@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import icons from '../constants/icons';
+import { Link } from 'react-router';
 
-const Login = () => {
+const Signin = () => {
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
 
   const showPassword = () => {
@@ -14,15 +15,17 @@ const Login = () => {
 
   return (
     <div className='w-full h-screen flex'>
-      <div className='w-1/2 flex flex-col items-center justify-center border-1 border-black'>
+      <div className='w-1/2 bg-blue-600'>slika</div>
+
+      <div className='w-1/2 flex flex-col items-center justify-center'>
         <div className='space-y-8 w-1/2'>
           <div className='text-blue-600 font-bold text-xl'>FieldSyncHub</div>
           <div className='space-y-3'>
             <p className='font-bold text-3xl text-[#212529]'>
-              Log in to your Account
+              Sign in to your Account
             </p>
-            <p className='text-[#343a40]'>
-              Welcome back! Select method to log in
+            <p className='text-[#6c757d]'>
+              Welcome back! Please enter your details.
             </p>
           </div>
           <form onSubmit={handleSubmit} className='flex flex-col space-y-4'>
@@ -51,8 +54,10 @@ const Login = () => {
             </div>
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-2'>
-                <input type='checkbox' className='w-4 h-4 cursor-pointer' />
-                <p className='text-[#495057]'>Remember me</p>
+                <input type='checkbox' className='w-3.5 h-3.5 cursor-pointer' />
+                <p className='text-[#212529] text-sm font-medium'>
+                  Remember me
+                </p>
               </div>
               <p className='text-blue-600 font-medium text-sm cursor-pointer'>
                 Forgot password?
@@ -62,7 +67,7 @@ const Login = () => {
               type='submit'
               className='w-full mt-4 bg-blue-600 text-white py-2 rounded-lg cursor-pointer font-medium'
             >
-              Log in
+              Sign in
             </button>
           </form>
           <div className='flex items-center space-x-3'>
@@ -72,21 +77,20 @@ const Login = () => {
           </div>
           <div className='flex items-center justify-center space-x-3 border-[1px] border-[#ced4da] rounded-lg py-2 cursor-pointer'>
             <img src={icons.googleIcon} alt='google' className='w-4 h-4' />
-            <p className='font-medium'>Login with Google</p>
+            <p className='font-medium'>Sign in with Google</p>
           </div>
           <div className='text-center'>
             <p className='text-[#6c757d] text-sm font-medium'>
               Don't have an account?{' '}
-              <span className='text-blue-600 cursor-pointer'>
-                Create an account
-              </span>
+              <Link to='/signup' className='text-blue-600 cursor-pointer'>
+                Sign up
+              </Link>
             </p>
           </div>
         </div>
       </div>
-      <div className='w-1/2 bg-blue-600'>slika</div>
     </div>
   );
 };
 
-export default Login;
+export default Signin;
