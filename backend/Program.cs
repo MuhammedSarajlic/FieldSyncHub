@@ -15,9 +15,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", cf =>
     {
-        cf.WithOrigins("http://localhost:3000", "http://192.168.0.38:3000")
+        cf.WithOrigins("http://localhost:5173")
         .AllowAnyMethod()
-        .AllowAnyHeader();
+        .AllowAnyHeader()
+        .AllowCredentials();
     });
 });
 builder.Services.AddService();
@@ -37,6 +38,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseHttpsRedirection();
+app.UseCors("AllowSpecificOrigin");
 app.UseRouting();
 app.UseAuthorization();
 
@@ -51,9 +53,6 @@ if (app.Environment.IsDevelopment())
 
 app.MapStaticAssets();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+app.MapControllers();
 
 app.Run();
