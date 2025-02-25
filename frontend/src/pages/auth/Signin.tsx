@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import icons from '../constants/icons';
 import { Link } from 'react-router';
+import icons from '../../constants/icons';
+import images from '../../constants/images';
 
 const Signin = () => {
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
@@ -15,13 +16,16 @@ const Signin = () => {
 
   return (
     <div className='w-full h-screen flex'>
-      <div className='w-1/2 bg-blue-600'>slika</div>
+      <div className='w-1/2 bg-bg-primary'></div>
 
       <div className='w-1/2 flex flex-col items-center justify-center'>
         <div className='space-y-8 w-1/2'>
-          <div className='text-blue-600 font-bold text-xl'>FieldSyncHub</div>
+          {/* <div className='text-blue-600 font-bold text-xl'>FieldSyncHub</div> */}
+          <div>
+            <img src={images.logo} alt='logo' className='max-w-[200px]' />
+          </div>
           <div className='space-y-3'>
-            <p className='font-bold text-3xl text-[#212529]'>
+            <p className='font-bold text-3xl text-heading'>
               Sign in to your Account
             </p>
             <p className='text-[#6c757d]'>
@@ -55,17 +59,15 @@ const Signin = () => {
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-2'>
                 <input type='checkbox' className='w-3.5 h-3.5 cursor-pointer' />
-                <p className='text-[#212529] text-sm font-medium'>
-                  Remember me
-                </p>
+                <p className='text-sm font-medium text-heading'>Remember me</p>
               </div>
-              <p className='text-blue-600 font-medium text-sm cursor-pointer'>
+              <p className='text-text-secondary font-medium text-sm cursor-pointer'>
                 Forgot password?
               </p>
             </div>
             <button
               type='submit'
-              className='w-full mt-4 bg-blue-600 text-white py-2 rounded-lg cursor-pointer font-medium'
+              className='w-full mt-4 bg-bg-primary text-white py-2 rounded-lg cursor-pointer font-medium hover:bg-bg-primary-hover transition-colors duration-200'
             >
               Sign in
             </button>
@@ -82,7 +84,7 @@ const Signin = () => {
           <div className='text-center'>
             <p className='text-[#6c757d] text-sm font-medium'>
               Don't have an account?{' '}
-              <Link to='/signup' className='text-blue-600 cursor-pointer'>
+              <Link to='/signup' className='text-text-secondary cursor-pointer'>
                 Sign up
               </Link>
             </p>

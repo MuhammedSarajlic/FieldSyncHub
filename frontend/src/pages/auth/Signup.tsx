@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import icons from '../constants/icons';
 import { Link } from 'react-router';
+import icons from '../../constants/icons';
+import images from '../../constants/images';
 
 const Signup = () => {
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
@@ -14,13 +15,15 @@ const Signup = () => {
   };
   return (
     <div className='w-full h-screen flex'>
-      <div className='w-1/2 bg-blue-600'>slika</div>
+      <div className='w-1/2 bg-bg-primary'></div>
 
       <div className='w-1/2 flex flex-col items-center justify-center'>
         <div className='space-y-8 w-1/2'>
-          <div className='text-blue-600 font-bold text-xl'>FieldSyncHub</div>
+          <div>
+            <img src={images.logo} alt='logo' className='max-w-[200px]' />
+          </div>
           <div className='space-y-3'>
-            <p className='font-bold text-3xl text-[#212529]'>
+            <p className='font-bold text-3xl text-heading'>
               Create your account
             </p>
             <p className='text-[#6c757d]'>
@@ -71,7 +74,7 @@ const Signup = () => {
             </div>
             <button
               type='submit'
-              className='w-full mt-4 bg-blue-600 text-white py-2 rounded-lg cursor-pointer font-medium'
+              className='w-full mt-4 bg-bg-primary text-white py-2 rounded-lg cursor-pointer font-medium hover:bg-bg-primary-hover transition-colors duration-200'
             >
               Sign up
             </button>
@@ -88,7 +91,7 @@ const Signup = () => {
           <div className='text-center'>
             <p className='text-[#6c757d] text-sm font-medium'>
               Have an account?{' '}
-              <Link to='/signin' className='text-blue-600 cursor-pointer'>
+              <Link to='/signin' className='text-text-secondary cursor-pointer'>
                 Sign in
               </Link>
             </p>
