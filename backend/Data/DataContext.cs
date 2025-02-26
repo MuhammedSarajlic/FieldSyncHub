@@ -13,5 +13,8 @@ namespace backend.Data
         {
         }
         public DbSet<User> Users => Set<User>(); 
+        public DbSet<Customers> Customers => Set<Customers>();
+        public DbSet<CustomFields> CustomFields => Set<CustomFields>();
+        public DbSet<CustomFiledValue> CustomFiledValues => Set<CustomFiledValue>();
     }
 }
