@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250225145214_CustomersTable")]
+    partial class CustomersTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,6 +29,9 @@ namespace backend.Migrations
                 {
                     b.Property<Guid>("CustomFieldId")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("CustomFiledValueCustomFieldValueId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("CustomerId")
@@ -45,6 +51,8 @@ namespace backend.Migrations
 
                     b.HasKey("CustomFieldId");
 
+                    b.HasIndex("CustomFiledValueCustomFieldValueId");
+
                     b.HasIndex("CustomersCustomerId");
 
                     b.ToTable("CustomFields");
@@ -59,17 +67,12 @@ namespace backend.Migrations
                     b.Property<Guid>("CustomFieldId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("CustomFieldsCustomFieldId")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("Value")
                         .HasColumnType("longtext");
 
                     b.HasKey("CustomFieldValueId");
 
-                    b.HasIndex("CustomFieldsCustomFieldId");
-
-                    b.ToTable("CustomFiledValues");
+                    b.ToTable("CustomFiledValue");
                 });
 
             modelBuilder.Entity("backend.Models.Customers", b =>
@@ -161,6 +164,9 @@ namespace backend.Migrations
                     b.Property<bool>("TextMessagesEnabled")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("Title")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("VisitReminders")
                         .HasColumnType("tinyint(1)");
 
@@ -206,20 +212,14 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.CustomFields", b =>
                 {
+                    b.HasOne("backend.Models.CustomFiledValue", "CustomFiledValue")
+                        .WithMany()
+                        .HasForeignKey("CustomFiledValueCustomFieldValueId");
+
                     b.HasOne("backend.Models.Customers", null)
                         .WithMany("CustomFields")
                         .HasForeignKey("CustomersCustomerId");
-                });
 
-            modelBuilder.Entity("backend.Models.CustomFiledValue", b =>
-                {
-                    b.HasOne("backend.Models.CustomFields", null)
-                        .WithMany("CustomFiledValue")
-                        .HasForeignKey("CustomFieldsCustomFieldId");
-                });
-
-            modelBuilder.Entity("backend.Models.CustomFields", b =>
-                {
                     b.Navigation("CustomFiledValue");
                 });
 
