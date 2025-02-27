@@ -22,6 +22,12 @@ import nextPageIcon from '../assets/icons/next_page.png';
 import firstPageIcon from '../assets/icons/first-page.png';
 import lastPageIcon from '../assets/icons/last-page.png';
 import customerDetailsIcon from '../assets/icons/customer-details.png';
+import arrowDownIcon from '../assets/icons/arrow-down.png';
+import officeIcon from '../assets/icons/office.png';
+import personIcon from '../assets/icons/person.png';
+import editIcon from '../assets/icons/edit.png';
+import archiveIcon from '../assets/icons/archive.png';
+import mailWhiteIcon from '../assets/icons/mail-white.png';
 
 export default {
   mailIcon,
@@ -48,4 +54,10 @@ export default {
   firstPageIcon,
   lastPageIcon,
   customerDetailsIcon,
+  arrowDownIcon,
+  officeIcon,
+  personIcon,
+  editIcon,
+  archiveIcon,
+  mailWhiteIcon,
 };
