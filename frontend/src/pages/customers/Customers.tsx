@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import ButtonIcon from '../components/CustomElements/ButtonIcon';
-import CustomButton from '../components/CustomElements/CustomButton';
-import Search from '../components/CustomElements/Search';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar/Sidebar';
-import Table from '../components/Table/Table';
-import icons from '../constants/icons';
-import CreateCustomerModal from '../components/Customers/CreateCustomerModal';
+import ButtonIcon from '../../components/CustomElements/ButtonIcon';
+import CustomButton from '../../components/CustomElements/CustomButton';
+import Search from '../../components/CustomElements/Search';
+import Navbar from '../../components/Navbar';
+import Sidebar from '../../components/Sidebar/Sidebar';
+import Table from '../../components/Table/Table';
+import icons from '../../constants/icons';
+import CreateCustomerModal from '../../components/Customers/CreateCustomerModal';
 
 const Customers = () => {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] =
@@ -28,7 +28,7 @@ const Customers = () => {
     <>
       <div className='flex'>
         <Sidebar />
-        <div className='flex-1 ml-[260px] h-[2000px]'>
+        <div className='flex-1 ml-[260px]'>
           <div>
             <Navbar />
           </div>
