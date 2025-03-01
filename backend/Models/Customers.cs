@@ -13,12 +13,12 @@ public class Customers
     public string? LastName { get; set; }
     public string? CompanyName { get; set; }
     public bool IsCompany { get; set; }
-    public string? MainPhone { get; set; } //AdditionalPhone nova tabela umjesto MainPhone i FaxPhone
-    public string? HomePhone { get; set; }
-    public string? WorkPhone { get; set; }
-    public string? MobilePhone { get; set; }
-    public string? OtherPhone { get; set; }
-    public string? FaxPhone { get; set; }
+    public List<string>? MainPhone { get; set; } 
+    public List<string>? HomePhone { get; set; }
+    public List<string>? WorkPhone { get; set; }
+    public List<string>? MobilePhone { get; set; }
+    public List<string>? OtherPhone { get; set; }
+    public List<string>? FaxPhone { get; set; }
     public string? Email { get; set; }
     public string? Address { get; set; }
     public string? City { get; set; }
