@@ -6,7 +6,7 @@ import Navbar from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Table from '../../components/Table/Table';
 import icons from '../../constants/icons';
-import CreateCustomerModal from '../../components/Customers/CreateCustomerModal';
+import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/CreateCustomerModal';
 
 const Customers = () => {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] =
