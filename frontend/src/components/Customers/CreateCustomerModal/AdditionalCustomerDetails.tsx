@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import icons from '../../constants/icons';
-import NewCustomFieldModal from '../CustomField/NewCustomFieldModal';
+import icons from '../../../constants/icons';
+import NewCustomFieldModal from '../../CustomField/NewCustomFieldModal';
 
 const AdditionalCustomerDetails = () => {
   const [isAdditionalDetailsOpen, setIsAdditionalDetailsOpen] =
