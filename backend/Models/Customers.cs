@@ -13,13 +13,7 @@ public class Customers
     public string? LastName { get; set; }
     public string? CompanyName { get; set; }
     public bool IsCompany { get; set; }
-    public List<string>? MainPhone { get; set; } 
-    public List<string>? HomePhone { get; set; }
-    public List<string>? WorkPhone { get; set; }
-    public List<string>? MobilePhone { get; set; }
-    public List<string>? OtherPhone { get; set; }
-    public List<string>? FaxPhone { get; set; }
-    public string? Email { get; set; }
+    public List<string>? Email { get; set; }
     public string? Address { get; set; }
     public string? City { get; set; }
     public string? State { get; set; }
@@ -39,4 +33,8 @@ public class Customers
     public string? Note { get; set; }
     public string? Tags { get; set; }
     public ICollection<CustomFields>? CustomFields {get; set;}
+    public ICollection<Notes>? Notes { get; set; }
+    public ICollection<Property>? Properties { get; set; }
+    public ICollection<CustomerPhone>? CustomerPhones { get; set; }
+
 }

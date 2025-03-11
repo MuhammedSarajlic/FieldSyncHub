@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250311150016_NewTables")]
+    partial class NewTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -75,34 +78,6 @@ namespace backend.Migrations
                     b.HasIndex("CustomFieldsCustomFieldId");
 
                     b.ToTable("CustomFiledValues");
-                });
-
-            modelBuilder.Entity("backend.Models.CustomerPhone", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("CustomersCustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<bool>("IsReceiveMessage")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("PhoneType")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomersCustomerId");
-
-                    b.ToTable("CustomerPhones");
                 });
 
             modelBuilder.Entity("backend.Models.Customers", b =>
@@ -218,6 +193,34 @@ namespace backend.Migrations
                     b.ToTable("Notes");
                 });
 
+            modelBuilder.Entity("backend.Models.Phones", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("CustomersCustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("IsReceiveMessage")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PhoneType")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomersCustomerId");
+
+                    b.ToTable("Phones");
+                });
+
             modelBuilder.Entity("backend.Models.Property", b =>
                 {
                     b.Property<Guid>("Id")
@@ -323,17 +326,17 @@ namespace backend.Migrations
                         .HasForeignKey("CustomFieldsCustomFieldId");
                 });
 
-            modelBuilder.Entity("backend.Models.CustomerPhone", b =>
-                {
-                    b.HasOne("backend.Models.Customers", null)
-                        .WithMany("CustomerPhones")
-                        .HasForeignKey("CustomersCustomerId");
-                });
-
             modelBuilder.Entity("backend.Models.Notes", b =>
                 {
                     b.HasOne("backend.Models.Customers", null)
                         .WithMany("Notes")
+                        .HasForeignKey("CustomersCustomerId");
+                });
+
+            modelBuilder.Entity("backend.Models.Phones", b =>
+                {
+                    b.HasOne("backend.Models.Customers", null)
+                        .WithMany("Phones")
                         .HasForeignKey("CustomersCustomerId");
                 });
 
@@ -362,9 +365,9 @@ namespace backend.Migrations
                 {
                     b.Navigation("CustomFields");
 
-                    b.Navigation("CustomerPhones");
-
                     b.Navigation("Notes");
+
+                    b.Navigation("Phones");
 
                     b.Navigation("Properties");
                 });

@@ -29,7 +29,7 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResponse<List<Customers>>> GetCustomers()
     {
-        var customers = await _context.Customers.Include(c => c.CustomFields).ToListAsync();
+        var customers = await _context.Customers.Include(c => c.CustomFields).Include(c => c.Properties).Include(c => c.Notes).Include(c => c.CustomerPhones).ToListAsync();
         return new ApiResponse<List<Customers>>()
             {
                 Success = true,

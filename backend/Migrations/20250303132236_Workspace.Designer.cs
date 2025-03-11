@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250303132236_Workspace")]
+    partial class Workspace
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,34 +80,6 @@ namespace backend.Migrations
                     b.ToTable("CustomFiledValues");
                 });
 
-            modelBuilder.Entity("backend.Models.CustomerPhone", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("CustomersCustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<bool>("IsReceiveMessage")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("PhoneType")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomersCustomerId");
-
-                    b.ToTable("CustomerPhones");
-                });
-
             modelBuilder.Entity("backend.Models.Customers", b =>
                 {
                     b.Property<Guid>("CustomerId")
@@ -141,11 +116,17 @@ namespace backend.Migrations
                     b.Property<string>("Country")
                         .HasColumnType("longtext");
 
-                    b.PrimitiveCollection<string>("Email")
+                    b.Property<string>("Email")
+                        .HasColumnType("longtext");
+
+                    b.PrimitiveCollection<string>("FaxPhone")
                         .HasColumnType("longtext");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.PrimitiveCollection<string>("HomePhone")
                         .HasColumnType("longtext");
 
                     b.Property<bool>("InvoiceFollowUps")
@@ -161,7 +142,16 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.PrimitiveCollection<string>("MainPhone")
+                        .HasColumnType("longtext");
+
+                    b.PrimitiveCollection<string>("MobilePhone")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Note")
+                        .HasColumnType("longtext");
+
+                    b.PrimitiveCollection<string>("OtherPhone")
                         .HasColumnType("longtext");
 
                     b.Property<int>("PostalCode")
@@ -182,77 +172,12 @@ namespace backend.Migrations
                     b.Property<bool>("VisitReminders")
                         .HasColumnType("tinyint(1)");
 
+                    b.PrimitiveCollection<string>("WorkPhone")
+                        .HasColumnType("longtext");
+
                     b.HasKey("CustomerId");
 
                     b.ToTable("Customers");
-                });
-
-            modelBuilder.Entity("backend.Models.Notes", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("CustomersCustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("NoteText")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("PathFile")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomersCustomerId");
-
-                    b.ToTable("Notes");
-                });
-
-            modelBuilder.Entity("backend.Models.Property", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("City")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Country")
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("CustomersCustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<bool>("IsBillingAddress")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("PostalCode")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("State")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Street")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomersCustomerId");
-
-                    b.ToTable("Properties");
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>
@@ -298,8 +223,8 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("longtext");
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("Name")
                         .HasColumnType("longtext");
@@ -323,27 +248,6 @@ namespace backend.Migrations
                         .HasForeignKey("CustomFieldsCustomFieldId");
                 });
 
-            modelBuilder.Entity("backend.Models.CustomerPhone", b =>
-                {
-                    b.HasOne("backend.Models.Customers", null)
-                        .WithMany("CustomerPhones")
-                        .HasForeignKey("CustomersCustomerId");
-                });
-
-            modelBuilder.Entity("backend.Models.Notes", b =>
-                {
-                    b.HasOne("backend.Models.Customers", null)
-                        .WithMany("Notes")
-                        .HasForeignKey("CustomersCustomerId");
-                });
-
-            modelBuilder.Entity("backend.Models.Property", b =>
-                {
-                    b.HasOne("backend.Models.Customers", null)
-                        .WithMany("Properties")
-                        .HasForeignKey("CustomersCustomerId");
-                });
-
             modelBuilder.Entity("backend.Models.User", b =>
                 {
                     b.HasOne("backend.Models.Workspace", "Workspace")
@@ -361,12 +265,6 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Customers", b =>
                 {
                     b.Navigation("CustomFields");
-
-                    b.Navigation("CustomerPhones");
-
-                    b.Navigation("Notes");
-
-                    b.Navigation("Properties");
                 });
 #pragma warning restore 612, 618
         }
