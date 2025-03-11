@@ -30,14 +30,14 @@ public class CustomerPhoneController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddCustomerPhone([FromBody] AddCustomerPhoneDto newCustomerPhone, Guid customerId)
+    public async Task<IActionResult> AddCustomerPhone([FromQuery] AddCustomerPhoneDto newCustomerPhone, Guid customerId)
     {
         await _customerPhoneService.AddCustomerPhone(newCustomerPhone, customerId);
         return Ok();
     }
 
     [HttpPost("bulk")]
-    public async Task<IActionResult> AddBulkPhone([FromQuery] List<AddCustomerPhoneDto> customerPhones, Guid customerId)
+    public async Task<IActionResult> AddBulkPhone([FromBody] List<AddCustomerPhoneDto> customerPhones, Guid customerId)
     {
         await _customerPhoneService.AddBulkPhone(customerPhones, customerId);
         return Ok();

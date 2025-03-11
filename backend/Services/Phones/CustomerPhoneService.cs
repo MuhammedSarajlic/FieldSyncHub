@@ -17,10 +17,27 @@ public class CustomerPhoneService : ICustomerPhoneService
 
     public async Task AddBulkPhone(List<AddCustomerPhoneDto> customerPhones, Guid customerId)
     {
-        foreach(var customerPhone in customerPhones)
+        var customer = await _context.Customers
+        .Where(c => c.CustomerId == customerId)
+        .Include(c => c.CustomerPhones)
+        .FirstOrDefaultAsync();
+
+        var customerPhonesEntities = customerPhones.Select(p => new CustomerPhone
         {
-            await AddCustomerPhone(customerPhone, customerId);
+            Id = Guid.NewGuid(),
+            CustomerId = customerId,
+            PhoneNumber = p.PhoneNumber,
+            PhoneType = p.PhoneType,
+            IsReceiveMessage = p.IsReceiveMessage
+        }).ToList();
+
+        foreach (var phone in customerPhonesEntities)
+        {
+            customer.CustomerPhones.Add(phone);
         }
+
+        await _context.CustomerPhones.AddRangeAsync(customerPhonesEntities);
+        await _context.SaveChangesAsync();
     }
 
     public async Task AddCustomerPhone(AddCustomerPhoneDto newCustomerPhone, Guid customerId)
