@@ -28,6 +28,14 @@ import personIcon from '../assets/icons/person.png';
 import editIcon from '../assets/icons/edit.png';
 import archiveIcon from '../assets/icons/archive.png';
 import mailWhiteIcon from '../assets/icons/mail-white.png';
+import phoneIcon from '../assets/icons/phone.png';
+import addressIcon from '../assets/icons/address.png';
+import mobilePhoneIcon from '../assets/icons/mobile-phone.png';
+import workPhoneIcon from '../assets/icons/work-phone.png';
+import tagIcon from '../assets/icons/tag.png';
+import noteIcon from '../assets/icons/note.png';
+import pinIcon from '../assets/icons/pin.png';
+import trashIcon from '../assets/icons/trash.png';
 
 export default {
   mailIcon,
@@ -60,4 +68,12 @@ export default {
   editIcon,
   archiveIcon,
   mailWhiteIcon,
+  phoneIcon,
+  addressIcon,
+  mobilePhoneIcon,
+  workPhoneIcon,
+  tagIcon,
+  noteIcon,
+  pinIcon,
+  trashIcon,
 };

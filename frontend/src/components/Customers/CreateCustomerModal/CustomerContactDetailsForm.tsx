@@ -1,4 +1,4 @@
-import ModalInputField from '../CustomElements/ModalInputField';
+import ModalInputField from '../../CustomElements/ModalInputField';
 
 const CustomerContactDetailsForm = () => {
   return (

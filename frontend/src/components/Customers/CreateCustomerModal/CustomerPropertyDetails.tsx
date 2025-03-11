@@ -1,5 +1,5 @@
-import CountryDropdown from '../CustomElements/CountryDropdown';
-import ModalInputField from '../CustomElements/ModalInputField';
+import CountryDropdown from '../../CustomElements/CountryDropdown';
+import ModalInputField from '../../CustomElements/ModalInputField';
 
 const CustomerPropertyDetails = () => {
   return (

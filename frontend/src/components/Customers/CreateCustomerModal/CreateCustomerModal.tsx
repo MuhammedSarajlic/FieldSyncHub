@@ -1,6 +1,6 @@
-import ButtonIcon from '../CustomElements/ButtonIcon';
-import CustomButton from '../CustomElements/CustomButton';
-import icons from '../../constants/icons';
+import ButtonIcon from '../../CustomElements/ButtonIcon';
+import CustomButton from '../../CustomElements/CustomButton';
+import icons from '../../../constants/icons';
 import CreateCustomerForm from './CreateCustomerForm';
 
 interface ICreateCustomerModal {
