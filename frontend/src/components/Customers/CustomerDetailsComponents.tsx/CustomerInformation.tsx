@@ -35,15 +35,6 @@ const CustomerInformation = () => {
           />
         </div>
       </div>
-      <div className='space-y-1.5'>
-        <p className='text-sm text-primary font-medium'>Address</p>
-        <div className='px-1 space-y-3'>
-          <CustomerDetailsContactInformationItem
-            icon={icons.addressIcon}
-            informationValue='123 Main Street Austin, TX 78701 USA'
-          />
-        </div>
-      </div>
     </div>
   );
 };

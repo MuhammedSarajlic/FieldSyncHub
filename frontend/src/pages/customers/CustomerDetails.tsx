@@ -11,6 +11,7 @@ import CustomerJobs from '../../components/Customers/CustomerDetailsComponents.t
 import CustomerRequests from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerRequestTab/CustomerRequests';
 import CustomerQuotes from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerQuoteTab/CustomerQuotes';
 import CustomerInvoices from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerInvoiceTab/CustomerInvoices';
+import CustomerProperties from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/CustomerProperties';
 
 const CustomerDetails = () => {
   const [selectedTab, setSelectedTab] = useState<string>('jobs');
@@ -62,6 +63,27 @@ const CustomerDetails = () => {
                     {customerInfo.firstName} {customerInfo.lastName}
                   </p>
                 )}
+              </div>
+            </div>
+            <div className='p-4 border-[1px] border-border-primary rounded-lg'>
+              <p className='font-semibold text-lg mb-4'>Customer Summary</p>
+              <div className='w-full flex items-center justify-between space-x-4'>
+                <div className='w-1/4 bg-[#FAFAFA] rounded-lg space-y-1 p-3'>
+                  <p className='text-sm text-heading'>Lifetime Value</p>
+                  <p className='font-semibold'>$12,580.00</p>
+                </div>
+                <div className='w-1/4 bg-[#FAFAFA] rounded-lg space-y-1 p-3'>
+                  <p className='text-sm text-heading'>Outstanding</p>
+                  <p className='font-semibold text-red-600'>$420.00</p>
+                </div>
+                <div className='w-1/4 bg-[#FAFAFA] rounded-lg space-y-1 p-3'>
+                  <p className='text-sm text-heading'>Total Jobs</p>
+                  <p className='font-semibold'>8</p>
+                </div>
+                <div className='w-1/4 bg-[#FAFAFA] rounded-lg space-y-1 p-3'>
+                  <p className='text-sm text-heading'>Last Activity</p>
+                  <p className='font-semibold'>15/02/2025</p>
+                </div>
               </div>
             </div>
             <div className='pt-2 border-[1px] border-border-primary rounded-lg'>
@@ -118,6 +140,7 @@ const CustomerDetails = () => {
             </div>
             <CustomerInformation />
             <CustomerTags />
+            <CustomerProperties />
             <CustomerNotes />
           </div>
         </div>
