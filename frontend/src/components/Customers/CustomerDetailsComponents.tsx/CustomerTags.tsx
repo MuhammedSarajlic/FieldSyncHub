@@ -1,5 +1,6 @@
 import icons from '../../../constants/icons';
 import CustomButton from '../../CustomElements/CustomButton';
+import CustomSmallButton from '../../CustomElements/CustomSmallButton';
 
 const CustomerTags = () => {
   return (
@@ -9,15 +10,7 @@ const CustomerTags = () => {
           <img src={icons.tagIcon} alt='tag' className='w-5 h-5' />
           <p className='font-semibold text-xl'>Tags</p>
         </div>
-        <div>
-          <button
-            className={`flex items-center space-x-1.5 border-[1px] border-border-primary rounded-lg py-1.5 px-4 cursor-pointer hover:bg-[#FAFAFA] hover:border-primary transition-colors duration-200`}
-          >
-            <p className={`text-sm font-semibold text-text-secondary`}>
-              New tag
-            </p>
-          </button>
-        </div>
+        <CustomSmallButton title='New tag' customStyle='px-4' />
       </div>
       {/* <div className='flex items-center space-x-2'>
         <input

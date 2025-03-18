@@ -1,5 +1,6 @@
 import React, { useRef, useState, ChangeEvent, DragEvent } from 'react';
 import icons from '../../constants/icons';
+import CustomSmallButton from '../CustomElements/CustomSmallButton';
 
 interface FileWithProgress {
   file: File;
@@ -73,14 +74,11 @@ const NoteFileUpload: React.FC = () => {
         onDrop={handleDrop}
       >
         <p className='text-sm text-primary'>Drag & drop files here or</p>
-        <button
-          className={`border-[1px] border-border-primary rounded-lg py-1.5 px-4 cursor-pointer hover:bg-[#FAFAFA] hover:border-primary transition-colors duration-200`}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <p className='text-sm font-semibold text-text-secondary'>
-            Select Files
-          </p>
-        </button>
+        <CustomSmallButton
+          title='Select Files'
+          customStyle='px-4'
+          handleClick={() => fileInputRef.current?.click()}
+        />
         <input
           ref={fileInputRef}
           type='file'

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ModalInputField from '../CustomElements/ModalInputField';
+import CustomSmallButton from '../CustomElements/CustomSmallButton';
 
 const CustomFieldForm = () => {
   const [fieldType, setFieldType] = useState<string>('text');
@@ -97,14 +98,10 @@ const CustomFieldForm = () => {
                   </div>
                 </div>
               ))}
-              <button
-                onClick={handleAddFieldOption}
-                className={`flex items-center space-x-1.5 border-[1px] border-border-primary rounded-lg py-1.5 px-2.5 cursor-pointer hover:bg-[#FAFAFA] hover:border-primary transition-colors duration-200`}
-              >
-                <p className={`text-sm font-semibold text-text-secondary `}>
-                  Add Another Option
-                </p>
-              </button>
+              <CustomSmallButton
+                title='Add Another Option'
+                handleClick={handleAddFieldOption}
+              />
             </div>
           </div>
         );

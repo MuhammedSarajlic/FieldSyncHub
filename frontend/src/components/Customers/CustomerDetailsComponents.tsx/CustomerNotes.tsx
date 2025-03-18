@@ -1,6 +1,7 @@
 import NoteFileUpload from '../../Notes/NoteFileUpload';
 import Note from '../../Notes/Note';
 import icons from '../../../constants/icons';
+import CustomSmallButton from '../../CustomElements/CustomSmallButton';
 
 const CustomerNotes = () => {
   return (
@@ -10,13 +11,11 @@ const CustomerNotes = () => {
           <img src={icons.noteIcon} alt='tag' className='w-5 h-5' />
           <p className='font-semibold text-xl'>Notes</p>
         </div>
-        <div>
-          <button
-            className={`flex bg-bg-primary rounded-lg py-1.5 px-4 cursor-pointer hover:bg-bg-primary-hover transition-colors duration-200`}
-          >
-            <p className={`text-sm font-semibold text-white `}>New note</p>
-          </button>
-        </div>
+        <CustomSmallButton
+          title='New note'
+          customStyle='px-4 border-transparent bg-bg-primary hover:bg-bg-primary-hover'
+          customTextStyle='text-white'
+        />
       </div>
       <div>
         <textarea

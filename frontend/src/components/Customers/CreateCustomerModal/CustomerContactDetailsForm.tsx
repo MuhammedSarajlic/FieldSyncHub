@@ -1,3 +1,4 @@
+import CustomSmallButton from '../../CustomElements/CustomSmallButton';
 import ModalInputField from '../../CustomElements/ModalInputField';
 
 const CustomerContactDetailsForm = () => {
@@ -12,11 +13,9 @@ const CustomerContactDetailsForm = () => {
               id='customer_phone_attributes'
               className='h-full px-2 text-sm min-w-[100px] outline-none text-heading border-r-[1px] border-border-primary'
             >
-              <option value='Main'>Main</option>
               <option value='Work'>Work</option>
               <option value='Mobile'>Mobile</option>
               <option value='Home'>Home</option>
-              <option value='Fax'>Fax</option>
               <option value='Other'>Other</option>
             </select>
             <ModalInputField
@@ -29,13 +28,14 @@ const CustomerContactDetailsForm = () => {
             <input type='checkbox' className='w-4 h-4' />
             <p className='text-sm text-primary'>Receives text messages</p>
           </div>
-          <button
+          <CustomSmallButton title='Add Phone Number' />
+          {/* <button
             className={`flex items-center space-x-1.5 border-[1px] border-border-primary rounded-lg py-1.5 px-2.5 cursor-pointer hover:bg-[#FAFAFA] hover:border-primary transition-colors duration-200`}
           >
             <p className={`text-sm font-semibold text-text-secondary `}>
               Add Phone Number
             </p>
-          </button>
+          </button> */}
         </div>
         <div className='space-y-2'>
           <div className='flex h-10 items-center border-[1px] border-border-primary rounded-lg'>
@@ -45,8 +45,6 @@ const CustomerContactDetailsForm = () => {
               className='h-full px-2 text-sm min-w-[100px] outline-none text-heading border-r-[1px] border-border-primary'
             >
               <option value='Main'>Main</option>
-              <option value='Work'>Work</option>
-              <option value='Mobile'>Personal</option>
               <option value='Other'>Other</option>
             </select>
             <ModalInputField
@@ -55,13 +53,7 @@ const CustomerContactDetailsForm = () => {
               customStyle='h-full border-transparent'
             />
           </div>
-          <button
-            className={`flex items-center space-x-1.5 border-[1px] border-border-primary rounded-lg py-1.5 px-2.5 cursor-pointer hover:bg-[#FAFAFA] hover:border-primary transition-colors duration-200`}
-          >
-            <p className={`text-sm font-semibold text-text-secondary `}>
-              Add Email Address
-            </p>
-          </button>
+          <CustomSmallButton title='Add Email Address' />
         </div>
       </div>
     </div>

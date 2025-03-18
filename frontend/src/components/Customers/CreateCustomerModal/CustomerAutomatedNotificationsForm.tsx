@@ -3,8 +3,10 @@ import CustomerModalNotificationItem from './CustomerModalNotificationItem';
 const CustomerAutomatedNotificationsForm = () => {
   return (
     <div className='space-y-2'>
-      <p className='font-medium text-lg'>Automated notifications</p>
-      <div className='space-y-2'>
+      <p className='px-2 py-1 font-medium text-lg bg-[#FAFAFA] rounded-md'>
+        Automated notifications
+      </p>
+      <div className='px-2 space-y-2'>
         <CustomerModalNotificationItem
           title='Quote follow-up'
           subtitle='Follow up on an outstanding quote.'
