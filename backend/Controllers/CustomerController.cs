@@ -29,7 +29,7 @@ public class CustomerController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddCustomer([FromQuery] Customers newCustomer)
+    public async Task<IActionResult> AddCustomer([FromBody] Customers newCustomer)
     {
         await _customerService.AddCustomer(newCustomer);
         return Ok();
