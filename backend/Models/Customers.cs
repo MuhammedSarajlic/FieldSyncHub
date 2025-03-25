@@ -19,7 +19,7 @@ public class Customers
     public bool QuoteFollowUps { get; set; }
     public bool InvoiceFollowUps { get; set; }
     public bool Archived { get; set; }
-    public string? Tags { get; set; }
+    public List<string>? Tags { get; set; }
     public ICollection<CustomFields>? CustomFields {get; set;}
     public ICollection<Notes>? Notes { get; set; }
     public ICollection<Property>? Properties { get; set; }
