@@ -1,11 +1,16 @@
+import { TCustomer } from '../../types/Customer';
 import TableBodyItem from './TableBodyItem';
 
-const TableBody = () => {
+interface ITableBody {
+  data: TCustomer[];
+}
+
+const TableBody = ({ data }: ITableBody) => {
   return (
     <div>
-      <TableBodyItem />
-      <TableBodyItem />
-      <TableBodyItem />
+      {data.map((item) => (
+        <TableBodyItem key={item.customerId} item={item} />
+      ))}
     </div>
   );
 };
