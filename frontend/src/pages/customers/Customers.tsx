@@ -7,10 +7,37 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import Table from '../../components/Table/Table';
 import icons from '../../constants/icons';
 import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/CreateCustomerModal';
+import { TAddCustomer, TCustomer } from '../../types/Customer';
+import { CreateCustomer, GetAllCustomers } from '../../services/customer';
+import { addCustomerInitialState } from '../../const/states';
 
 const Customers = () => {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] =
     useState<boolean>(false);
+  const [listOfCustomers, setListOfCustomers] = useState<TCustomer[] | []>([]);
+  const [customer, setCustomer] = useState<TAddCustomer>(
+    addCustomerInitialState
+  );
+
+  const handleCreateCustomer = async () => {
+    console.log(customer);
+
+    const response = await CreateCustomer(customer);
+    if (response.status === 200) {
+      setIsAddCustomerModalOpen(false);
+      setCustomer(addCustomerInitialState);
+      getAllWorkspaceCustomers();
+    }
+  };
+
+  const getAllWorkspaceCustomers = async () => {
+    const resposne = await GetAllCustomers();
+    if (resposne.status === 200) setListOfCustomers(resposne.data.payload);
+  };
+
+  useEffect(() => {
+    getAllWorkspaceCustomers();
+  }, []);
 
   useEffect(() => {
     if (isAddCustomerModalOpen) {
@@ -26,14 +53,14 @@ const Customers = () => {
 
   return (
     <>
-      <div className='flex'>
+      <div className='flex mb-4'>
         <Sidebar />
         <div className='flex-1 ml-[260px]'>
           <div>
             <Navbar />
           </div>
           <div className='px-4'>
-            <div className='py-4 mb-4 flex items-center justify-between'>
+            <div className='pb-4 mb-4 flex items-center justify-between'>
               <p className='text-heading text-4xl font-extrabold'>Customers</p>
               <div className='flex items-center space-x-3'>
                 <ButtonIcon name='Import' icon={icons.importIcon} />
@@ -82,13 +109,16 @@ const Customers = () => {
                 </div>
               </div>
             </div>
-            <Table />
+            <Table data={listOfCustomers} />
           </div>
         </div>
       </div>
       {isAddCustomerModalOpen && (
         <CreateCustomerModal
           setIsAddCustomerModalOpen={setIsAddCustomerModalOpen}
+          handleCreateCustomer={handleCreateCustomer}
+          setCustomer={setCustomer}
+          customer={customer}
         />
       )}
     </>
