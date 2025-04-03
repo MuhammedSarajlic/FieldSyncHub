@@ -1,27 +1,32 @@
-import { useState } from 'react';
 import ModalInputField from '../CustomElements/ModalInputField';
 import CustomSmallButton from '../CustomElements/CustomSmallButton';
+import { TAddCustomField } from '../../types/CustomField';
 
-const CustomFieldForm = () => {
-  const [fieldType, setFieldType] = useState<string>('text');
-  const [dropdownOptions, setDropdownOptions] = useState<string[]>(['']);
-  const [defaultValue, setDefaultValue] = useState<string>('');
-  const [dropdownDefaultValue, setDropdownDefaultValue] = useState('');
+interface ICustomFieldForm {
+  customField: TAddCustomField;
+  setCustomField: React.Dispatch<React.SetStateAction<TAddCustomField>>;
+}
 
+const CustomFieldForm = ({ customField, setCustomField }: ICustomFieldForm) => {
   const handleAddFieldOption = () => {
-    setDropdownOptions([...dropdownOptions, '']);
+    setCustomField({
+      ...customField,
+      dropdownOptions: [...(customField.dropdownOptions || []), ''],
+    });
   };
 
   const renderDefaultValueInput = () => {
-    switch (fieldType) {
+    switch (customField.fieldType) {
       case 'text':
         return (
           <ModalInputField
             inputType='text'
             placeholder='Default value'
             label='Default Value'
-            value={defaultValue}
-            onChange={(e) => setDefaultValue(e.target.value)}
+            value={customField.defaultValue}
+            onChange={(e) =>
+              setCustomField({ ...customField, defaultValue: e.target.value })
+            }
           />
         );
       case 'numeric':
@@ -30,8 +35,10 @@ const CustomFieldForm = () => {
             inputType='number'
             placeholder='Default value'
             label='Default Value'
-            value={defaultValue}
-            onChange={(e) => setDefaultValue(e.target.value)}
+            value={customField.defaultValue}
+            onChange={(e) =>
+              setCustomField({ ...customField, defaultValue: e.target.value })
+            }
           />
         );
       case 'boolean':
@@ -41,11 +48,15 @@ const CustomFieldForm = () => {
               Default Value
             </label>
             <select
-              value={defaultValue}
-              onChange={(e) => setDefaultValue(e.target.value)}
+              value={customField.defaultValue}
+              onChange={(e) =>
+                setCustomField({ ...customField, defaultValue: e.target.value })
+              }
               className='w-full p-2 text-sm text-heading outline-none border-[1px] border-border-primary rounded-lg'
             >
-              <option value='true'>Yes</option>
+              <option defaultValue='true' value='true'>
+                Yes
+              </option>
               <option value='false'>No</option>
             </select>
           </div>
@@ -56,8 +67,10 @@ const CustomFieldForm = () => {
             inputType='date'
             placeholder='Default value'
             label='Default Value'
-            value={defaultValue}
-            onChange={(e) => setDefaultValue(e.target.value)}
+            value={customField.defaultValue}
+            onChange={(e) =>
+              setCustomField({ ...customField, defaultValue: e.target.value })
+            }
           />
         );
       case 'dropdown':
@@ -67,16 +80,19 @@ const CustomFieldForm = () => {
               <p className='text-sm text-primary font-medium'>
                 Options for dropdown
               </p>
-              {dropdownOptions.map((option, index) => (
+              {customField.dropdownOptions?.map((option, index) => (
                 <div key={index} className='space-y-2'>
                   {index === 0 && (
                     <div className='flex-1'>
                       <ModalInputField
                         placeholder='Default option'
                         inputType='text'
-                        value={dropdownDefaultValue}
+                        value={customField.defaultValue}
                         onChange={(e) =>
-                          setDropdownDefaultValue(e.target.value)
+                          setCustomField({
+                            ...customField,
+                            defaultValue: e.target.value,
+                          })
                         }
                       />
                     </div>
@@ -89,9 +105,14 @@ const CustomFieldForm = () => {
                         value={option}
                         placeholder='Option'
                         onChange={(e) => {
-                          const newOptions = [...dropdownOptions];
+                          const newOptions = [
+                            ...(customField.dropdownOptions || []),
+                          ];
                           newOptions[index] = e.target.value;
-                          setDropdownOptions(newOptions);
+                          setCustomField({
+                            ...customField,
+                            dropdownOptions: newOptions,
+                          });
                         }}
                       />
                     </div>
@@ -116,6 +137,10 @@ const CustomFieldForm = () => {
         inputType='text'
         label='Custom Field Name'
         placeholder='Custom field name'
+        value={customField.fieldName}
+        onChange={(e) =>
+          setCustomField({ ...customField, fieldName: e.target.value })
+        }
       />
       <div className='flex flex-col space-y-1'>
         <label
@@ -128,10 +153,12 @@ const CustomFieldForm = () => {
           name='custom_field_type'
           id='custom_field_type'
           onChange={(e) => {
-            setFieldType(e.target.value);
-            setDefaultValue('');
-            setDropdownDefaultValue('');
-            setDropdownOptions(['']);
+            setCustomField({
+              ...customField,
+              fieldType: e.target.value,
+              defaultValue: e.target.value === 'boolean' ? 'true' : '',
+              dropdownOptions: [''],
+            });
           }}
           className='w-full p-2 text-sm text-heading outline-none border-[1px] border-border-primary rounded-lg'
         >

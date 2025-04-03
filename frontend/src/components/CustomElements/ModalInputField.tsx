@@ -3,6 +3,7 @@ interface IModalInputField {
   inputType: string;
   placeholder?: string;
   customStyle?: string;
+  isChecked?: boolean;
   value?: string;
   onChange?: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -14,6 +15,7 @@ const ModalInputField = ({
   inputType,
   placeholder,
   customStyle,
+  isChecked,
   value,
   onChange,
 }: IModalInputField) => {
@@ -29,6 +31,7 @@ const ModalInputField = ({
         type={inputType}
         placeholder={placeholder}
         value={value}
+        checked={isChecked}
         onChange={onChange}
         className={`w-full px-3 py-2 text-sm text-heading outline-none border-[1px] border-border-primary rounded-lg ${customStyle}`}
       />

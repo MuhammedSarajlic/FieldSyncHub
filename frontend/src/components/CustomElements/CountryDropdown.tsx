@@ -1,18 +1,19 @@
 import Select, { StylesConfig } from 'react-select';
 import countryList from 'country-list';
-import { useState } from 'react';
+// import { TAddCustomer } from '../../types/Customer';
+import { TAddProperty } from '../../types/Property';
 
 interface CountryOption {
   value: string;
   label: string;
 }
 
-const CountryDropdown = () => {
-  const [selectedCountry, setSelectedCountry] = useState<{
-    value: string;
-    label: string;
-  } | null>(null);
+interface ICountryDropdownProps {
+  property: TAddProperty;
+  setProperty: React.Dispatch<React.SetStateAction<TAddProperty>>;
+}
 
+const CountryDropdown = ({ property, setProperty }: ICountryDropdownProps) => {
   const options = countryList.getNames().map((country) => ({
     value: country,
     label: country,
@@ -68,10 +69,12 @@ const CountryDropdown = () => {
       <label className='block text-sm font-medium text-gray-700'>Country</label>
       <Select
         options={options}
-        value={selectedCountry}
-        onChange={(newValue) =>
-          setSelectedCountry(newValue as { value: string; label: string })
+        value={
+          options.find((option) => option.value === property.country) || null
         }
+        onChange={(newValue) => {
+          setProperty({ ...property, country: newValue?.value || '' });
+        }}
         placeholder='Choose a country'
         styles={customStyles}
         className='mt-1'
