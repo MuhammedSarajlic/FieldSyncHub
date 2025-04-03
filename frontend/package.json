@@ -12,6 +12,7 @@
   "dependencies": {
     "@fontsource/inter": "^5.1.1",
     "@tailwindcss/vite": "^4.0.6",
+    "axios": "^1.8.3",
     "country-list": "^2.3.0",
     "frontend": "file:",
     "react": "^19.0.0",
