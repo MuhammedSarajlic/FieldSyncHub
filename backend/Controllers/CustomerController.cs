@@ -36,7 +36,7 @@ public class CustomerController : ControllerBase
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateCustomer([FromQuery] Customers updatedCustomer)
+    public async Task<IActionResult> UpdateCustomer([FromBody] Customers updatedCustomer)
     {
         await _customerService.UpdateCustomer(updatedCustomer);
         return Ok();
