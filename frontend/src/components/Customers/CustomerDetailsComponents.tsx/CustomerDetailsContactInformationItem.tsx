@@ -1,19 +1,23 @@
 interface ICustomerDetailsContactInformationItem {
   icon: string;
-  informationValue: string;
+  informationValues: string[];
 }
 
 const CustomerDetailsContactInformationItem = ({
   icon,
-  informationValue,
+  informationValues,
 }: ICustomerDetailsContactInformationItem) => {
   return (
-    <div className='flex items-center space-x-3'>
-      <div className=''>
-        <img src={icon} alt='phone' className='w-5 h-5' />
-      </div>
+    <div className='flex items-start space-x-3'>
       <div>
-        <p className='text-heading font-medium text-sm'>{informationValue}</p>
+        <img src={icon} alt='icon' className='w-5 h-5' />
+      </div>
+      <div className='space-y-1.5'>
+        {informationValues.map((value, index) => (
+          <p key={index} className='text-heading font-medium text-sm'>
+            {value}
+          </p>
+        ))}
       </div>
     </div>
   );

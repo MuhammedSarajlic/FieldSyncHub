@@ -1,18 +1,10 @@
+import { TProperty } from '../../../../types/Property';
+
 interface ICustomerPropertyItem {
-  id: number;
-  street: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  isBillingAddress: boolean;
+  property: TProperty;
 }
 
-const CustomerPropertyItem = ({
-  property,
-}: {
-  property: ICustomerPropertyItem;
-}) => {
+const CustomerPropertyItem = ({ property }: ICustomerPropertyItem) => {
   return (
     <div className='p-2 bg-[#FAFAFA] rounded-lg'>
       <div className='flex items-center pb-2 space-x-3'>
