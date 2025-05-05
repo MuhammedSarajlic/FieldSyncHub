@@ -12,11 +12,12 @@ import CustomerRequests from '../../components/Customers/CustomerDetailsComponen
 import CustomerQuotes from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerQuoteTab/CustomerQuotes';
 import CustomerInvoices from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerInvoiceTab/CustomerInvoices';
 import CustomerProperties from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/CustomerProperties';
-import { useParams } from 'react-router';
-import { GetCustomerById } from '../../services/customer';
+import { useNavigate, useParams } from 'react-router';
+import { ArchiveCustomer, GetCustomerById } from '../../services/customer';
 import { TCustomer } from '../../types/Customer';
 
 const CustomerDetails = () => {
+  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState<string>('jobs');
   const [customer, setCustomer] = useState<TCustomer>();
   const { customerId } = useParams();
@@ -25,6 +26,14 @@ const CustomerDetails = () => {
     const response = await GetCustomerById(customerId as string);
     if (response.data.success) {
       setCustomer(response.data.payload);
+    }
+    console.log(response);
+  };
+
+  const archiveCustomer = async () => {
+    const response = await ArchiveCustomer(customerId as string);
+    if (response.status === 200) {
+      navigate('/customers');
     }
     console.log(response);
   };
@@ -40,7 +49,7 @@ const CustomerDetails = () => {
   return (
     <div className='flex'>
       <Sidebar />
-      <div className='flex-1 ml-[260px] h-[2000px]'>
+      <div className='flex-1 ml-[260px]'>
         <div>
           <Navbar customer={customer} />
         </div>
@@ -136,14 +145,22 @@ const CustomerDetails = () => {
               <ButtonIcon name='Edit' icon={icons.editIcon} />
               <ButtonIcon
                 name='Archive'
+                handleBtnClick={archiveCustomer}
                 icon={icons.archiveIcon}
                 customTextStyle='text-red-600'
               />
             </div>
             <CustomerInformation customer={customer} />
-            <CustomerTags />
+            <CustomerTags
+              tags={customer.tags}
+              customerId={customer.customerId}
+              fetchCustomer={fetchCustomer}
+            />
             <CustomerProperties properties={customer.properties} />
-            <CustomerNotes />
+            <CustomerNotes
+              notes={customer.notes}
+              customerId={customer.customerId}
+            />
           </div>
         </div>
       </div>

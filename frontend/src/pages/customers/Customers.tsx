@@ -10,10 +10,14 @@ import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/
 import { TAddCustomer, TCustomer } from '../../types/Customer';
 import { CreateCustomer, GetAllCustomers } from '../../services/customer';
 import { addCustomerInitialState } from '../../const/states';
+import ImportCustomersModal from '../../components/Customers/ImportCustomer/ImportCustomersModal';
 
 const Customers = () => {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] =
     useState<boolean>(false);
+  const [isImportCustomerModalOpen, setIsImportCustomerModalOpen] =
+    useState<boolean>(false);
+
   const [listOfCustomers, setListOfCustomers] = useState<TCustomer[] | []>([]);
   const [customer, setCustomer] = useState<TAddCustomer>(
     addCustomerInitialState
@@ -28,6 +32,15 @@ const Customers = () => {
       setCustomer(addCustomerInitialState);
       getAllWorkspaceCustomers();
     }
+  };
+
+  const handleImportCustomers = async (file: File) => {
+    console.log(file);
+
+    // TODO: Here you would parse the CSV file and upload customers.
+    // You can use a library like PapaParse if you want to parse it easily.
+    // Example: await ImportCustomersService(file);
+    setIsImportCustomerModalOpen(false);
   };
 
   const getAllWorkspaceCustomers = async () => {
@@ -63,7 +76,12 @@ const Customers = () => {
             <div className='pb-4 mb-4 flex items-center justify-between'>
               <p className='text-heading text-4xl font-extrabold'>Customers</p>
               <div className='flex items-center space-x-3'>
-                <ButtonIcon name='Import' icon={icons.importIcon} />
+                <ButtonIcon
+                  name='Import'
+                  icon={icons.importIcon}
+                  handleBtnClick={() => setIsImportCustomerModalOpen(true)}
+                />
+
                 <ButtonIcon name='Export' icon={icons.exportIcon} />
                 <div className='w-[1px] h-[38px] bg-border-primary'></div>
                 <CustomButton
@@ -119,6 +137,12 @@ const Customers = () => {
           handleCreateCustomer={handleCreateCustomer}
           setCustomer={setCustomer}
           customer={customer}
+        />
+      )}
+      {isImportCustomerModalOpen && (
+        <ImportCustomersModal
+          setIsImportCustomerModalOpen={setIsImportCustomerModalOpen}
+          handleImportCustomers={handleImportCustomers}
         />
       )}
     </>

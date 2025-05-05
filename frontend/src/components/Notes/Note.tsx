@@ -1,6 +1,22 @@
 import icons from '../../constants/icons';
+import { TNote } from '../../types/Note';
 
-const Note = () => {
+interface INote {
+  note: TNote;
+}
+
+const Note = ({ note }: INote) => {
+  // Convert the ISO string (UTC date) to a local date in the user's timezone
+  const formattedCreatedAt = new Date(note.createdAt).toLocaleString('en-US', {
+    month: 'short', // Apr
+    day: '2-digit', // 12
+    year: 'numeric', // 2025
+    hour: '2-digit', // 12
+    minute: '2-digit', // 32
+    second: '2-digit', // 25
+    hour12: true, // AM/PM format
+  });
+
   return (
     <div className='p-4 bg-white border-[1px] border-border-primary rounded-lg space-y-6'>
       <div className='flex items-center justify-between'>
@@ -11,7 +27,7 @@ const Note = () => {
               Muhammed Sarajlic
             </p>
             <p className='text-xs text-primary'>
-              Created: Feb 28, 2025 11:48PM
+              {`Created: ${formattedCreatedAt}`}
             </p>
           </div>
         </div>
@@ -20,22 +36,8 @@ const Note = () => {
         </div>
       </div>
       <div className='py-1'>
-        <p className='text-primary text-sm'>
-          Ovo je neki note za ovog klijenta kojeg smo dodali kao lead. Ovo je
-          klijent za kojeg radimo trenutno
-        </p>
+        <p className='text-primary text-sm'>{note.noteText}</p>
       </div>
-      {/* <div className='flex items-center space-x-3'>
-        <div className='bg-gray-200 p-2 rounded-md'>
-          <span className='text-gray-700'>PDF</span>
-        </div>
-        <div className='space-y-1'>
-          <p className='text-sm font-medium'>neki_file.pdf</p>
-          <div className='text-xs text-gray-500'>
-            <span>120KB</span>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 };
