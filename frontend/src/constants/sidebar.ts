@@ -31,4 +31,52 @@ export const sidebar = [
     slug: 'invoices',
     icon: icons.invoiceIcon,
   },
+  {
+    id: 13,
+    name: 'Requests',
+    slug: 'requests',
+    icon: icons.requestIcon,
+  },
+  {
+    id: 6,
+    name: 'Quotes',
+    slug: 'quotes',
+    icon: icons.quoteIcon,
+  },
+  {
+    id: 7,
+    name: 'Team',
+    slug: 'team',
+    icon: icons.teamIcon,
+  },
+  {
+    id: 8,
+    name: 'Pricebook',
+    slug: 'pricebook',
+    icon: icons.pricebookIcon,
+  },
+  {
+    id: 9,
+    name: 'Reports',
+    slug: 'reports',
+    icon: icons.reportIcon,
+  },
+  {
+    id: 10,
+    name: 'Marketing',
+    slug: 'marketing',
+    icon: icons.marketingIcon,
+  },
+  {
+    id: 11,
+    name: 'Settings',
+    slug: 'settings',
+    icon: icons.settingsIcon,
+  },
+  {
+    id: 12,
+    name: 'Help & Support',
+    slug: 'help',
+    icon: icons.helpIcon,
+  },
 ];

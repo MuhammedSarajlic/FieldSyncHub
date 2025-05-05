@@ -12,3 +12,11 @@ export const addCustomerInitialState = {
   customerPhones: [],
   customFields: [],
 };
+
+export const initialNoteState = {
+  createdBy: '',
+  createdAt: '',
+  noteText: '',
+  pathFile: '',
+  customerId: '',
+};

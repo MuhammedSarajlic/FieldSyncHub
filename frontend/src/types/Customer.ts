@@ -1,5 +1,6 @@
 import { TAddCustomerPhone, TCustomerPhone } from './CustomerPhone';
 import { TAddCustomField } from './CustomField';
+import { TNote } from './Note';
 import { TAddProperty, TProperty } from './Property';
 
 export type TCustomer = {
@@ -14,10 +15,11 @@ export type TCustomer = {
   quoteFollowUps: boolean;
   invoiceFollowUps: boolean;
   archived: boolean;
-  tags: string;
+  tags: string[];
   properties: TProperty[];
   customerPhones: TCustomerPhone[];
   customFields: TAddCustomField[];
+  notes: TNote[];
 };
 
 export type TAddCustomer = {

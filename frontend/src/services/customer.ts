@@ -15,3 +15,36 @@ export async function GetCustomerById(id: string) {
   const response = await api.get(`/customer/${id}`);
   return response;
 }
+
+export async function AddCustomerTag(id: string, tag: string) {
+  const response = await api.patch(
+    `/customer/${id}/tags`,
+    JSON.stringify(tag),
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    }
+  );
+  return response;
+}
+
+export async function RemoveCustomerTag(id: string, tag: string) {
+  const response = await api.patch(
+    `/customer/${id}/tags/remove`,
+    JSON.stringify(tag),
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    }
+  );
+  return response;
+}
+
+export async function ArchiveCustomer(id: string) {
+  const response = await api.patch(`/customer/${id}/archive`);
+  return response;
+}
