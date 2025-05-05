@@ -36,6 +36,15 @@ import tagIcon from '../assets/icons/tag.png';
 import noteIcon from '../assets/icons/note.png';
 import pinIcon from '../assets/icons/pin.png';
 import trashIcon from '../assets/icons/trash.png';
+import uploadIcon from '../assets/icons/upload.png';
+import csvFileIcon from '../assets/icons/csv-file.png';
+import exclamationIcon from '../assets/icons/exclamation.png';
+import teamIcon from '../assets/icons/group (4).png';
+import reportIcon from '../assets/icons/report.png';
+import marketingIcon from '../assets/icons/marketing.png';
+import pricebookIcon from '../assets/icons/pricebook.png';
+import requestIcon from '../assets/icons/request.png';
+import quoteIcon from '../assets/icons/quote.png';
 
 export default {
   mailIcon,
@@ -76,4 +85,13 @@ export default {
   noteIcon,
   pinIcon,
   trashIcon,
+  uploadIcon,
+  csvFileIcon,
+  exclamationIcon,
+  teamIcon,
+  reportIcon,
+  marketingIcon,
+  pricebookIcon,
+  requestIcon,
+  quoteIcon,
 };
