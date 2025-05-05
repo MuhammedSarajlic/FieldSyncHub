@@ -29,12 +29,19 @@ public class NoteController : ControllerBase
         return await _notesService.GetNoteById(id);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> AddNote([FromBody] AddNotesDto newNote, Guid customerID)
+    [HttpGet("{customerId}/customer")]
+    public async Task<ApiResponse<List<Notes>>> GetNoteByCustomerId(Guid customerId)
     {
-        await _notesService.AddNote(newNote, customerID);
+        return await _notesService.GetNoteByCustomerId(customerId);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AddNote([FromBody] AddNotesDto newNote)
+    {
+        await _notesService.AddNote(newNote);
         return Ok();
     }
+
 
     [HttpPut]
     public async Task<IActionResult> UpdateNote([FromQuery] Notes updatedNote)

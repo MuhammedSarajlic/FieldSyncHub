@@ -68,9 +68,11 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResponse<List<Customers>>> GetCustomers()
     {
-        var customers = await _context.Customers.Include(c => c.CustomFields)
+        var customers = await _context.Customers.Where(c => c.Archived != true)
+                                                .Include(c => c.CustomFields)
                                                 .Include(c => c.Properties)
                                                 .Include(c => c.CustomerPhones)
+                                                .Include(c => c.Notes)
                                                 .ToListAsync();
         return new ApiResponse<List<Customers>>()
         {
@@ -85,6 +87,7 @@ public class CustomerService : ICustomerService
         var customer = await _context.Customers.Include(c => c.CustomFields)
                                                .Include(c => c.Properties)
                                                .Include(c => c.CustomerPhones)
+                                               .Include(c => c.Notes)
                                                .FirstOrDefaultAsync(c => c.CustomerId == id);
         return new ApiResponse<Customers>()
         {
@@ -97,6 +100,49 @@ public class CustomerService : ICustomerService
     public async Task UpdateCustomer(Customers updatedCustomer)
     {
         _context.Update(updatedCustomer);
+        await _context.SaveChangesAsync();
+    }
+    
+
+    public async Task UpdateCustomerTags(Guid customerId, string tag)
+    {
+        var customer = await _context.Customers.FindAsync(customerId);
+
+        if (customer == null)
+            throw new Exception("Customer not found");
+
+        if (customer.Tags == null)
+            customer.Tags = new List<string>();
+
+        if (!customer.Tags.Contains(tag))
+            customer.Tags.Add(tag);
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveCustomerTag(Guid customerId, string tag)
+    {
+        var customer = await _context.Customers.FindAsync(customerId);
+
+        if (customer == null)
+            throw new Exception("Customer not found");
+
+        if (customer.Tags != null && customer.Tags.Contains(tag))
+        {
+            customer.Tags.Remove(tag);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task ArchiveCustomer(Guid customerId)
+    {
+        var customer = await _context.Customers.FindAsync(customerId);
+
+        if (customer == null)
+            throw new Exception("Customer not found");
+
+        customer.Archived = true;
+
         await _context.SaveChangesAsync();
     }
 }

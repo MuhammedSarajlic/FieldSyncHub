@@ -9,5 +9,8 @@ public interface ICustomerService
     Task<ApiResponse<Customers>> GetCustomersById(Guid id);
     Task AddCustomer(Customers newCustomer);
     Task UpdateCustomer(Customers updatedCustomer);
+    Task UpdateCustomerTags(Guid customerId, string tag);
+    Task RemoveCustomerTag(Guid customerId, string tag);
+    Task ArchiveCustomer(Guid customerId);
     Task DeleteCustomer(Guid id);
 }

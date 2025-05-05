@@ -42,6 +42,27 @@ public class CustomerController : ControllerBase
         return Ok();
     }
 
+    [HttpPatch("{customerId}/tags")]
+    public async Task<IActionResult> UpdateCustomerTags(Guid customerId, [FromBody] string tag)
+    {
+        await _customerService.UpdateCustomerTags(customerId, tag);
+        return Ok();
+    }
+
+    [HttpPatch("{customerId}/tags/remove")]
+    public async Task<IActionResult> RemoveCustomerTag(Guid customerId, [FromBody] string tag)
+    {
+        await _customerService.RemoveCustomerTag(customerId, tag);
+        return Ok();
+    }
+
+    [HttpPatch("{customerId}/archive")]
+    public async Task<IActionResult> ArchiveCustomer(Guid customerId)
+    {
+        await _customerService.ArchiveCustomer(customerId);
+        return Ok();
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteCustomer(Guid id)
     {

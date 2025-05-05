@@ -8,7 +8,8 @@ public interface INotesService
 {
     Task<ApiResponse<List<Notes>>> GetNotes();
     Task<ApiResponse<Notes>> GetNoteById(Guid id);
-    Task AddNote(AddNotesDto newNote, Guid customerId);
+    Task<ApiResponse<List<Notes>>> GetNoteByCustomerId(Guid customerId);
+    Task AddNote(AddNotesDto newNote);
     Task UpdateNote(Notes updatedNote);
     Task DeleteNote(Guid id);
 }
