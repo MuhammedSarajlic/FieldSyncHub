@@ -4,9 +4,10 @@ import Signup from './pages/auth/Signup';
 import Home from './pages/Home';
 import Calendar from './pages/Calendar';
 import Customers from './pages/customers/Customers';
-import Jobs from './pages/Jobs';
+import Jobs from './pages/jobs/Jobs';
 import Invoices from './pages/Invoices';
 import CustomerDetails from './pages/customers/CustomerDetails';
+import JobDetails from './pages/jobs/JobsDetails';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <Route path='customers' element={<Customers />} />
       <Route path='customers/:customerId' element={<CustomerDetails />} />
       <Route path='jobs' element={<Jobs />} />
+      <Route path='jobsd' element={<JobDetails />} />
       <Route path='invoices' element={<Invoices />} />
     </Routes>
   );
