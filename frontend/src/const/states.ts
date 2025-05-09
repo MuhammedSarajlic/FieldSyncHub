@@ -20,3 +20,17 @@ export const initialNoteState = {
   pathFile: '',
   customerId: '',
 };
+
+export const addServiceItemInitialState = {
+  name: '',
+  description: '',
+  type: 'service',
+  category: '',
+  sku: '',
+  unitPrice: 0,
+  cost: 0,
+  taxRate: 0,
+  isTaxable: true,
+  isActive: true,
+  imageUrl: '',
+};
