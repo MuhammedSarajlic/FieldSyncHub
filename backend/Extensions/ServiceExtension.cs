@@ -5,6 +5,7 @@ using backend.Services.CustomFieldValueService;
 using backend.Services.NotesService;
 using backend.Services.Phones;
 using backend.Services.PropertyService;
+using backend.Services.ServiceItemService;
 using backend.Services.UserService;
 using backend.Services.WorkspaceService;
 
@@ -23,5 +24,6 @@ public static class ServiceExtension
         services.AddScoped<ICustomerPhoneService, CustomerPhoneService>();
         services.AddScoped<INotesService, NotesService>();
         services.AddScoped<IPropertyService, PropertyService>();
+        services.AddScoped<IServiceItemService, ServiceItemService>();
     }
 }
