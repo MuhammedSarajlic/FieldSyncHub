@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import JobsTable from '../../components/Jobs/JobsTable/JobsTable';
 import CustomButton from '../../components/CustomElements/CustomButton';
 import ButtonIcon from '../../components/CustomElements/ButtonIcon';
+import Search from '../../components/CustomElements/Search';
+import icons from '../../constants/icons';
+import JobFilterModal from '../../components/Jobs/JobsFilter/JobFilterModal';
+import NewJobModal from '../../components/Jobs/JobsModal/NewJobModal';
+import JobsSortModal from '../../components/Jobs/JobsModal/JobsSortModal';
 
 const Jobs = () => {
   // Sample data - replace with your actual data source
@@ -95,6 +100,14 @@ const Jobs = () => {
     return matchesStatus && matchesSearch;
   });
 
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    status: '',
+    priority: '',
+    dateFrom: '',
+    dateTo: '',
+  });
+
   return (
     <div className='flex'>
       <Sidebar />
@@ -120,7 +133,7 @@ const Jobs = () => {
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
             <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-full bg-blue-100 text-blue-600 mr-4'>
+                <div className='p-3 rounded-full bg-bg-primary/10 text-bg-primary mr-4'>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     className='h-6 w-6'
@@ -147,7 +160,7 @@ const Jobs = () => {
 
             <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-full bg-green-100 text-green-600 mr-4'>
+                <div className='p-3 rounded-full bg-bg-primary/10 text-bg-primary mr-4'>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     className='h-6 w-6'
@@ -172,7 +185,7 @@ const Jobs = () => {
 
             <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4'>
+                <div className='p-3 rounded-full bg-bg-primary/10 text-bg-primary mr-4'>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     className='h-6 w-6'
@@ -197,7 +210,7 @@ const Jobs = () => {
 
             <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-full bg-purple-100 text-purple-600 mr-4'>
+                <div className='p-3 rounded-full bg-bg-primary/10 text-bg-primary mr-4'>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     className='h-6 w-6'
@@ -224,84 +237,23 @@ const Jobs = () => {
           </div>
 
           {/* Filters and search */}
-          <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4'>
-            <div className='flex flex-wrap items-center space-x-2'>
-              <span className='text-sm font-medium text-gray-700'>
-                Filter by:
-              </span>
-              <div className='inline-flex rounded-md shadow-sm' role='group'>
-                <button
-                  type='button'
-                  className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
-                    filterStatus === 'All'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setFilterStatus('All')}
-                >
-                  All
-                </button>
-                <button
-                  type='button'
-                  className={`px-4 py-2 text-sm font-medium ${
-                    filterStatus === 'Scheduled'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setFilterStatus('Scheduled')}
-                >
-                  Scheduled
-                </button>
-                <button
-                  type='button'
-                  className={`px-4 py-2 text-sm font-medium ${
-                    filterStatus === 'In Progress'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setFilterStatus('In Progress')}
-                >
-                  In Progress
-                </button>
-                <button
-                  type='button'
-                  className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
-                    filterStatus === 'Completed'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setFilterStatus('Completed')}
-                >
-                  Completed
-                </button>
-              </div>
-            </div>
-
-            <div className='relative w-full md:w-64'>
-              <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                <svg
-                  className='w-4 h-4 text-gray-500'
-                  aria-hidden='true'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 20 20'
-                >
-                  <path
-                    stroke='currentColor'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z'
-                  />
-                </svg>
-              </div>
-              <input
-                type='search'
-                className='block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500'
-                placeholder='Search jobs...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+          <div className='flex items-center justify-between mb-4'>
+            <Search inputPlaceholder='Search jobs...' />
+            <div className='relative flex items-center space-x-3'>
+              {/* <ButtonIcon name='Sort' icon={icons.sortIcon} /> */}
+              {<JobsSortModal />}
+              <ButtonIcon
+                name='Filter'
+                icon={icons.filterIcon}
+                handleBtnClick={() => setIsFilterModalOpen(true)}
               />
+              {isFilterModalOpen && (
+                <JobFilterModal
+                  filters={filters}
+                  setFilters={setFilters}
+                  onClose={() => setIsFilterModalOpen(false)}
+                />
+              )}
             </div>
           </div>
 
@@ -310,6 +262,7 @@ const Jobs = () => {
           </div>
         </div>
       </div>
+      <NewJobModal />
     </div>
   );
 };
