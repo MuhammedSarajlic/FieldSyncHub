@@ -120,7 +120,7 @@ const Customers = () => {
                 <p className='text-sm text-[#838488]'>(2 results)</p>
               </div>
               <div className='flex items-center justify-between'>
-                <Search />
+                <Search inputPlaceholder='Search customers...' />
                 <div className='flex items-center space-x-3'>
                   <ButtonIcon name='Sort' icon={icons.sortIcon} />
                   <ButtonIcon name='Filter' icon={icons.filterIcon} />
