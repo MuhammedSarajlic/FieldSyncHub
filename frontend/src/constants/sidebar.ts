@@ -44,9 +44,15 @@ export const sidebar = [
     icon: icons.quoteIcon,
   },
   {
+    id: 14,
+    name: 'Dispatch',
+    slug: 'dispatch',
+    icon: icons.dispatchIcon,
+  },
+  {
     id: 7,
-    name: 'Team',
-    slug: 'team',
+    name: 'Employees',
+    slug: 'employees',
     icon: icons.teamIcon,
   },
   {

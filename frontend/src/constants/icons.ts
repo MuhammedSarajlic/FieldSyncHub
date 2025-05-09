@@ -45,6 +45,8 @@ import marketingIcon from '../assets/icons/marketing.png';
 import pricebookIcon from '../assets/icons/pricebook.png';
 import requestIcon from '../assets/icons/request.png';
 import quoteIcon from '../assets/icons/quote.png';
+import dispatchIcon from '../assets/icons/dispatch.png';
+import addIcon from '../assets/icons/add.png';
 
 export default {
   mailIcon,
@@ -94,4 +96,6 @@ export default {
   pricebookIcon,
   requestIcon,
   quoteIcon,
+  dispatchIcon,
+  addIcon,
 };
