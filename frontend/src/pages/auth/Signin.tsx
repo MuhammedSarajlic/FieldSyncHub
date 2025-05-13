@@ -2,16 +2,28 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import icons from '../../constants/icons';
 import images from '../../constants/images';
+import { Login } from '../../services/Auth';
 
 const Signin = () => {
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
+  const [userLoginData, setUserLoginData] = useState({
+    email: '',
+    password: '',
+  });
 
   const showPassword = () => {
     setIsPasswordHidden(!isPasswordHidden);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log(userLoginData);
+    console.log('Sta ej ba ovo');
+
+    const response = await Login(userLoginData);
+    if (response.status === 200) {
+      console.log(response);
+    }
   };
 
   return (
@@ -36,7 +48,12 @@ const Signin = () => {
             <div className='flex items-center space-x-3 border-[1px] border-[#ced4da] rounded-lg py-2 px-3'>
               <img src={icons.mailIcon} alt='mail' className='w-5' />
               <input
+                required
                 type='email'
+                value={userLoginData.email}
+                onChange={(e) =>
+                  setUserLoginData({ ...userLoginData, email: e.target.value })
+                }
                 placeholder='Email'
                 className='w-full outline-none text-[#212529]'
               />
@@ -44,17 +61,25 @@ const Signin = () => {
             <div className='flex items-center justify-between space-x-3 border-[1px] border-[#ced4da] rounded-lg py-2 px-3'>
               <img src={icons.passwordIcon} alt='mail' className='w-5' />
               <input
+                required
                 type={isPasswordHidden ? 'text' : 'password'}
                 placeholder='Password'
+                value={userLoginData.password}
+                onChange={(e) =>
+                  setUserLoginData({
+                    ...userLoginData,
+                    password: e.target.value,
+                  })
+                }
                 className='flex-1 outline-none'
               />
-              <button onClick={showPassword} className='cursor-pointer'>
+              <div onClick={showPassword} className='cursor-pointer'>
                 <img
                   src={isPasswordHidden ? icons.showIcon : icons.hideIcon}
                   alt='hide'
                   className='w-5 h-5'
                 />
-              </button>
+              </div>
             </div>
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-2'>

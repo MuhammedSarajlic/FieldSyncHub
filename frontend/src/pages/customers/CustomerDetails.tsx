@@ -13,7 +13,7 @@ import CustomerQuotes from '../../components/Customers/CustomerDetailsComponents
 import CustomerInvoices from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerInvoiceTab/CustomerInvoices';
 import CustomerProperties from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/CustomerProperties';
 import { useNavigate, useParams } from 'react-router';
-import { ArchiveCustomer, GetCustomerById } from '../../services/customer';
+import { ArchiveCustomer, GetCustomerById } from '../../services/Customer';
 import { TCustomer } from '../../types/Customer';
 
 const CustomerDetails = () => {

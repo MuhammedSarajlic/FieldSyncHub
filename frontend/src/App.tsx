@@ -16,12 +16,14 @@ import Pricebook from './pages/Pricebook';
 import Marketing from './pages/Marketing';
 import Settings from './pages/Settings';
 import QuoteDetails from './pages/quotes/QuoteDetails';
+import WorkspaceOnboarding from './pages/WorkspaceOnboarding';
 
 function App() {
   return (
     <Routes>
       <Route path='signin' element={<Signin />} />
       <Route path='signup' element={<Signup />} />
+      <Route path='workspace' element={<WorkspaceOnboarding />} />
       <Route path='home' element={<Home />} />
       <Route path='calendar' element={<Calendar />} />
       <Route path='customers' element={<Customers />} />

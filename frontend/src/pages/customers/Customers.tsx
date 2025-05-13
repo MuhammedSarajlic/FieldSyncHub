@@ -8,9 +8,9 @@ import Table from '../../components/Table/Table';
 import icons from '../../constants/icons';
 import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/CreateCustomerModal';
 import { TAddCustomer, TCustomer } from '../../types/Customer';
-import { CreateCustomer, GetAllCustomers } from '../../services/customer';
 import { addCustomerInitialState } from '../../const/states';
 import ImportCustomersModal from '../../components/Customers/ImportCustomer/ImportCustomersModal';
+import { CreateCustomer, GetAllCustomers } from '../../services/Customer';
 
 const Customers = () => {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] =

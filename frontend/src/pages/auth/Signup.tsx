@@ -2,16 +2,28 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import icons from '../../constants/icons';
 import images from '../../constants/images';
+import { Register } from '../../services/Auth';
 
 const Signup = () => {
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
+  const [userLoginData, setUserLoginData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+  });
 
   const showPassword = () => {
     setIsPasswordHidden(!isPasswordHidden);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log(userLoginData);
+    const response = await Register(userLoginData);
+    if (response.status === 200) {
+      console.log(response);
+    }
   };
   return (
     <div className='w-full h-screen flex'>
@@ -35,7 +47,15 @@ const Signup = () => {
               <div className='w-1/2 flex items-center space-x-3 border-[1px] border-[#ced4da] rounded-lg py-2 px-3'>
                 <img src={icons.idCardIcon} alt='mail' className='w-5' />
                 <input
+                  required
                   type='text'
+                  value={userLoginData.firstName}
+                  onChange={(e) =>
+                    setUserLoginData({
+                      ...userLoginData,
+                      firstName: e.target.value,
+                    })
+                  }
                   placeholder='First Name'
                   className='w-full outline-none text-[#212529]'
                 />
@@ -43,7 +63,15 @@ const Signup = () => {
               <div className='w-1/2 flex items-center space-x-3 border-[1px] border-[#ced4da] rounded-lg py-2 px-3'>
                 <img src={icons.idCardIcon} alt='mail' className='w-5' />
                 <input
+                  required
                   type='text'
+                  value={userLoginData.lastName}
+                  onChange={(e) =>
+                    setUserLoginData({
+                      ...userLoginData,
+                      lastName: e.target.value,
+                    })
+                  }
                   placeholder='Last Name'
                   className='w-full outline-none text-[#212529]'
                 />
@@ -52,7 +80,12 @@ const Signup = () => {
             <div className='flex items-center space-x-3 border-[1px] border-[#ced4da] rounded-lg py-2 px-3'>
               <img src={icons.mailIcon} alt='mail' className='w-5' />
               <input
+                required
                 type='email'
+                value={userLoginData.email}
+                onChange={(e) =>
+                  setUserLoginData({ ...userLoginData, email: e.target.value })
+                }
                 placeholder='Email'
                 className='w-full outline-none text-[#212529]'
               />
@@ -60,17 +93,25 @@ const Signup = () => {
             <div className='flex items-center justify-between space-x-3 border-[1px] border-[#ced4da] rounded-lg py-2 px-3'>
               <img src={icons.passwordIcon} alt='mail' className='w-5' />
               <input
+                required
                 type={isPasswordHidden ? 'text' : 'password'}
+                value={userLoginData.password}
+                onChange={(e) =>
+                  setUserLoginData({
+                    ...userLoginData,
+                    password: e.target.value,
+                  })
+                }
                 placeholder='Password'
                 className='flex-1 outline-none'
               />
-              <button onClick={showPassword} className='cursor-pointer'>
+              <div onClick={showPassword} className='cursor-pointer'>
                 <img
                   src={isPasswordHidden ? icons.showIcon : icons.hideIcon}
                   alt='hide'
                   className='w-5 h-5'
                 />
-              </button>
+              </div>
             </div>
             <button
               type='submit'
