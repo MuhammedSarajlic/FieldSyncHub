@@ -1,4 +1,4 @@
-const JobsTablePagination = ({ filteredJobs }) => {
+const JobsTablePagination = ({ listLength }: { listLength: number }) => {
   return (
     <div className='px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6'>
       <div className='flex-1 flex justify-between sm:hidden'>
@@ -13,8 +13,8 @@ const JobsTablePagination = ({ filteredJobs }) => {
         <div>
           <p className='text-sm text-gray-700'>
             Showing <span className='font-medium'>1</span> to{' '}
-            <span className='font-medium'>{filteredJobs.length}</span> of{' '}
-            <span className='font-medium'>{filteredJobs.length}</span> results
+            <span className='font-medium'>{listLength}</span> of{' '}
+            <span className='font-medium'>{listLength}</span> results
           </p>
         </div>
         <div>

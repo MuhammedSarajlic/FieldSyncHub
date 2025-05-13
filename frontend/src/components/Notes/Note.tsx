@@ -1,5 +1,6 @@
 import icons from '../../constants/icons';
 import { TNote } from '../../types/Note';
+import { DateTime } from 'luxon';
 
 interface INote {
   note: TNote;
@@ -7,15 +8,8 @@ interface INote {
 
 const Note = ({ note }: INote) => {
   // Convert the ISO string (UTC date) to a local date in the user's timezone
-  const formattedCreatedAt = new Date(note.createdAt).toLocaleString('en-US', {
-    month: 'short', // Apr
-    day: '2-digit', // 12
-    year: 'numeric', // 2025
-    hour: '2-digit', // 12
-    minute: '2-digit', // 32
-    second: '2-digit', // 25
-    hour12: true, // AM/PM format
-  });
+  const formattedCreatedAt = new Date(note.createdAt).toLocaleString(); // Shows in user's timezone
+  const localDate = DateTime.fromISO(note.createdAt, { zone: 'utc' }).toLocal();
 
   return (
     <div className='p-4 bg-white border-[1px] border-border-primary rounded-lg space-y-6'>
@@ -27,7 +21,7 @@ const Note = ({ note }: INote) => {
               Muhammed Sarajlic
             </p>
             <p className='text-xs text-primary'>
-              {`Created: ${formattedCreatedAt}`}
+              {`Created: ${localDate.toFormat('yyyy-MM-dd HH:mm')}`}
             </p>
           </div>
         </div>

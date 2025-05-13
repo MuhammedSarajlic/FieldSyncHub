@@ -1,8 +1,13 @@
+import { TJob } from '../../../types/Job';
 import JobsTableBody from './JobsTableBody';
 import JobsTableHeader from './JobsTableHeader';
 import JobsTablePagination from './JobsTablePagination';
 
-const JobsTable = ({ filteredJobs }) => {
+interface IJobsTable {
+  jobs: TJob[];
+}
+
+const JobsTable = ({ jobs }: IJobsTable) => {
   return (
     <div
       className={`w-full overflow-hidden bg-white rounded-lg shadow-sm border-[1px] border-border-primary`}
@@ -10,11 +15,11 @@ const JobsTable = ({ filteredJobs }) => {
       <div className='overflow-x-auto'>
         <table className='min-w-full divide-y divide-gray-200'>
           <JobsTableHeader />
-          <JobsTableBody filteredJobs={filteredJobs} />
+          <JobsTableBody jobs={jobs} />
         </table>
       </div>
 
-      <JobsTablePagination filteredJobs={filteredJobs} />
+      <JobsTablePagination listLength={jobs.length} />
     </div>
   );
 };

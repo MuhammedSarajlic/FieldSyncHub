@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import icons from '../../../constants/icons';
-import { AddCustomerTag, RemoveCustomerTag } from '../../../services/customer';
+import { AddCustomerTag, RemoveCustomerTag } from '../../../services/Customer';
 import CustomButton from '../../CustomElements/CustomButton';
 import CustomSmallButton from '../../CustomElements/CustomSmallButton';
 
