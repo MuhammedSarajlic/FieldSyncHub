@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.Models;
 
@@ -15,4 +14,12 @@ public class User
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public Workspace? Workspace { get; set; }
+    public UserRole? Role { get; set; }
+}
+
+public enum UserRole
+{
+    Owner,
+    Admin,
+    Employee
 }
