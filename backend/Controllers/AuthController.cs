@@ -31,9 +31,9 @@ namespace backend.Controllers
 
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login(User user)
+        public async Task<IActionResult> Login(UserLoginDto userLogin)
         {
-            var userDB = await _authService.Login(user);
+            var userDB = await _authService.Login(userLogin);
             if (userDB.Success == false)
             {
                 return BadRequest(new { message = userDB.ErrorMessage });
@@ -52,9 +52,9 @@ namespace backend.Controllers
 
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Register(User user)
+        public async Task<IActionResult> Register(UserLoginDto userLogin)
         {
-            var userDB = await _authService.Register(user);
+            var userDB = await _authService.Register(userLogin);
 
             if (userDB.Success == false)
             {

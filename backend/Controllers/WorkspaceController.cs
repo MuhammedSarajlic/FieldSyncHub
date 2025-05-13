@@ -29,14 +29,14 @@ public class WorkspaceController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddWorkspace([FromQuery] Workspace newWorkspace)
+    public async Task<IActionResult> AddWorkspace([FromBody] Workspace newWorkspace)
     {
         await _workspaceService.AddWorkspace(newWorkspace);
         return Ok();
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateWorkspace([FromQuery] Workspace updatedWorkspace)
+    public async Task<IActionResult> UpdateWorkspace([FromBody] Workspace updatedWorkspace)
     {
         await _workspaceService.UpdateWorkspace(updatedWorkspace);
         return Ok();

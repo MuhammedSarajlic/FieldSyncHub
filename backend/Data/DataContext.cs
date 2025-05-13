@@ -17,5 +17,8 @@ namespace backend.Data
         public DbSet<CustomerPhone> CustomerPhones => Set<CustomerPhone>();
         public DbSet<Property> Properties => Set<Property>();
         public DbSet<ServiceItem> ServiceItems => Set<ServiceItem>();
+        public DbSet<Job> Jobs => Set<Job>();
+        public DbSet<LineItem> LineItems => Set<LineItem>();
+        public DbSet<StatusChange> StatusChanges => Set<StatusChange>();
     }
 }
