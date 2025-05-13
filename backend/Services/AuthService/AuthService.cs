@@ -42,11 +42,11 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<ApiResponse<UserDto>> Login(User user)
+    public async Task<ApiResponse<UserDto>> Login(UserLoginDto userLogin)
     {
-        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userLogin.Email);
 
-        if (dbUser == null || !VerifyPassword(user.PasswordHash, dbUser.PasswordHash))
+        if (dbUser == null || !VerifyPassword(userLogin.Password, dbUser.PasswordHash))
         {
             return new ApiResponse<UserDto>()
             {
@@ -62,6 +62,8 @@ public class AuthService : IAuthService
             FirstName = dbUser.FirstName,
             LastName = dbUser.LastName,
             Email = dbUser.Email,
+            CreatedAt = dbUser.CreatedAt,
+            UpdatedAt = dbUser.UpdatedAt
         };
 
         return new ApiResponse<UserDto>()
@@ -77,10 +79,10 @@ public class AuthService : IAuthService
         throw new NotImplementedException();
     }
 
-    public async Task<ApiResponse<UserDto>> Register(User user)
+    public async Task<ApiResponse<UserDto>> Register(UserLoginDto userLogin)
     {
 
-        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userLogin.Email);
         if (dbUser != null)
         {
             return new ApiResponse<UserDto>()
@@ -91,12 +93,23 @@ public class AuthService : IAuthService
             };
         }
 
-        if (!string.IsNullOrEmpty(user.PasswordHash))
+        if (!string.IsNullOrEmpty(userLogin.Password))
         {
-            user.PasswordHash = HashPassword(user.PasswordHash);
+            userLogin.Password = HashPassword(userLogin.Password);
         }
 
-        user.Id = Guid.NewGuid();
+        User user = new(){
+            Id = Guid.NewGuid(),
+            FirstName = userLogin.FirstName,
+            LastName = userLogin.LastName,
+            PasswordHash = userLogin.Password,
+            Email = userLogin.Email,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+
+        // userLogin.Id = Guid.NewGuid();
 
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();

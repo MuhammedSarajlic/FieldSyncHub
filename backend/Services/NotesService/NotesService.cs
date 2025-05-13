@@ -41,8 +41,6 @@ public class NotesService : INotesService
         await _context.SaveChangesAsync();
     }
 
-
-
     public async Task DeleteNote(Guid id)
     {
         var workspace = await _context.Notes.FirstOrDefaultAsync(n => n.Id == id);

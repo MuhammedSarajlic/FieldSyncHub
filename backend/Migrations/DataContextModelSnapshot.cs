@@ -151,6 +151,164 @@ namespace backend.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("backend.Models.Job", b =>
+                {
+                    b.Property<Guid>("JobId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("ArrivalWindowEnd")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("ArrivalWindowStart")
+                        .HasColumnType("datetime(6)");
+
+                    b.PrimitiveCollection<string>("AssignedTeamMemberIds")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("ConfirmationSent")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("CustomerNotes")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("DepositAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int?>("Duration")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EstimatedDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InternalNotes")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("InvoiceSent")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("JobType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("PropertyId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("ReminderDaysBefore")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ReminderSent")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Repeats")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("SendInvoice")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("SendReminder")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.PrimitiveCollection<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("TimeZone")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("JobId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("Jobs");
+                });
+
+            modelBuilder.Entity("backend.Models.LineItem", b =>
+                {
+                    b.Property<Guid>("LineItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("ServiceItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal?>("TotalPrice")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("LineItemId");
+
+                    b.HasIndex("JobId");
+
+                    b.HasIndex("ServiceItemId");
+
+                    b.ToTable("LineItems");
+                });
+
             modelBuilder.Entity("backend.Models.Notes", b =>
                 {
                     b.Property<Guid>("Id")
@@ -169,6 +327,9 @@ namespace backend.Migrations
                     b.Property<Guid?>("CustomersCustomerId")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid?>("JobId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("NoteText")
                         .HasColumnType("longtext");
 
@@ -178,6 +339,8 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomersCustomerId");
+
+                    b.HasIndex("JobId");
 
                     b.ToTable("Notes");
                 });
@@ -271,6 +434,40 @@ namespace backend.Migrations
                     b.ToTable("ServiceItems");
                 });
 
+            modelBuilder.Entity("backend.Models.StatusChange", b =>
+                {
+                    b.Property<Guid>("StatusChangeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ChangedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FromStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("StatusChangeId");
+
+                    b.HasIndex("JobId");
+
+                    b.ToTable("StatusChanges");
+                });
+
             modelBuilder.Entity("backend.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -295,6 +492,9 @@ namespace backend.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("Role")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -314,10 +514,23 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("LogoUrl")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Theme")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -346,11 +559,49 @@ namespace backend.Migrations
                         .HasForeignKey("CustomersCustomerId");
                 });
 
+            modelBuilder.Entity("backend.Models.Job", b =>
+                {
+                    b.HasOne("backend.Models.Customers", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Property");
+                });
+
+            modelBuilder.Entity("backend.Models.LineItem", b =>
+                {
+                    b.HasOne("backend.Models.Job", null)
+                        .WithMany("LineItems")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.ServiceItem", "ServiceItem")
+                        .WithMany()
+                        .HasForeignKey("ServiceItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ServiceItem");
+                });
+
             modelBuilder.Entity("backend.Models.Notes", b =>
                 {
                     b.HasOne("backend.Models.Customers", null)
                         .WithMany("Notes")
                         .HasForeignKey("CustomersCustomerId");
+
+                    b.HasOne("backend.Models.Job", null)
+                        .WithMany("TeamNotes")
+                        .HasForeignKey("JobId");
                 });
 
             modelBuilder.Entity("backend.Models.Property", b =>
@@ -360,10 +611,19 @@ namespace backend.Migrations
                         .HasForeignKey("CustomersCustomerId");
                 });
 
+            modelBuilder.Entity("backend.Models.StatusChange", b =>
+                {
+                    b.HasOne("backend.Models.Job", null)
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("backend.Models.User", b =>
                 {
                     b.HasOne("backend.Models.Workspace", "Workspace")
-                        .WithMany()
+                        .WithMany("Users")
                         .HasForeignKey("WorkspaceId");
 
                     b.Navigation("Workspace");
@@ -383,6 +643,20 @@ namespace backend.Migrations
                     b.Navigation("Notes");
 
                     b.Navigation("Properties");
+                });
+
+            modelBuilder.Entity("backend.Models.Job", b =>
+                {
+                    b.Navigation("LineItems");
+
+                    b.Navigation("StatusHistory");
+
+                    b.Navigation("TeamNotes");
+                });
+
+            modelBuilder.Entity("backend.Models.Workspace", b =>
+                {
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }
