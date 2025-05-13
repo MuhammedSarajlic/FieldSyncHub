@@ -1,3 +1,22 @@
+export const customerInitialState = {
+  customerId: '',
+  firstName: '',
+  lastName: '',
+  companyName: '',
+  isCompany: false,
+  email: [],
+  visitReminders: true,
+  jobFollowUps: true,
+  quoteFollowUps: true,
+  invoiceFollowUps: true,
+  archived: false,
+  tags: [],
+  properties: [],
+  customerPhones: [],
+  customFields: [],
+  notes: [],
+};
+
 export const addCustomerInitialState = {
   firstName: '',
   lastName: '',
@@ -11,6 +30,17 @@ export const addCustomerInitialState = {
   properties: [],
   customerPhones: [],
   customFields: [],
+};
+
+export const initialPropertyState = {
+  id: '',
+  street: '',
+  city: '',
+  state: '',
+  country: '',
+  postalCode: '',
+  isBillingAddress: true,
+  customerId: '',
 };
 
 export const initialNoteState = {

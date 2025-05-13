@@ -5,6 +5,7 @@ export type TServiceItem = {
   type: string;
   category: string;
   sku: string;
+  hours: number;
   unitPrice: number;
   cost: number;
   taxRate: number;
