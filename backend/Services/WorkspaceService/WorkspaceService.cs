@@ -12,19 +12,6 @@ public class WorkspaceService : IWorkspaceService
     {
         _context = context;
     }
-    public async Task AddWorkspace(Workspace newWorkspace)
-    {
-        newWorkspace.Id = Guid.NewGuid();
-        await _context.Workspaces.AddAsync(newWorkspace);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task DeleteWorkspace(Guid id)
-    {
-        var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == id);
-        _context.Remove(workspace);
-        await _context.SaveChangesAsync();
-    }
 
     public async Task<ApiResponse<Workspace>> GetWorkspaceById(Guid id)
     {
@@ -48,9 +35,30 @@ public class WorkspaceService : IWorkspaceService
         };
     }
 
+    public async Task AddWorkspace(Workspace newWorkspace)
+    {
+        newWorkspace.Id = Guid.NewGuid();
+        await _context.Workspaces.AddAsync(newWorkspace);
+
+        var userId = Guid.Parse(newWorkspace.CreatedBy);
+        var user = await _context.Users.FindAsync(userId);
+        if(user != null){
+            user.Workspace = newWorkspace;
+        }
+        await _context.SaveChangesAsync();
+    }
+    
     public async Task UpdateWorkspace(Workspace updatedWorkspace)
     {
         _context.Update(updatedWorkspace);
         await _context.SaveChangesAsync();
     }
+
+    public async Task DeleteWorkspace(Guid id)
+    {
+        var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == id);
+        _context.Remove(workspace);
+        await _context.SaveChangesAsync();
+    }
+
 }

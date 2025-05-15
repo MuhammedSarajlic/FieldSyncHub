@@ -16,5 +16,5 @@ export type TAddWorkspace = {
   logoUrl: string;
   theme: string;
   category: string;
-  users: TUser[];
+  users: string[];
 };

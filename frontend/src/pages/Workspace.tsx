@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CheckCircle,
   ChevronRight,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { TAddWorkspace } from '../types/Workspace';
 import { CreateWorkspace } from '../services/Workspace';
+import { useAuth } from '../context/AuthProvider';
 
 // Enum for steps in our onboarding process
 enum OnboardingStep {
@@ -23,21 +24,19 @@ enum OnboardingStep {
   COMPLETE = 5,
 }
 
-export default function WorkspaceOnboarding() {
+const Workspace = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(
     OnboardingStep.WELCOME
   );
-  //   const [workspace, setWorkspace] = useState<Workspace>({
-  //     name: '',
-  //     createdBy: 'current-user-id', // This would be dynamically set from your auth context
-  //   });
+  const { user } = useAuth();
+
   const [workspace, setWorkspace] = useState<TAddWorkspace>({
     name: '',
-    createdBy: 'user123',
+    createdBy: user?.id ?? '', // Initial attempt, might be empty initially
     logoUrl: '',
     theme: 'light',
     category: '',
-    users: [],
+    users: user?.id ? [user.id] : [], // Initial attempt
   });
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -139,6 +138,8 @@ export default function WorkspaceOnboarding() {
     //   category: selectedCategory === 'Other' ? otherCategory : selectedCategory,
     // });
     console.log(workspace);
+    if (!user) return;
+    setWorkspace({ ...workspace, createdBy: user.id, users: [user.id] });
     const response = await CreateWorkspace(workspace);
     if (response.status === 200) {
       console.log(response);
@@ -147,6 +148,21 @@ export default function WorkspaceOnboarding() {
     // Move to complete step
     setCurrentStep(OnboardingStep.COMPLETE);
   };
+
+  useEffect(() => {
+    // Once the user object is available, update the createdBy and users
+    if (user?.id) {
+      setWorkspace((prevWorkspace) => ({
+        ...prevWorkspace,
+        createdBy: user.id,
+        users: [user.id],
+      }));
+    }
+  }, [user]);
+
+  if (!user) {
+    return <p>Loading...</p>;
+  }
 
   // Progress indicators
   const renderProgressSteps = () => {
@@ -220,7 +236,11 @@ export default function WorkspaceOnboarding() {
               />
             </div>
             <button
-              onClick={() => setCurrentStep(OnboardingStep.WORKSPACE_DETAILS)}
+              onClick={() => {
+                setCurrentStep(OnboardingStep.WORKSPACE_DETAILS);
+                console.log(user);
+                console.log(workspace);
+              }}
               className={`${currentTheme.primary} ${currentTheme.hover} text-white px-8 py-3 rounded-lg font-medium shadow-md flex items-center mx-auto transition-all`}
             >
               Get Started <ChevronRight className='ml-2' size={18} />
@@ -602,4 +622,6 @@ export default function WorkspaceOnboarding() {
       </main>
     </div>
   );
-}
+};
+
+export default Workspace;

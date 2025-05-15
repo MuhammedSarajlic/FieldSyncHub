@@ -10,7 +10,7 @@ public class Workspace
     public string? LogoUrl { get; set; }
     public string Theme { get; set; } = "light";
     public string Category { get; set; } = string.Empty;
-    public ICollection<User> Users { get; set; } = new List<User>();
+    public List<string> Users { get; set; } = [];
     
     [NotMapped]
     public User? User { get; set; }

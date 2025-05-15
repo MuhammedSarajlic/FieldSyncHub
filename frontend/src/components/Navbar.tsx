@@ -2,18 +2,20 @@ import { useState } from 'react';
 import icons from '../constants/icons';
 import ActivityFeed from './ActivityFeed/ActivityFeed';
 import { TCustomer } from '../types/Customer';
+import { useAuth } from '../context/AuthProvider';
 
 interface INavbar {
   customer?: TCustomer;
 }
 
 const Navbar = ({ customer }: INavbar) => {
+  const { user } = useAuth();
   const [isActivityFeedOpen, setIsActivityFeedOpen] = useState<boolean>(false);
   return (
     <>
       <div className='mb-4 px-4 h-16 flex items-center justify-between'>
         <div className='text-[#6c757d] flex items-center space-x-3'>
-          <span>{`workspace name`}</span>
+          <span>{user?.workspace?.name}</span>
           {customer && (
             <>
               <div className='w-[1px] h-[24px] bg-border-primary'></div>
