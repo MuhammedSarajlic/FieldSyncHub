@@ -11,6 +11,7 @@ namespace backend.Services.UserService
     public interface IUserService
     {
         Task<ApiResponse<List<UserDto>>> GetAllUsers();
+        Task<ApiResponse<UserDto>> GetLoggedInUser(Guid userId);
         Task<ApiResponse<UserDto>> GetUserById(Guid userId);
         Task<ApiResponse<UserDto>> GetUserByEmail(string email);
         Task<ApiResponse<User>> UpdateUser(UpdateUserDto updatedUser);

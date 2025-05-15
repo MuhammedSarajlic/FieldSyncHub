@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using backend.Data;
 using backend.Dtos.UserDto;
 using backend.Models;
@@ -16,19 +17,34 @@ namespace backend.Services.UserService
             _context = context;
         }
 
-        public async Task DeleteUser(Guid userId)
-        {
-            var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            _context.Users.Remove(dbUser);
-            await _context.SaveChangesAsync();
-        }
-
         public async Task<ApiResponse<List<UserDto>>> GetAllUsers()
         {
-            var dbUsers = await _context.Users.ToListAsync();
+            var dbUsers = await _context.Users.Include(u => u.Workspace).ToListAsync();
             var userDto = dbUsers.Select(u => u.Adapt<UserDto>()).ToList();
 
             return new ApiResponse<List<UserDto>>()
+            {
+                Success = true,
+                Payload = userDto,
+                ErrorMessage = null
+            };
+        }
+
+        public async Task<ApiResponse<UserDto>> GetLoggedInUser(Guid userId)
+        {
+            var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null) {
+                return new ApiResponse<UserDto>()
+                {
+                    Success = false,
+                    ErrorMessage = "User Not Found",
+                    Payload = null
+                };
+            }
+
+            var userDto = user.Adapt<UserDto>();
+            return new ApiResponse<UserDto>()
             {
                 Success = true,
                 Payload = userDto,
@@ -108,6 +124,13 @@ namespace backend.Services.UserService
                 Payload = existingUser,
                 ErrorMessage = null
             };
+        }
+
+        public async Task DeleteUser(Guid userId)
+        {
+            var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            _context.Users.Remove(dbUser);
+            await _context.SaveChangesAsync();
         }
 
     }

@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using backend.Dtos.UserDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.UserService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
@@ -16,6 +18,25 @@ namespace backend.Controllers
         public async Task<ApiResponse<List<UserDto>>> GetAllUsers()
         {
             return await _userService.GetAllUsers();
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ApiResponse<UserDto>> GetLoggedInUser()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+            {
+                return new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Invalid or missing user ID in token.",
+                    Payload = null
+                };
+            }
+
+            return await _userService.GetLoggedInUser(userId);
         }
 
         [HttpGet]
