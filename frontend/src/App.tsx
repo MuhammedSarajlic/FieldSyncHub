@@ -16,29 +16,50 @@ import Pricebook from './pages/Pricebook';
 import Marketing from './pages/Marketing';
 import Settings from './pages/Settings';
 import QuoteDetails from './pages/quotes/QuoteDetails';
-import WorkspaceOnboarding from './pages/WorkspaceOnboarding';
+import Workspace from './pages/Workspace';
+import PrivateRoute from './utils/PrivateRoute';
+import PublicRoute from './utils/PublicRoute';
+import { useAuth } from './context/AuthProvider';
+import RequireWorkspace from './utils/RequireWorkspace';
 
 function App() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>; // or spinner
+  }
+
   return (
     <Routes>
-      <Route path='signin' element={<Signin />} />
-      <Route path='signup' element={<Signup />} />
-      <Route path='workspace' element={<WorkspaceOnboarding />} />
-      <Route path='home' element={<Home />} />
-      <Route path='calendar' element={<Calendar />} />
-      <Route path='customers' element={<Customers />} />
-      <Route path='customers/:customerId' element={<CustomerDetails />} />
-      <Route path='jobs' element={<Jobs />} />
-      <Route path='jobsd' element={<JobDetails />} />
-      <Route path='invoices' element={<Invoices />} />
-      <Route path='employees' element={<Employees />} />
-      <Route path='dispatch' element={<Dispatch />} />
-      <Route path='requests' element={<Requests />} />
-      <Route path='quotes' element={<Quotes />} />
-      <Route path='quotesd' element={<QuoteDetails />} />
-      <Route path='pricebook' element={<Pricebook />} />
-      <Route path='marketing' element={<Marketing />} />
-      <Route path='settings' element={<Settings />} />
+      <Route element={<PublicRoute />}>
+        <Route path='signin' element={<Signin />} />
+        <Route path='signup' element={<Signup />} />
+      </Route>
+
+      <Route element={<PrivateRoute />}>
+        <Route path='workspace' element={<Workspace />} />
+      </Route>
+
+      <Route element={<PrivateRoute />}>
+        <Route element={<RequireWorkspace />}>
+          <Route path='workspace' element={<Workspace />} />
+          <Route path='home' element={<Home />} />
+          <Route path='calendar' element={<Calendar />} />
+          <Route path='customers' element={<Customers />} />
+          <Route path='customers/:customerId' element={<CustomerDetails />} />
+          <Route path='jobs' element={<Jobs />} />
+          <Route path='jobsd' element={<JobDetails />} />
+          <Route path='invoices' element={<Invoices />} />
+          <Route path='employees' element={<Employees />} />
+          <Route path='dispatch' element={<Dispatch />} />
+          <Route path='requests' element={<Requests />} />
+          <Route path='quotes' element={<Quotes />} />
+          <Route path='quotesd' element={<QuoteDetails />} />
+          <Route path='pricebook' element={<Pricebook />} />
+          <Route path='marketing' element={<Marketing />} />
+          <Route path='settings' element={<Settings />} />
+        </Route>
+      </Route>
     </Routes>
   );
 }

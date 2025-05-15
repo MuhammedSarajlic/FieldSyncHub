@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
 import icons from '../../constants/icons';
 import images from '../../constants/images';
 import { Register } from '../../services/Auth';
+import { useAuth } from '../../context/AuthProvider';
 
 const Signup = () => {
+  const navigate = useNavigate();
+  const { setAccessToken, user, loading } = useAuth();
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
   const [userLoginData, setUserLoginData] = useState({
     firstName: '',
@@ -19,12 +22,20 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(userLoginData);
     const response = await Register(userLoginData);
     if (response.status === 200) {
-      console.log(response);
+      const token = response.data.accessToken;
+      localStorage.setItem('accessToken', token);
+      setAccessToken(token);
     }
   };
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/workspace');
+    }
+  }, [user, loading]);
+
   return (
     <div className='w-full h-screen flex'>
       <div className='w-1/2 bg-bg-primary'></div>

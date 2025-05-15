@@ -1,8 +1,10 @@
 import images from '../../constants/images';
 import { sidebar } from '../../constants/sidebar';
+import { useAuth } from '../../context/AuthProvider';
 import SidebarItem from './SidebarItem';
 
 const Sidebar = () => {
+  const { logout } = useAuth();
   return (
     <div className='fixed top-0 left-0 w-[260px] h-screen bg-[#FAFAFA] flex flex-col justify-between p-4 border-r-[2px] border-[#EFF0F2]'>
       <div className='space-y-4'>
@@ -20,7 +22,7 @@ const Sidebar = () => {
           </div>
         </div>
       </div>
-      <div>dole</div>
+      <div onClick={logout}>Logout</div>
     </div>
   );
 };

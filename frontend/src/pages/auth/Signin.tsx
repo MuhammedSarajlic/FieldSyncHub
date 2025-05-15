@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
 import icons from '../../constants/icons';
 import images from '../../constants/images';
 import { Login } from '../../services/Auth';
+import { useAuth } from '../../context/AuthProvider';
 
 const Signin = () => {
+  const navigate = useNavigate();
+  const { user, loading, setAccessToken } = useAuth();
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
   const [userLoginData, setUserLoginData] = useState({
     email: '',
@@ -17,14 +20,19 @@ const Signin = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(userLoginData);
-    console.log('Sta ej ba ovo');
-
     const response = await Login(userLoginData);
     if (response.status === 200) {
-      console.log(response);
+      const token = response.data.accessToken;
+      localStorage.setItem('accessToken', token);
+      setAccessToken(token);
     }
   };
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/home');
+    }
+  }, [user, loading]);
 
   return (
     <div className='w-full h-screen flex'>
