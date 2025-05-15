@@ -26,20 +26,33 @@ public class AuthService : IAuthService
     public async Task<ApiResponse<User>> GetUserByRefreshToken(string refreshToken)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var jwtToken = tokenHandler.ReadJwtToken(refreshToken);
-
-        var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
-        if (emailClaim == null) return null;
-
-        var email = emailClaim.Value;
-        var userEmail = await _userService.GetUserByEmail(email);
-        var user = userEmail.Payload.Adapt<User>();
-        return new ApiResponse<User>()
+        try
         {
-            Success = true,
-            ErrorMessage = "",
-            Payload = user,
-        };
+            var jwtToken = tokenHandler.ReadJwtToken(refreshToken);
+
+            var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
+            if (emailClaim == null) return new ApiResponse<User> { Success = false, ErrorMessage = "Invalid refresh token (email claim missing)." };
+
+            var email = emailClaim.Value;
+            var userEmailResult = await _userService.GetUserByEmail(email);
+
+            if (!userEmailResult.Success)
+            {
+                return new ApiResponse<User> { Success = false, ErrorMessage = "User not found for the provided email." };
+            }
+
+            var user = userEmailResult.Payload.Adapt<User>();
+            return new ApiResponse<User>()
+            {
+                Success = true,
+                ErrorMessage = "",
+                Payload = user,
+            };
+        }
+        catch (Exception)
+        {
+            return new ApiResponse<User> { Success = false, ErrorMessage = "Invalid refresh token." };
+        }
     }
 
     public async Task<ApiResponse<UserDto>> Login(UserLoginDto userLogin)
@@ -166,6 +179,18 @@ public class AuthService : IAuthService
             ErrorMessage = "",
             Payload = "Password changed"
         };
+    }
+
+    public async Task Logout(HttpContext httpContext)
+    {
+        httpContext.Response.Cookies.Delete("refreshToken", new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/",
+            Secure = false
+        });
+        await Task.CompletedTask;
     }
 
     public bool ValidateRefreshToken(string refreshToken)

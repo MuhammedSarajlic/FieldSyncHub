@@ -85,6 +85,14 @@ namespace backend.Controllers
         }
 
         [HttpPost]
+        [Route("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _authService.Logout(HttpContext);
+            return Ok(new {  message = "Logged out successfully" });
+        }
+
+        [HttpPost]
         [Route("refresh")]
         public async Task<IActionResult> RefreshToken()
         {
@@ -94,13 +102,13 @@ namespace backend.Controllers
                 return Unauthorized();
             }
 
-            var user = await _authService.GetUserByRefreshToken(refreshToken);
-            if (user == null)
+            var userResult = await _authService.GetUserByRefreshToken(refreshToken);
+            if (!userResult.Success || userResult.Payload == null)
             {
                 return Unauthorized();
             }
-            var userDto = user.Adapt<UserDto>();
-            (string accessToken, string newRefreshToken) tokens = GenerateTokens(userDto);
+            var userDto = userResult.Payload.Adapt<UserDto>();
+            (string accessToken, string newRefreshToken) tokens = GenerateTokens(userDto); // Line 111
 
             SetRefreshTokenCookie(tokens.newRefreshToken);
 
@@ -108,12 +116,10 @@ namespace backend.Controllers
         }
 
 
-        private (string accessToken, string refreshToken) GenerateTokens(UserDto user)
+        private (string accessToken, string refreshToken) GenerateTokens(UserDto user) // Line 121
         {
-            var accessToken = CreateToken(user, DateTime.UtcNow.AddMinutes(60));
-
+            var accessToken = CreateToken(user, DateTime.UtcNow.AddMinutes(60)); // Line 131 (where the error occurs)
             var refreshToken = CreateToken(user, DateTime.UtcNow.AddDays(30));
-
             return (accessToken, refreshToken);
         }
 
@@ -122,7 +128,10 @@ namespace backend.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Email)
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // this is standard
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("workspaceId", user.Workspace?.Id.ToString() ?? ""),
+                new Claim(ClaimTypes.Role, user.Role?.ToString() ?? "user")
             };
 
             string? tokenKey = _configuration.GetSection("AppSettings:Token")?.Value;
