@@ -4,11 +4,6 @@ import { useAuth } from '../context/AuthProvider';
 const RequireWorkspace = () => {
   const { user, loading } = useAuth();
 
-  console.log('[RequireWorkspace]', {
-    loading,
-    user,
-  });
-
   if (loading) return null;
 
   if (user && !user.workspace) {

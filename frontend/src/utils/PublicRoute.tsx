@@ -2,17 +2,12 @@ import React from 'react';
 import { useAuth } from '../context/AuthProvider';
 import { Navigate, Outlet } from 'react-router';
 
-interface PublicRouteProps {
+interface IPublicRoute {
   children?: React.ReactNode;
 }
 
-const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
+const PublicRoute = ({ children }: IPublicRoute) => {
   const { user, loading } = useAuth();
-
-  console.log('[Public]', {
-    loading,
-    user,
-  });
 
   if (loading) {
     return <div>Loading...</div>;

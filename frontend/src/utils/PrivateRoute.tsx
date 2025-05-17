@@ -10,16 +10,11 @@ const PrivateRoute = ({ children }: IPrivateRoute) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  console.log('[Private]', {
-    loading,
-    user,
-  });
-
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  if (!user) {
+  if (user === null) {
     return <Navigate to='/signin' state={{ from: location }} replace />;
   }
 

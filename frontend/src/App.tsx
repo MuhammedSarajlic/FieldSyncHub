@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router';
+import { Navigate, Route, Routes } from 'react-router';
 import Signin from './pages/auth/Signin';
 import Signup from './pages/auth/Signup';
 import Home from './pages/Home';
@@ -21,6 +21,7 @@ import PrivateRoute from './utils/PrivateRoute';
 import PublicRoute from './utils/PublicRoute';
 import { useAuth } from './context/AuthProvider';
 import RequireWorkspace from './utils/RequireWorkspace';
+import InviteJoin from './pages/InviteJoin';
 
 function App() {
   const { loading } = useAuth();
@@ -31,6 +32,8 @@ function App() {
 
   return (
     <Routes>
+      <Route path='/' element={<Navigate to='/home' replace />} />
+
       <Route element={<PublicRoute />}>
         <Route path='signin' element={<Signin />} />
         <Route path='signup' element={<Signup />} />
@@ -41,8 +44,10 @@ function App() {
       </Route>
 
       <Route element={<PrivateRoute />}>
+        <Route path='workspace' element={<Workspace />} />
+        <Route path='invite/join' element={<InviteJoin />} />
+
         <Route element={<RequireWorkspace />}>
-          <Route path='workspace' element={<Workspace />} />
           <Route path='home' element={<Home />} />
           <Route path='calendar' element={<Calendar />} />
           <Route path='customers' element={<Customers />} />
@@ -60,6 +65,8 @@ function App() {
           <Route path='settings' element={<Settings />} />
         </Route>
       </Route>
+
+      <Route path='*' element={<Navigate to='/home' replace />} />
     </Routes>
   );
 }
