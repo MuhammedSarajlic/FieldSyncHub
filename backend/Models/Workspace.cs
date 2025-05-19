@@ -11,7 +11,6 @@ public class Workspace
     public string Theme { get; set; } = "light";
     public string Category { get; set; } = string.Empty;
     public List<string> Users { get; set; } = [];
-    
     [NotMapped]
     public User? User { get; set; }
 }

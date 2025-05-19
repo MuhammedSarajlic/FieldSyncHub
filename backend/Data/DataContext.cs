@@ -20,5 +20,7 @@ namespace backend.Data
         public DbSet<Job> Jobs => Set<Job>();
         public DbSet<LineItem> LineItems => Set<LineItem>();
         public DbSet<StatusChange> StatusChanges => Set<StatusChange>();
+        public DbSet<EmployeeInvite> EmployeeInvites => Set<EmployeeInvite>();
+        public DbSet<Employee> Employees => Set<Employee>();
     }
 }

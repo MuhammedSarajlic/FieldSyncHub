@@ -1,19 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using backend.Data;
 using backend.Dtos.UserDto;
-using backend.Models;
 using backend.Services.AuthService;
+using backend.Services.TokenService;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Controllers
 {
@@ -23,10 +12,12 @@ namespace backend.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IAuthService _authService;
-        public AuthController(IAuthService authService, IConfiguration configuration)
+        private readonly ITokenService _tokenService;
+        public AuthController(IAuthService authService, IConfiguration configuration, ITokenService tokenService)
         {
             _authService = authService;
             _configuration = configuration;
+            _tokenService = tokenService;
         }
 
         [HttpPost]
@@ -39,9 +30,9 @@ namespace backend.Controllers
                 return BadRequest(new { message = userDB.ErrorMessage });
             }
 
-            (string accessToken, string refreshToken) tokens = GenerateTokens(userDB.Payload);
+            (string accessToken, string refreshToken) tokens = _tokenService.GenerateTokens(userDB.Payload);
 
-            SetRefreshTokenCookie(tokens.refreshToken);
+            _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
 
             return Ok(new
             {
@@ -61,9 +52,9 @@ namespace backend.Controllers
                 return BadRequest(new { message = userDB.ErrorMessage });
             }
 
-            (string accessToken, string refreshToken) tokens = GenerateTokens(userDB.Payload);
+            (string accessToken, string refreshToken) tokens = _tokenService.GenerateTokens(userDB.Payload);
 
-            SetRefreshTokenCookie(tokens.refreshToken);
+            _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
 
             return Ok(new
             {
@@ -89,7 +80,7 @@ namespace backend.Controllers
         public async Task<IActionResult> Logout()
         {
             await _authService.Logout(HttpContext);
-            return Ok(new {  message = "Logged out successfully" });
+            return Ok(new { message = "Logged out successfully" });
         }
 
         [HttpPost]
@@ -108,58 +99,11 @@ namespace backend.Controllers
                 return Unauthorized();
             }
             var userDto = userResult.Payload.Adapt<UserDto>();
-            (string accessToken, string newRefreshToken) tokens = GenerateTokens(userDto); // Line 111
+            (string accessToken, string newRefreshToken) tokens = _tokenService.GenerateTokens(userDto); // Line 111
 
-            SetRefreshTokenCookie(tokens.newRefreshToken);
+            _tokenService.SetRefreshTokenCookie(tokens.newRefreshToken);
 
             return Ok(new { accessToken = tokens.accessToken });
-        }
-
-
-        private (string accessToken, string refreshToken) GenerateTokens(UserDto user) // Line 121
-        {
-            var accessToken = CreateToken(user, DateTime.UtcNow.AddMinutes(60)); // Line 131 (where the error occurs)
-            var refreshToken = CreateToken(user, DateTime.UtcNow.AddDays(30));
-            return (accessToken, refreshToken);
-        }
-
-        private string CreateToken(UserDto user, DateTime expiresAt)
-        {
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // this is standard
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim("workspaceId", user.Workspace?.Id.ToString() ?? ""),
-                new Claim(ClaimTypes.Role, user.Role?.ToString() ?? "user")
-            };
-
-            string? tokenKey = _configuration.GetSection("AppSettings:Token")?.Value;
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: expiresAt,
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-
-        private void SetRefreshTokenCookie(string refreshToken)
-        {
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddDays(30)
-            };
-
-            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
         }
 
     }

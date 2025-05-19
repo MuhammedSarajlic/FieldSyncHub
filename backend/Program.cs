@@ -28,8 +28,9 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddService();
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
