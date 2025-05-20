@@ -99,6 +99,19 @@ namespace backend.Services.EmployeeService
             };
         }
 
+        public async Task<ApiResponse<List<Employee>>> GetEmployeesByWorkspaceId(Guid workspaceId)
+        {
+            var employees = await _context.Employees.Where(e => e.WorkspaceId == workspaceId)
+                                                    .Include(e => e.User)
+                                                    .ToListAsync();
+            return new ApiResponse<List<Employee>>()
+            {
+                Success = true,
+                Payload = employees,
+                ErrorMessage = null
+            };
+        }
+
         public async Task UpdateEmployee(UpdateEmployeeDto updatedEmployee)
         {
             var employee = updatedEmployee.Adapt<Employee>();

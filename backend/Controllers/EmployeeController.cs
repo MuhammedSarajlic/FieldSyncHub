@@ -28,6 +28,12 @@ namespace backend.Controllers
             return await _employeeService.GetEmployeesById(id);
         }
 
+        [HttpGet("workspace/{workspaceId:guid}")]
+        public async Task<ApiResponse<List<Employee>>> GetEmployeesByWorkspaceId(Guid workspaceId)
+        {
+            return await _employeeService.GetEmployeesByWorkspaceId(workspaceId);
+        }
+
         [HttpPut]
         public async Task<IActionResult> UpdateEmployee([FromBody] UpdateEmployeeDto updatedEmployee)
         {
