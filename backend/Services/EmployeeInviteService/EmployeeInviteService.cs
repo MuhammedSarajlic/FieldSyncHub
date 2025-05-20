@@ -97,17 +97,29 @@ namespace backend.Services.EmployeeInviteService
 
         public async Task SendInvite(string email, Guid workspaceId)
         {
+            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var invite = new EmployeeInvite
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                WorkspaceId = workspaceId,
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddHours(48)
+            };
+            _context.EmployeeInvites.Add(invite);
+            await _context.SaveChangesAsync();
+            
             var client = new SendGridClient(ApiKey);
             var from = new EmailAddress(SenderEmail, SenderName);
             var to = new EmailAddress(email, "User");
             var subject = "You're Invited to Join a Workspace!";
-            var plainTextContent = $"You have been invited to join the workspace with ID: {workspaceId}. Visit https://yourdomain.com/accept-invite/{workspaceId} to accept the invitation.";
+            var plainTextContent = $"You have been invited to join the workspace with ID: {workspaceId}.";
             var htmlContent = $@"
                 <html>
                 <body>
                     <h1>Workspace Invitation</h1>
                     <p>You have been invited to join the workspace with ID: <strong>{workspaceId}</strong>.</p>
-                    <p>Click here to accept the invitation.</p>
+                    <p>Click here to accept the invitation.</p> <a>http://localhost:5173/invite?token={token}</a>
                 </body>
                 </html>";
 
@@ -130,7 +142,9 @@ namespace backend.Services.EmployeeInviteService
 
         public async Task<EmployeeInvite?> ValidateInviteTokenAsync(string token)
         {
-            return await _context.EmployeeInvites.FirstOrDefaultAsync(i => i.Token == token && i.ExpiresAt > DateTime.UtcNow && !i.IsAccepted);
+            return await _context.EmployeeInvites.Where(i => i.Token == token && i.ExpiresAt > DateTime.UtcNow && !i.IsAccepted)
+                                                .Include(i => i.Workspace)
+                                                .FirstOrDefaultAsync();
         }
     }
 }

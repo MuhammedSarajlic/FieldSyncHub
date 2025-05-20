@@ -11,10 +11,8 @@ namespace backend.Models
         public string Token { get; set; }
         public DateTime ExpiresAt { get; set; }
         public Guid WorkspaceId { get; set; }
-        [NotMapped]
         public Workspace Workspace { get; set; }
         public string Role { get; set; } = "employee";
-        public bool IsUsed { get; set; } = false;
         public bool IsAccepted { get; set; } = false;
     }
 }

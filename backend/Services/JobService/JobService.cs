@@ -27,6 +27,24 @@ public class JobService : IJobService
         };
     }
 
+    public async Task<ApiResponse<Job>> GetJobById(Guid jobId)
+    {
+        var job = await _context.Jobs.Where(j => j.JobId == jobId)
+                                    .Include(j => j.LineItems)
+                                        .ThenInclude(l => l.ServiceItem)
+                                    .Include(j => j.Customer)
+                                        .ThenInclude(c => c.CustomerPhones)
+                                    .Include(j => j.Customer)
+                                        .ThenInclude(c => c.Properties)
+                                    .FirstOrDefaultAsync();
+        return new ApiResponse<Job>()
+        {
+            Success = true,
+            Payload = job,
+            ErrorMessage = null
+        };
+    }
+
     public async Task CreateJob(Job newJob)
     {
         // Generate JobId if it's empty
@@ -91,4 +109,5 @@ public class JobService : IJobService
         _context.Remove(job);
         await _context.SaveChangesAsync();
     }
+
 }

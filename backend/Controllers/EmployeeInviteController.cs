@@ -9,7 +9,7 @@ using Mapster;
 
 namespace backend.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/invite")]
     [ApiController]
     public class EmployeeInviteController : ControllerBase
     {
@@ -31,17 +31,17 @@ namespace backend.Controllers
             return Ok($"Invitation sent to {email}");
         }
 
-        [HttpPost("create-invite")]
-        public async Task<IActionResult> CreateInvite([FromQuery] string email, [FromQuery] Guid workspaceId, [FromQuery] string role = "employee")
-        {
-            if (string.IsNullOrEmpty(email) || workspaceId == Guid.Empty)
-            {
-                return BadRequest("Email and workspace ID are required.");
-            }
+        // [HttpPost("create-invite")]
+        // public async Task<IActionResult> CreateInvite([FromQuery] string email, [FromQuery] Guid workspaceId, [FromQuery] string role = "employee")
+        // {
+        //     if (string.IsNullOrEmpty(email) || workspaceId == Guid.Empty)
+        //     {
+        //         return BadRequest("Email and workspace ID are required.");
+        //     }
 
-            var invite = await _employeeInviteService.CreateInviteAsync(email, workspaceId, role);
-            return Ok(invite);
-        }
+        //     var invite = await _employeeInviteService.CreateInviteAsync(email, workspaceId, role);
+        //     return Ok(invite);
+        // }
 
         [HttpPost("accept-invite")]
         public async Task<IActionResult> AcceptInvite([FromQuery] string token, [FromBody] UserLoginDto user)

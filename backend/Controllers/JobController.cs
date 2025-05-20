@@ -20,6 +20,11 @@ public class JobController : ControllerBase
         return await _jobService.GetJobs();
     }
 
+    [HttpGet("{jobId:guid}")]
+    public async Task<ApiResponse<Job>> GetJobById(Guid jobId){
+        return await _jobService.GetJobById(jobId);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateJob([FromBody] Job newJob){
         await _jobService.CreateJob(newJob);
