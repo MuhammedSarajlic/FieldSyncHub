@@ -31,32 +31,16 @@ namespace backend.Controllers
             return Ok($"Invitation sent to {email}");
         }
 
-        // [HttpPost("create-invite")]
-        // public async Task<IActionResult> CreateInvite([FromQuery] string email, [FromQuery] Guid workspaceId, [FromQuery] string role = "employee")
-        // {
-        //     if (string.IsNullOrEmpty(email) || workspaceId == Guid.Empty)
-        //     {
-        //         return BadRequest("Email and workspace ID are required.");
-        //     }
-
-        //     var invite = await _employeeInviteService.CreateInviteAsync(email, workspaceId, role);
-        //     return Ok(invite);
-        // }
-
         [HttpPost("accept-invite")]
-        public async Task<IActionResult> AcceptInvite([FromQuery] string token, [FromBody] UserLoginDto user)
+        public async Task<IActionResult> AcceptInvite(string token, [FromBody] UserLoginDto user)
         {
-            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(user.FirstName) || string.IsNullOrEmpty(user.LastName) || string.IsNullOrEmpty(user.Password))
-            {
-                return BadRequest("All fields are required.");
-            }
+            var accessToken = await _employeeInviteService.AcceptInviteAsync(token, user);
+            if (accessToken == null)
+                return BadRequest("Invalid or expired invite.");
 
-            var result = await _employeeInviteService.AcceptInviteAsync(token, user);
-            if (!result)
-                return BadRequest("Invalid or expired invite token, or user already exists.");
-
-            return Ok("Invite accepted and user created.");
+            return Ok(new { accessToken });
         }
+
 
         [HttpGet("validate-token")]
         public async Task<IActionResult> ValidateInviteToken([FromQuery] string token)

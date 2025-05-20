@@ -1,13 +1,11 @@
-using System;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 using backend.Data;
 using backend.Dtos.UserDto;
 using backend.Models;
+using backend.Services.EmailService;
+using backend.Services.TokenService;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
-using SendGrid;
-using SendGrid.Helpers.Mail;
 
 namespace backend.Services.EmployeeInviteService
 {
@@ -17,24 +15,26 @@ namespace backend.Services.EmployeeInviteService
         private const string SenderEmail = "invmansis@gmail.com";
         private const string SenderName = "FieldSyncHub";
         private readonly DataContext _context;
-        public EmployeeInviteService(DataContext context)
+        private readonly IEmailService _emailService;
+        private readonly ITokenService _tokenService;
+        public EmployeeInviteService(DataContext context, IEmailService emailService, ITokenService tokenService)
         {
             _context = context;
+            _emailService = emailService;
+            _tokenService = tokenService;
         }
-        public async Task<bool> AcceptInviteAsync(string token, UserLoginDto user)
+        public async Task<string?> AcceptInviteAsync(string token, UserLoginDto user)
         {
             var invite = await _context.EmployeeInvites.FirstOrDefaultAsync(i => i.Token == token);
             if (invite == null || invite.IsAccepted || invite.ExpiresAt < DateTime.UtcNow)
             {
-                Console.WriteLine("1");
-                return false;
+                return null;
             }
 
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == invite.Email);
-            Console.WriteLine(existingUser);
             if (existingUser != null)
             {
-                return false;
+                return null;
             }
 
             var newUser = new User
@@ -46,19 +46,18 @@ namespace backend.Services.EmployeeInviteService
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                
+                Role = UserRole.Employee
             };
             _context.Users.Add(newUser);
-            
+
             var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == invite.WorkspaceId);
             if (workspace == null)
             {
-                Console.WriteLine("3");
-                return false;
+                return null;
             }
 
             if (!workspace.Users.Contains(newUser.Id.ToString()))
-                 workspace.Users.Add(newUser.Id.ToString());
+                workspace.Users.Add(newUser.Id.ToString());
 
             invite.IsAccepted = true;
 
@@ -73,27 +72,14 @@ namespace backend.Services.EmployeeInviteService
 
             await _context.SaveChangesAsync();
 
-            return true;
+            var newuser = newUser.Adapt<UserDto>();  
+
+            var tokens = _tokenService.GenerateTokens(newuser);
+            _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
+
+            return tokens.accessToken;
         }
 
-
-        public async Task<EmployeeInvite> CreateInviteAsync(string email, Guid workspaceId, string role)
-        {
-            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-            var invite = new EmployeeInvite
-            {
-                Id = Guid.NewGuid(),
-                Email = email,
-                WorkspaceId = workspaceId,
-                Role = role,
-                Token = token,
-                ExpiresAt = DateTime.UtcNow.AddHours(48)
-            };
-            _context.EmployeeInvites.Add(invite);
-            await _context.SaveChangesAsync();
-
-            return invite;
-        }
 
         public async Task SendInvite(string email, Guid workspaceId)
         {
@@ -106,39 +92,30 @@ namespace backend.Services.EmployeeInviteService
                 Token = token,
                 ExpiresAt = DateTime.UtcNow.AddHours(48)
             };
+
             _context.EmployeeInvites.Add(invite);
             await _context.SaveChangesAsync();
-            
-            var client = new SendGridClient(ApiKey);
-            var from = new EmailAddress(SenderEmail, SenderName);
-            var to = new EmailAddress(email, "User");
+
             var subject = "You're Invited to Join a Workspace!";
-            var plainTextContent = $"You have been invited to join the workspace with ID: {workspaceId}.";
-            var htmlContent = $@"
-                <html>
-                <body>
-                    <h1>Workspace Invitation</h1>
-                    <p>You have been invited to join the workspace with ID: <strong>{workspaceId}</strong>.</p>
-                    <p>Click here to accept the invitation.</p> <a>http://localhost:5173/invite?token={token}</a>
-                </body>
-                </html>";
+            var plainText = $"You have been invited to join the workspace with ID: {workspaceId}. Visit: http://localhost:5173/invite?token={token}";
+            var html = $@"
+        <html>
+        <body>
+            <h1>Workspace Invitation</h1>
+            <p>You have been invited to join the workspace with ID: <strong>{workspaceId}</strong>.</p>
+            <p>Click here to accept the invitation:</p>
+            <a href='http://localhost:5173/invite?token={token}'>Accept Invitation</a>
+        </body>
+        </html>";
 
-            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+            var emailSent = await _emailService.SendEmailAsync(email, subject, plainText, html);
 
-            var response = await client.SendEmailAsync(msg);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.OK)
+            if (!emailSent)
             {
-                var errorBody = await response.Body.ReadAsStringAsync();
-                Console.WriteLine($"Failed to send invite. Status: {response.StatusCode}, Body: {errorBody}");
-                throw new Exception($"SendGrid API returned error: {response.StatusCode}");
-            }
-            else
-            {
-                Console.WriteLine("Invitation email sent successfully.");
+                throw new Exception("Failed to send invitation email.");
             }
         }
+
 
         public async Task<EmployeeInvite?> ValidateInviteTokenAsync(string token)
         {
