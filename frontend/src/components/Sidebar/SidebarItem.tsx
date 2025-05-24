@@ -1,20 +1,42 @@
 import { useLocation, useNavigate } from 'react-router';
 import { sidebarItem } from '../../types/sidebar_types';
 
-const SidebarItem = ({ item }: { item: sidebarItem }) => {
+const SidebarItem = ({ item, isCollapsed }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const isActive = pathname === `/${item.slug}`;
+
   return (
     <div
       onClick={() => navigate(`/${item.slug}`)}
-      className={`px-2.5 py-2 flex items-center space-x-3.5 rounded-lg cursor-pointer border-[1px] hover:bg-[#EEF0F0] ${
-        pathname === `/${item.slug}`
-          ? 'bg-white border-[#E3E3E3] '
-          : 'border-transparent'
-      } `}
+      className={`relative flex items-center ${
+        // Added 'relative' for potential indicator
+        isCollapsed ? 'justify-center' : 'space-x-3'
+      } px-3 py-2.5 mx-1 rounded-lg cursor-pointer transition-colors duration-200 ${
+        isActive
+          ? 'bg-[#f0f7f3] border-[1px] border-[#a8d0bb]'
+          : 'hover:bg-gray-50 border-[1px] border-transparent'
+      }`}
+      title={isCollapsed ? item.name : ''}
     >
-      <img src={item.icon} alt={`${item.slug}`} className='w-5 h-5' />
-      <p className={`text-sm font-semibold text-[#4F4F57]`}>{item.name}</p>
+      {isActive && !isCollapsed && (
+        <div className='absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-bg-primary rounded-r-md' />
+      )}
+      <img
+        src={item.icon}
+        alt={item.name}
+        className={`w-5 h-5 ${isActive ? 'opacity-100' : 'opacity-75'}`}
+      />
+
+      {!isCollapsed && (
+        <p
+          className={`text-sm font-medium ${
+            isActive ? 'text-text-secondary' : 'text-gray-700'
+          }`}
+        >
+          {item.name}
+        </p>
+      )}
     </div>
   );
 };
