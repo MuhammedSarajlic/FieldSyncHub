@@ -90,7 +90,7 @@ namespace backend.Services.EmployeeService
 
         public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
         {
-            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
+            var employee = await _context.Employees.Where(e => e.Id == id).Include(e => e.User).FirstOrDefaultAsync();
             return new ApiResponse<Employee>()
             {
                 Success = true,
