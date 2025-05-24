@@ -13,11 +13,26 @@ import {
   LineItem,
 } from '../../models/JobModel';
 import { useNavigate, useParams } from 'react-router';
+import { TJob } from '../../types/Job';
+import { GetJobById } from '../../services/Job';
 
 const JobDetails = () => {
-  const { id } = useParams();
+  const { jobId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('details');
+  const [jobDetails, setJobDetails] = useState<TJob>();
+
+  const fetchJobById = async () => {
+    const response = await GetJobById(jobId as string);
+    if (response.status === 200) {
+      console.log(response);
+      setJobDetails(response.data.payload);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobById();
+  }, [jobId]);
 
   // Sample job data - in a real app, you would fetch this from your API
   const [job, setJob] = useState<Job>({
@@ -360,7 +375,7 @@ const JobDetails = () => {
         </div>
 
         {/* Main content */}
-        <div className='px-4 py-6'>
+        <div className='px-4 pb-6'>
           {/* Page header */}
           <div className='pb-4 mb-6 flex items-center justify-between border-b border-gray-200'>
             <div className='flex items-center'>
@@ -389,17 +404,19 @@ const JobDetails = () => {
                       job.status
                     )}`}
                   >
-                    {job.status}
+                    {jobDetails?.status}
                   </span>
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(
-                      job.priority
+                      jobDetails?.priority as string
                     )}`}
                   >
-                    {job.priority}
+                    {jobDetails?.priority}
                   </span>
                 </div>
-                <h1 className='text-heading text-2xl font-bold'>{job.title}</h1>
+                <h1 className='text-heading text-2xl font-bold'>
+                  {jobDetails?.title === '' ? 'Job #1' : jobDetails?.title}
+                </h1>
               </div>
             </div>
             <div className='flex items-center space-x-3'>
@@ -494,16 +511,16 @@ const JobDetails = () => {
                     <h2 className='font-semibold text-lg'>Job Status</h2>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        job.status
+                        jobDetails?.status
                       )}`}
                     >
-                      {job.status}
+                      {jobDetails?.status}
                     </span>
                   </div>
                   <div className='grid grid-cols-2 sm:grid-cols-4 gap-2'>
                     <button
                       className={`px-3 py-2 rounded-md text-xs sm:text-sm font-medium ${
-                        job.status === 'New'
+                        jobDetails?.status === 'New'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                       }`}
@@ -513,7 +530,7 @@ const JobDetails = () => {
                     </button>
                     <button
                       className={`px-3 py-2 rounded-md text-xs sm:text-sm font-medium ${
-                        job.status === 'Scheduled'
+                        jobDetails?.status === 'scheduled'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                       }`}
@@ -523,7 +540,7 @@ const JobDetails = () => {
                     </button>
                     <button
                       className={`px-3 py-2 rounded-md text-xs sm:text-sm font-medium ${
-                        job.status === 'Confirmed'
+                        jobDetails?.status === 'Confirmed'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                       }`}
@@ -533,7 +550,7 @@ const JobDetails = () => {
                     </button>
                     <button
                       className={`px-3 py-2 rounded-md text-xs sm:text-sm font-medium ${
-                        job.status === 'In Progress'
+                        jobDetails?.status === 'In Progress'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                       }`}
@@ -543,7 +560,7 @@ const JobDetails = () => {
                     </button>
                     <button
                       className={`px-3 py-2 rounded-md text-xs sm:text-sm font-medium ${
-                        job.status === 'On Hold'
+                        jobDetails?.status === 'On Hold'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                       }`}
@@ -553,7 +570,7 @@ const JobDetails = () => {
                     </button>
                     <button
                       className={`px-3 py-2 rounded-md text-xs sm:text-sm font-medium ${
-                        job.status === 'Completed'
+                        jobDetails?.status === 'Completed'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                       }`}
@@ -563,7 +580,7 @@ const JobDetails = () => {
                     </button>
                     <button
                       className={`px-3 py-2 rounded-md text-xs sm:text-sm font-medium ${
-                        job.status === 'Invoiced'
+                        jobDetails?.status === 'Invoiced'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                       }`}
@@ -573,7 +590,7 @@ const JobDetails = () => {
                     </button>
                     <button
                       className={`px-3 py-2 rounded-md text-xs sm:text-sm font-medium ${
-                        job.status === 'Canceled'
+                        jobDetails?.status === 'Canceled'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                       }`}
@@ -589,7 +606,9 @@ const JobDetails = () => {
                   <h2 className='font-semibold text-lg mb-4'>
                     Job Description
                   </h2>
-                  <p className='text-gray-700 mb-4'>{job.description}</p>
+                  <p className='text-gray-700 mb-4'>
+                    {jobDetails?.description}
+                  </p>
                   <div className='bg-yellow-50 border-l-4 border-yellow-400 p-4'>
                     <div className='flex'>
                       <div className='flex-shrink-0'>
@@ -781,15 +800,18 @@ const JobDetails = () => {
                   <div className='space-y-3'>
                     <div className='flex items-center'>
                       <div className='w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold mr-3'>
-                        {customer.name
+                        {jobDetails?.customer.firstName
                           .split(' ')
                           .map((n) => n[0])
                           .join('')}
                       </div>
                       <div>
-                        <p className='font-medium'>{customer.name}</p>
+                        <p className='font-medium'>
+                          {jobDetails?.customer.firstName}{' '}
+                          {jobDetails?.customer.lastName}
+                        </p>
                         <p className='text-sm text-gray-500'>
-                          {customer.company}
+                          {jobDetails?.customer.companyName}
                         </p>
                       </div>
                     </div>
@@ -810,7 +832,10 @@ const JobDetails = () => {
                           />
                         </svg>
                         <div>
-                          <p className='text-sm'>{customer.phone}</p>
+                          <p className='text-sm'>
+                            {jobDetails?.customer?.customerPhones[0]
+                              ?.phoneNumber ?? 'nema broja'}
+                          </p>
                         </div>
                       </div>
                       <div className='flex items-start mb-2'>
@@ -829,7 +854,9 @@ const JobDetails = () => {
                           />
                         </svg>
                         <div>
-                          <p className='text-sm'>{customer.email}</p>
+                          <p className='text-sm'>
+                            {jobDetails?.customer.email[0]}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -872,14 +899,16 @@ const JobDetails = () => {
                       </svg>
                       <div>
                         <p className='text-sm font-medium'>
-                          {property.address}
+                          {jobDetails?.customer.properties[0].street}
                         </p>
                         <p className='text-sm text-gray-500'>
-                          {property.city}, {property.state} {property.zipcode}
+                          {jobDetails?.customer.properties[0].city},{' '}
+                          {jobDetails?.customer.properties[0].state}{' '}
+                          {jobDetails?.customer.properties[0].postalCode}
                         </p>
                       </div>
                     </div>
-                    <div className='pt-2'>
+                    {/* <div className='pt-2'>
                       <div className='text-sm'>
                         <span className='text-gray-500'>Property type:</span>{' '}
                         {property.property_type}
@@ -898,7 +927,7 @@ const JobDetails = () => {
                         Notes:
                       </p>
                       <p className='text-sm'>{property.notes}</p>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -930,7 +959,7 @@ const JobDetails = () => {
                         Scheduled Date
                       </p>
                       <p className='font-medium'>
-                        {formatDate(job.schedule_date)}
+                        {formatDate(jobDetails?.startDate)}
                       </p>
                     </div>
                     <div>
@@ -938,7 +967,7 @@ const JobDetails = () => {
                         Scheduled Time
                       </p>
                       <p className='font-medium'>
-                        {formatTime(job.schedule_time)}
+                        {formatTime(jobDetails?.startTime)}
                       </p>
                     </div>
                     <div>
@@ -946,8 +975,8 @@ const JobDetails = () => {
                         Arrival Window
                       </p>
                       <p className='font-medium'>
-                        {formatTime(job.window_start_time)} -{' '}
-                        {formatTime(job.window_end_time)}
+                        {formatTime(jobDetails?.arrivalWindowStart)} -{' '}
+                        {formatTime(jobDetails?.arrivalWindowEnd)}
                       </p>
                     </div>
                     <div>
@@ -955,7 +984,7 @@ const JobDetails = () => {
                         Estimated Duration
                       </p>
                       <p className='font-medium'>
-                        {job.duration_minutes} minutes
+                        {jobDetails?.estimatedDurationMinutes} minutes
                       </p>
                     </div>
                   </div>
@@ -1092,15 +1121,15 @@ const JobDetails = () => {
                         </tr>
                       </thead>
                       <tbody className='bg-white divide-y divide-gray-200'>
-                        {job.service_items.map((item, index) => (
+                        {jobDetails?.lineItems.map((item, index) => (
                           <tr key={index}>
                             <td className='px-6 py-4 whitespace-nowrap'>
                               <div className='text-sm font-medium text-gray-900'>
-                                {item.name}
+                                {item.serviceItem?.name}
                               </div>
-                              {item.notes && (
+                              {item.serviceItem?.description && (
                                 <div className='text-xs text-gray-500'>
-                                  {item.notes}
+                                  {item.serviceItem?.description}
                                 </div>
                               )}
                             </td>
@@ -1108,10 +1137,10 @@ const JobDetails = () => {
                               {item.quantity}
                             </td>
                             <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right'>
-                              ${item.unit_price.toFixed(2)}
+                              ${item.serviceItem?.unitPrice.toFixed(2)}
                             </td>
                             <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right'>
-                              ${item.total_price.toFixed(2)}
+                              ${item.serviceItem?.unitPrice.toFixed(2)}
                             </td>
                           </tr>
                         ))}

@@ -13,97 +13,15 @@ import { Plus } from 'lucide-react';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import { TAddJob, TJob } from '../../types/Job';
 import { CreateJob, GetJobs } from '../../services/Job';
+import { AxiosResponse } from 'axios';
 
 const Jobs = () => {
-  // Sample data - replace with your actual data source
-  // const [jobs, setJobs] = useState([
-  //   {
-  //     id: 1,
-  //     customer: 'John Smith',
-  //     address: '123 Oak Street, Anytown',
-  //     service: 'Plumbing Repair',
-  //     status: 'Scheduled',
-  //     date: 'May 10, 2025',
-  //     time: '09:00 AM',
-  //     priority: 'High',
-  //     payment: 'Pending',
-  //     value: '$150.00',
-  //   },
-  //   {
-  //     id: 2,
-  //     customer: 'Alice Johnson',
-  //     address: '456 Maple Ave, Somecity',
-  //     service: 'Electrical Inspection',
-  //     status: 'In Progress',
-  //     date: 'May 04, 2025',
-  //     time: '10:30 AM',
-  //     priority: 'Medium',
-  //     payment: 'Partial',
-  //     value: '$220.00',
-  //   },
-  //   {
-  //     id: 3,
-  //     customer: 'Robert Davis',
-  //     address: '789 Pine Road, Elsewhere',
-  //     service: 'HVAC Maintenance',
-  //     status: 'Completed',
-  //     date: 'May 03, 2025',
-  //     time: '02:00 PM',
-  //     priority: 'Low',
-  //     payment: 'Paid',
-  //     value: '$350.00',
-  //   },
-  //   {
-  //     id: 4,
-  //     customer: 'Emily Wilson',
-  //     address: '321 Cedar Lane, Newtown',
-  //     service: 'Pool Cleaning',
-  //     status: 'Scheduled',
-  //     date: 'May 12, 2025',
-  //     time: '11:00 AM',
-  //     priority: 'Medium',
-  //     payment: 'Pending',
-  //     value: '$95.00',
-  //   },
-  //   {
-  //     id: 5,
-  //     customer: 'Michael Brown',
-  //     address: '654 Birch Blvd, Oldcity',
-  //     service: 'Lawn Mowing',
-  //     status: 'Canceled',
-  //     date: 'May 05, 2025',
-  //     time: '01:00 PM',
-  //     priority: 'Low',
-  //     payment: 'Refunded',
-  //     value: '$80.00',
-  //   },
-  // ]);
   const [jobs, setJobs] = useState<TJob[]>([]);
 
   const [filterStatus, setFilterStatus] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Metrics calculation
   const totalJobs = jobs.length;
-  // const completedJobs = jobs.filter((job) => job.status === 'Completed').length;
-  // const scheduledJobs = jobs.filter((job) => job.status === 'Scheduled').length;
-  // const inProgressJobs = jobs.filter(
-  //   (job) => job.status === 'In Progress'
-  // ).length;
-  // const totalValue = jobs.reduce((sum, job) => {
-  //   const value = parseFloat(job.value.replace('$', ''));
-  //   return sum + (isNaN(value) ? 0 : value);
-  // }, 0);
-
-  // Filter jobs based on status and search term
-  // const filteredJobs = jobs.filter((job) => {
-  //   const matchesStatus = filterStatus === 'All' || job.status === filterStatus;
-  //   const matchesSearch =
-  //     job.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     job.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     job.address.toLowerCase().includes(searchTerm.toLowerCase());
-  //   return matchesStatus && matchesSearch;
-  // });
 
   const [isNewJobModalOpen, setIsNewJobModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -114,11 +32,11 @@ const Jobs = () => {
     dateTo: '',
   });
 
-  const handleAddJob = async (job: TAddJob) => {
+  const handleAddJob = async (
+    job: TAddJob
+  ): Promise<AxiosResponse<any, any>> => {
     const response = await CreateJob(job);
-    if (response.status === 200) {
-      console.log(response);
-    }
+    return response;
   };
 
   const fetchJobs = async () => {
@@ -294,6 +212,7 @@ const Jobs = () => {
         isOpen={isNewJobModalOpen}
         onClose={() => setIsNewJobModalOpen(false)}
         onCreate={handleAddJob}
+        fetchJobs={fetchJobs}
       />
     </div>
   );

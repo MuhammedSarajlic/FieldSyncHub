@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router';
 import { TJob } from '../../../types/Job';
 
 interface IJobsTableBody {
@@ -5,6 +6,8 @@ interface IJobsTableBody {
 }
 
 const JobsTableBody = ({ jobs }: IJobsTableBody) => {
+  const navigate = useNavigate();
+
   // Get status color "scheduled", "dispatched", "in_progress", "completed", "canceled"
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -39,6 +42,10 @@ const JobsTableBody = ({ jobs }: IJobsTableBody) => {
     }
   };
 
+  const handleOpenJobDetails = (jobId: string) => {
+    navigate(`/jobs/${jobId}`);
+  };
+
   return (
     <tbody className='bg-white divide-y divide-gray-200'>
       {jobs.length > 0 &&
@@ -46,6 +53,7 @@ const JobsTableBody = ({ jobs }: IJobsTableBody) => {
           <tr
             key={job.jobId}
             className={`hover:bg-gray-50 cursor-pointer min-h-[163px]`}
+            onClick={() => handleOpenJobDetails(job.jobId)}
           >
             <td className='px-4 py-5 whitespace-nowrap'>
               <div className='flex items-center'>
@@ -55,7 +63,7 @@ const JobsTableBody = ({ jobs }: IJobsTableBody) => {
               </div>
             </td>
             <td className='px-4 py-5 whitespace-nowrap text-sm'>
-              {job.property.street}
+              {job.property ? job.property?.street : 'No property'}
             </td>
             <td className='px-4 py-5 whitespace-nowrap'>
               <div className='text-sm text-gray-900'>{job.startDate}</div>
