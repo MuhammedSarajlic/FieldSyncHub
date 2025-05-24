@@ -76,9 +76,9 @@ const ServiceItemFilterModal = ({
     <div className='absolute right-0 top-full mt-2 w-[400px] max-w-md z-50'>
       <div className='bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-auto shadow-xl'>
         {/* Header */}
-        <div className='sticky top-0 p-4 border-b border-gray-300 flex justify-between items-center'>
+        <div className='sticky top-0 p-4 py-3 border-b border-gray-300 flex justify-between items-center'>
           <div className='flex items-center'>
-            <Sliders className='h-5 w-5 mr-2 text-gray-600' />
+            {/* <Sliders className='h-5 w-5 mr-2 text-gray-600' /> */}
             <h2 className='text-lg font-semibold text-gray-800'>Filters</h2>
           </div>
           <button
@@ -90,7 +90,7 @@ const ServiceItemFilterModal = ({
         </div>
 
         {/* Filters */}
-        <div className='p-6 space-y-6'>
+        <div className='p-4 space-y-6'>
           {/* Category Filter */}
           <div>
             <label
@@ -248,7 +248,7 @@ const ServiceItemFilterModal = ({
         {/* Actions */}
         <div className='p-4 border-t border-gray-300 flex justify-end space-x-2'>
           <ButtonIcon
-            name='Reset'
+            name='Reset Filters'
             customStyle='shadow-sm'
             handleBtnClick={handleReset}
           />
