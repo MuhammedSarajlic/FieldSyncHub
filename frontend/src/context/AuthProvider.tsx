@@ -20,6 +20,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchCurrentUser = async () => {
+    console.log('This shit fetching again');
+
     setLoading(true);
     try {
       const token = localStorage.getItem('accessToken');
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const response = await GetLoggedInUser(token);
+      console.log('Fetching...');
 
       if (response.status === 200) {
         setUser(response.data.payload);

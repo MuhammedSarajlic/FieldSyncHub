@@ -6,7 +6,7 @@ const RequireWorkspace = () => {
 
   if (loading) return null;
 
-  if (user && !user.workspace) {
+  if (user && !user.workspace && user.role !== 2) {
     return <Navigate to='/workspace' replace />;
   }
 
