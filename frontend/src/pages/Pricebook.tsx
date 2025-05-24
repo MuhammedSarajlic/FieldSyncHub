@@ -14,8 +14,8 @@ import {
 } from '../services/ServiceItem';
 import { TServiceItem, TServiceItemFilter } from '../types/ServiceItem';
 import { useSearchParams } from 'react-router';
-import ServiceItemSortModal from '../components/Pricebook/PricebookModals/ServiceItemSortModal';
 import ServiceItemFilterModal from '../components/Pricebook/PricebookModals/ServiceItemFilterModal';
+import SortModal from '../components/CustomElements/SortComponent/SortModal';
 
 const Pricebook = () => {
   const [items, setItems] = useState<TServiceItem[]>([]);
@@ -130,7 +130,7 @@ const Pricebook = () => {
 
   useEffect(() => {
     fetchServiceItems();
-  }, [searchParams]); // listens to any param change
+  }, [searchParams]);
 
   return (
     <div className='flex h-screen'>
@@ -168,7 +168,14 @@ const Pricebook = () => {
               handleChange={handleSearch}
             />
             <div className='flex items-center space-x-3'>
-              <div className='relative'>
+              <SortModal
+                setIsSortModalOpen={setIsSortModalOpen}
+                isSortModalOpen={isSortModalOpen}
+                sortOptions={sortOptions}
+                currentSort={currentSort}
+                handleSort={handleSort}
+              />
+              {/* <div className='relative'>
                 <ButtonIcon
                   name='Sort'
                   icon={icons.sortIcon}
@@ -181,7 +188,7 @@ const Pricebook = () => {
                   onSort={handleSort}
                   // currentSort={currentSort}
                 />
-              </div>
+              </div> */}
               <div className='relative'>
                 <ButtonIcon
                   name='Filter'
