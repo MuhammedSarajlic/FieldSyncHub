@@ -10,5 +10,12 @@ export type TUser = {
   createdAt: string;
   updatedAt: string;
   workspace: TWorkspace;
-  role: string;
+  role: number;
+};
+
+export type TUserLogin = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
 };

@@ -6,6 +6,11 @@ export async function GetJobs() {
   return response;
 }
 
+export async function GetJobById(jobId: string) {
+  const response = await api.get(`/job/${jobId}`);
+  return response;
+}
+
 export async function CreateJob(job: TAddJob) {
   const response = await api.post('/job', job);
   return response;

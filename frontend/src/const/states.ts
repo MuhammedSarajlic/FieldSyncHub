@@ -64,3 +64,28 @@ export const addServiceItemInitialState = {
   isActive: true,
   imageUrl: '',
 };
+
+export const addJobInitialState = {
+  title: '',
+  description: '',
+  customerId: '',
+  propertyId: '',
+  jobType: 'one-time',
+  repeats: '',
+  lineItems: [],
+  status: 'scheduled',
+  priority: 'normal',
+  startDate: '',
+  startTime: '',
+  arrivalWindowStart: '',
+  arrivalWindowEnd: '',
+  duration: 1,
+  estimatedDurationMinutes: 30,
+  timeZone: '',
+  assignedTeamMemberIds: [],
+  paymentStatus: 'unpaid',
+  sendInvoice: false,
+  sendReminder: false,
+  reminderDaysBefore: 0,
+  createdBy: '',
+};
