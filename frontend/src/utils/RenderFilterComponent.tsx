@@ -24,7 +24,7 @@ export const renderFilterComponent = ({
             <option value=''>Select an option</option>
             {option.dropdownOptions.map((opt: string) => (
               <option key={opt} value={opt}>
-                {opt}
+                {opt.charAt(0).toUpperCase() + opt.slice(1)}
               </option>
             ))}
           </select>
@@ -46,11 +46,10 @@ export const renderFilterComponent = ({
                   option.name,
                   'min',
                   option.valueType === 'number'
-                    ? parseInt(e.target.value)
+                    ? parseFloat(e.target.value)
                     : e.target.value
                 )
               }
-              min={option.min}
               placeholder={option.min}
               className='w-full border border-gray-300 shadow-sm rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500'
             />
@@ -63,11 +62,10 @@ export const renderFilterComponent = ({
                   option.name,
                   'max',
                   option.valueType === 'number'
-                    ? parseInt(e.target.value)
+                    ? parseFloat(e.target.value)
                     : e.target.value
                 )
               }
-              min={option.min}
               placeholder={option.max}
               className='w-full border border-gray-300 shadow-sm rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500'
             />

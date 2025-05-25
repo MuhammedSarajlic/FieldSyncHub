@@ -1,15 +1,23 @@
 import { motion } from 'framer-motion';
 import { UserPlus, Users } from 'lucide-react';
+import useClearFilters from '../../../hooks/useClearFilters';
 
 interface IEmptyEmployeeTable {
-  resetFilters: () => void;
+  // resetFilters: () => void;
   setIsInviteModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  filterOptions: any;
 }
 
 const EmptyEmployeeTable = ({
-  resetFilters,
+  // resetFilters,
   setIsInviteModalOpen,
+  filterOptions,
 }: IEmptyEmployeeTable) => {
+  const { clearFilterURLParams } = useClearFilters();
+
+  const handleResetFilters = () => {
+    clearFilterURLParams(filterOptions);
+  };
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -30,7 +38,7 @@ const EmptyEmployeeTable = ({
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.98 }}
-          onClick={resetFilters}
+          onClick={handleResetFilters}
           className='inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-3'
         >
           Clear Filters

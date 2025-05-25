@@ -6,13 +6,11 @@ import images from '../../../constants/images';
 interface IEmployeeTable {
   employees: TEmployee[];
   getStatusBadge: (status: string) => { background: string; indicator: string };
-  handleViewProfile: (employee: TEmployee) => void;
 }
 
 const EmployeeTable = ({
   employees: filteredEmployees,
   getStatusBadge,
-  handleViewProfile,
 }: IEmployeeTable) => {
   return (
     <div className='bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100'>
@@ -112,7 +110,6 @@ const EmployeeTable = ({
                   <div className='flex space-x-1 justify-end'>
                     <motion.button
                       whileHover={{ scale: 1.1 }}
-                      onClick={() => handleViewProfile(employee)}
                       className='text-blue-600 hover:text-blue-900 p-1'
                     >
                       View

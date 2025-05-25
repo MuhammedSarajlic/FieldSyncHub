@@ -1,6 +1,6 @@
 import { Check, Copy, Plus, UserPlus, X } from 'lucide-react';
 import { useState } from 'react';
-import { SendInvite } from '../../../services/Invite';
+import { SendInvite, SendInviteBulk } from '../../../services/Invite';
 import { useAuth } from '../../../context/AuthProvider';
 
 interface IInviteEmployeeModal {
@@ -11,21 +11,30 @@ interface IInviteEmployeeModal {
 const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
   const { user } = useAuth();
   const [emails, setEmails] = useState(['']);
-  const [email, setEmail] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [role, setRole] = useState('Technician');
-  const [department, setDepartment] = useState('Field Service');
+  // const [email, setEmail] = useState('');
+  // const [copied, setCopied] = useState(false);
+  // const [role, setRole] = useState('Technician');
+  // const [department, setDepartment] = useState('Field Service');
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
-  const magicLink = 'http://localhost.com/invite/87689';
+  // const magicLink = 'http://localhost.com/invite/87689';
 
   const handleInvite = async () => {
+    // setSending(true);
+    // const response = await SendInvite(emails[0], user?.workspace.id as string);
+    // if (response.status === 200) {
+    //   setSending(false);
+    //   setSuccess(true);
+    //   onClose();
+    // }
+    // console.log(response);
     setSending(true);
-    const response = await SendInvite(emails[0], user?.workspace.id as string);
+    const response = await SendInviteBulk(emails, user?.workspace.id);
     if (response.status === 200) {
       setSending(false);
       setSuccess(true);
       onClose();
+      setEmails(['']);
     }
     console.log(response);
   };
@@ -43,15 +52,19 @@ const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
     }
   };
 
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(magicLink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy: ', err);
-    }
+  const addEmailField = () => {
+    setEmails([...emails, '']);
   };
+
+  // const copyToClipboard = async () => {
+  //   try {
+  //     await navigator.clipboard.writeText(magicLink);
+  //     setCopied(true);
+  //     setTimeout(() => setCopied(false), 2000);
+  //   } catch (err) {
+  //     console.error('Failed to copy: ', err);
+  //   }
+  // };
 
   if (!isOpen) return null;
 
@@ -96,9 +109,7 @@ const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
                     value={email}
                     onChange={(e) => updateEmail(index, e.target.value)}
                     placeholder={
-                      index === emails.length - 1 && email === ''
-                        ? 'hi@yourcompany.com'
-                        : ''
+                      index === 0 && email === '' ? 'hi@yourcompany.com' : ''
                     }
                     className='w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
                   />
@@ -115,7 +126,7 @@ const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
             </div>
 
             <button
-              // onClick={addEmailField}
+              onClick={addEmailField}
               className='mt-3 text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1 transition-colors'
             >
               <Plus className='w-4 h-4' />
@@ -132,7 +143,7 @@ const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
           </button>
 
           {/* Magic Link Section */}
-          <div>
+          {/* <div>
             <h3 className='text-sm font-medium text-gray-900 mb-4'>
               Invite via magic link
             </h3>
@@ -154,7 +165,7 @@ const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
                 )}
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

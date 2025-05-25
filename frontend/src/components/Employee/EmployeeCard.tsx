@@ -6,15 +6,10 @@ import { useNavigate } from 'react-router';
 
 interface IEmployeeCard {
   employee: TEmployee;
-  handleViewProfile: (employee: TEmployee) => void;
   getStatusBadge: (status: string) => { background: string; indicator: string };
 }
 
-const EmployeeCard = ({
-  employee,
-  handleViewProfile,
-  getStatusBadge,
-}: IEmployeeCard) => {
+const EmployeeCard = ({ employee, getStatusBadge }: IEmployeeCard) => {
   const navigate = useNavigate();
   const { background, indicator } = getStatusBadge(employee.status);
   return (
@@ -46,7 +41,7 @@ const EmployeeCard = ({
               {employee.user.firstName} {employee.user.lastName}
             </h3>
             <p className='text-sm text-gray-600 truncate'>
-              {employee.position} Electrician
+              {employee.position}
             </p>
 
             {/* Contact Info */}

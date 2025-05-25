@@ -1,6 +1,6 @@
 export const employeeFilterOptions = [
   {
-    name: 'date',
+    name: 'hireDate',
     label: 'Hire date',
     type: 'range',
     valueType: 'date',
@@ -8,8 +8,8 @@ export const employeeFilterOptions = [
   {
     name: 'status',
     label: 'Status',
-    type: 'button-select',
-    options: ['all', 'active', 'inactive'],
+    type: 'dropdown',
+    dropdownOptions: ['all', 'active', 'on-leave', 'terminated'],
   },
   {
     name: 'position',
