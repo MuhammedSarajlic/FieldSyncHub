@@ -1,53 +1,127 @@
 import { Check, Filter, X } from 'lucide-react';
 import ButtonIcon from '../ButtonIcon';
 import CustomIconButton from '../CustomIconButton';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { renderFilterComponent } from '../../../utils/RenderFilterComponent';
+import useClearFilters from '../../../hooks/useClearFilters';
+import { useSearchParams } from 'react-router';
 
-interface IFilterModal {
+interface IFilterModal<T> {
+  initialFilters: T;
   filterOptions: any;
-  activeFiltersCount: number;
+  onApply: (filters: T) => void;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isFilterModalOpen: boolean;
+  // handleClearURLParams: () => void;
 }
 
-const FilterModal = ({
+const FilterModal = <T extends Record<string, any>>({
+  initialFilters,
   filterOptions,
-  activeFiltersCount,
+  onApply,
   setIsFilterModalOpen,
   isFilterModalOpen,
-}: IFilterModal) => {
-  const [filters, setFilters] = useState<{ [key: string]: any }>({});
+}: // handleClearURLParams,
+IFilterModal<T>) => {
+  const [filters, setFilters] = useState<T>(initialFilters);
+  const [searchParams] = useSearchParams();
+  const { clearFilterURLParams } = useClearFilters();
 
-  const handleFilterChange = (filterName: string, value: string) => {
-    setFilters({
-      ...filters,
+  const handleFilterChange = (filterName: keyof T, value: any) => {
+    setFilters((prev) => ({
+      ...prev,
       [filterName]: value,
-    });
+    }));
   };
 
   const handleRangeChange = (
-    filterName: string,
+    filterName: keyof T,
     key: string,
-    value: number
+    value: number | string
   ) => {
-    setFilters({
-      ...filters,
+    setFilters((prev) => ({
+      ...prev,
       [filterName]: {
-        ...filters[filterName],
+        ...(prev[filterName] || {}),
         [key]: value,
       },
-    });
+    }));
   };
 
   const handleReset = () => {
-    setFilters({
-      hireDate: { startDate: '', endDate: '' },
-      status: 'all',
-      position: '',
-      department: '',
-    });
+    setFilters(initialFilters);
+    clearFilterURLParams(filterOptions);
   };
+
+  const handleApply = () => {
+    onApply(filters);
+    setIsFilterModalOpen(false);
+  };
+
+  const activeFiltersCount = Object.keys(filters).filter((key) => {
+    const initialValue = initialFilters[key];
+    const currentValue = filters[key];
+
+    if (
+      typeof initialValue === 'object' &&
+      initialValue !== null &&
+      typeof currentValue === 'object' &&
+      currentValue !== null
+    ) {
+      return JSON.stringify(initialValue) !== JSON.stringify(currentValue);
+    }
+    return initialValue !== currentValue;
+  }).length;
+
+  const getFiltersFromURL = <T extends Record<string, any>>(
+    searchParams: URLSearchParams,
+    filterOptions: any[],
+    initialFilters: T
+  ): T => {
+    const parsedFilters: any = { ...initialFilters };
+
+    filterOptions.forEach((option) => {
+      if (option.type === 'range') {
+        const start = searchParams.get(`${option.name}Min`);
+        const end = searchParams.get(`${option.name}Max`);
+        parsedFilters[option.name] = {
+          min: start || initialFilters[option.name]?.min || '',
+          max: end || initialFilters[option.name]?.max || '',
+        };
+      } else {
+        const param = searchParams.get(option.name);
+        parsedFilters[option.name] = param ?? initialFilters[option.name];
+      }
+    });
+
+    return parsedFilters;
+  };
+
+  useEffect(() => {
+    console.log('111111111111111111');
+
+    const hasActiveParams = filterOptions.some((option: any) => {
+      if (option.type === 'range') {
+        return (
+          searchParams.get(`${option.name}Min`) ||
+          searchParams.get(`${option.name}Max`)
+        );
+      } else {
+        return searchParams.get(option.name);
+      }
+    });
+
+    if (!hasActiveParams) {
+      setFilters(initialFilters);
+    } else {
+      const extracted = getFiltersFromURL(
+        searchParams,
+        filterOptions,
+        initialFilters
+      );
+      setFilters(extracted);
+    }
+  }, [searchParams]);
 
   return (
     <div className='relative'>
@@ -63,14 +137,13 @@ const FilterModal = ({
           </span>
         )}
       </button>
+
       {isFilterModalOpen && (
         <div className='absolute right-0 top-full mt-2 w-[400px] max-w-md z-50'>
           <div className='bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-auto shadow-xl'>
             {/* Header */}
             <div className='sticky top-0 p-4 py-3 border-b border-gray-300 flex justify-between items-center'>
-              <div className='flex items-center'>
-                <h2 className='text-lg font-semibold text-gray-800'>Filters</h2>
-              </div>
+              <h2 className='text-lg font-semibold text-gray-800'>Filters</h2>
               <button
                 onClick={() => setIsFilterModalOpen(false)}
                 className='text-gray-500 hover:text-gray-700 focus:outline-none cursor-pointer'
@@ -81,7 +154,7 @@ const FilterModal = ({
 
             {/* Filters */}
             <div className='p-4 space-y-6'>
-              {filterOptions.map((option) =>
+              {filterOptions.map((option: any) =>
                 renderFilterComponent({
                   option,
                   filters,
@@ -99,9 +172,9 @@ const FilterModal = ({
                 handleBtnClick={handleReset}
               />
               <CustomIconButton
-                text='Apply fitlers'
+                text='Apply filters'
                 icon={<Check className='h-4 w-4 mr-2' />}
-                //   handleClick={handleApply}
+                handleClick={handleApply}
               />
             </div>
           </div>

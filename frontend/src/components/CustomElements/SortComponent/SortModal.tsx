@@ -5,7 +5,7 @@ interface ISortModal {
   setIsSortModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isSortModalOpen: boolean;
   sortOptions: TSortOption[];
-  currentSort?: string;
+  currentSort: string;
   handleSort: (optionId: string) => void;
 }
 
