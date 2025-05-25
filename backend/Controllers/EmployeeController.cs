@@ -34,6 +34,12 @@ namespace backend.Controllers
             return await _employeeService.GetEmployeesByWorkspaceId(workspaceId);
         }
 
+        [HttpGet("export/{workspaceId:guid}")]
+        public async Task<IActionResult> ExportEmployees(Guid workspaceId)
+        {
+            return await _employeeService.ExportEmployees(workspaceId);
+        }
+
         [HttpPut]
         public async Task<IActionResult> UpdateEmployee([FromBody] UpdateEmployeeDto updatedEmployee)
         {
@@ -50,17 +56,18 @@ namespace backend.Controllers
 
         [HttpGet("filter")]
         public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(
+        [FromQuery] string q,
         [FromQuery] Guid? workspaceId,
         [FromQuery] string? position,
         [FromQuery] string? department,
         [FromQuery] string? status,
-        [FromQuery] DateTime? hireDateStart,
-        [FromQuery] DateTime? hireDateEnd,
+        [FromQuery] DateTime? hireDateMin,
+        [FromQuery] DateTime? hireDateMax,
         [FromQuery] string? sortBy,
         [FromQuery] string? sort)
         {
             return await _employeeService.GetEmployeesByFilter(
-                workspaceId, position, department, status, hireDateStart, hireDateEnd, sortBy, sort
+                q, workspaceId, position, department, status, hireDateMin, hireDateMax, sortBy, sort
             );
         }
     }

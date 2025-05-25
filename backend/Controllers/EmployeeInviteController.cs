@@ -6,6 +6,7 @@ using backend.Services.EmployeeInviteService;
 using backend.Models;
 using backend.Dtos.UserDto;
 using Mapster;
+using backend.Dtos.EmployeeInviteDto;
 
 namespace backend.Controllers
 {
@@ -29,6 +30,22 @@ namespace backend.Controllers
             }
             await _employeeInviteService.SendInvite(email, workspaceId);
             return Ok($"Invitation sent to {email}");
+        }
+
+        [HttpPost("send-invite/bulk")]
+        public async Task<IActionResult> SendBulkInvite([FromBody] EmployeeInviteRequest request)
+        {
+            if (request.Emails == null || request.Emails.Count == 0 || request.WorkspaceId == Guid.Empty)
+            {
+                return BadRequest("At least one email and a valid workspace ID are required.");
+            }
+
+            foreach (var email in request.Emails)
+            {
+                await _employeeInviteService.SendInvite(email, request.WorkspaceId);
+            }
+
+            return Ok("Invitations sent.");
         }
 
         [HttpPost("accept-invite")]

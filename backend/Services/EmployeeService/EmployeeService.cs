@@ -1,8 +1,10 @@
+using System.Text;
 using backend.Data;
 using backend.Dtos.EmployeeDto;
 using backend.Models;
 using backend.Response;
 using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.EmployeeService
@@ -32,9 +34,44 @@ namespace backend.Services.EmployeeService
             };
         }
 
-        public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(Guid? workspaceId, string? position, string? department, string? status, DateTime? hireDateStart, DateTime? hireDateEnd, string? sortBy, string? sort)
+        public async Task<IActionResult> ExportEmployees(Guid workspaceId)
         {
-            var queryable = _context.Employees.AsQueryable();
+            var employees = await _context.Employees
+                .Where(e => e.WorkspaceId == workspaceId)
+                .Include(e => e.User)
+                .ToListAsync();
+
+            if (employees == null || !employees.Any())
+            {
+                return new NotFoundResult();
+            }
+
+            var sb = new StringBuilder();
+
+            sb.AppendLine("EmployeeId,FirstName,LastName,Email,Position,Department,Status,HireDate,WorkspaceId");
+
+            foreach (var employee in employees)
+            {
+                string hireDateFormatted = employee.HireDate.ToString("yyyy-MM-dd");
+                sb.AppendLine($"{employee.Id},{employee.User?.FirstName},{employee.User?.LastName},{employee.User?.Email},{employee.Position},{employee.Department},{employee.Status},{hireDateFormatted},{employee.WorkspaceId}");
+            }
+
+            var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+            return new FileContentResult(csvBytes, "text/csv")
+            {
+                FileDownloadName = $"employees_workspace_{workspaceId}.csv"
+            };
+        }
+
+        public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(string q, Guid? workspaceId, string? position, string? department, string? status, DateTime? hireDateMin, DateTime? hireDateMax, string? sortBy, string? sort)
+        {
+            var queryable = _context.Employees.Include(e => e.User).AsQueryable();
+
+            // 🔎 Search by name (q)
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                queryable = queryable.Where(s => s.User.FirstName.Contains(q));
+            }
 
             // 🔍 Filter: WorkspaceId
             if (workspaceId.HasValue && workspaceId != Guid.Empty)
@@ -61,22 +98,20 @@ namespace backend.Services.EmployeeService
             }
 
             // 🔍 Filter: Hire Date Range
-            if (hireDateStart.HasValue)
+            if (hireDateMin.HasValue)
             {
-                queryable = queryable.Where(e => e.HireDate >= hireDateStart.Value);
+                queryable = queryable.Where(e => e.HireDate >= hireDateMin.Value);
             }
-            if (hireDateEnd.HasValue)
+            if (hireDateMax.HasValue)
             {
-                queryable = queryable.Where(e => e.HireDate <= hireDateEnd.Value);
+                queryable = queryable.Where(e => e.HireDate <= hireDateMax.Value);
             }
 
             // 🔄 Sorting
             queryable = sortBy?.ToLower() switch
             {
-                "hiredate" => sort == "desc" ? queryable.OrderByDescending(e => e.HireDate) : queryable.OrderBy(e => e.HireDate),
-                "position" => sort == "desc" ? queryable.OrderByDescending(e => e.Position) : queryable.OrderBy(e => e.Position),
-                "department" => sort == "desc" ? queryable.OrderByDescending(e => e.Department) : queryable.OrderBy(e => e.Department),
-                _ => queryable.OrderBy(e => e.HireDate) // default sorting
+                "name" => sort == "desc" ? queryable.OrderByDescending(s => s.User.FirstName) : queryable.OrderBy(s => s.User.LastName),
+                _ => queryable.OrderBy(s => s.User.FirstName)
             };
 
             var employees = await queryable.ToListAsync();
