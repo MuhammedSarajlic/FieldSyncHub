@@ -2,17 +2,17 @@ import { Check, Filter, X } from 'lucide-react';
 import ButtonIcon from '../ButtonIcon';
 import CustomIconButton from '../CustomIconButton';
 import { useEffect, useState } from 'react';
-import { renderFilterComponent } from '../../../utils/RenderFilterComponent';
+import { renderFilterComponent } from '../../../utils/RenderHelpers/RenderFilterComponent';
 import useClearFilters from '../../../hooks/useClearFilters';
 import { useSearchParams } from 'react-router';
+import { TFilterOption } from '../../../types/FilterOption';
 
 interface IFilterModal<T> {
   initialFilters: T;
-  filterOptions: any;
+  filterOptions: TFilterOption[];
   onApply: (filters: T) => void;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isFilterModalOpen: boolean;
-  // handleClearURLParams: () => void;
 }
 
 const FilterModal = <T extends Record<string, any>>({
@@ -21,8 +21,7 @@ const FilterModal = <T extends Record<string, any>>({
   onApply,
   setIsFilterModalOpen,
   isFilterModalOpen,
-}: // handleClearURLParams,
-IFilterModal<T>) => {
+}: IFilterModal<T>) => {
   const [filters, setFilters] = useState<T>(initialFilters);
   const [searchParams] = useSearchParams();
   const { clearFilterURLParams } = useClearFilters();
@@ -75,7 +74,7 @@ IFilterModal<T>) => {
 
   const getFiltersFromURL = <T extends Record<string, any>>(
     searchParams: URLSearchParams,
-    filterOptions: any[],
+    filterOptions: TFilterOption[],
     initialFilters: T
   ): T => {
     const parsedFilters: any = { ...initialFilters };
@@ -98,9 +97,7 @@ IFilterModal<T>) => {
   };
 
   useEffect(() => {
-    console.log('111111111111111111');
-
-    const hasActiveParams = filterOptions.some((option: any) => {
+    const hasActiveParams = filterOptions.some((option) => {
       if (option.type === 'range') {
         return (
           searchParams.get(`${option.name}Min`) ||
@@ -154,7 +151,7 @@ IFilterModal<T>) => {
 
             {/* Filters */}
             <div className='p-4 space-y-6'>
-              {filterOptions.map((option: any) =>
+              {filterOptions.map((option: TFilterOption) =>
                 renderFilterComponent({
                   option,
                   filters,

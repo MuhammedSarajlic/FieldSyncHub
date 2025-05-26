@@ -1,10 +1,12 @@
+import { TFilterOption } from '../../types/FilterOption';
+
 export const renderFilterComponent = ({
   option,
   filters,
   handleFilterChange,
   handleRangeChange,
 }: {
-  option: any;
+  option: TFilterOption;
   filters: { [key: string]: any };
   handleFilterChange: (filterName: string, value: string) => void;
   handleRangeChange: (filterName: string, key: string, value: number) => void;
@@ -22,11 +24,12 @@ export const renderFilterComponent = ({
             className='mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
           >
             <option value=''>Select an option</option>
-            {option.dropdownOptions.map((opt: string) => (
-              <option key={opt} value={opt}>
-                {opt.charAt(0).toUpperCase() + opt.slice(1)}
-              </option>
-            ))}
+            {option.dropdownOptions &&
+              option.dropdownOptions.map((opt: string) => (
+                <option key={opt} value={opt}>
+                  {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                </option>
+              ))}
           </select>
         </div>
       );

@@ -24,20 +24,19 @@ import { employeeFilterOptions } from '../../constants/Options/EmployeeFilterOpt
 
 const Employees = () => {
   const { user } = useAuth();
-
   const [isLoading, setIsLoading] = useState(true);
-  const sortOptions = [
-    { id: 'name-asc', label: 'Name (A-Z)', sortBy: 'name', sort: 'asc' },
-    { id: 'name-desc', label: 'Name (Z-A)', sortBy: 'name', sort: 'desc' },
-  ];
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [employees, setEmployees] = useState<TEmployee[]>([]);
-  const [currentSort, setCurrentSort] = useState<string>('');
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
+
+  const sortOptions = [
+    { id: 'name-asc', label: 'Name (A-Z)', sortBy: 'name', sort: 'asc' },
+    { id: 'name-desc', label: 'Name (Z-A)', sortBy: 'name', sort: 'desc' },
+  ];
 
   const initialEmployeeFilters = {
     hireDate: { min: '', max: '' },
@@ -45,66 +44,6 @@ const Employees = () => {
     position: '',
     department: '',
   };
-
-  const getStatusBadge = (
-    status: string
-  ): { background: string; indicator: string } => {
-    switch (status) {
-      case 'active':
-        return {
-          background: 'bg-green-100 text-green-800',
-          indicator: 'bg-green-500',
-        };
-      case 'on-leave':
-        return {
-          background: 'bg-yellow-100 text-yellow-800',
-          indicator: 'bg-yellow-500',
-        };
-      case 'terminated':
-        return {
-          background: 'bg-red-100 text-red-800',
-          indicator: 'bg-red-500',
-        };
-      default:
-        return {
-          background: 'bg-gray-100 text-gray-800',
-          indicator: 'bg-gray-500',
-        };
-    }
-  };
-
-  const handleSort = (optionId: string) => {
-    setCurrentSort(optionId);
-    const selectedOption = sortOptions.find((opt) => opt.id === optionId);
-    if (selectedOption) {
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.set('sortBy', selectedOption.sortBy);
-        newParams.set('sort', selectedOption.sort);
-        return newParams;
-      });
-    } else {
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.delete('sortBy');
-        newParams.delete('sort');
-        return newParams;
-      });
-    }
-    setIsSortModalOpen(false);
-  };
-
-  // const clearFilterURLParams = () => {
-  //   setSearchParams((prev) => {
-  //     const newParams = new URLSearchParams(prev);
-  //     newParams.delete('hireDateStart');
-  //     newParams.delete('hireDateEnd');
-  //     newParams.delete('status');
-  //     newParams.delete('position');
-  //     newParams.delete('department');
-  //     return newParams;
-  //   });
-  // };
 
   const handleSearch = async (query: string) => {
     setSearchParams((prev) => {
@@ -330,8 +269,6 @@ const Employees = () => {
                   setIsSortModalOpen={setIsSortModalOpen}
                   isSortModalOpen={isSortModalOpen}
                   sortOptions={sortOptions}
-                  currentSort={currentSort}
-                  handleSort={handleSort}
                 />
                 <FilterModal
                   initialFilters={initialEmployeeFilters}
@@ -339,7 +276,6 @@ const Employees = () => {
                   setIsFilterModalOpen={setIsFilterModalOpen}
                   isFilterModalOpen={isFilterModalOpen}
                   onApply={handleApplyFilters}
-                  // handleClearURLParams={clearFilterURLParams}
                 />
 
                 <div className='flex items-center bg-gray-100 rounded-lg p-1'>
@@ -378,18 +314,11 @@ const Employees = () => {
               {viewMode === 'grid' ? (
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
                   {employees.map((employee) => (
-                    <EmployeeCard
-                      key={employee.id}
-                      employee={employee}
-                      getStatusBadge={getStatusBadge}
-                    />
+                    <EmployeeCard key={employee.id} employee={employee} />
                   ))}
                 </div>
               ) : (
-                <EmployeeTable
-                  employees={employees}
-                  getStatusBadge={getStatusBadge}
-                />
+                <EmployeeTable employees={employees} />
               )}
             </div>
           ) : (
@@ -404,7 +333,7 @@ const Employees = () => {
       {/* Invite employee modal */}
       <InviteEmployeeModal
         isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
+        setIsInviteModalOpen={setIsInviteModalOpen}
       />
     </div>
   );

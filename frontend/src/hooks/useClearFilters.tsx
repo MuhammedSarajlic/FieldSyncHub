@@ -18,6 +18,7 @@ const useClearFilters = (): IUseClearFilters => {
           newParams.delete(option.name);
         }
       });
+      newParams.delete('q');
       return newParams;
     });
   };

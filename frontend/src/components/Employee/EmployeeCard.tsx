@@ -1,17 +1,17 @@
 import { motion } from 'framer-motion';
-import { ChevronRight, Mail, Phone } from 'lucide-react';
+import { ChevronRight, Mail, Phone, User } from 'lucide-react';
 import { TEmployee } from '../../types/Employee';
-import images from '../../constants/images';
 import { useNavigate } from 'react-router';
+import { getStatusBadge } from '../../utils/FuntionHelpers/getStatusBadge';
 
 interface IEmployeeCard {
   employee: TEmployee;
-  getStatusBadge: (status: string) => { background: string; indicator: string };
 }
 
-const EmployeeCard = ({ employee, getStatusBadge }: IEmployeeCard) => {
+const EmployeeCard = ({ employee }: IEmployeeCard) => {
   const navigate = useNavigate();
   const { background, indicator } = getStatusBadge(employee.status);
+
   return (
     <div className='relative bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-all duration-300 flex flex-col h-full'>
       {/* Status Badge */}
@@ -30,11 +30,17 @@ const EmployeeCard = ({ employee, getStatusBadge }: IEmployeeCard) => {
       <div className='p-5 flex-grow flex flex-col'>
         <div className='flex items-start space-x-4'>
           <div className='flex-shrink-0'>
-            <img
-              src={images.img}
-              alt={employee.user.firstName}
-              className='h-16 w-16 rounded-full object-cover border-2 border-gray-100'
-            />
+            {employee.imageUrl ? (
+              <img
+                src={employee.imageUrl}
+                alt={employee.user.firstName}
+                className='h-16 w-16 rounded-full object-cover border-2 border-gray-100'
+              />
+            ) : (
+              <div className='h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-100'>
+                <User className='h-8 w-8 text-gray-500' />
+              </div>
+            )}
           </div>
           <div className='flex-1 min-w-0'>
             <h3 className='text-lg font-semibold text-gray-900 truncate'>

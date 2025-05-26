@@ -17,10 +17,10 @@ import Marketing from './pages/Marketing';
 import Settings from './pages/Settings';
 import QuoteDetails from './pages/quotes/QuoteDetails';
 import Workspace from './pages/Workspace';
-import PrivateRoute from './utils/PrivateRoute';
-import PublicRoute from './utils/PublicRoute';
+import PrivateRoute from './utils/AuthHelpers/PrivateRoute';
+import PublicRoute from './utils/AuthHelpers/PublicRoute';
 import { useAuth } from './context/AuthProvider';
-import RequireWorkspace from './utils/RequireWorkspace';
+import RequireWorkspace from './utils/AuthHelpers/RequireWorkspace';
 import InviteJoin from './pages/InviteJoin';
 import EmployeeDetails from './pages/employees/EmployeeDetails';
 

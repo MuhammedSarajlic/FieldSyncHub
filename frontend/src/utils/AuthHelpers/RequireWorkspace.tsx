@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router';
-import { useAuth } from '../context/AuthProvider';
+import { useAuth } from '../../context/AuthProvider';
 
 const RequireWorkspace = () => {
   const { user, loading } = useAuth();

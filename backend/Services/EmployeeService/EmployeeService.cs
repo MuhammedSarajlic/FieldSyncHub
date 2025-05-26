@@ -67,37 +67,31 @@ namespace backend.Services.EmployeeService
         {
             var queryable = _context.Employees.Include(e => e.User).AsQueryable();
 
-            // 🔎 Search by name (q)
             if (!string.IsNullOrWhiteSpace(q))
             {
                 queryable = queryable.Where(s => s.User.FirstName.Contains(q));
             }
 
-            // 🔍 Filter: WorkspaceId
             if (workspaceId.HasValue && workspaceId != Guid.Empty)
             {
                 queryable = queryable.Where(e => e.WorkspaceId == workspaceId);
             }
 
-            // 🔍 Filter: Position
             if (!string.IsNullOrWhiteSpace(position))
             {
                 queryable = queryable.Where(e => e.Position != null && e.Position.Contains(position));
             }
 
-            // 🔍 Filter: Department
             if (!string.IsNullOrWhiteSpace(department))
             {
                 queryable = queryable.Where(e => e.Department != null && e.Department.Contains(department));
             }
 
-            // 🔍 Filter: Status
             if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
             {
                 queryable = queryable.Where(e => e.Status.ToLower() == status.ToLower());
             }
 
-            // 🔍 Filter: Hire Date Range
             if (hireDateMin.HasValue)
             {
                 queryable = queryable.Where(e => e.HireDate >= hireDateMin.Value);
@@ -107,10 +101,9 @@ namespace backend.Services.EmployeeService
                 queryable = queryable.Where(e => e.HireDate <= hireDateMax.Value);
             }
 
-            // 🔄 Sorting
             queryable = sortBy?.ToLower() switch
             {
-                "name" => sort == "desc" ? queryable.OrderByDescending(s => s.User.FirstName) : queryable.OrderBy(s => s.User.LastName),
+                "name" => sort == "desc" ? queryable.OrderByDescending(s => s.User.FirstName) : queryable.OrderBy(s => s.User.FirstName),
                 _ => queryable.OrderBy(s => s.User.FirstName)
             };
 

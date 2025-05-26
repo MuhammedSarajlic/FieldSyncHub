@@ -1,17 +1,24 @@
-import { MoreHorizontal } from 'lucide-react';
+import { User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TEmployee } from '../../../types/Employee';
-import images from '../../../constants/images';
+import { useNavigate } from 'react-router';
+import { getStatusBadge } from '../../../utils/FuntionHelpers/getStatusBadge';
 
 interface IEmployeeTable {
   employees: TEmployee[];
-  getStatusBadge: (status: string) => { background: string; indicator: string };
 }
 
-const EmployeeTable = ({
-  employees: filteredEmployees,
-  getStatusBadge,
-}: IEmployeeTable) => {
+const EmployeeTable = ({ employees: filteredEmployees }: IEmployeeTable) => {
+  const navigate = useNavigate();
+  function formatDate(isoDateString: string): string {
+    const date = new Date(isoDateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+    return date.toLocaleDateString(undefined, options);
+  }
   return (
     <div className='bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100'>
       <div className='overflow-x-auto'>
@@ -25,12 +32,13 @@ const EmployeeTable = ({
                 'Location',
                 'Status',
                 'Hire Date',
-                'Actions',
               ].map((header, index) => (
                 <th
                   key={index}
                   scope='col'
-                  className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                  className={`px-6 py-3 ${
+                    header === 'Actions' ? 'text-right' : 'text-left'
+                  } text-xs font-medium text-gray-500 uppercase tracking-wider`}
                 >
                   {header}
                 </th>
@@ -39,7 +47,6 @@ const EmployeeTable = ({
           </thead>
           <tbody className='bg-white divide-y divide-gray-200'>
             {filteredEmployees.map((employee, idx) => (
-              // const { background, indicator } = getStatusBadge(employee.status);
               <motion.tr
                 key={employee.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -48,17 +55,23 @@ const EmployeeTable = ({
                   duration: 0.2,
                   delay: idx * 0.05,
                 }}
-                className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                onClick={() => navigate(`/employees/${employee.id}`)}
+                className={'hover:bg-gray-50 cursor-pointer'}
               >
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <div className='flex items-center'>
-                    <div className='flex-shrink-0 h-10 w-10 relative'>
-                      <img
-                        src={images.img}
-                        alt={employee.user.firstName}
-                        className='h-10 w-10 rounded-full'
-                      />
-                      <div className='absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-emerald-500'></div>
+                    <div className='flex-shrink-0'>
+                      {employee.imageUrl ? (
+                        <img
+                          src={employee.imageUrl}
+                          alt={employee.user.firstName}
+                          className='h-12 w-12 rounded-full object-cover border-2 border-gray-100'
+                        />
+                      ) : (
+                        <div className='h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-100'>
+                          <User className='h-6 w-6 text-gray-500' />
+                        </div>
+                      )}
                     </div>
                     <div className='ml-4'>
                       <div className='text-sm font-medium text-gray-900'>
@@ -72,19 +85,17 @@ const EmployeeTable = ({
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <div className='text-sm text-gray-900'>
-                    {employee.position ?? 'position'}
+                    {employee.position ?? 'N/A'}
                   </div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <div className='text-sm text-gray-900'>
-                    {/* {employee.department} */}
-                    dep
+                    {employee.department ?? 'N/A'}
                   </div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <div className='text-sm text-gray-900'>
-                    {/* {employee.location} */}
-                    location
+                    {employee.location ?? 'N/A'}
                   </div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
@@ -103,24 +114,7 @@ const EmployeeTable = ({
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {/* {formatDate(employee.hireDate)} */}
-                  11.02.2025
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
-                  <div className='flex space-x-1 justify-end'>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      className='text-blue-600 hover:text-blue-900 p-1'
-                    >
-                      View
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      className='text-gray-500 hover:text-gray-700 p-1'
-                    >
-                      <MoreHorizontal className='h-4 w-4' />
-                    </motion.button>
-                  </div>
+                  {formatDate(employee.hireDate)}
                 </td>
               </motion.tr>
             ))}

@@ -1,70 +1,71 @@
-import { Check, Copy, Plus, UserPlus, X } from 'lucide-react';
+import { Check, Plus, UserPlus, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { SendInvite, SendInviteBulk } from '../../../services/Invite';
+import { SendInviteBulk } from '../../../services/Invite';
 import { useAuth } from '../../../context/AuthProvider';
+import { isValidEmail } from '../../../utils/FuntionHelpers/isValidEmail';
 
 interface IInviteEmployeeModal {
   isOpen: boolean;
-  onClose: () => void;
+  setIsInviteModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
+const InviteEmployeeModal = ({
+  isOpen,
+  setIsInviteModalOpen,
+}: IInviteEmployeeModal) => {
   const { user } = useAuth();
   const [emails, setEmails] = useState(['']);
-  // const [email, setEmail] = useState('');
-  // const [copied, setCopied] = useState(false);
-  // const [role, setRole] = useState('Technician');
-  // const [department, setDepartment] = useState('Field Service');
   const [sending, setSending] = useState(false);
-  const [success, setSuccess] = useState(false);
-  // const magicLink = 'http://localhost.com/invite/87689';
+  const [success, setSuccess] = useState<boolean | null>(null);
 
   const handleInvite = async () => {
-    // setSending(true);
-    // const response = await SendInvite(emails[0], user?.workspace.id as string);
-    // if (response.status === 200) {
-    //   setSending(false);
-    //   setSuccess(true);
-    //   onClose();
-    // }
-    // console.log(response);
-    setSending(true);
-    const response = await SendInviteBulk(emails, user?.workspace.id);
-    if (response.status === 200) {
+    try {
+      const validEmails = emails
+        .map((e) => e.trim())
+        .filter(Boolean)
+        .filter(isValidEmail);
+
+      if (validEmails.length === 0) {
+        setSuccess(false);
+        return;
+      }
+
+      setSending(true);
+      setSuccess(null);
+      const response = await SendInviteBulk(validEmails, user?.workspace.id);
       setSending(false);
-      setSuccess(true);
-      onClose();
-      setEmails(['']);
+
+      if (response?.status === 200) {
+        setSuccess(true);
+        setEmails(['']);
+      } else {
+        setSuccess(false);
+      }
+    } catch (error) {
+      console.log(error);
+      setSuccess(false);
+      setSending(false);
     }
-    console.log(response);
   };
 
-  const updateEmail = (index, value) => {
+  const updateEmail = (index: number, value: string) => {
     const newEmails = [...emails];
     newEmails[index] = value;
     setEmails(newEmails);
   };
 
-  const removeEmail = (index) => {
+  const removeEmail = (index: number) => {
     if (emails.length > 1) {
       const newEmails = emails.filter((_, i) => i !== index);
       setEmails(newEmails);
+    } else {
+      setEmails(['']);
     }
   };
 
   const addEmailField = () => {
     setEmails([...emails, '']);
   };
-
-  // const copyToClipboard = async () => {
-  //   try {
-  //     await navigator.clipboard.writeText(magicLink);
-  //     setCopied(true);
-  //     setTimeout(() => setCopied(false), 2000);
-  //   } catch (err) {
-  //     console.error('Failed to copy: ', err);
-  //   }
-  // };
 
   if (!isOpen) return null;
 
@@ -81,13 +82,17 @@ const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
               <h2 className='text-lg font-semibold text-gray-900'>
                 Invite team members
               </h2>
-              <p className='text-sm text-gray-500'>
-                Invite teammates to earn free components.
+              <p className='text-sm font-normal text-gray-500'>
+                Send invitations to new team members.
               </p>
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              setIsInviteModalOpen(false);
+              setSuccess(null);
+              setEmails(['']);
+            }}
             className='text-gray-400 hover:text-gray-600 transition-colors cursor-pointer'
           >
             <X className='w-5 h-5' />
@@ -103,23 +108,34 @@ const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
             </h3>
             <div className='space-y-3'>
               {emails.map((email, index) => (
-                <div key={index} className='relative'>
-                  <input
-                    type='email'
-                    value={email}
-                    onChange={(e) => updateEmail(index, e.target.value)}
-                    placeholder={
-                      index === 0 && email === '' ? 'hi@yourcompany.com' : ''
-                    }
-                    className='w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
-                  />
-                  {emails.length > 1 && email === '' && (
-                    <button
-                      onClick={() => removeEmail(index)}
-                      className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
-                    >
-                      <X className='w-4 h-4' />
-                    </button>
+                <div key={index}>
+                  <div className='relative'>
+                    <input
+                      type='email'
+                      value={email}
+                      onChange={(e) => updateEmail(index, e.target.value)}
+                      placeholder={
+                        index === 0 && email === '' ? 'hi@yourcompany.com' : ''
+                      }
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent text-sm ${
+                        email.trim() !== '' && !isValidEmail(email)
+                          ? 'border-red-300 focus:ring-red-200'
+                          : 'border-gray-200 focus:ring-blue-500'
+                      }`}
+                    />
+                    {emails.length > 1 && (
+                      <button
+                        onClick={() => removeEmail(index)}
+                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                      >
+                        <X className='w-4 h-4' />
+                      </button>
+                    )}
+                  </div>
+                  {email.trim() !== '' && !isValidEmail(email) && (
+                    <p className='mt-1 ml-1 text-xs text-red-500'>
+                      Please enter a valid email
+                    </p>
                   )}
                 </div>
               ))}
@@ -137,35 +153,64 @@ const InviteEmployeeModal = ({ isOpen, onClose }: IInviteEmployeeModal) => {
           {/* Send Invites Button */}
           <button
             onClick={handleInvite}
-            className='w-full bg-bg-primary text-white py-3 px-4 rounded-xl font-medium hover:bg-bg-primary-hover transition-colors cursor-pointer'
+            disabled={
+              sending ||
+              emails.every((email) => email.trim() === '') ||
+              emails.some(
+                (email) => email.trim() !== '' && !isValidEmail(email)
+              )
+            }
+            className={`w-full py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 min-h-[44px] ${
+              sending ||
+              emails.every((email) => email.trim() === '') ||
+              emails.some(
+                (email) => email.trim() !== '' && !isValidEmail(email)
+              )
+                ? 'bg-[#e0ece7] text-[#356852] cursor-auto'
+                : 'bg-bg-primary text-white hover:bg-bg-primary-hover cursor-pointer'
+            }`}
           >
-            Send invites
+            {sending ? (
+              <>
+                <div className='relative w-4 h-4'>
+                  <Loader2 className='absolute top-0 left-0 w-full h-full animate-spin [animation-duration:2000ms] transform-origin-center' />
+                </div>
+                <span>Sending...</span>
+              </>
+            ) : (
+              'Send invites'
+            )}
           </button>
 
-          {/* Magic Link Section */}
-          {/* <div>
-            <h3 className='text-sm font-medium text-gray-900 mb-4'>
-              Invite via magic link
-            </h3>
-            <div className='relative'>
-              <input
-                type='text'
-                value={magicLink}
-                readOnly
-                className='w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-600'
-              />
-              <button
-                onClick={copyToClipboard}
-                className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer'
-              >
-                {copied ? (
-                  <Check className='w-4 h-4 text-green-500' />
-                ) : (
-                  <Copy className='w-4 h-4' />
-                )}
-              </button>
+          {/* Notification */}
+          {success === true && (
+            <div className='rounded-md bg-green-50 p-4'>
+              <div className='flex'>
+                <div className='flex-shrink-0'>
+                  <Check className='h-5 w-5 text-green-500' />
+                </div>
+                <div className='ml-3'>
+                  <p className='text-sm font-medium text-green-800'>
+                    Invites sent successfully!
+                  </p>
+                </div>
+              </div>
             </div>
-          </div> */}
+          )}
+          {success === false && (
+            <div className='rounded-md bg-red-50 p-4'>
+              <div className='flex'>
+                <div className='flex-shrink-0'>
+                  <X className='h-5 w-5 text-red-500' />
+                </div>
+                <div className='ml-3'>
+                  <p className='text-sm font-medium text-red-800'>
+                    Failed to send invites. Please check the email addresses.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

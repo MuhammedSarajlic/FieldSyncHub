@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../context/AuthProvider';
+import { useAuth } from '../../context/AuthProvider';
 import { Navigate, Outlet, useLocation } from 'react-router';
 
 interface IPrivateRoute {

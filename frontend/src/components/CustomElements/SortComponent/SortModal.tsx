@@ -1,21 +1,61 @@
 import { ArrowUpDown, Check } from 'lucide-react';
 import { TSortOption } from '../../../types/ServiceItem';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 
 interface ISortModal {
   setIsSortModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isSortModalOpen: boolean;
   sortOptions: TSortOption[];
-  currentSort: string;
-  handleSort: (optionId: string) => void;
 }
 
 const SortModal = ({
   setIsSortModalOpen,
   isSortModalOpen,
   sortOptions,
-  currentSort,
-  handleSort,
 }: ISortModal) => {
+  const [currentSort, setCurrentSort] = useState<string>('');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const handleSort = (optionId: string) => {
+    setCurrentSort(optionId);
+    const selectedOption = sortOptions.find((opt) => opt.id === optionId);
+    if (selectedOption) {
+      setSearchParams((prev) => {
+        const newParams = new URLSearchParams(prev);
+        newParams.set('sortBy', selectedOption.sortBy);
+        newParams.set('sort', selectedOption.sort);
+        return newParams;
+      });
+    } else {
+      setSearchParams((prev) => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('sortBy');
+        newParams.delete('sort');
+        return newParams;
+      });
+    }
+    setIsSortModalOpen(false);
+  };
+
+  useEffect(() => {
+    const sortByParam = searchParams.get('sortBy');
+    const sortOrderParam = searchParams.get('sort');
+
+    if (sortByParam && sortOrderParam) {
+      const matchingOption = sortOptions.find(
+        (opt) => opt.sortBy === sortByParam && opt.sort === sortOrderParam
+      );
+      if (matchingOption) {
+        setCurrentSort(matchingOption.id);
+      } else {
+        setCurrentSort('');
+      }
+    } else {
+      setCurrentSort('');
+    }
+  }, [searchParams]);
+
   return (
     <div className='relative'>
       <button

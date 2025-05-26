@@ -1,4 +1,6 @@
-export const employeeFilterOptions = [
+import { TFilterOption } from '../../types/FilterOption';
+
+export const employeeFilterOptions: TFilterOption[] = [
   {
     name: 'hireDate',
     label: 'Hire date',
