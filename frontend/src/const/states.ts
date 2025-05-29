@@ -1,3 +1,5 @@
+import { TAddInvoice } from '../types/Invoice';
+
 export const customerInitialState = {
   customerId: '',
   firstName: '',
@@ -88,4 +90,18 @@ export const addJobInitialState = {
   sendReminder: false,
   reminderDaysBefore: 0,
   createdBy: '',
+};
+
+export const initialAddInvoiceState: TAddInvoice = {
+  customerId: '',
+  workspaceId: '',
+  items: [{ name: '', description: '', quantity: 1, unitPrice: 0 }],
+  taxRate: 0.1,
+  discount: 0,
+  discountType: 'percentage',
+  issueDate: new Date().toISOString().split('T')[0],
+  customDueDate: undefined,
+  paymentTerms: 'net15',
+  notes: '',
+  internalNotes: '',
 };

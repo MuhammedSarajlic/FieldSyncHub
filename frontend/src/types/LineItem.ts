@@ -2,11 +2,15 @@ import { TServiceItem } from './ServiceItem';
 
 export type TLineItem = {
   lineItemId: string;
-  serviceItemId: string;
-  serviceItem: TServiceItem;
+  serviceItemId?: string;
+  serviceItem?: TServiceItem;
+  name?: string;
+  unitPrice?: number;
+  description?: string;
   quantity: number;
   totalPrice: number;
-  jobId: string;
+  jobId?: string;
+  invoiceId?: string;
 };
 
 export type TModalLineItem = {
@@ -16,7 +20,9 @@ export type TModalLineItem = {
 };
 
 export type TAddLineItem = {
-  serviceItemId: string;
-  //   serviceItem: TServiceItem;
+  serviceItemId?: string;
   quantity: number;
+  name?: string;
+  unitPrice?: number;
+  description?: string;
 };

@@ -1,4 +1,4 @@
-import { TFilterOption } from '../../types/FilterOption';
+import { TFilterOption } from '../../../types/FilterOption';
 
 export const employeeFilterOptions: TFilterOption[] = [
   {
