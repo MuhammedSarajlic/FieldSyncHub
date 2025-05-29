@@ -5,6 +5,7 @@ using backend.Services.CustomFieldValueService;
 using backend.Services.EmailService;
 using backend.Services.EmployeeInviteService;
 using backend.Services.EmployeeService;
+using backend.Services.InvoiceService;
 using backend.Services.JobService;
 using backend.Services.NotesService;
 using backend.Services.Phones;
@@ -35,5 +36,6 @@ public static class ServiceExtension
         services.AddScoped<IEmployeeService, EmployeeService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IInvoiceService, InvoiceService>();
     }
 }

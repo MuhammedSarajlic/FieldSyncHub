@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250528200715_InvoiceUpdate")]
+    partial class InvoiceUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -270,9 +273,6 @@ namespace backend.Migrations
                     b.Property<decimal>("TaxRate")
                         .HasColumnType("decimal(65,30)");
 
-                    b.Property<Guid>("WorkspaceId")
-                        .HasColumnType("char(36)");
-
                     b.HasKey("InvoiceId");
 
                     b.HasIndex("CustomerId");
@@ -419,26 +419,17 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
                     b.Property<Guid?>("InvoiceId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid?>("JobId")
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("longtext");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("ServiceItemId")
+                    b.Property<Guid>("ServiceItemId")
                         .HasColumnType("char(36)");
-
-                    b.Property<decimal?>("UnitPrice")
-                        .HasColumnType("decimal(65,30)");
 
                     b.HasKey("LineItemId");
 
@@ -774,10 +765,9 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.LineItem", b =>
                 {
-                    b.HasOne("backend.Models.Invoice", "Invoice")
+                    b.HasOne("backend.Models.Invoice", null)
                         .WithMany("Items")
-                        .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("InvoiceId");
 
                     b.HasOne("backend.Models.Job", null)
                         .WithMany("LineItems")
@@ -785,9 +775,9 @@ namespace backend.Migrations
 
                     b.HasOne("backend.Models.ServiceItem", "ServiceItem")
                         .WithMany()
-                        .HasForeignKey("ServiceItemId");
-
-                    b.Navigation("Invoice");
+                        .HasForeignKey("ServiceItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("ServiceItem");
                 });

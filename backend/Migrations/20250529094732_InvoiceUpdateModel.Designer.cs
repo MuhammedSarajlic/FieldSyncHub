@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250529094732_InvoiceUpdateModel")]
+    partial class InvoiceUpdateModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -774,10 +777,9 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.LineItem", b =>
                 {
-                    b.HasOne("backend.Models.Invoice", "Invoice")
+                    b.HasOne("backend.Models.Invoice", null)
                         .WithMany("Items")
-                        .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("InvoiceId");
 
                     b.HasOne("backend.Models.Job", null)
                         .WithMany("LineItems")
@@ -786,8 +788,6 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.ServiceItem", "ServiceItem")
                         .WithMany()
                         .HasForeignKey("ServiceItemId");
-
-                    b.Navigation("Invoice");
 
                     b.Navigation("ServiceItem");
                 });

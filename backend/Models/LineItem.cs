@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace backend.Models;
 
@@ -8,16 +9,39 @@ public class LineItem
     [Key]
     public Guid LineItemId { get; set; }
 
-    // Reference to ServiceItem instead of copying fields
-    public Guid ServiceItemId { get; set; }
+    public Guid? ServiceItemId { get; set; }
     public ServiceItem? ServiceItem { get; set; }
 
-    // Job-specific fields
+    public string? Name { get; set; }
+    public decimal? UnitPrice { get; set; }
+    public string? Description { get; set; }
+
     public int Quantity { get; set; } = 1;
-    public decimal? TotalPrice { get; set; } // Optional price override
+    public decimal TotalPrice
+    {
+        get
+        {
+            if (ServiceItem != null)
+            {
+                return ServiceItem.UnitPrice * Quantity;
+            }
+            else if (UnitPrice.HasValue)
+            {
+                return UnitPrice.Value * Quantity;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+    }
 
     // Relationships
-    public Guid JobId { get; set; }
-    [NotMapped]
+    public Guid? JobId { get; set; }
+    [JsonIgnore]
     public Job? Job { get; set; }
+
+    public Guid? InvoiceId { get; set; }
+    [JsonIgnore]
+    public Invoice? Invoice { get; set; }
 }
