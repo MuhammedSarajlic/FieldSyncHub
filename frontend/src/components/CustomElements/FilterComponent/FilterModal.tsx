@@ -10,7 +10,7 @@ import { TFilterOption } from '../../../types/FilterOption';
 interface IFilterModal<T> {
   initialFilters: T;
   filterOptions: TFilterOption[];
-  onApply: (filters: T) => void;
+  // onApply: (filters: T) => void;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isFilterModalOpen: boolean;
 }
@@ -18,12 +18,12 @@ interface IFilterModal<T> {
 const FilterModal = <T extends Record<string, any>>({
   initialFilters,
   filterOptions,
-  onApply,
+  // onApply,
   setIsFilterModalOpen,
   isFilterModalOpen,
 }: IFilterModal<T>) => {
   const [filters, setFilters] = useState<T>(initialFilters);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { clearFilterURLParams } = useClearFilters();
 
   const handleFilterChange = (filterName: keyof T, value: any) => {
@@ -47,13 +47,46 @@ const FilterModal = <T extends Record<string, any>>({
     }));
   };
 
+  const handleApplyFilters = (filters: any) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+
+      filterOptions.forEach((option) => {
+        const value = filters[option.name];
+
+        if (option.type === 'range' && value) {
+          if (value.min) {
+            newParams.set(`${option.name}Min`, value.min.toString());
+          } else {
+            newParams.delete(`${option.name}Min`);
+          }
+
+          if (value.max) {
+            newParams.set(`${option.name}Max`, value.max.toString());
+          } else {
+            newParams.delete(`${option.name}Max`);
+          }
+        } else if (option.type === 'dropdown' && value === 'all') {
+          // Skip default "all"
+          newParams.delete(option.name);
+        } else if (value) {
+          newParams.set(option.name, value.toString());
+        } else {
+          newParams.delete(option.name);
+        }
+      });
+
+      return newParams;
+    });
+  };
+
   const handleReset = () => {
     setFilters(initialFilters);
     clearFilterURLParams(filterOptions);
   };
 
   const handleApply = () => {
-    onApply(filters);
+    handleApplyFilters(filters);
     setIsFilterModalOpen(false);
   };
 

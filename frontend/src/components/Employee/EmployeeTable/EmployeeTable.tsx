@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { TEmployee } from '../../../types/Employee';
 import { useNavigate } from 'react-router';
 import { getStatusBadge } from '../../../utils/FuntionHelpers/getStatusBadge';
+import { formatDate } from '../../../utils/FuntionHelpers/formatDate';
 
 interface IEmployeeTable {
   employees: TEmployee[];
@@ -10,15 +11,7 @@ interface IEmployeeTable {
 
 const EmployeeTable = ({ employees: filteredEmployees }: IEmployeeTable) => {
   const navigate = useNavigate();
-  function formatDate(isoDateString: string): string {
-    const date = new Date(isoDateString);
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    };
-    return date.toLocaleDateString(undefined, options);
-  }
+
   return (
     <div className='bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100'>
       <div className='overflow-x-auto'>

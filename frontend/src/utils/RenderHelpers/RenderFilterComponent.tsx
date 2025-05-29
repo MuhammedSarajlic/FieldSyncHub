@@ -56,7 +56,9 @@ export const renderFilterComponent = ({
               placeholder={option.min}
               className='w-full border border-gray-300 shadow-sm rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500'
             />
-            <span className='text-gray-500'>to</span>
+            {option.valueType === 'date' && (
+              <span className='text-gray-500'>to</span>
+            )}
             <input
               type={option.valueType}
               value={filters[option.name]?.max || ''}

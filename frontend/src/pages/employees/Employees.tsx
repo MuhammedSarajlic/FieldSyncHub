@@ -20,7 +20,7 @@ import icons from '../../constants/icons';
 import Search from '../../components/CustomElements/Search';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
-import { employeeFilterOptions } from '../../constants/Options/EmployeeFilterOptions';
+import { employeeFilterOptions } from '../../constants/Options/FilterOptions/EmployeeFilterOptions';
 
 const Employees = () => {
   const { user } = useAuth();
@@ -141,7 +141,7 @@ const Employees = () => {
       <div className='flex-1 flex flex-col overflow-hidden ml-[260px]'>
         <Navbar />
 
-        <div className='flex-1 overflow-y-auto px-4'>
+        <div className='flex-1 overflow-y-auto px-4 pb-10'>
           {/* Header */}
           <div className='flex items-center justify-between mb-6'>
             <div>
@@ -275,7 +275,7 @@ const Employees = () => {
                   filterOptions={employeeFilterOptions}
                   setIsFilterModalOpen={setIsFilterModalOpen}
                   isFilterModalOpen={isFilterModalOpen}
-                  onApply={handleApplyFilters}
+                  // onApply={handleApplyFilters}
                 />
 
                 <div className='flex items-center bg-gray-100 rounded-lg p-1'>

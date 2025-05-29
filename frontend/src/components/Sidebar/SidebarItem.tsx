@@ -1,7 +1,12 @@
 import { useLocation, useNavigate } from 'react-router';
 import { sidebarItem } from '../../types/sidebar_types';
 
-const SidebarItem = ({ item, isCollapsed }) => {
+interface ISidebarItem {
+  item: sidebarItem;
+  isCollapsed: boolean;
+}
+
+const SidebarItem = ({ item, isCollapsed }: ISidebarItem) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isActive = pathname === `/${item.slug}`;
