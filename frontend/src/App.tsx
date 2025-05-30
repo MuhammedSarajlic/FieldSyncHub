@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import Calendar from './pages/Calendar';
 import Customers from './pages/customers/Customers';
 import Jobs from './pages/jobs/Jobs';
-import Invoices from './pages/Invoices';
+import Invoices from './pages/invoices/Invoices';
 import CustomerDetails from './pages/customers/CustomerDetails';
 import JobDetails from './pages/jobs/JobsDetails';
 import Employees from './pages/employees/Employees';
@@ -23,6 +23,7 @@ import { useAuth } from './context/AuthProvider';
 import RequireWorkspace from './utils/AuthHelpers/RequireWorkspace';
 import InviteJoin from './pages/InviteJoin';
 import EmployeeDetails from './pages/employees/EmployeeDetails';
+import InvoiceDetails from './pages/invoices/InvoiceDetails';
 
 function App() {
   const { loading } = useAuth();
@@ -57,6 +58,7 @@ function App() {
           <Route path='jobs/:jobId' element={<JobDetails />} />
           <Route path='jobsd' element={<JobDetails />} />
           <Route path='invoices' element={<Invoices />} />
+          <Route path='invoices/:invoiceId' element={<InvoiceDetails />} />
           <Route path='employees' element={<Employees />} />
           <Route path='employees/:employeeId' element={<EmployeeDetails />} />
           <Route path='dispatch' element={<Dispatch />} />

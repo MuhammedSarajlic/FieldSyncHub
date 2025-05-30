@@ -7,22 +7,21 @@ import { TCustomer } from '../../../types/Customer';
 import { TServiceItem } from '../../../types/ServiceItem';
 import { GetServiceItemsByFilter } from '../../../services/ServiceItem';
 import CustomButton from '../../CustomElements/CustomButton';
-import { TAddInvoice } from '../../../types/Invoice';
+import { TInvoice, TUpdateInvoice } from '../../../types/Invoice';
 import { TAddLineItem } from '../../../types/LineItem';
-import { CreateInvoice } from '../../../services/Invoice';
 import { useAuth } from '../../../context/AuthProvider';
-import { initialAddInvoiceState } from '../../../const/states';
+import { updateInvoice } from '../../../services/Invoice';
 
 interface ICreateInvoiceModal {
   isOpen: boolean;
   onClose: () => void;
-  fetchAllInvoicesByWorkspace: () => Promise<void>;
+  invoice: TInvoice;
 }
 
-const CreateInvoiceModal = ({
+const UpdateInvoiceModal = ({
   isOpen,
   onClose,
-  fetchAllInvoicesByWorkspace,
+  invoice,
 }: ICreateInvoiceModal) => {
   const { user } = useAuth();
   const [customers, setCustomers] = useState<TCustomer[]>();
@@ -31,7 +30,7 @@ const CreateInvoiceModal = ({
   }>({});
   const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  const [invoice, setInvoice] = useState<TAddInvoice>(initialAddInvoiceState);
+  const [updatedInvoice, setUpdatedInvoice] = useState<TUpdateInvoice>(invoice);
 
   const debouncedSearch = useCallback((query: string) => {
     if (!query) {
@@ -57,7 +56,7 @@ const CreateInvoiceModal = ({
   };
 
   const handleAddItem = () => {
-    setInvoice((prevInvoice) => ({
+    setUpdatedInvoice((prevInvoice) => ({
       ...prevInvoice,
       items: [
         ...prevInvoice.items,
@@ -67,7 +66,7 @@ const CreateInvoiceModal = ({
   };
 
   const handleRemoveItem = (index: number) => {
-    setInvoice((prevInvoice) => {
+    setUpdatedInvoice((prevInvoice) => {
       const newItems = prevInvoice.items.filter((_, i) => i !== index);
       return {
         ...prevInvoice,
@@ -84,7 +83,7 @@ const CreateInvoiceModal = ({
     field: keyof TAddLineItem | 'name',
     value: any
   ) => {
-    setInvoice((prevInvoice) => {
+    setUpdatedInvoice((prevInvoice) => {
       const newItems = [...prevInvoice.items];
       if (newItems[index]) {
         newItems[index] = { ...newItems[index], [field]: value };
@@ -97,8 +96,21 @@ const CreateInvoiceModal = ({
     });
   };
 
+  const subtotal = updatedInvoice.items.reduce(
+    (sum, item) => sum + item.quantity * (item.unitPrice ?? 0),
+    0
+  );
+
+  const taxableAmount = subtotal;
+  const tax = taxableAmount * updatedInvoice.taxRate;
+  const discountAmount =
+    updatedInvoice.discountType === 'percentage'
+      ? subtotal * (updatedInvoice.discount / 100)
+      : updatedInvoice.discount;
+  const total = subtotal + tax - discountAmount;
+
   const selectServiceItem = (index: number, service: TServiceItem) => {
-    setInvoice((prevInvoice) => {
+    setUpdatedInvoice((prevInvoice) => {
       const updatedItems = [...prevInvoice.items];
       if (updatedItems[index]) {
         updatedItems[index] = {
@@ -120,7 +132,7 @@ const CreateInvoiceModal = ({
 
   useEffect(() => {
     const newSuggestions: { [key: number]: TServiceItem[] } = {};
-    invoice.items.forEach((item, index) => {
+    updatedInvoice.items.forEach((item, index) => {
       if (item.name && focusedIndex === index) {
         // Only filter if this input is focused
         const filtered = serviceItems
@@ -134,41 +146,31 @@ const CreateInvoiceModal = ({
       }
     });
     setServiceSuggestions(newSuggestions);
-  }, [serviceItems, invoice.items, focusedIndex]);
+  }, [serviceItems, updatedInvoice.items, focusedIndex]);
 
-  // Calculations (moved inside component for clarity)
-  const subtotal = invoice.items.reduce(
-    (sum, item) => sum + item.quantity * (item.unitPrice ?? 0),
-    0
-  );
-  const taxableAmount = subtotal;
-  const tax = taxableAmount * invoice.taxRate;
-  const discountAmount =
-    invoice.discountType === 'percentage'
-      ? subtotal * (invoice.discount / 100)
-      : invoice.discount;
-  const total = subtotal + tax - discountAmount;
+  const handleUpdateInvoice = async () => {
+    if (!updatedInvoice) return;
+
+    try {
+      // Example service call to update
+      const response = await updateInvoice(invoice.invoiceId, updatedInvoice);
+      if (response.status === 200) {
+        alert('Invoice updated successfully!');
+        onClose();
+      } else {
+        alert('Failed to update invoice');
+      }
+    } catch (error) {
+      console.error('Update failed:', error);
+      alert('An error occurred while updating invoice.');
+    }
+  };
 
   const fetchAllCustomers = async () => {
     const response = await GetAllCustomers();
     if (response.status === 200) {
       setCustomers(response.data.payload);
     }
-  };
-
-  const handleCreateInvoice = async () => {
-    if (!user) return;
-    const updatedInvoice = {
-      ...invoice,
-      workspaceId: user?.workspace.id,
-    };
-    const response = await CreateInvoice(updatedInvoice);
-    if (response.status === 201) {
-      await fetchAllInvoicesByWorkspace();
-      onClose();
-      setInvoice(initialAddInvoiceState);
-    }
-    console.log(response);
   };
 
   useEffect(() => {
@@ -183,7 +185,7 @@ const CreateInvoiceModal = ({
         {/* Header */}
         <div className='p-6 border-b border-gray-100 flex justify-between items-center'>
           <div>
-            <h2 className='text-2xl font-bold text-heading'>Create Invoice</h2>
+            <h2 className='text-2xl font-bold text-heading'>Update Invoice</h2>
           </div>
           <button
             onClick={onClose}
@@ -199,14 +201,14 @@ const CreateInvoiceModal = ({
           <div className='flex flex-col md:flex-row gap-16 mb-10'>
             {/* Left: Customer Selection (2/3 width) */}
             <div className='w-full md:w-2/3 space-y-4'>
-              <div className='space-y-2'>
+              {/* <div className='space-y-2'>
                 <label className='block text-sm font-medium text-gray-700'>
                   Customer
                 </label>
                 <div className='flex items-center gap-2.5'>
                   <select
                     onChange={(e) =>
-                      setInvoice((prev) => ({
+                      setUpdatedInvoice((prev) => ({
                         ...prev,
                         customerId: e.target.value,
                       }))
@@ -221,7 +223,7 @@ const CreateInvoiceModal = ({
                           key={customer.customerId}
                           value={customer.customerId}
                         >
-                          {customer.fullName}
+                          {customer.firstName} {customer.lastName}
                         </option>
                       ))}
                   </select>
@@ -232,7 +234,7 @@ const CreateInvoiceModal = ({
                     handleClick={() => alert('Open Create Customer Modal')}
                   />
                 </div>
-              </div>
+              </div> */}
 
               {customers && (
                 <div className='p-4 border border-gray-200 rounded-lg bg-gray-50'>
@@ -243,7 +245,8 @@ const CreateInvoiceModal = ({
                     <strong>Name:</strong>{' '}
                     {
                       customers.find(
-                        (c) => c.customerId.toString() === invoice.customerId
+                        (c) =>
+                          c.customerId.toString() === updatedInvoice.customerId
                       )?.fullName
                     }
                   </p>
@@ -251,7 +254,8 @@ const CreateInvoiceModal = ({
                     <strong>Email:</strong>{' '}
                     {
                       customers.find(
-                        (c) => c.customerId.toString() === invoice.customerId
+                        (c) =>
+                          c.customerId.toString() === updatedInvoice.customerId
                       )?.email[0]
                     }
                   </p>
@@ -274,9 +278,9 @@ const CreateInvoiceModal = ({
                 <div className='relative'>
                   <input
                     type='date'
-                    value={invoice.issueDate}
+                    value={updatedInvoice.issueDate.split('T')[0]}
                     onChange={(e) =>
-                      setInvoice((prev) => ({
+                      setUpdatedInvoice((prev) => ({
                         ...prev,
                         issueDate: e.target.value,
                       }))
@@ -294,9 +298,9 @@ const CreateInvoiceModal = ({
                   Payment Terms
                 </label>
                 <select
-                  value={invoice.paymentTerms}
+                  value={updatedInvoice.paymentTerms}
                   onChange={(e) =>
-                    setInvoice((prev) => ({
+                    setUpdatedInvoice((prev) => ({
                       ...prev,
                       paymentTerms: e.target.value,
                       customDueDate:
@@ -314,7 +318,7 @@ const CreateInvoiceModal = ({
                 </select>
               </div>
 
-              {invoice.paymentTerms === 'custom' && (
+              {updatedInvoice.paymentTerms === 'custom' && (
                 <div className='space-y-2'>
                   <label className='block text-sm font-medium text-gray-700'>
                     Due Date
@@ -322,9 +326,9 @@ const CreateInvoiceModal = ({
                   <div className='relative'>
                     <input
                       type='date'
-                      value={invoice.customDueDate}
+                      value={updatedInvoice.dueDate}
                       onChange={(e) =>
-                        setInvoice((prev) => ({
+                        setUpdatedInvoice((prev) => ({
                           ...prev,
                           customDueDate: e.target.value,
                         }))
@@ -361,7 +365,7 @@ const CreateInvoiceModal = ({
             </div>
 
             <div className='space-y-6'>
-              {invoice.items.map((item, index) => (
+              {updatedInvoice.items.map((item, index) => (
                 <div key={index} className='space-y-1'>
                   {/* Line 1 */}
                   <div className='grid grid-cols-12 gap-4 items-center'>
@@ -458,7 +462,7 @@ const CreateInvoiceModal = ({
                     </div>
 
                     <div className='col-span-2 text-right pt-1.5'>
-                      {invoice.items.length > 1 && (
+                      {updatedInvoice.items.length > 1 && (
                         <ButtonIcon
                           name='Remove'
                           customTextStyle='text-red-500'
@@ -483,9 +487,9 @@ const CreateInvoiceModal = ({
                   </label>
                   <div className='flex items-center gap-3'>
                     <select
-                      value={invoice.discountType}
+                      value={updatedInvoice.discountType}
                       onChange={(e) =>
-                        setInvoice((prev) => ({
+                        setUpdatedInvoice((prev) => ({
                           ...prev,
                           discountType: e.target.value,
                         }))
@@ -499,9 +503,9 @@ const CreateInvoiceModal = ({
                       type='number'
                       min='0'
                       step='0.1'
-                      value={invoice.discount}
+                      value={updatedInvoice.discount}
                       onChange={(e) =>
-                        setInvoice((prev) => ({
+                        setUpdatedInvoice((prev) => ({
                           ...prev,
                           discount: parseFloat(e.target.value),
                         }))
@@ -523,9 +527,9 @@ const CreateInvoiceModal = ({
                       min='0'
                       max='100'
                       step='0.1'
-                      value={invoice.taxRate * 100}
+                      value={updatedInvoice.taxRate * 100}
                       onChange={(e) =>
-                        setInvoice((prev) => ({
+                        setUpdatedInvoice((prev) => ({
                           ...prev,
                           taxRate: parseFloat(e.target.value) / 100,
                         }))
@@ -551,7 +555,7 @@ const CreateInvoiceModal = ({
                   </span>
                 </div>
                 <div className='flex justify-between text-sm text-gray-700 mb-1'>
-                  <span>Tax ({invoice.taxRate * 100}%)</span>
+                  <span>Tax ({updatedInvoice.taxRate * 100}%)</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
                 <div className='flex justify-between text-lg font-bold pt-2 border-t border-gray-100 mt-2'>
@@ -571,9 +575,12 @@ const CreateInvoiceModal = ({
                 </label>
                 <textarea
                   rows={3}
-                  value={invoice.notes}
+                  value={updatedInvoice.notes}
                   onChange={(e) =>
-                    setInvoice((prev) => ({ ...prev, notes: e.target.value }))
+                    setUpdatedInvoice((prev) => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
                   }
                   className='w-full p-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500'
                   placeholder='Visible to the customer'
@@ -585,9 +592,9 @@ const CreateInvoiceModal = ({
                 </label>
                 <textarea
                   rows={3}
-                  value={invoice.internalNotes}
+                  value={updatedInvoice.internalNotes}
                   onChange={(e) =>
-                    setInvoice((prev) => ({
+                    setUpdatedInvoice((prev) => ({
                       ...prev,
                       internalNotes: e.target.value,
                     }))
@@ -605,7 +612,7 @@ const CreateInvoiceModal = ({
             <div className='flex space-x-3'>
               <button
                 onClick={() => {
-                  console.log(invoice);
+                  console.log(updatedInvoice);
                 }}
                 className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center'
               >
@@ -614,7 +621,7 @@ const CreateInvoiceModal = ({
               </button>
               <CustomButton
                 title='Send Invoice'
-                handleBtnClick={handleCreateInvoice}
+                handleBtnClick={handleUpdateInvoice}
               />
             </div>
           </div>
@@ -624,4 +631,4 @@ const CreateInvoiceModal = ({
   );
 };
 
-export default CreateInvoiceModal;
+export default UpdateInvoiceModal;

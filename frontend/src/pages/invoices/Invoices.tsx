@@ -6,7 +6,7 @@ import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import Search from '../../components/CustomElements/Search';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { formatDate } from '../../utils/FuntionHelpers/formatDate';
 import { invoiceFilterOptions } from '../../constants/Options/FilterOptions/InvoiceFilterOptions';
 import { inoviceSortOptions } from '../../constants/Options/SortOptions/InvoiceSortOptions';
@@ -14,9 +14,11 @@ import CreateInvoiceModal from '../../components/Invoice/Modal/CreateInvoiceModa
 import { GetAllInvoicesByWorkspaceId } from '../../services/Invoice';
 import { TInvoice } from '../../types/Invoice';
 import { useAuth } from '../../context/AuthProvider';
+import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
 
 const Invoices = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
@@ -107,36 +109,6 @@ const Invoices = () => {
   //     technician: 'Mike T.',
   //   },
   // ];
-
-  const getInvoiceStatus = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return {
-          color: 'bg-green-50 text-green-700 border-green-100',
-          icon: <CheckCircle className='w-4 h-4 text-green-500' />,
-        };
-      case 'sent':
-        return {
-          color: 'bg-blue-50 text-blue-700 border-blue-100',
-          icon: <Clock className='w-4 h-4 text-blue-500' />,
-        };
-      case 'overdue':
-        return {
-          color: 'bg-red-50 text-red-700 border-red-100',
-          icon: <AlertCircle className='w-4 h-4 text-red-500' />,
-        };
-      case 'draft':
-        return {
-          color: 'bg-gray-50 text-gray-700 border-gray-100',
-          icon: <FileText className='w-4 h-4 text-gray-500' />,
-        };
-      default:
-        return {
-          color: 'bg-gray-50 text-gray-700 border-gray-100',
-          icon: <FileText className='w-4 h-4 text-gray-500' />,
-        };
-    }
-  };
 
   // Summary calculations
   const totalOutstanding = invoices
@@ -337,6 +309,9 @@ const Invoices = () => {
                   {invoices.map((invoice) => (
                     <tr
                       key={invoice.invoiceId}
+                      onClick={() =>
+                        navigate(`/invoices/${invoice.invoiceNumber}`)
+                      }
                       className='hover:bg-gray-50 group h-[70px] cursor-pointer'
                     >
                       <td className='px-6 py-4 whitespace-nowrap'>

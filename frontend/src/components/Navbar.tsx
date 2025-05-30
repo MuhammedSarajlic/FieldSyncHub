@@ -13,7 +13,7 @@ const Navbar = ({ customer }: INavbar) => {
   const [isActivityFeedOpen, setIsActivityFeedOpen] = useState<boolean>(false);
   return (
     <>
-      <div className='mb-4 px-4 h-16 flex items-center justify-between'>
+      <div className='mb-4 px-4 h-16 flex items-center justify-between border-b border-gray-100'>
         <div className='text-[#6c757d] flex items-center space-x-3'>
           <span>{user?.workspace?.name}</span>
           {customer && (
