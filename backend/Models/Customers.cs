@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace backend.Models;
@@ -11,6 +12,9 @@ public class Customers
     public string? FirstName { get; set; }
     [Required]
     public string? LastName { get; set; }
+
+    [NotMapped]
+    public string? FullName => $"{FirstName} {LastName}";
     public string? CompanyName { get; set; }
     public bool IsCompany { get; set; }
     public List<string>? Email { get; set; }

@@ -2,6 +2,9 @@ using backend.Data;
 using backend.Dtos.InvoiceDto;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace backend.Services.InvoiceService;
 
@@ -34,6 +37,20 @@ public class InvoiceService : IInvoiceService
             .Include(i => i.Items)
             .ThenInclude(item => item.ServiceItem)
             .FirstOrDefaultAsync(i => i.InvoiceId == id);
+    }
+
+    public async Task<Invoice?> GetInvoiceByInvoiceNumber(string invoiceNumber)
+    {
+        return await _context.Invoices
+            .AsNoTracking()
+            .Include(i => i.Customer)
+            .ThenInclude(c => c.Properties)
+            .Include(i => i.Customer)
+            .ThenInclude(c => c.CustomerPhones)
+            .Include(i => i.Job)
+            .Include(i => i.Items)
+            .ThenInclude(item => item.ServiceItem)
+            .FirstOrDefaultAsync(i => i.InvoiceNumber == invoiceNumber);
     }
 
     public async Task<IEnumerable<Invoice>> GetInvoicesByWorkspaceId(Guid workspaceId)
@@ -82,11 +99,11 @@ public class InvoiceService : IInvoiceService
         return invoice;
     }
 
-    public async Task<Invoice?> UpdateInvoice(Guid id, UpdateInvoiceDto invoiceDto)
+    public async Task<Invoice?> UpdateInvoice(Guid invoiceId, UpdateInvoiceDto invoiceDto)
     {
         var existingInvoice = await _context.Invoices
             .Include(i => i.Items)
-            .FirstOrDefaultAsync(i => i.InvoiceId == id);
+            .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
 
         if (existingInvoice == null)
         {
@@ -208,5 +225,86 @@ public class InvoiceService : IInvoiceService
         }
 
         return $"{prefix}{datePart}-{sequence:D3}";
+    }
+
+    public byte[] GenerateDocument(Invoice invoice)
+    {
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
+        var pdf = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Margin(40);
+                page.Size(PageSizes.A4);
+
+                page.Header().Text("INVOICE").FontSize(24).Bold().AlignCenter();
+
+                page.Content().Column(col =>
+                {
+                    col.Spacing(20);
+
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text($"Invoice #: {invoice.InvoiceNumber}");
+                            // c.Item().Text($"Service Date: {invoice.ServiceDate:MMMM dd, yyyy}");
+                            c.Item().Text($"Payment Terms: {invoice.PaymentTerms}");
+                            c.Item().Text($"Due Date: {invoice.DueDate:MMMM dd, yyyy}");
+                        });
+
+                        row.ConstantItem(200).Column(c =>
+                        {
+                            c.Item().Text("Inat Digital").Bold();
+                            c.Item().Text("Muhamed Sarajlic");
+                            c.Item().Text("(387) 624-0991");
+                            c.Item().Text("lordmest.lm@gmail.com");
+                        });
+                    });
+
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(4);
+                            columns.RelativeColumn(1);
+                            columns.RelativeColumn(2);
+                            columns.RelativeColumn(2);
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Text("Services").Bold();
+                            header.Cell().Text("Qty").Bold();
+                            header.Cell().Text("Unit Price").Bold();
+                            header.Cell().Text("Amount").Bold();
+                        });
+
+                        foreach (var item in invoice.Items)
+                        {
+                            table.Cell().Text(item.Name);
+                            table.Cell().Text($"{item.Quantity}");
+                            table.Cell().Text($"${item.UnitPrice:0.00}");
+                            table.Cell().Text($"${item.TotalPrice:0.00}");
+                        }
+                    });
+
+                    col.Item().AlignRight().Column(totals =>
+                    {
+                        totals.Item().Text($"Subtotal: ${invoice.Subtotal:0.00}");
+                        totals.Item().Text($"Tax: ${invoice.TaxRate:0.00}");
+                        totals.Item().Text($"Total: ${invoice.Total:0.00}").Bold();
+                    });
+
+                    col.Item().Text("See our Terms & Conditions").Italic().FontSize(10);
+                    // col.Item().Text(invoice.TermsUrl).FontSize(10).Underline().Color(Colors.Blue.Medium);
+                });
+
+                page.Footer().AlignCenter().Text("Inat Digital 1 of 1").FontSize(10);
+            });
+        });
+
+        return pdf.GeneratePdf();
     }
 }

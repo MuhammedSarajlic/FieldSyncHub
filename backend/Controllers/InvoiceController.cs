@@ -34,6 +34,17 @@ public class InvoiceController : ControllerBase
         return Ok(invoice);
     }
 
+    [HttpGet("invoice-number/{invoiceNumber}")]
+    public async Task<ActionResult<Invoice>> GetByInvoiceNumber(string invoiceNumber)
+    {
+        var invoice = await _invoiceService.GetInvoiceByInvoiceNumber(invoiceNumber);
+        if (invoice == null)
+        {
+            return NotFound();
+        }
+        return Ok(invoice);
+    }
+
     [HttpGet("workspace/{workspaceId}")]
     public async Task<ActionResult<IEnumerable<Invoice>>> GetByWorkspaceId(Guid workspaceId)
     {
@@ -52,14 +63,14 @@ public class InvoiceController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = createdInvoice.InvoiceId }, createdInvoice);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateInvoiceDto invoiceDto)
+    [HttpPut("{invoiceId}")]
+    public async Task<IActionResult> Update(Guid invoiceId, [FromBody] UpdateInvoiceDto invoiceDto)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
-        var updatedInvoice = await _invoiceService.UpdateInvoice(id, invoiceDto);
+        var updatedInvoice = await _invoiceService.UpdateInvoice(invoiceId, invoiceDto);
         if (updatedInvoice == null)
         {
             return NotFound();
@@ -76,5 +87,17 @@ public class InvoiceController : ControllerBase
             return NotFound();
         }
         return NoContent();
+    }
+
+    [HttpGet("invoice/{id}/pdf")]
+    public async Task<IActionResult> GetInvoicePdf(Guid id)
+    {
+        var invoice = await _invoiceService.GetInvoiceById(id);
+        if (invoice == null)
+            return NotFound();
+
+        var document = _invoiceService.GenerateDocument(invoice);
+
+        return File(document, "application/pdf", $"invoice-{id}.pdf");
     }
 }
