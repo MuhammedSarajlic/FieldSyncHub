@@ -64,7 +64,7 @@ function App() {
           <Route path='dispatch' element={<Dispatch />} />
           <Route path='requests' element={<Requests />} />
           <Route path='quotes' element={<Quotes />} />
-          <Route path='quotesd' element={<QuoteDetails />} />
+          <Route path='quotes/:quoteId' element={<QuoteDetails />} />
           <Route path='pricebook' element={<Pricebook />} />
           <Route path='marketing' element={<Marketing />} />
           <Route path='settings' element={<Settings />} />

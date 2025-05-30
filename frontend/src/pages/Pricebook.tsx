@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar/Sidebar';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/Navbar/Navbar';
 import { Plus } from 'lucide-react';
 import PricebookItemModal from '../components/Pricebook/PricebookModals/PricebookItemModal';
 import ButtonIcon from '../components/CustomElements/ButtonIcon';

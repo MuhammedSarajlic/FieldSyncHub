@@ -13,7 +13,7 @@ import {
   FiEye,
   FiStar,
 } from 'react-icons/fi';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import EditEmployeeModal from '../../components/Employee/EmployeeModals/EditEmployeeModal';
 import { useParams } from 'react-router';

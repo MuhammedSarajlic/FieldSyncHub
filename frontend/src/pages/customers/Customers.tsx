@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import ButtonIcon from '../../components/CustomElements/ButtonIcon';
 import CustomButton from '../../components/CustomElements/CustomButton';
 import Search from '../../components/CustomElements/Search';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
-import Table from '../../components/Table/Table';
+import CustomerTable from '../../components/CustomerTable/CustomerTable';
 import icons from '../../constants/icons';
 import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/CreateCustomerModal';
 import { TAddCustomer, TCustomer } from '../../types/Customer';
@@ -127,7 +127,7 @@ const Customers = () => {
                 </div>
               </div>
             </div>
-            <Table data={listOfCustomers} />
+            <CustomerTable data={listOfCustomers} />
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar/Sidebar';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/Navbar/Navbar';
 import {
   FiUser,
   FiUsers,

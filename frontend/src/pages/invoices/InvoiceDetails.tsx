@@ -2,7 +2,7 @@ import { useParams } from 'react-router';
 import { GetInvoiceByInvoiceNumber } from '../../services/Invoice';
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/Navbar/Navbar';
 import {
   Printer,
   Mail,

@@ -1,4 +1,4 @@
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import { useEffect, useState } from 'react';
 import { Plus, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import ButtonIcon from '../../components/CustomElements/ButtonIcon';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import icons from '../../constants/icons';
 import CustomerDetailsTab from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTab';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UserPlus, Grid, List } from 'lucide-react';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import InviteEmployeeModal from '../../components/Employee/EmployeeModals/InviteEmployeeModal';
 import { useAuth } from '../../context/AuthProvider';
