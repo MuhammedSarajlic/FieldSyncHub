@@ -39,3 +39,17 @@ export type TAddInvoice = {
   notes: string;
   internalNotes: string;
 };
+
+export type TUpdateInvoice = {
+  customerId: string;
+  jobId?: string;
+  items: TAddLineItem[];
+  taxRate: number;
+  discount: number;
+  discountType: string;
+  issueDate: string;
+  paymentTerms: string;
+  customDueDate?: string | undefined;
+  notes: string;
+  internalNotes: string;
+};

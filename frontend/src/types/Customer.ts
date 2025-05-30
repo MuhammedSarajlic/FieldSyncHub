@@ -7,6 +7,7 @@ export type TCustomer = {
   customerId: string;
   firstName: string;
   lastName: string;
+  fullName: string;
   companyName: string;
   isCompany: boolean;
   email: string[];
