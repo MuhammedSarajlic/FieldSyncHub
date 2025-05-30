@@ -1,11 +1,11 @@
 import { Link } from 'react-router';
 import { TCustomer } from '../../types/Customer';
 
-interface ITableBodyItem {
+interface ICustomerTableBodyItem {
   item: TCustomer;
 }
 
-const TableBodyItem = ({ item }: ITableBodyItem) => {
+const CustomerTableBodyItem = ({ item }: ICustomerTableBodyItem) => {
   return (
     <Link
       to={`/customers/${item.customerId}`}
@@ -41,4 +41,4 @@ const TableBodyItem = ({ item }: ITableBodyItem) => {
   );
 };
 
-export default TableBodyItem;
+export default CustomerTableBodyItem;

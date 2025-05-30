@@ -1,6 +1,6 @@
 import icons from '../../constants/icons';
 
-const TablePagination = () => {
+const CustomerTablePagination = () => {
   return (
     <div className='flex items-center justify-center'>
       {/* <div className='w-1/2'>
@@ -53,4 +53,4 @@ const TablePagination = () => {
   );
 };
 
-export default TablePagination;
+export default CustomerTablePagination;

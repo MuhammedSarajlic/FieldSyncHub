@@ -1,4 +1,4 @@
-const TableHeader = () => {
+const CustomerTableHeader = () => {
   return (
     <div className='px-4 py-3 flex items-center bg-gray-100 uppercase tracking-wider font-medium'>
       <div className='flex items-center justify-center pr-4'>
@@ -12,4 +12,4 @@ const TableHeader = () => {
   );
 };
 
-export default TableHeader;
+export default CustomerTableHeader;

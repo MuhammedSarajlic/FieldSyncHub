@@ -1,21 +1,51 @@
-import { TCustomer } from '../../types/Customer';
-import TableBody from './TableBody';
-import TableHeader from './TableHeader';
-import TablePagination from './TablePagination';
+import { usePagination } from '../../hooks/usePagination';
+import TableHeader from './TableComponents/TableHeader';
+import TableBody from './TableComponents/TableBody';
+import TablePagination from './TableComponents/TablePagination';
+import { useLocation, useNavigate } from 'react-router';
+import TableEmptyState from './TableComponents/TableEmptyState';
+import { TTableColumns } from '../../types/Table';
 
-interface ITable {
-  data: TCustomer[];
+interface ITable<T> {
+  data: T[];
+  columns: TTableColumns;
 }
 
-const Table = ({ data }: ITable) => {
+const Table = <T extends { id: string | number }>({
+  data,
+  columns,
+}: ITable<T>) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { currentPage, onPageChange } = usePagination(1, 'page');
+
+  const handleRowClick = (item: T) => {
+    const newPath = `${location.pathname}/${item.id}`;
+    navigate(newPath);
+  };
+
   return (
-    <>
-      <div className='mb-5 w-full border-[1px] border-border-primary rounded-lg overflow-hidden'>
-        <TableHeader />
-        <TableBody data={data} />
+    <div className='bg-white rounded-lg shadow overflow-hidden'>
+      <div className='overflow-x-auto'>
+        <table className='min-w-full divide-y divide-gray-200'>
+          <TableHeader columns={columns} />
+          <TableBody<T>
+            data={data}
+            columns={columns}
+            onRowClick={handleRowClick}
+            emptyState={<TableEmptyState />}
+            loading={false} // Set to true when loading data
+          />
+        </table>
       </div>
-      <TablePagination />
-    </>
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={9}
+        totalItems={data.length}
+        onPageChange={onPageChange}
+        itemsPerPage={10}
+      />
+    </div>
   );
 };
 
