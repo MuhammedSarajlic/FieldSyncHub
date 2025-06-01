@@ -232,7 +232,7 @@ public class JobService : IJobService
 
         return $"{prefix}{datePart}-{sequence:D3}";
     }
-    public async Task <Job?> GetJobByJobNumber(string jobNumber)
+    public async Task<Job?> GetJobByJobNumber(string jobNumber)
     {
         return await _context.Jobs.Where(j => j.JobNumber == jobNumber)
                             .Include(j => j.LineItems)
@@ -244,4 +244,30 @@ public class JobService : IJobService
                             .FirstOrDefaultAsync();
 
     }
+    public async Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace)
+    {
+        var job = await _context.Jobs.FirstOrDefaultAsync(j => j.JobId == jobId);
+
+        if (job == null)
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
+
+        if (replace)
+        {
+            job.Tags = tags;
+        }
+        else
+        {
+            var updatedTags = new HashSet<string>(job.Tags ?? []);
+            foreach (var tag in tags)
+                updatedTags.Add(tag);
+
+            job.Tags = updatedTags.ToList();
+        }
+
+        job.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<Job> { Success = true, Payload = job };
+    }
+
 }
