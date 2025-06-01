@@ -1,0 +1,56 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using backend.Dtos.QuoteDto;
+using backend.Services.QuoteService;
+using Microsoft.AspNetCore.Mvc;
+
+namespace backend.Controllers
+{
+    [ApiController]
+    [Route("api/quote")]
+    public class QuoteController : ControllerBase
+    {
+        private readonly IQuoteService _quoteService;
+
+        public QuoteController(IQuoteService quoteService)
+        {
+            _quoteService = quoteService;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<QuoteDto>>> GetAllQuotes()
+        {
+            return Ok(await _quoteService.GetAllAsync());
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<QuoteDto>> GetQuoteById(Guid id)
+        {
+            var result = await _quoteService.GetByIdAsync(id);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<QuoteDto>> CreateQuote(CreateQuoteDto dto)
+        {
+            var result = await _quoteService.CreateAsync(dto);
+            return Ok(result);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<QuoteDto>> UpdateQuote(Guid id, CreateQuoteDto dto)
+        {
+            var result = await _quoteService.UpdateAsync(id, dto);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteQuote(Guid id)
+        {
+            var success = await _quoteService.DeleteAsync(id);
+            return success ? NoContent() : NotFound();
+        }
+    }
+}

@@ -11,9 +11,6 @@ namespace backend.Services.EmployeeInviteService
 {
     public class EmployeeInviteService : IEmployeeInviteService
     {
-        private const string ApiKey = "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";
-        private const string SenderEmail = "invmansis@gmail.com";
-        private const string SenderName = "FieldSyncHub";
         private readonly DataContext _context;
         private readonly IEmailService _emailService;
         private readonly ITokenService _tokenService;
@@ -72,7 +69,7 @@ namespace backend.Services.EmployeeInviteService
 
             await _context.SaveChangesAsync();
 
-            var newuser = newUser.Adapt<UserDto>();  
+            var newuser = newUser.Adapt<UserDto>();
 
             var tokens = _tokenService.GenerateTokens(newuser);
             _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
