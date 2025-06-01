@@ -19,7 +19,23 @@ public class Invoice
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }
     public string DiscountType { get; set; }
-    public decimal Total => Subtotal + (Subtotal * TaxRate) - Discount;
+    public decimal Total
+    {
+        get
+        {
+            decimal discountedSubtotal = Subtotal;
+            if (DiscountType?.ToLower() == "percentage" && Discount > 0)
+            {
+                discountedSubtotal -= Subtotal * (Discount / 100);
+            }
+            else if (DiscountType?.ToLower() == "fixed" && Discount > 0)
+            {
+                discountedSubtotal -= Discount;
+            }
+
+            return discountedSubtotal + (discountedSubtotal * TaxRate);
+        }
+    }
 
     public string Status { get; set; } = "draft"; // draft, sent, paid, overdue
     public DateTime IssueDate { get; set; } = DateTime.UtcNow;

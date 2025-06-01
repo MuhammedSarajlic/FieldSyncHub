@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("WebApiDatabase"),
-        new MySqlServerVersion(new Version(8, 0, 36)) 
+        new MySqlServerVersion(new Version(8, 0, 36))
     ));
 
 builder.Services.AddCors(options =>
