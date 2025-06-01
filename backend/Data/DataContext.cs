@@ -1,5 +1,6 @@
 using backend.Models;
 using backend.Models.Quote;
+using backend.Models.Request;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data;
@@ -25,6 +26,7 @@ public class DataContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Quote> Quotes => Set<Quote>();
+    public DbSet<Request> Requests => Set<Request>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

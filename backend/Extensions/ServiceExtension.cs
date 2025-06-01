@@ -11,6 +11,7 @@ using backend.Services.NotesService;
 using backend.Services.Phones;
 using backend.Services.PropertyService;
 using backend.Services.QuoteService;
+using backend.Services.RequestService;
 using backend.Services.ServiceItemService;
 using backend.Services.TokenService;
 using backend.Services.UserService;
@@ -39,5 +40,6 @@ public static class ServiceExtension
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IQuoteService, QuoteService>();
+        services.AddScoped<IRequestService, RequestService>();
     }
 }

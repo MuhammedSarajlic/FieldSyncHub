@@ -8,14 +8,11 @@ public class LineItem
 {
     [Key]
     public Guid LineItemId { get; set; }
-
     public Guid? ServiceItemId { get; set; }
     public ServiceItem? ServiceItem { get; set; }
-
     public string? Name { get; set; }
     public decimal? UnitPrice { get; set; }
     public string? Description { get; set; }
-
     public int Quantity { get; set; } = 1;
     public decimal TotalPrice
     {

@@ -24,9 +24,11 @@ public class Customers
     public bool InvoiceFollowUps { get; set; }
     public bool Archived { get; set; }
     public List<string>? Tags { get; set; }
-    public ICollection<CustomFields>? CustomFields {get; set;}
+    public ICollection<CustomFields>? CustomFields { get; set; }
     public ICollection<Notes>? Notes { get; set; }
     public ICollection<Property>? Properties { get; set; }
     public ICollection<CustomerPhone>? CustomerPhones { get; set; }
+    public DateTime CreatedAt { get; set; } =  DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } =  DateTime.UtcNow;
 
 }
