@@ -24,4 +24,9 @@ public class QuoteDto
     public string Notes { get; set; }
     public string InternalNotes { get; set; }
     public List<string> AttachmentUrls { get; set; }
+
+    public static implicit operator List<object>(QuoteDto v)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.Dtos.QuoteDto;
 using backend.Models.Quote;
+using backend.Response;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -66,4 +67,66 @@ public class QuoteService : IQuoteService
         return $"QT-{year}-{month}-{count.ToString("000")}";
     }
 
+    public async Task<ApiResponse<List<Quote>>> GetQuotesByFilter(Guid? workspaceId, string? status, DateTime? createdMin, DateTime? createdMax, decimal? totalMin, decimal? totalMax, string? sortBy, string? sort)
+    {
+        var queryable = _context.Quotes
+        .Include(q => q.Customer)
+        .Include(q => q.LineItems)
+        .AsQueryable();
+
+        if (workspaceId.HasValue && workspaceId != Guid.Empty)
+        {
+            queryable = queryable.Where(q => q.WorkspaceId == workspaceId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<QuoteStatus>(status, true, out var parsedStatus))
+        {
+            queryable = queryable.Where(q => q.Status == parsedStatus);
+        }
+
+        if (createdMin.HasValue)
+        {
+            queryable = queryable.Where(q => q.CreatedAt >= createdMin.Value);
+        }
+
+        if (createdMax.HasValue)
+        {
+            queryable = queryable.Where(q => q.CreatedAt <= createdMax.Value);
+        }
+
+        if (totalMin.HasValue)
+        {
+            queryable = queryable.Where(q => q.Total >= totalMin.Value);
+        }
+
+        if (totalMax.HasValue)
+        {
+            queryable = queryable.Where(q => q.Total <= totalMax.Value);
+        }
+
+        queryable = sortBy?.ToLower() switch
+        {
+            "customer" => sort == "desc"
+                ? queryable.OrderByDescending(q => q.Customer.FirstName)
+                : queryable.OrderBy(q => q.Customer.FirstName),
+
+            "created" => sort == "desc"
+                ? queryable.OrderByDescending(q => q.CreatedAt)
+                : queryable.OrderBy(q => q.CreatedAt),
+
+            "total" => sort == "desc"
+                ? queryable.OrderByDescending(q => q.Total)
+                : queryable.OrderBy(q => q.Total),
+
+            _ => queryable.OrderByDescending(q => q.CreatedAt)
+        };
+
+        var result = await queryable.ToListAsync();
+
+        return new ApiResponse<List<Quote>>
+        {
+            Success = true,
+            Payload = result
+        };
+    }
 }

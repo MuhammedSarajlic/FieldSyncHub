@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using backend.Dtos.QuoteDto;
+using backend.Models.Quote;
+using backend.Response;
 using backend.Services.QuoteService;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,6 +53,31 @@ namespace backend.Controllers
         {
             var success = await _quoteService.DeleteAsync(id);
             return success ? NoContent() : NotFound();
+        }
+
+        [HttpGet("filter")]
+        public async Task<ActionResult<ApiResponse<List<Quote>>>> GetByFilter(
+        [FromQuery] Guid? workspaceId,
+        [FromQuery] string? status,
+        [FromQuery] DateTime? createdMin,
+        [FromQuery] DateTime? createdMax,
+        [FromQuery] decimal? totalMin,
+        [FromQuery] decimal? totalMax,
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sort)
+        {
+            var result = await _quoteService.GetQuotesByFilter(
+                workspaceId,
+                status,
+                createdMin,
+                createdMax,
+                totalMin,
+                totalMax,
+                sortBy,
+                sort
+            );
+
+            return Ok(result);
         }
     }
 }
