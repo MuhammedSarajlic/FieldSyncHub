@@ -56,7 +56,7 @@ public class JobService : IJobService
         // Set CreatedAt and UpdatedAt timestamps
         newJob.CreatedAt = DateTime.UtcNow;
         newJob.UpdatedAt = DateTime.UtcNow;
-
+        newJob.JobNumber = await GenerateJobNumberAsync();
         // Validate Customer
         var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == newJob.CustomerId);
         if (!customerExists)
@@ -152,11 +152,11 @@ public class JobService : IJobService
             .Include(j => j.LineItems)
             .Include(j => j.Property)
             .Include(j => j.Customer)
-            .ToListAsync(); 
+            .ToListAsync();
 
         var filteredJobs = jobs
             .Where(j => j.AssignedTeamMemberIds != null && j.AssignedTeamMemberIds.Contains(employeeId))
-            .ToList(); 
+            .ToList();
 
         return new ApiResponse<List<Job>> { Success = true, Payload = filteredJobs };
     }
@@ -206,5 +206,42 @@ public class JobService : IJobService
         var result = await query.ToListAsync();
 
         return new ApiResponse<List<Job>> { Success = true, Payload = result };
+    }
+
+    private async Task<string> GenerateJobNumberAsync()
+    {
+        var today = DateTime.UtcNow.Date;
+        var prefix = "JOB-";
+        var datePart = today.ToString("yyMMdd");
+
+        var lastJob = await _context.Jobs
+            .Where(j => j.JobNumber.StartsWith(prefix + datePart))
+            .OrderByDescending(j => j.JobNumber)
+            .Select(j => j.JobNumber)
+            .FirstOrDefaultAsync();
+
+        int sequence = 1;
+        if (lastJob != null)
+        {
+            var parts = lastJob.Split('-');
+            if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+            {
+                sequence = lastSequence + 1;
+            }
+        }
+
+        return $"{prefix}{datePart}-{sequence:D3}";
+    }
+    public async Task <Job?> GetJobByJobNumber(string jobNumber)
+    {
+        return await _context.Jobs.Where(j => j.JobNumber == jobNumber)
+                            .Include(j => j.LineItems)
+                                .ThenInclude(l => l.ServiceItem)
+                            .Include(j => j.Customer)
+                                .ThenInclude(c => c.CustomerPhones)
+                            .Include(j => j.Customer)
+                                .ThenInclude(c => c.Properties)
+                            .FirstOrDefaultAsync();
+
     }
 }

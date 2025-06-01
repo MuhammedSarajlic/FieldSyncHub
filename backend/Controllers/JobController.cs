@@ -47,7 +47,7 @@ public class JobController : ControllerBase
         await _jobService.UpdateJob(updatedJob);
         return Ok();
     }
-      [HttpGet("customer/{customerId:guid}")]
+    [HttpGet("customer/{customerId:guid}")]
     public async Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId)
     {
         return await _jobService.GetJobsByCustomerId(customerId);
@@ -67,8 +67,8 @@ public class JobController : ControllerBase
         [FromQuery] decimal? totalMax,
         [FromQuery] string? priority,
         [FromQuery] string? status,
-        [FromQuery] string? sortBy,    
-        [FromQuery] string? sortDir    
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sortDir
     )
     {
         return await _jobService.GetJobsByFilter(
@@ -77,5 +77,15 @@ public class JobController : ControllerBase
             priority, status,
             sortBy, sortDir
         );
+    }
+    [HttpGet("job-number/{jobNumber}")]
+    public async Task<ActionResult<Job>> GetByInvoiceNumber(string jobNumber)
+    {
+        var job = await _jobService.GetJobByJobNumber(jobNumber);
+        if (job == null)
+        {
+            return NotFound();
+        }
+        return Ok(job);
     }
 }
