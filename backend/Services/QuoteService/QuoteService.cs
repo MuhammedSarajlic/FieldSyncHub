@@ -129,4 +129,10 @@ public class QuoteService : IQuoteService
             Payload = result
         };
     }
+
+    public async Task<QuoteDto> GetByWorkspaceIdAsync(Guid workspaceId)
+    {
+        var quote = await _context.Quotes.Include(q => q.LineItems).FirstOrDefaultAsync(q => q.WorkspaceId == workspaceId);
+        return quote.Adapt<QuoteDto>();
+    }
 }

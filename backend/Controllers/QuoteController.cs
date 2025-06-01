@@ -79,5 +79,11 @@ namespace backend.Controllers
 
             return Ok(result);
         }
+        [HttpGet("workspace/{workspaceId}")]
+        public async Task<ActionResult<QuoteDto>> GetByWorkspaceIdAsync(Guid workspaceId)
+        {
+            var result = await _quoteService.GetByWorkspaceIdAsync(workspaceId);
+            return result == null ? NotFound() : Ok(result);
+        }
     }
 }
