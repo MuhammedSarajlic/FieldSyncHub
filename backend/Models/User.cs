@@ -15,6 +15,7 @@ public class User
     public DateTime UpdatedAt { get; set; }
     public Workspace? Workspace { get; set; }
     public UserRole? Role { get; set; }
+    public Guid? WorkspaceId { get; set; }
 }
 
 public enum UserRole

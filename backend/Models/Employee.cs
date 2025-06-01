@@ -4,7 +4,7 @@ namespace backend.Models
 {
     public class Employee
     {
-        [Key] 
+        [Key]
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public User? User { get; set; }
@@ -12,7 +12,13 @@ namespace backend.Models
         public Workspace? Workspace { get; set; }
         public string? Position { get; set; }
         public string? Department { get; set; }
-        public string Status { get; set; } = "active"; 
+        public string Status { get; set; } = "active";
         public DateTime HireDate { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? Location { get; set; }
+        public bool Availability { get; set; } = true;
     }
 }

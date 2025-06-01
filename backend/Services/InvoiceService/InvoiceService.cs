@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.Dtos.InvoiceDto;
 using backend.Models;
+using backend.Response;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -306,5 +307,79 @@ public class InvoiceService : IInvoiceService
         });
 
         return pdf.GeneratePdf();
+    }
+
+    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByFilter(Guid? workspaceId, string? status, DateTime? dueDateMin, DateTime? dueDateMax, decimal? totalMin, decimal? totalMax, string? sortBy, string? sort)
+    {
+        var queryable = _context.Invoices
+        .Include(i => i.Customer)
+        .Include(i => i.Items)
+            .ThenInclude(item => item.ServiceItem)
+        .AsQueryable();
+
+        if (workspaceId.HasValue && workspaceId != Guid.Empty)
+        {
+            queryable = queryable.Where(i => i.WorkspaceId == workspaceId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
+        {
+            queryable = queryable.Where(i => i.Status.ToLower() == status.ToLower());
+        }
+
+        if (dueDateMin.HasValue)
+        {
+            queryable = queryable.Where(i => i.DueDate >= dueDateMin.Value);
+        }
+
+        if (dueDateMax.HasValue)
+        {
+            queryable = queryable.Where(i => i.DueDate <= dueDateMax.Value);
+        }
+
+        if (totalMin.HasValue)
+        {
+            queryable = queryable.Where(i =>
+                i.Items.Sum(x => (x.ServiceItem != null ? x.ServiceItem.UnitPrice : x.UnitPrice) * x.Quantity) +
+                (i.Items.Sum(x => (x.ServiceItem != null ? x.ServiceItem.UnitPrice : x.UnitPrice) * x.Quantity) * i.TaxRate) -
+                i.Discount >= totalMin.Value);
+        }
+
+        if (totalMax.HasValue)
+        {
+            queryable = queryable.Where(i =>
+                i.Items.Sum(x => (x.ServiceItem != null ? x.ServiceItem.UnitPrice : x.UnitPrice) * x.Quantity) +
+                (i.Items.Sum(x => (x.ServiceItem != null ? x.ServiceItem.UnitPrice : x.UnitPrice) * x.Quantity) * i.TaxRate) -
+                i.Discount <= totalMax.Value);
+        }
+
+        queryable = sortBy?.ToLower() switch
+        {
+            "invoice-number" => sort == "desc"
+                ? queryable.OrderByDescending(i => i.InvoiceNumber)
+                : queryable.OrderBy(i => i.InvoiceNumber),
+
+            "customer" => sort == "desc"
+                ? queryable.OrderByDescending(i => i.Customer.FullName)
+                : queryable.OrderBy(i => i.Customer.FullName),
+
+            "due-date" => sort == "desc"
+                ? queryable.OrderByDescending(i => i.DueDate)
+                : queryable.OrderBy(i => i.DueDate),
+
+            "total" => sort == "desc"
+                ? queryable.OrderByDescending(i => i.Total)
+                : queryable.OrderBy(i => i.Total),
+
+            _ => queryable.OrderBy(i => i.IssueDate)
+        };
+
+        var invoices = await queryable.ToListAsync();
+
+        return new ApiResponse<List<Invoice>>
+        {
+            Success = true,
+            Payload = invoices
+        };
     }
 }

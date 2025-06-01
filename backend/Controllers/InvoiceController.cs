@@ -1,5 +1,6 @@
 using backend.Dtos.InvoiceDto;
 using backend.Models;
+using backend.Response;
 using backend.Services.InvoiceService;
 using Microsoft.AspNetCore.Mvc;
 
@@ -99,5 +100,29 @@ public class InvoiceController : ControllerBase
         var document = _invoiceService.GenerateDocument(invoice);
 
         return File(document, "application/pdf", $"invoice-{id}.pdf");
+    }
+    [HttpGet("filter")]
+    public async Task<ActionResult<ApiResponse<List<Invoice>>>> GetByFilter(
+    [FromQuery] Guid? workspaceId,
+    [FromQuery] string? status,
+    [FromQuery] DateTime? dueDateMin,
+    [FromQuery] DateTime? dueDateMax,
+    [FromQuery] decimal? totalMin,
+    [FromQuery] decimal? totalMax,
+    [FromQuery] string? sortBy,
+    [FromQuery] string? sort)
+    {
+        var response = await _invoiceService.GetInvoicesByFilter(
+            workspaceId,
+            status,
+            dueDateMin,
+            dueDateMax,
+            totalMin,
+            totalMax,
+            sortBy,
+            sort
+        );
+
+        return Ok(response);
     }
 }

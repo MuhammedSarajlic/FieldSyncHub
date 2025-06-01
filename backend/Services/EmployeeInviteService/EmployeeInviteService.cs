@@ -46,7 +46,8 @@ namespace backend.Services.EmployeeInviteService
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                Role = UserRole.Employee
+                Role = UserRole.Employee,
+                WorkspaceId = invite.WorkspaceId
             };
             _context.Users.Add(newUser);
 

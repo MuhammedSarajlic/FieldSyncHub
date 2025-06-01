@@ -42,12 +42,28 @@ public class WorkspaceService : IWorkspaceService
 
         var userId = Guid.Parse(newWorkspace.CreatedBy);
         var user = await _context.Users.FindAsync(userId);
-        if(user != null){
+        if (user != null)
+        {
             user.Workspace = newWorkspace;
+
+            var employee = new Employee
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                WorkspaceId = newWorkspace.Id,
+                HireDate = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Status = "active",
+                Availability = true,
+                Position = "Owner"
+            };
+
+            await _context.Employees.AddAsync(employee);
         }
         await _context.SaveChangesAsync();
     }
-    
+
     public async Task UpdateWorkspace(Workspace updatedWorkspace)
     {
         _context.Update(updatedWorkspace);
