@@ -13,6 +13,7 @@ public interface IJobService
     Task<Job?> GetJobByJobNumber(string jobNumber);
     Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId);
     Task<ApiResponse<List<Job>>> GetAllJobsByEmployeeId(Guid employeeId);
+    Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace);
     Task<ApiResponse<List<Job>>> GetJobsByFilter(DateTime? scheduleDateMin, DateTime? scheduleDateMax,
                                                  decimal? totalMin, decimal? totalMax,
                                                  string? priority, string? status,

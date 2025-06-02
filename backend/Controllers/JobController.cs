@@ -88,4 +88,15 @@ public class JobController : ControllerBase
         }
         return Ok(job);
     }
+
+    [HttpPatch("{jobId:guid}/tags")]
+    public async Task<IActionResult> UpdateTags(
+        Guid jobId,
+        [FromBody] List<string> tags,
+        [FromQuery] bool replace = false)
+    {
+        await _jobService.UpdateJobTags(jobId, tags, replace);
+        return Ok();
+    }
+
 }
