@@ -58,7 +58,7 @@ public class JobService : IJobService
         newJob.UpdatedAt = DateTime.UtcNow;
         newJob.JobNumber = await GenerateJobNumberAsync();
         // Validate Customer
-        var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == newJob.CustomerId);
+        var customerExists = await _context.Customers.AnyAsync(c => c.Id == newJob.CustomerId);
         if (!customerExists)
         {
             throw new Exception("Customer not found");
@@ -232,7 +232,7 @@ public class JobService : IJobService
 
         return $"{prefix}{datePart}-{sequence:D3}";
     }
-    public async Task <Job?> GetJobByJobNumber(string jobNumber)
+    public async Task<Job?> GetJobByJobNumber(string jobNumber)
     {
         return await _context.Jobs.Where(j => j.JobNumber == jobNumber)
                             .Include(j => j.LineItems)

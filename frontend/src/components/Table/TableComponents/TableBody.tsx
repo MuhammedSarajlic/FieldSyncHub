@@ -1,5 +1,8 @@
 import { ReactNode } from 'react';
 import { TTableColumns } from '../../../types/Table';
+import { FileText } from 'lucide-react';
+import { formatDate } from '../../../utils/FuntionHelpers/formatDate';
+import { DateTime } from 'luxon';
 
 interface ITableBody<T = any> {
   data: T[];
@@ -17,19 +20,24 @@ const TableBody = <T extends Record<string, any>>({
   loading = false,
 }: ITableBody<T>) => {
   const renderCellContent = (item: T, column: any, rowIndex: number) => {
-    const value = column.accessor ? item[column.accessor] : null;
+    const value =
+      typeof column.accessor === 'function'
+        ? column.accessor(item)
+        : column.accessor
+        ? item[column.accessor]
+        : null;
 
     if (column.render) {
       return column.render(value, item, rowIndex);
     }
     let statusConfig;
+    let label;
+    let localDate;
     switch (column.type) {
       case 'text':
         return (
           <div
-            className={`text-sm ${
-              column.bold ? 'font-medium text-gray-900' : 'text-gray-600'
-            }`}
+            className={`text-sm text-heading ${column.bold && 'font-semibold'}`}
           >
             {value}
           </div>
@@ -37,7 +45,7 @@ const TableBody = <T extends Record<string, any>>({
 
       case 'currency':
         return (
-          <div className='text-sm font-medium text-gray-900'>
+          <div className='text-sm font-medium text-heading'>
             $
             {typeof value === 'number'
               ? value.toLocaleString(undefined, {
@@ -49,25 +57,33 @@ const TableBody = <T extends Record<string, any>>({
         );
 
       case 'date':
+        localDate = DateTime.fromISO(value, { zone: 'utc' }).toLocal();
+        console.log(localDate);
+
         return (
-          <div className='text-sm text-gray-900'>
-            {value ? new Date(value).toLocaleDateString() : '-'}
+          <div className='text-sm text-heading'>
+            {localDate ? formatDate(localDate) : '-'}
           </div>
         );
 
       case 'status':
-        statusConfig = column.statusConfig?.(value) || {
+        statusConfig = column.statusConfig?.(value) ?? {
           color: 'bg-gray-100 text-gray-800',
-          icon: null,
+          icon: <FileText className='w-4 h-4 mr-1.5' />,
         };
+
+        label =
+          statusConfig.label ??
+          (typeof value === 'number' && column.enumMap
+            ? column.enumMap[value]
+            : value);
+
         return (
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}
           >
             {statusConfig.icon}
-            <span className={`${statusConfig.icon ? 'ml-1' : ''} capitalize`}>
-              {value}
-            </span>
+            <span className={`capitalize`}>{label}</span>
           </span>
         );
 
@@ -160,7 +176,7 @@ const TableBody = <T extends Record<string, any>>({
     <tbody className='bg-white divide-y divide-gray-200'>
       {data.map((item, rowIndex) => (
         <tr
-          key={item.id || rowIndex}
+          key={item.id ?? rowIndex}
           onClick={onRowClick ? () => onRowClick(item) : undefined}
           className={`hover:bg-gray-50 cursor-pointer h-[70px] group `}
         >
@@ -173,7 +189,7 @@ const TableBody = <T extends Record<string, any>>({
                   : column.align === 'center'
                   ? 'text-center'
                   : 'text-left'
-              } ${column.cellClassName || ''}`}
+              } ${column.cellClassName ?? ''}`}
             >
               {renderCellContent(item, column, rowIndex)}
             </td>

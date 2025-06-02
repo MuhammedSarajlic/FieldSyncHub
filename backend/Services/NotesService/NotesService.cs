@@ -24,7 +24,7 @@ public class NotesService : INotesService
 
         // Step 2: Find the customer using the CustomerId
         var customer = await _context.Customers
-            .Where(c => c.CustomerId == newNote.CustomerId)
+            .Where(c => c.Id == newNote.CustomerId)
             .Include(c => c.Notes)  // Ensure we include the Notes collection of the customer
             .FirstOrDefaultAsync();
 

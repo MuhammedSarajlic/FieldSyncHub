@@ -8,6 +8,7 @@ interface IModalInputField {
   onChange?: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
+  error?: string;
 }
 
 const ModalInputField = ({
@@ -18,6 +19,7 @@ const ModalInputField = ({
   isChecked,
   value,
   onChange,
+  error,
 }: IModalInputField) => {
   return (
     <div className='w-full flex flex-col space-y-1'>
@@ -33,8 +35,11 @@ const ModalInputField = ({
         value={value}
         checked={isChecked}
         onChange={onChange}
-        className={`w-full px-3 py-2 text-sm text-heading outline-none border-[1px] border-border-primary rounded-lg ${customStyle}`}
+        className={`w-full px-3 py-2 text-sm text-heading outline-none border-[1px] ${
+          error ? 'border-red-600' : 'border-border-primary'
+        } rounded-lg ${customStyle}`}
       />
+      {error && <p className='text-xs text-red-500 mt-1'>{error}</p>}
     </div>
   );
 };

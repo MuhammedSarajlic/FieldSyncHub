@@ -6,7 +6,7 @@ import { TAddNote, TNote } from '../../../types/Note';
 import { useEffect, useState } from 'react';
 import CustomButton from '../../CustomElements/CustomButton';
 import ButtonIcon from '../../CustomElements/ButtonIcon';
-import { initialNoteState } from '../../../const/states';
+import { addNoteInitialState } from '../../../const/states';
 import { CreateNote } from '../../../services/Notes';
 
 interface ICustomerNotes {
@@ -16,7 +16,7 @@ interface ICustomerNotes {
 
 const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
   const [isAddNote, setIsAddNote] = useState<boolean>(false);
-  const [newNote, setNewNote] = useState<TAddNote>(initialNoteState);
+  const [newNote, setNewNote] = useState<TAddNote>(addNoteInitialState);
 
   useEffect(() => {
     setNewNote({ ...newNote, customerId: customerId });

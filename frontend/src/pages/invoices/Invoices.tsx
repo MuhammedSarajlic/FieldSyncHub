@@ -25,6 +25,18 @@ const Invoices = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
 
+  const handleSearch = async (query: string) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      if (query) {
+        newParams.set('q', query);
+      } else {
+        newParams.delete('q');
+      }
+      return newParams;
+    });
+  };
+
   const initialInvoiceFilters = {
     dueDate: { min: '', max: '' },
     total: { min: '', max: '' },
@@ -259,7 +271,7 @@ const Invoices = () => {
                 <Search
                   inputPlaceholder='Search invoices...'
                   searchQuery={searchQuery}
-                  // handleChange={handleSearch}
+                  handleChange={handleSearch}
                 />
               </div>
 

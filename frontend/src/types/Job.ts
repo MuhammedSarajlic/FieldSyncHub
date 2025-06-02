@@ -1,4 +1,4 @@
-import { TAddCustomer, TCustomer } from './Customer';
+import { TCustomer } from './Customer';
 import { TAddLineItem, TLineItem } from './LineItem';
 import { TNote } from './Note';
 import { TProperty } from './Property';

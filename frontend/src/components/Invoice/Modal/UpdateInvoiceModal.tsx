@@ -245,8 +245,7 @@ const UpdateInvoiceModal = ({
                     <strong>Name:</strong>{' '}
                     {
                       customers.find(
-                        (c) =>
-                          c.customerId.toString() === updatedInvoice.customerId
+                        (c) => c.id.toString() === updatedInvoice.customerId
                       )?.fullName
                     }
                   </p>
@@ -254,8 +253,7 @@ const UpdateInvoiceModal = ({
                     <strong>Email:</strong>{' '}
                     {
                       customers.find(
-                        (c) =>
-                          c.customerId.toString() === updatedInvoice.customerId
+                        (c) => c.id.toString() === updatedInvoice.customerId
                       )?.email[0]
                     }
                   </p>

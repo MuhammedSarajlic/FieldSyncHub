@@ -17,7 +17,7 @@ public class CustomFieldService : ICustomFieldService
     public async Task AddCustomField(AddCustomFieldDto newCustomField, Guid customerId)
     {
         var customField = newCustomField.Adapt<CustomFields>();
-        var customer = await _context.Customers.Where(c => c.CustomerId == customerId).Include(c => c.CustomFields).FirstOrDefaultAsync();
+        var customer = await _context.Customers.Where(c => c.Id == customerId).Include(c => c.CustomFields).FirstOrDefaultAsync();
         customField.CustomFieldId = Guid.NewGuid();
         customField.CustomerId = customerId;
         await _context.CustomFields.AddAsync(customField);
@@ -34,24 +34,24 @@ public class CustomFieldService : ICustomFieldService
 
     public async Task<ApiResponse<CustomFields>> GetCustomFieldsById(Guid id)
     {
-        var customFields = await _context.CustomFields.Include(c => c.CustomFiledValue).FirstOrDefaultAsync(c => c.CustomFieldId==id);
+        var customFields = await _context.CustomFields.Include(c => c.CustomFiledValue).FirstOrDefaultAsync(c => c.CustomFieldId == id);
         return new ApiResponse<CustomFields>()
-            {
-                Success = true,
-                Payload = customFields,
-                ErrorMessage = null
-            };
+        {
+            Success = true,
+            Payload = customFields,
+            ErrorMessage = null
+        };
     }
 
     public async Task<ApiResponse<List<CustomFields>>> GetCustomFields()
     {
         var customFields = await _context.CustomFields.Include(c => c.CustomFiledValue).ToListAsync();
         return new ApiResponse<List<CustomFields>>()
-            {
-                Success = true,
-                Payload = customFields,
-                ErrorMessage = null
-            };
+        {
+            Success = true,
+            Payload = customFields,
+            ErrorMessage = null
+        };
     }
 
     public async Task UpdateCustomField(UpdateCustomFieldDto updatedCustomField)

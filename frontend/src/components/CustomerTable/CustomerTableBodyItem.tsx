@@ -8,7 +8,7 @@ interface ICustomerTableBodyItem {
 const CustomerTableBodyItem = ({ item }: ICustomerTableBodyItem) => {
   return (
     <Link
-      to={`/customers/${item.customerId}`}
+      to={`/customers/${item.id}`}
       className='min-h-[60px] px-4 py-2.5 flex items-center border-t-[1px] border-border-primary cursor-pointer hover:bg-[#FAFAFA]'
     >
       <div className='flex items-center justify-center pr-4'>

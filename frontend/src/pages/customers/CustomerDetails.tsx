@@ -153,14 +153,11 @@ const CustomerDetails = () => {
             <CustomerInformation customer={customer} />
             <CustomerTags
               tags={customer.tags}
-              customerId={customer.customerId}
+              customerId={customer.id}
               fetchCustomer={fetchCustomer}
             />
             <CustomerProperties properties={customer.properties} />
-            <CustomerNotes
-              notes={customer.notes}
-              customerId={customer.customerId}
-            />
+            <CustomerNotes notes={customer.notes} customerId={customer.id} />
           </div>
         </div>
       </div>

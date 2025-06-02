@@ -22,27 +22,35 @@ namespace backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<QuoteDto>>> GetAllQuotes()
+        public async Task<ActionResult<List<Quote>>> GetAllQuotes()
         {
             return Ok(await _quoteService.GetAllAsync());
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<QuoteDto>> GetQuoteById(Guid id)
+        public async Task<ActionResult<Quote>> GetQuoteById(Guid id)
         {
             var result = await _quoteService.GetByIdAsync(id);
             return result == null ? NotFound() : Ok(result);
         }
 
+        [HttpGet("workspace/{workspaceId}")]
+        public async Task<ActionResult<List<Quote>>> GetQuotesByWorkspaceId(Guid workspaceId)
+        {
+            var result = await _quoteService.GetQuotesByWorkspaceId(workspaceId);
+            return result == null ? NotFound() : Ok(result);
+        }
+
         [HttpPost]
-        public async Task<ActionResult<QuoteDto>> CreateQuote(CreateQuoteDto dto)
+        public async Task<ActionResult<Quote>> CreateQuote(CreateQuoteDto dto)
         {
             var result = await _quoteService.CreateAsync(dto);
             return Ok(result);
         }
 
+
         [HttpPut("{id}")]
-        public async Task<ActionResult<QuoteDto>> UpdateQuote(Guid id, CreateQuoteDto dto)
+        public async Task<ActionResult<Quote>> UpdateQuote(Guid id, CreateQuoteDto dto)
         {
             var result = await _quoteService.UpdateAsync(id, dto);
             return result == null ? NotFound() : Ok(result);
@@ -57,6 +65,7 @@ namespace backend.Controllers
 
         [HttpGet("filter")]
         public async Task<ActionResult<ApiResponse<List<Quote>>>> GetByFilter(
+            [FromQuery] string? q,
         [FromQuery] Guid? workspaceId,
         [FromQuery] string? status,
         [FromQuery] DateTime? createdMin,
@@ -67,6 +76,7 @@ namespace backend.Controllers
         [FromQuery] string? sort)
         {
             var result = await _quoteService.GetQuotesByFilter(
+                q,
                 workspaceId,
                 status,
                 createdMin,
@@ -78,12 +88,6 @@ namespace backend.Controllers
             );
 
             return Ok(result);
-        }
-        [HttpGet("workspace/{workspaceId}")]
-        public async Task<ActionResult<QuoteDto>> GetByWorkspaceIdAsync(Guid workspaceId)
-        {
-            var result = await _quoteService.GetByWorkspaceIdAsync(workspaceId);
-            return result == null ? NotFound() : Ok(result);
         }
     }
 }

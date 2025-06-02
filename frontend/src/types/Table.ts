@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 
-interface BaseColumn {
+interface BaseColumn<T = any> {
   header: string;
-  accessor: string;
+  accessor: keyof T | ((arg: T) => any);
   align?: 'left' | 'center' | 'right';
   width?: string;
   customColumnStyle?: string;
@@ -10,6 +10,7 @@ interface BaseColumn {
 }
 
 interface StatusConfig {
+  label?: string;
   color: string;
   icon: ReactNode | null;
 }
@@ -29,7 +30,8 @@ interface DateColumn extends BaseColumn {
 
 interface StatusColumn extends BaseColumn {
   type: 'status';
-  statusConfig?: (value: any) => StatusConfig;
+  statusConfig?: (value: string | number) => StatusConfig;
+  enumMap: Record<number, string>;
 }
 
 interface ImageColumn extends BaseColumn {
@@ -71,7 +73,7 @@ interface ColumnWithRender extends BaseColumn {
     | 'default';
   render: (value: any, item: any, rowIndex: number) => ReactNode;
   bold?: boolean;
-  statusConfig?: (value: any) => StatusConfig;
+  statusConfig?: (value: string | number) => StatusConfig;
   imageSize?: string;
   imageAccessor?: string;
   subtitle?: string;

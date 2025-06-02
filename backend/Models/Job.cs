@@ -13,7 +13,6 @@ public class Job
     public Customers? Customer { get; set; }
     public Guid? PropertyId { get; set; }
     public Property? Property { get; set; }
-    // public string? AlternateAddress { get; set; }
     public string JobType { get; set; } = "one-time"; // "one-time" or "recurring"
     public string Repeats { get; set; }
     public ICollection<LineItem> LineItems { get; set; } = new List<LineItem>();

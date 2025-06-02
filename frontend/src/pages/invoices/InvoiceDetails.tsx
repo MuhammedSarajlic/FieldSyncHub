@@ -19,6 +19,8 @@ import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import images from '../../constants/images';
 import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
 import UpdateInvoiceModal from '../../components/Invoice/Modal/UpdateInvoiceModal';
+import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
+import { formatDate } from '../../utils/FuntionHelpers/formatDate';
 
 const InvoiceDetails = () => {
   const { invoiceId } = useParams();
@@ -63,21 +65,6 @@ const InvoiceDetails = () => {
 
   const handleEdit = () => {
     console.log('Edit invoice');
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   if (loading) {

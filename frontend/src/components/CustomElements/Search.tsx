@@ -1,10 +1,27 @@
+import { useSearchParams } from 'react-router';
+
 interface ISearch {
   inputPlaceholder: string;
   searchQuery?: string;
-  handleChange?: (q: string) => void;
+  // handleChange?: (q: string) => void;
 }
 
-const Search = ({ inputPlaceholder, searchQuery, handleChange }: ISearch) => {
+const Search = ({
+  inputPlaceholder,
+  searchQuery /*handleChange*/,
+}: ISearch) => {
+  const [_, setSearchParams] = useSearchParams();
+  const handleSearch = async (query: string) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      if (query) {
+        newParams.set('q', query);
+      } else {
+        newParams.delete('q');
+      }
+      return newParams;
+    });
+  };
   return (
     <div className='relative w-full md:w-64'>
       <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
@@ -27,19 +44,11 @@ const Search = ({ inputPlaceholder, searchQuery, handleChange }: ISearch) => {
       <input
         type='search'
         value={searchQuery}
-        onChange={(e) => handleChange(e.target.value)}
+        onChange={(e) => handleSearch(e.target.value)}
         className='block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-bg-primary focus:border-bg-primary outline-none'
         placeholder={inputPlaceholder}
       />
     </div>
-    // <div className='flex items-center py-1.5 px-2.5 border-[1px] border-border-primary w-[280px] rounded-md space-x-2'>
-    //   <img src={icons.searchIcon} alt='search' className='w-4.5 h-4.5' />
-    //   <input
-    //     type='text'
-    //     placeholder='Search'
-    //     className='w-full outline-none text-primary text-sm'
-    //   />
-    // </div>
   );
 };
 

@@ -58,11 +58,11 @@ const NewJobModalCustomerSection = ({
         <div className='space-y-2 max-h-96 overflow-y-auto'>
           {customers.map((customer) => (
             <div
-              key={customer.customerId}
+              key={customer.id}
               onClick={() => {
                 setNewJob((prev) => ({
                   ...prev,
-                  customerId: customer.customerId,
+                  customerId: customer.id,
                   propertyId: customer.properties[0]?.id,
                 }));
                 setSelectedCustomer(customer);

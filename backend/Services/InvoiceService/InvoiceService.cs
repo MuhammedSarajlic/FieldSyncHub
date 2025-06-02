@@ -73,7 +73,7 @@ public class InvoiceService : IInvoiceService
             CustomerId = invoiceDto.CustomerId,
             JobId = invoiceDto.JobId,
             WorkspaceId = invoiceDto.WorkspaceId,
-            InvoiceNumber = await GenerateInvoiceNumberAsync(),
+            InvoiceNumber = await GenerateInvoiceNumber(),
             Items = invoiceDto.Items.Select(itemDto => new LineItem
             {
                 ServiceItemId = itemDto.ServiceItemId,
@@ -201,31 +201,6 @@ public class InvoiceService : IInvoiceService
             "net30" => issueDate.AddDays(30),
             _ => issueDate
         };
-    }
-
-    private async Task<string> GenerateInvoiceNumberAsync()
-    {
-        var today = DateTime.UtcNow.Date;
-        var prefix = "FSH-";
-        var datePart = today.ToString("yyMMdd");
-
-        var lastInvoice = await _context.Invoices
-            .Where(i => i.InvoiceNumber.StartsWith(prefix + datePart))
-            .OrderByDescending(i => i.InvoiceNumber)
-            .Select(i => i.InvoiceNumber)
-            .FirstOrDefaultAsync();
-
-        int sequence = 1;
-        if (lastInvoice != null)
-        {
-            var parts = lastInvoice.Split('-');
-            if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
-            {
-                sequence = lastSequence + 1;
-            }
-        }
-
-        return $"{prefix}{datePart}-{sequence:D3}";
     }
 
     public byte[] GenerateDocument(Invoice invoice)
@@ -381,5 +356,30 @@ public class InvoiceService : IInvoiceService
             Success = true,
             Payload = invoices
         };
+    }
+
+    private async Task<string> GenerateInvoiceNumber()
+    {
+        var today = DateTime.UtcNow.Date;
+        var prefix = "FSH-";
+        var datePart = today.ToString("yyMMdd");
+
+        var lastInvoice = await _context.Invoices
+            .Where(i => i.InvoiceNumber.StartsWith(prefix + datePart))
+            .OrderByDescending(i => i.InvoiceNumber)
+            .Select(i => i.InvoiceNumber)
+            .FirstOrDefaultAsync();
+
+        int sequence = 1;
+        if (lastInvoice != null)
+        {
+            var parts = lastInvoice.Split('-');
+            if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+            {
+                sequence = lastSequence + 1;
+            }
+        }
+
+        return $"{prefix}{datePart}-{sequence:D3}";
     }
 }

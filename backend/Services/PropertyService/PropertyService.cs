@@ -17,7 +17,7 @@ namespace backend.Services.PropertyService
         public async Task AddProperty(AddPropertyDto newProperty, Guid customerId)
         {
             var property = newProperty.Adapt<Property>();
-            var customer = await _context.Customers.Where(c => c.CustomerId == customerId).Include(c => c.Properties).FirstOrDefaultAsync();
+            var customer = await _context.Customers.Where(c => c.Id == customerId).Include(c => c.Properties).FirstOrDefaultAsync();
             newProperty.Id = Guid.NewGuid();
             property.CustomerId = customerId;
             await _context.Properties.AddAsync(property);

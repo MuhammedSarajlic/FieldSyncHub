@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250602123745_CustomerWorkspaceUpdate")]
+    partial class CustomerWorkspaceUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,7 +34,7 @@ namespace backend.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("CustomersId")
+                    b.Property<Guid?>("CustomersCustomerId")
                         .HasColumnType("char(36)");
 
                     b.Property<string>("DefaultValue")
@@ -50,7 +53,7 @@ namespace backend.Migrations
 
                     b.HasKey("CustomFieldId");
 
-                    b.HasIndex("CustomersId");
+                    b.HasIndex("CustomersCustomerId");
 
                     b.ToTable("CustomFields");
                 });
@@ -86,7 +89,7 @@ namespace backend.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("CustomersId")
+                    b.Property<Guid?>("CustomersCustomerId")
                         .HasColumnType("char(36)");
 
                     b.Property<bool>("IsReceiveMessage")
@@ -100,14 +103,14 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomersId");
+                    b.HasIndex("CustomersCustomerId");
 
                     b.ToTable("CustomerPhones");
                 });
 
             modelBuilder.Entity("backend.Models.Customers", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("CustomerId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
@@ -155,7 +158,7 @@ namespace backend.Migrations
                     b.Property<Guid>("WorkspaceId")
                         .HasColumnType("char(36)");
 
-                    b.HasKey("Id");
+                    b.HasKey("CustomerId");
 
                     b.ToTable("Customers");
                 });
@@ -507,7 +510,7 @@ namespace backend.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("CustomersId")
+                    b.Property<Guid?>("CustomersCustomerId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid?>("JobId")
@@ -521,7 +524,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomersId");
+                    b.HasIndex("CustomersCustomerId");
 
                     b.HasIndex("JobId");
 
@@ -543,7 +546,7 @@ namespace backend.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("CustomersId")
+                    b.Property<Guid?>("CustomersCustomerId")
                         .HasColumnType("char(36)");
 
                     b.Property<bool>("IsBillingAddress")
@@ -560,7 +563,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomersId");
+                    b.HasIndex("CustomersCustomerId");
 
                     b.ToTable("Properties");
                 });
@@ -837,7 +840,7 @@ namespace backend.Migrations
                 {
                     b.HasOne("backend.Models.Customers", null)
                         .WithMany("CustomFields")
-                        .HasForeignKey("CustomersId");
+                        .HasForeignKey("CustomersCustomerId");
                 });
 
             modelBuilder.Entity("backend.Models.CustomFiledValue", b =>
@@ -851,7 +854,7 @@ namespace backend.Migrations
                 {
                     b.HasOne("backend.Models.Customers", null)
                         .WithMany("CustomerPhones")
-                        .HasForeignKey("CustomersId");
+                        .HasForeignKey("CustomersCustomerId");
                 });
 
             modelBuilder.Entity("backend.Models.Employee", b =>
@@ -952,7 +955,7 @@ namespace backend.Migrations
                 {
                     b.HasOne("backend.Models.Customers", null)
                         .WithMany("Notes")
-                        .HasForeignKey("CustomersId");
+                        .HasForeignKey("CustomersCustomerId");
 
                     b.HasOne("backend.Models.Job", null)
                         .WithMany("TeamNotes")
@@ -963,7 +966,7 @@ namespace backend.Migrations
                 {
                     b.HasOne("backend.Models.Customers", null)
                         .WithMany("Properties")
-                        .HasForeignKey("CustomersId");
+                        .HasForeignKey("CustomersCustomerId");
                 });
 
             modelBuilder.Entity("backend.Models.Quote.Quote", b =>

@@ -10,7 +10,6 @@ import { TFilterOption } from '../../../types/FilterOption';
 interface IFilterModal<T> {
   initialFilters: T;
   filterOptions: TFilterOption[];
-  // onApply: (filters: T) => void;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isFilterModalOpen: boolean;
 }
@@ -18,7 +17,6 @@ interface IFilterModal<T> {
 const FilterModal = <T extends Record<string, any>>({
   initialFilters,
   filterOptions,
-  // onApply,
   setIsFilterModalOpen,
   isFilterModalOpen,
 }: IFilterModal<T>) => {
@@ -47,7 +45,7 @@ const FilterModal = <T extends Record<string, any>>({
     }));
   };
 
-  const handleApplyFilters = (filters: any) => {
+  const handleApplyFilters = (filters: T) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
 
@@ -67,7 +65,6 @@ const FilterModal = <T extends Record<string, any>>({
             newParams.delete(`${option.name}Max`);
           }
         } else if (option.type === 'dropdown' && value === 'all') {
-          // Skip default "all"
           newParams.delete(option.name);
         } else if (value) {
           newParams.set(option.name, value.toString());
@@ -169,7 +166,7 @@ const FilterModal = <T extends Record<string, any>>({
       </button>
 
       {isFilterModalOpen && (
-        <div className='absolute right-0 top-full mt-2 w-[400px] max-w-md z-50'>
+        <div className='absolute right-0 top-full mt-2 w-[400px] max-w-md z-50 pb-10'>
           <div className='bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-auto shadow-xl'>
             {/* Header */}
             <div className='sticky top-0 p-4 py-3 border-b border-gray-300 flex justify-between items-center'>

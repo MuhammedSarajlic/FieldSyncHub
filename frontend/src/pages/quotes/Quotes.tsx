@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Search from '../../components/CustomElements/Search';
@@ -7,150 +7,52 @@ import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import Table from '../../components/Table/Table';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
-import { TTableColumns } from '../../types/Table';
 import { TQuote } from '../../types/Quote';
+import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
+import { quoteSortOptions } from '../../constants/Options/SortOptions/QuoteSortOptions';
+import { quoteFilterOptions } from '../../constants/Options/FilterOptions/QuoteFilterOptions';
+import { useSearchParams } from 'react-router';
+import { GetQuoteByWorkspace } from '../../services/Quote';
+import { useAuth } from '../../context/AuthProvider';
+import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum';
+import { quoteColumns } from '../../constants/Columns/QuoteColumns';
 
 const Quotes = () => {
-  const [quotes, setQuotes] = useState<TQuote[]>([
-    {
-      id: 1,
-      client: 'Johnson Residence',
-      quoteNumber: 'Q-2023-001',
-      property: '123 Main Street',
-      created: 'Apr 15, 2023',
-      status: 'Approved',
-      total: 2450.0,
-      lastUpdated: 'Apr 18, 2023',
-      expiryDate: 'May 15, 2023',
-    },
-    {
-      id: 2,
-      client: 'Thompson Landscaping',
-      quoteNumber: 'Q-2025-002',
-      property: '456 Oak Avenue',
-      created: 'Apr 17, 2023',
-      status: 'Awaiting Response',
-      total: 3875.5,
-      lastUpdated: 'Apr 17, 2023',
-      expiryDate: 'May 17, 2023',
-    },
-    {
-      id: 3,
-      client: 'Garcia Construction',
-      quoteNumber: 'Q-2023-003',
-      property: '789 Pine Road',
-      created: 'Apr 22, 2023',
-      status: 'Awaiting Response',
-      total: 5219.75,
-      lastUpdated: 'Apr 22, 2023',
-      expiryDate: 'May 22, 2023',
-    },
-  ]);
+  const { user } = useAuth();
+  const [isNewQuoteModalOpen, setIsNewQuoteModalOpen] =
+    useState<boolean>(false);
+  const [quotes, setQuotes] = useState<TQuote[]>([]);
 
-  const quoteColumns: TTableColumns = [
-    {
-      header: 'Client',
-      accessor: 'client',
-      type: 'text',
-      bold: true,
-      width: '200px',
-    },
-    {
-      header: 'Quote Number',
-      accessor: 'quoteNumber',
-      type: 'text',
-      width: '150px',
-    },
-    {
-      header: 'Property',
-      accessor: 'property',
-      type: 'text',
-      width: '200px',
-    },
-    {
-      header: 'Created',
-      accessor: 'created',
-      type: 'text', // or 'date' if you want to parse it as a date
-      width: '120px',
-    },
-    {
-      header: 'Status',
-      accessor: 'status',
-      type: 'status',
-      width: '150px',
-      statusConfig: (status: string) => {
-        switch (status) {
-          case 'Approved':
-            return {
-              color: 'bg-green-100 text-green-800 border-green-200',
-              icon: null,
-            };
-          case 'Awaiting Response':
-            return {
-              color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-              icon: null,
-            };
-          case 'Rejected':
-            return {
-              color: 'bg-red-100 text-red-800 border-red-200',
-              icon: null,
-            };
-          default:
-            return {
-              color: 'bg-gray-100 text-gray-800 border-gray-200',
-              icon: null,
-            };
-        }
-      },
-    },
-    {
-      header: 'Total',
-      accessor: 'total',
-      type: 'currency',
-      align: 'right',
-      width: '120px',
-    },
-  ];
-
-  // Metrics calculation
   const totalQuotes = quotes.length;
-  const approvedQuotes = quotes.filter(
-    (quote) => quote.status === 'Approved'
-  ).length;
-  // const awaitingQuotes = quotes.filter(
-  //   (quote) => quote.status === 'Awaiting Response'
-  // ).length;
-  // const draftQuotes = quotes.filter((quote) => quote.status === 'Draft').length;
-
   const totalValue = quotes.reduce((sum, quote) => sum + quote.total, 0);
   const approvedValue = quotes
-    .filter((q) => q.status === 'Approved')
+    .filter((q) => q.status === QuoteStatus.Approved)
     .reduce((sum, quote) => sum + quote.total, 0);
 
-  // Calculate conversion rate
-  const conversionRate =
-    approvedQuotes > 0 ? Math.round((approvedQuotes / totalQuotes) * 100) : 0;
+  const initialQuoteFilters = {
+    createdDateMin: { min: '', max: '' },
+    total: { min: '', max: '' },
+    status: '',
+  };
 
-  // const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  // const [searchTerm, setSearchTerm] = useState('');
+  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') ?? '';
+  const conversionRate = 1;
 
-  // Get status color class
-  // const getStatusColor = (status) => {
-  //   switch (status) {
-  //     case 'Approved':
-  //       return 'bg-green-100 text-green-800';
-  //     case 'Awaiting Response':
-  //       return 'bg-yellow-100 text-yellow-800';
-  //     case 'Changes Requested':
-  //       return 'bg-orange-100 text-orange-800';
-  //     case 'Declined':
-  //       return 'bg-red-100 text-red-800';
-  //     case 'Draft':
-  //       return 'bg-gray-100 text-gray-800';
-  //     default:
-  //       return 'bg-gray-100 text-gray-800';
-  //   }
-  // };
+  const fetchQuotesByWorkspace = async () => {
+    if (!user) return;
+    const response = await GetQuoteByWorkspace(user?.workspace.id);
+    if (response.status === 200) {
+      setQuotes(response.data);
+    }
+    console.log(response);
+  };
+
+  useEffect(() => {
+    fetchQuotesByWorkspace();
+  }, []);
 
   return (
     <div className='flex'>
@@ -161,7 +63,7 @@ const Quotes = () => {
         </div>
 
         {/* Main content */}
-        <div className='px-4'>
+        <div className='px-6'>
           {/* Page header */}
           <div className=' mb-6 flex items-center justify-between'>
             <div>
@@ -175,7 +77,7 @@ const Quotes = () => {
               <CustomIconButton
                 icon={<Plus className='w-4 h-4 mr-1' />}
                 text='Create quote'
-                // onClick={() => setIsNewQuoteModalOpen(true)}
+                handleClick={() => setIsNewQuoteModalOpen(true)}
               />
             </div>
           </div>
@@ -284,10 +186,27 @@ const Quotes = () => {
             </div>
           </div>
 
-          <div className='mb-8'>
-            <Search inputPlaceholder='Search quotes...' />
-            {/* <SortModal />
-            <FilterModal /> */}
+          <div className='flex items-center justify-between gap-4 mb-8'>
+            <div className='flex-1 max-w-md'>
+              <Search
+                inputPlaceholder='Search quotes...'
+                searchQuery={searchQuery}
+                // handleChange={handleSearch}
+              />
+            </div>
+            <div className='flex items-center gap-2'>
+              <SortModal
+                setIsSortModalOpen={setIsSortModalOpen}
+                isSortModalOpen={isSortModalOpen}
+                sortOptions={quoteSortOptions}
+              />
+              <FilterModal
+                initialFilters={initialQuoteFilters}
+                filterOptions={quoteFilterOptions}
+                setIsFilterModalOpen={setIsFilterModalOpen}
+                isFilterModalOpen={isFilterModalOpen}
+              />
+            </div>
           </div>
 
           {/* Quotes table section */}
@@ -297,11 +216,10 @@ const Quotes = () => {
         </div>
       </div>
 
-      {/* Modal for new quote */}
-      {/* <NewQuoteModal 
-        isOpen={isNewQuoteModalOpen} 
+      <NewQuoteModal
+        isOpen={isNewQuoteModalOpen}
         onClose={() => setIsNewQuoteModalOpen(false)}
-      /> */}
+      />
     </div>
   );
 };

@@ -9,7 +9,7 @@ const CustomerTableBody = ({ data }: ICustomerTableBody) => {
   return (
     <div>
       {data.map((item) => (
-        <CustomerTableBodyItem key={item.customerId} item={item} />
+        <CustomerTableBodyItem key={item.id} item={item} />
       ))}
     </div>
   );

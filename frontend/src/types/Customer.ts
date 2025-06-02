@@ -4,7 +4,8 @@ import { TNote } from './Note';
 import { TAddProperty, TProperty } from './Property';
 
 export type TCustomer = {
-  customerId: string;
+  id: string;
+  workspaceId: string;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -21,9 +22,12 @@ export type TCustomer = {
   customerPhones: TCustomerPhone[];
   customFields: TAddCustomField[];
   notes: TNote[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TAddCustomer = {
+  workspaceId: string;
   firstName: string;
   lastName: string;
   companyName: string;

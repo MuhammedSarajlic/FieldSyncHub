@@ -16,38 +16,53 @@ public class QuoteService : IQuoteService
         _context = context;
     }
 
-    public async Task<List<QuoteDto>> GetAllAsync()
+    public async Task<List<Quote>> GetAllAsync()
     {
         var quotes = await _context.Quotes.Include(q => q.LineItems).ToListAsync();
-        return quotes.Select(q => q.Adapt<QuoteDto>()).ToList();
+        return quotes;
     }
 
-    public async Task<QuoteDto> GetByIdAsync(Guid id)
+    public async Task<Quote> GetByIdAsync(Guid id)
     {
-        var quote = await _context.Quotes.Include(q => q.LineItems).FirstOrDefaultAsync(q => q.Id == id);
-        return quote.Adapt<QuoteDto>();
+        var quote = await _context.Quotes.Include(q => q.LineItems)
+                                        .Include(q => q.Customer)
+                                        .ThenInclude(c => c.CustomerPhones)
+                                        .Include(q => q.Customer)
+                                        .ThenInclude(c => c.Properties)
+                                        .FirstOrDefaultAsync(q => q.Id == id);
+        return quote;
     }
 
-    public async Task<QuoteDto> CreateAsync(CreateQuoteDto dto)
+    public async Task<List<Quote>> GetQuotesByWorkspaceId(Guid workspaceId)
+    {
+        var quotes = await _context.Quotes.Include(q => q.LineItems)
+                                        .Include(q => q.Customer)
+                                        .ThenInclude(c => c.Properties)
+                                        .Where(q => q.WorkspaceId == workspaceId)
+                                        .ToListAsync();
+        return quotes;
+    }
+
+    public async Task<Quote> CreateAsync(CreateQuoteDto dto)
     {
         var quote = dto.Adapt<Quote>();
         quote.Id = Guid.NewGuid();
-        quote.QuoteNumber = GenerateQuoteNumber();
+        quote.QuoteNumber = await GenerateQuoteNumber();
         quote.CreatedAt = DateTime.UtcNow;
         quote.UpdatedAt = DateTime.UtcNow;
         _context.Quotes.Add(quote);
         await _context.SaveChangesAsync();
-        return quote.Adapt<QuoteDto>();
+        return quote;
     }
 
-    public async Task<QuoteDto> UpdateAsync(Guid id, CreateQuoteDto dto)
+    public async Task<Quote> UpdateAsync(Guid id, CreateQuoteDto dto)
     {
         var quote = await _context.Quotes.Include(q => q.LineItems).FirstOrDefaultAsync(q => q.Id == id);
         if (quote == null) return null;
         dto.Adapt(quote);
         quote.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        return quote.Adapt<QuoteDto>();
+        return quote;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
@@ -59,20 +74,17 @@ public class QuoteService : IQuoteService
         return true;
     }
 
-    private string GenerateQuoteNumber()
-    {
-        var year = DateTime.Now.Year;
-        var month = DateTime.Now.Month.ToString("00");
-        var count = _context.Quotes.Count(q => q.CreatedAt.Year == year) + 1;
-        return $"QT-{year}-{month}-{count.ToString("000")}";
-    }
-
-    public async Task<ApiResponse<List<Quote>>> GetQuotesByFilter(Guid? workspaceId, string? status, DateTime? createdMin, DateTime? createdMax, decimal? totalMin, decimal? totalMax, string? sortBy, string? sort)
+    public async Task<ApiResponse<List<Quote>>> GetQuotesByFilter(string? q, Guid? workspaceId, string? status, DateTime? createdMin, DateTime? createdMax, decimal? totalMin, decimal? totalMax, string? sortBy, string? sort)
     {
         var queryable = _context.Quotes
         .Include(q => q.Customer)
         .Include(q => q.LineItems)
         .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            queryable = queryable.Where(quote => quote.Customer.FullName.Contains(q));
+        }
 
         if (workspaceId.HasValue && workspaceId != Guid.Empty)
         {
@@ -130,9 +142,28 @@ public class QuoteService : IQuoteService
         };
     }
 
-    public async Task<QuoteDto> GetByWorkspaceIdAsync(Guid workspaceId)
+    private async Task<string> GenerateQuoteNumber()
     {
-        var quote = await _context.Quotes.Include(q => q.LineItems).FirstOrDefaultAsync(q => q.WorkspaceId == workspaceId);
-        return quote.Adapt<QuoteDto>();
+        var today = DateTime.UtcNow.Date;
+        var prefix = "QT-";
+        var datePart = today.ToString("yyMMdd");
+
+        var lastQuote = await _context.Quotes
+            .Where(q => q.QuoteNumber.StartsWith(prefix + datePart))
+            .OrderByDescending(q => q.QuoteNumber)
+            .Select(q => q.QuoteNumber)
+            .FirstOrDefaultAsync();
+
+        int sequence = 1;
+        if (lastQuote != null)
+        {
+            var parts = lastQuote.Split('-');
+            if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+            {
+                sequence = lastSequence + 1;
+            }
+        }
+
+        return $"{prefix}{datePart}-{sequence:D3}";
     }
 }

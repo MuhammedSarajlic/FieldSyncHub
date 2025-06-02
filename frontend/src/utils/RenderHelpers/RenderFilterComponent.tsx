@@ -27,7 +27,8 @@ export const renderFilterComponent = ({
             {option.dropdownOptions &&
               option.dropdownOptions.map((opt: string) => (
                 <option key={opt} value={opt}>
-                  {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                  {opt.charAt(0).toUpperCase() +
+                    opt.slice(1).replace(/-/g, ' ')}
                 </option>
               ))}
           </select>
@@ -85,7 +86,7 @@ export const renderFilterComponent = ({
             {option.label}
           </label>
           <div className='flex space-x-2'>
-            {option.options.map((btnOption: string) => (
+            {option.options?.map((btnOption: string) => (
               <button
                 key={btnOption}
                 onClick={() => handleFilterChange(option.name, btnOption)}
@@ -96,8 +97,6 @@ export const renderFilterComponent = ({
                     : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
                 }`}
               >
-                {/* {employee.status.charAt(0).toUpperCase() +
-                      employee.status.slice(1)} */}
                 {btnOption.charAt(0).toUpperCase() + btnOption.slice(1)}
               </button>
             ))}

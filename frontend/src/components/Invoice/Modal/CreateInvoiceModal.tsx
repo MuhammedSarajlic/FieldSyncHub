@@ -217,10 +217,7 @@ const CreateInvoiceModal = ({
                     {customers &&
                       customers.length > 0 &&
                       customers.map((customer) => (
-                        <option
-                          key={customer.customerId}
-                          value={customer.customerId}
-                        >
+                        <option key={customer.id} value={customer.id}>
                           {customer.fullName}
                         </option>
                       ))}
@@ -243,7 +240,7 @@ const CreateInvoiceModal = ({
                     <strong>Name:</strong>{' '}
                     {
                       customers.find(
-                        (c) => c.customerId.toString() === invoice.customerId
+                        (c) => c.id.toString() === invoice.customerId
                       )?.fullName
                     }
                   </p>
@@ -251,7 +248,7 @@ const CreateInvoiceModal = ({
                     <strong>Email:</strong>{' '}
                     {
                       customers.find(
-                        (c) => c.customerId.toString() === invoice.customerId
+                        (c) => c.id.toString() === invoice.customerId
                       )?.email[0]
                     }
                   </p>

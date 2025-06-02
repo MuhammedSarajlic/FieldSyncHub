@@ -16,6 +16,21 @@ export async function GetCustomerById(id: string) {
   return response;
 }
 
+export async function GetCustomerByWorkspace(workspaceId: string) {
+  const response = await api.get(`/customer/workspace/${workspaceId}`);
+  return response;
+}
+
+export async function GetCustomersByFilter(
+  params: string,
+  workspaceId: string
+) {
+  const response = await api.get(
+    `/customer/workspace/${workspaceId}/filter?${params}`
+  );
+  return response;
+}
+
 export async function AddCustomerTag(id: string, tag: string) {
   const response = await api.patch(
     `/customer/${id}/tags`,

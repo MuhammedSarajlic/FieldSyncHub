@@ -8,13 +8,22 @@ import CustomerPropertyDetails from './CustomerPropertyDetails';
 interface ICreateCustomerForm {
   customer: TAddCustomer;
   setCustomer: React.Dispatch<React.SetStateAction<TAddCustomer>>;
+  errors: { [key: string]: string };
 }
 
-const CreateCustomerForm = ({ customer, setCustomer }: ICreateCustomerForm) => {
+const CreateCustomerForm = ({
+  customer,
+  setCustomer,
+  errors,
+}: ICreateCustomerForm) => {
   return (
-    <div className='px-6 py-2 h-full flex items-start justify-between overflow-y-auto space-x-8'>
-      <div className='w-1/2 space-y-4'>
-        <CustomerDetailsForm customer={customer} setCustomer={setCustomer} />
+    <div className='px-6 py-4 h-full flex items-start justify-between overflow-y-auto space-x-8'>
+      <div className='w-1/2 space-y-6'>
+        <CustomerDetailsForm
+          customer={customer}
+          setCustomer={setCustomer}
+          errors={errors}
+        />
         <CustomerContactDetailsForm
           customer={customer}
           setCustomer={setCustomer}
@@ -24,7 +33,8 @@ const CreateCustomerForm = ({ customer, setCustomer }: ICreateCustomerForm) => {
           setCustomer={setCustomer}
         />
       </div>
-      <div className='w-1/2 space-y-4'>
+      <div className='border-r border-gray-200 h-full'></div>
+      <div className='w-1/2 space-y-6'>
         <CustomerPropertyDetails setCustomer={setCustomer} />
         <AdditionalCustomerDetails
           customer={customer}

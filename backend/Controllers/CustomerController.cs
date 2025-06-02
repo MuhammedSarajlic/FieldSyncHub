@@ -28,6 +28,31 @@ public class CustomerController : ControllerBase
         return await _customerService.GetCustomersById(id);
     }
 
+    [HttpGet("workspace/{workspaceId:guid}")]
+    public async Task<ApiResponse<List<Customers>>> GetCustomersByWorkspace(Guid workspaceId)
+    {
+        return await _customerService.GetCustomersByWorkspace(workspaceId);
+    }
+
+    [HttpGet("workspace/{workspaceId:guid}/filter")]
+    public async Task<ApiResponse<List<Customers>>> GetCustomersByFilter(
+            Guid workspaceId,
+            [FromQuery] string? q,
+            [FromQuery] string? sortBy,
+            [FromQuery] string? sort,
+            [FromQuery] string? customerType,
+            [FromQuery] string? createdDateMin,
+            [FromQuery] string? createdDateMax,
+            [FromQuery] string? propertiesMin,
+            [FromQuery] string? propertiesMax,
+            [FromQuery] string? hasEmail,
+            [FromQuery] string? hasPhone,
+            [FromQuery] string? tags
+        )
+    {
+        return await _customerService.GetCustomersByFilter(workspaceId, q, sortBy, sort, customerType, createdDateMin, createdDateMax, propertiesMin, propertiesMax, hasEmail, hasPhone, tags);
+    }
+
     [HttpPost]
     public async Task<IActionResult> AddCustomer([FromBody] Customers newCustomer)
     {
@@ -42,24 +67,24 @@ public class CustomerController : ControllerBase
         return Ok();
     }
 
-    [HttpPatch("{customerId}/tags")]
-    public async Task<IActionResult> UpdateCustomerTags(Guid customerId, [FromBody] string tag)
+    [HttpPatch("{id}/tags")]
+    public async Task<IActionResult> UpdateCustomerTags(Guid id, [FromBody] string tag)
     {
-        await _customerService.UpdateCustomerTags(customerId, tag);
+        await _customerService.UpdateCustomerTags(id, tag);
         return Ok();
     }
 
-    [HttpPatch("{customerId}/tags/remove")]
-    public async Task<IActionResult> RemoveCustomerTag(Guid customerId, [FromBody] string tag)
+    [HttpPatch("{id}/tags/remove")]
+    public async Task<IActionResult> RemoveCustomerTag(Guid id, [FromBody] string tag)
     {
-        await _customerService.RemoveCustomerTag(customerId, tag);
+        await _customerService.RemoveCustomerTag(id, tag);
         return Ok();
     }
 
-    [HttpPatch("{customerId}/archive")]
-    public async Task<IActionResult> ArchiveCustomer(Guid customerId)
+    [HttpPatch("{id}/archive")]
+    public async Task<IActionResult> ArchiveCustomer(Guid id)
     {
-        await _customerService.ArchiveCustomer(customerId);
+        await _customerService.ArchiveCustomer(id);
         return Ok();
     }
 

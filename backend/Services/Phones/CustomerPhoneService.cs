@@ -18,7 +18,7 @@ public class CustomerPhoneService : ICustomerPhoneService
     public async Task AddBulkPhone(List<AddCustomerPhoneDto> customerPhones, Guid customerId)
     {
         var customer = await _context.Customers
-        .Where(c => c.CustomerId == customerId)
+        .Where(c => c.Id == customerId)
         .Include(c => c.CustomerPhones)
         .FirstOrDefaultAsync();
 
@@ -43,7 +43,7 @@ public class CustomerPhoneService : ICustomerPhoneService
     public async Task AddCustomerPhone(AddCustomerPhoneDto newCustomerPhone, Guid customerId)
     {
         var customerPhone = newCustomerPhone.Adapt<CustomerPhone>();
-        var customer = await _context.Customers.Where(c => c.CustomerId == customerId).Include(c => c.CustomerPhones).FirstOrDefaultAsync();
+        var customer = await _context.Customers.Where(c => c.Id == customerId).Include(c => c.CustomerPhones).FirstOrDefaultAsync();
         newCustomerPhone.Id = Guid.NewGuid();
         customerPhone.CustomerId = customerId;
         await _context.CustomerPhones.AddAsync(customerPhone);

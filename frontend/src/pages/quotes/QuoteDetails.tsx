@@ -1,324 +1,172 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import {
   Check,
   X,
   Send,
-  Printer,
   Eye,
   ArrowRight,
   Edit,
   PlusCircle,
   Clock,
-  Download,
   Calendar,
   User,
   DollarSign,
   Paperclip,
-  MessageSquare,
   Trash,
-  ChevronDown,
-  AlertCircle,
   Mail,
-  ExternalLink,
-  MoreHorizontal,
-  Copy,
 } from 'lucide-react';
+import { formatDate } from '../../utils/FuntionHelpers/formatDate';
+import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
+import { GetQuoteById } from '../../services/Quote';
+import { useParams } from 'react-router';
+import { TQuote } from '../../types/Quote';
+import {
+  DiscountType,
+  QuoteStatus,
+} from '../../constants/Enumeration/QuoteEnum';
+import { getQuoteStatus } from '../../utils/FuntionHelpers/getQuoteStatus';
 
 const QuoteDetails = () => {
-  const [quote, setQuote] = useState({
-    id: 'QT-2023-001',
-    customer: {
-      name: 'Acme Corporation',
-      contact: 'John Doe',
-      email: 'john.doe@acmecorp.com',
-      phone: '(555) 123-4567',
-      address: '123 Business Ave, Suite 100, New York, NY 10001',
-    },
-    status: 'Awaiting Approval',
-    viewed: true,
-    viewedAt: '2023-05-02 14:30',
-    createdAt: '2023-05-01',
-    expiresAt: '2023-05-30',
-    createdBy: 'Sarah Johnson',
-    lineItems: [
-      {
-        id: 1,
-        name: 'Website Development',
-        description: 'Full website development including responsive design',
-        quantity: 1,
-        price: 3500,
-        total: 3500,
-      },
-      {
-        id: 2,
-        name: 'Maintenance Package',
-        description: '12-month website maintenance and support',
-        quantity: 1,
-        price: 1200,
-        total: 1200,
-      },
-      {
-        id: 3,
-        name: 'SEO Package',
-        description: 'Basic SEO optimization package',
-        quantity: 1,
-        price: 800,
-        total: 800,
-      },
-    ],
-    subtotal: 5500,
-    discount: { type: 'percentage', value: 10, amount: 550 },
-    tax: { rate: 7.5, amount: 371.25 },
-    total: 5321.25,
-    notes:
-      'This quote is valid for 30 days. Payment terms: 50% upfront, 50% upon completion.',
-    internalNotes:
-      'Customer requested rush delivery if possible. Approved for 10% discount due to being a repeat customer.',
-  });
+  const { quoteId } = useParams();
+  const [quote, setQuote] = useState<TQuote>();
 
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const handleApprove = () => {
-    setQuote({ ...quote, status: 'Approved' });
-    // API call would go here
-  };
-
-  const handleDecline = () => {
-    setQuote({ ...quote, status: 'Declined' });
-    // API call would go here
-  };
 
   const handleSendEmail = () => {
     setIsEmailModalOpen(true);
-    // Email sending logic would go here
   };
 
   const handleConvertToJob = () => {
-    // Convert to job logic would go here
     alert('Converting to job...');
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Draft':
-        return 'bg-gray-100 text-gray-700 border-gray-300';
-      case 'Awaiting Approval':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Approved':
-        return 'bg-green-50 text-green-700 border-green-200';
-      case 'Declined':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'Expired':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
+  const fetchCurrentQuote = async () => {
+    const response = await GetQuoteById(quoteId as string);
+    if (response.status === 200) {
+      setQuote(response.data);
     }
+    console.log(response);
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Draft':
-        return null;
-      case 'Awaiting Approval':
-        return <Clock size={14} className='mr-1' />;
-      case 'Approved':
-        return <Check size={14} className='mr-1' />;
-      case 'Declined':
-        return <X size={14} className='mr-1' />;
-      case 'Expired':
-        return <AlertCircle size={14} className='mr-1' />;
-      default:
-        return null;
-    }
-  };
+  useEffect(() => {
+    fetchCurrentQuote();
+  }, [quoteId]);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(date);
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  if (!quote) return <p>Loading...</p>;
 
   return (
-    <div className='flex h-screen bg-gray-50'>
+    <div className='min-h-screen'>
       <Sidebar />
       <div className='flex-1 ml-[260px] flex flex-col'>
         <Navbar />
 
-        <div className='flex-1 overflow-auto'>
+        <div className='flex-1 overflow-auto px-4'>
           {/* Header */}
-          <div className='bg-white border-b border-gray-200'>
-            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4'>
-              <div className='flex justify-between items-center'>
-                <div className='flex items-center'>
-                  <h1 className='text-2xl font-semibold text-gray-900'>
-                    Quote #{quote.id}
-                  </h1>
+          <div className='mb-6'>
+            <div className='flex justify-between items-center'>
+              <div>
+                <h1 className='text-2xl font-bold text-gray-800 mb-2'>
+                  Quote #{quote.quoteNumber}
+                </h1>
+                <div className='flex items-center space-x-4'>
                   <div
-                    className={`ml-4 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
-                      quote.status
-                    )} flex items-center`}
+                    className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      getQuoteStatus(quote.status).color
+                    }`}
                   >
-                    {getStatusIcon(quote.status)}
-                    {quote.status}
+                    {getQuoteStatus(quote.status).icon}
+                    {QuoteStatus[quote.status]}
                   </div>
                   {quote.viewed && (
-                    <div className='ml-3 flex items-center text-sm text-gray-500'>
+                    <div className='flex items-center text-gray-500 text-sm'>
                       <Eye size={14} className='mr-1' />
                       <span>Viewed {quote.viewedAt}</span>
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className='flex items-center gap-2'>
-                  {quote.status === 'Awaiting Approval' && (
-                    <>
-                      <button className='inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'>
-                        <Check size={16} className='mr-1' /> Approve
-                      </button>
-                      <button className='inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500'>
-                        <X size={16} className='mr-1' /> Decline
-                      </button>
-                    </>
-                  )}
-                  {quote.status === 'Approved' && (
-                    <button className='inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'>
-                      <ArrowRight size={16} className='mr-1' /> Convert to Job
+              <div className='flex items-center gap-2'>
+                {quote.status === QuoteStatus.AwaitingApproval && (
+                  <>
+                    <button className='flex items-center px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700'>
+                      <Check size={16} className='mr-2' /> Approve
                     </button>
-                  )}
-                  <button
-                    onClick={handleSendEmail}
-                    className='inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-                  >
-                    <Send size={16} className='mr-1' /> Send
-                  </button>
-                  <button
-                    onClick={() => setIsEditMode(!isEditMode)}
-                    className='inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-                  >
-                    <Edit size={16} className='mr-1' /> Edit
-                  </button>
-                  <div className='relative'>
-                    <button
-                      onClick={() => setIsMenuOpen(!isMenuOpen)}
-                      className='inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-                    >
-                      <MoreHorizontal size={16} />
+                    <button className='flex items-center px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700'>
+                      <X size={16} className='mr-2' /> Decline
                     </button>
+                  </>
+                )}
+                {quote.status === QuoteStatus.Approved && (
+                  <button
+                    onClick={handleConvertToJob}
+                    className='flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700'
+                  >
+                    <ArrowRight size={16} className='mr-2' /> Convert to Job
+                  </button>
+                )}
+                <button
+                  onClick={handleSendEmail}
+                  className='flex items-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700'
+                >
+                  <Send size={16} className='mr-2' /> Send
+                </button>
+                <button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className='flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50'
+                >
+                  <Edit size={16} className='mr-2' /> Edit
+                </button>
+              </div>
+            </div>
+          </div>
 
-                    {isMenuOpen && (
-                      <div className='origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10'>
-                        <button className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left'>
-                          <Printer size={16} className='mr-2' /> Print Quote
-                        </button>
-                        <button className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left'>
-                          <Download size={16} className='mr-2' /> Download PDF
-                        </button>
-                        <button className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left'>
-                          <Copy size={16} className='mr-2' /> Duplicate Quote
-                        </button>
-                        <button className='flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left'>
-                          <Trash size={16} className='mr-2' /> Delete Quote
-                        </button>
-                      </div>
-                    )}
+          {/* Stats Cards */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+            <div className='bg-white rounded-lg shadow-sm p-4'>
+              <div className='flex items-center'>
+                <Calendar className='h-5 w-5 text-gray-500 mr-3' />
+                <div>
+                  <div className='text-sm text-gray-500'>Created</div>
+                  <div className='font-medium'>
+                    {formatDate(quote.createdAt)}
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Quote Summary */}
-              <div className='mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
-                  <div className='px-4 py-5 sm:p-6'>
-                    <div className='flex items-center'>
-                      <div className='flex-shrink-0 bg-blue-100 rounded-md p-3'>
-                        <Calendar className='h-6 w-6 text-blue-600' />
-                      </div>
-                      <div className='ml-5 w-0 flex-1'>
-                        <dl>
-                          <dt className='text-sm font-medium text-gray-500 truncate'>
-                            Created
-                          </dt>
-                          <dd className='text-lg font-semibold text-gray-900'>
-                            {formatDate(quote.createdAt)}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
+            <div className='bg-white rounded-lg shadow-sm p-4'>
+              <div className='flex items-center'>
+                <Clock className='h-5 w-5 text-gray-500 mr-3' />
+                <div>
+                  <div className='text-sm text-gray-500'>Expires</div>
+                  <div className='font-medium'>
+                    {formatDate(quote.createdAt)}
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
-                  <div className='px-4 py-5 sm:p-6'>
-                    <div className='flex items-center'>
-                      <div className='flex-shrink-0 bg-amber-100 rounded-md p-3'>
-                        <Clock className='h-6 w-6 text-amber-600' />
-                      </div>
-                      <div className='ml-5 w-0 flex-1'>
-                        <dl>
-                          <dt className='text-sm font-medium text-gray-500 truncate'>
-                            Expires
-                          </dt>
-                          <dd className='text-lg font-semibold text-gray-900'>
-                            {formatDate(quote.expiresAt)}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </div>
+            <div className='bg-white rounded-lg shadow-sm p-4'>
+              <div className='flex items-center'>
+                <User className='h-5 w-5 text-gray-500 mr-3' />
+                <div>
+                  <div className='text-sm text-gray-500'>Created By</div>
+                  <div className='font-medium'>{quote.customer.fullName}</div>
                 </div>
+              </div>
+            </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
-                  <div className='px-4 py-5 sm:p-6'>
-                    <div className='flex items-center'>
-                      <div className='flex-shrink-0 bg-green-100 rounded-md p-3'>
-                        <User className='h-6 w-6 text-green-600' />
-                      </div>
-                      <div className='ml-5 w-0 flex-1'>
-                        <dl>
-                          <dt className='text-sm font-medium text-gray-500 truncate'>
-                            Created By
-                          </dt>
-                          <dd className='text-lg font-semibold text-gray-900'>
-                            {quote.createdBy}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
-                  <div className='px-4 py-5 sm:p-6'>
-                    <div className='flex items-center'>
-                      <div className='flex-shrink-0 bg-indigo-100 rounded-md p-3'>
-                        <DollarSign className='h-6 w-6 text-indigo-600' />
-                      </div>
-                      <div className='ml-5 w-0 flex-1'>
-                        <dl>
-                          <dt className='text-sm font-medium text-gray-500 truncate'>
-                            Total
-                          </dt>
-                          <dd className='text-lg font-semibold text-gray-900'>
-                            {formatCurrency(quote.total)}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
+            <div className='bg-white rounded-lg shadow-sm p-4'>
+              <div className='flex items-center'>
+                <DollarSign className='h-5 w-5 text-gray-500 mr-3' />
+                <div>
+                  <div className='text-sm text-gray-500'>Total</div>
+                  <div className='font-medium text-indigo-600'>
+                    {formatCurrency(quote.total)}
                   </div>
                 </div>
               </div>
@@ -326,228 +174,178 @@ const QuoteDetails = () => {
           </div>
 
           {/* Main Content */}
-          <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-            <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-              {/* Customer Info */}
-              <div className='lg:col-span-1'>
-                <div className='bg-white shadow rounded-lg mb-6'>
-                  <div className='px-6 py-5 border-b border-gray-200'>
-                    <h3 className='text-lg font-medium text-gray-900'>
-                      Customer
-                    </h3>
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+            {/* Customer Info */}
+            <div className='lg:col-span-1 space-y-6'>
+              <div className='bg-white rounded-lg shadow-sm p-6'>
+                <h3 className='text-lg font-semibold text-gray-800 mb-4 flex items-center'>
+                  <User className='h-5 w-5 text-gray-500 mr-2' />
+                  Customer
+                </h3>
+                <div className='space-y-4'>
+                  <div className='text-center pb-4 border-b border-gray-100'>
+                    <h4 className='text-lg font-semibold text-gray-900 mb-1'>
+                      {quote.customer.fullName}
+                    </h4>
+                    <p className='text-gray-500'>
+                      {quote.customer.customerPhones?.[0].phoneNumber}
+                    </p>
                   </div>
-                  <div className='px-6 py-5'>
-                    <div className='space-y-4'>
-                      <div>
-                        <h4 className='text-base font-medium text-gray-900'>
-                          {quote.customer.name}
-                        </h4>
-                        <p className='text-sm text-gray-500'>
-                          {quote.customer.contact}
-                        </p>
-                      </div>
-                      <div className='flex items-center'>
-                        <Mail size={16} className='text-gray-400 mr-2' />
-                        <a
-                          href={`mailto:${quote.customer.email}`}
-                          className='text-sm text-blue-600 hover:text-blue-800'
-                        >
-                          {quote.customer.email}
-                        </a>
-                      </div>
-                      <div className='flex items-center'>
-                        {/* <Phone size={16} className="text-gray-400 mr-2" /> */}
-                        <span className='text-sm text-gray-500'>
-                          {quote.customer.phone}
-                        </span>
-                      </div>
-                      <div className='flex'>
-                        {/* <Map size={16} className="text-gray-400 mr-2 flex-shrink-0 mt-1" /> */}
-                        <span className='text-sm text-gray-500'>
-                          {quote.customer.address}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quote Actions */}
-                <div className='bg-white shadow rounded-lg mb-6'>
-                  <div className='px-6 py-5 border-b border-gray-200'>
-                    <h3 className='text-lg font-medium text-gray-900'>
-                      Actions
-                    </h3>
-                  </div>
-                  <div className='px-6 py-5'>
-                    <div className='space-y-3'>
+                  <div className='space-y-3'>
+                    <div className='flex items-center'>
+                      <Mail size={16} className='text-gray-400 mr-3' />
                       <a
-                        href='#'
-                        className='flex items-center justify-between py-2 px-3 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100'
+                        href={`mailto:${quote.customer.email?.[0]}`}
+                        className='text-blue-600 hover:text-blue-800'
                       >
-                        <span className='flex items-center'>
-                          <ExternalLink size={16} className='mr-2' />
-                          Customer View Link
-                        </span>
-                        <Copy size={14} />
-                      </a>
-                      <a
-                        href='#'
-                        className='flex items-center justify-between py-2 px-3 text-gray-700 rounded-md hover:bg-gray-100'
-                      >
-                        <span className='flex items-center'>
-                          <Eye size={16} className='mr-2' />
-                          View Activity Log
-                        </span>
-                        <ChevronDown size={14} />
+                        {quote.customer.email?.[0]}
                       </a>
                     </div>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className='bg-white shadow rounded-lg'>
-                  <div className='px-6 py-5 border-b border-gray-200 flex justify-between items-center'>
-                    <h3 className='text-lg font-medium text-gray-900'>Notes</h3>
-                    {isEditMode && (
-                      <button className='text-sm text-blue-600 hover:text-blue-800'>
-                        Edit
-                      </button>
-                    )}
-                  </div>
-                  <div className='px-6 py-5'>
-                    <div className='mb-6'>
-                      <h4 className='text-sm font-medium text-gray-700 mb-2'>
-                        Customer Notes
-                      </h4>
-                      <p className='text-sm text-gray-600'>{quote.notes}</p>
+                    <div className='text-gray-600'>
+                      {quote.customer.customerPhones?.[0].phoneNumber}
                     </div>
-                    <div>
-                      <h4 className='text-sm font-medium text-gray-700 mb-2'>
-                        Internal Notes
-                      </h4>
-                      <p className='text-sm text-gray-600'>
-                        {quote.internalNotes}
-                      </p>
+                    <div className='text-gray-600'>
+                      {quote.customer.properties?.[0].address}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Quote Details */}
-              <div className='lg:col-span-2'>
-                <div className='bg-white shadow rounded-lg overflow-hidden'>
-                  <div className='px-6 py-5 border-b border-gray-200 flex justify-between items-center'>
-                    <h3 className='text-lg font-medium text-gray-900'>
-                      Quote Items
-                    </h3>
-                    {isEditMode && (
-                      <button className='inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'>
-                        <PlusCircle size={14} className='mr-1' /> Add Item
-                      </button>
-                    )}
+              {/* Notes */}
+              <div className='bg-white rounded-lg shadow-sm p-6'>
+                <div className='flex justify-between items-center mb-4'>
+                  <h3 className='text-lg font-semibold text-gray-800 flex items-center'>
+                    <User className='h-5 w-5 text-gray-500 mr-2' />
+                    Notes
+                  </h3>
+                  {isEditMode && (
+                    <button className='text-sm text-blue-600 hover:text-blue-800'>
+                      Edit
+                    </button>
+                  )}
+                </div>
+                <div className='space-y-4'>
+                  <div className='p-4 bg-blue-50 rounded-md border border-blue-100'>
+                    <h4 className='text-sm font-semibold text-blue-800 mb-2'>
+                      Customer Notes
+                    </h4>
+                    <p className='text-gray-700'>{quote.notes}</p>
                   </div>
+                  <div className='p-4 bg-amber-50 rounded-md border border-amber-100'>
+                    <h4 className='text-sm font-semibold text-amber-800 mb-2'>
+                      Internal Notes
+                    </h4>
+                    <p className='text-gray-700'>{quote.internalNotes}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                  <div className='overflow-x-auto'>
-                    <table className='min-w-full divide-y divide-gray-200'>
-                      <thead className='bg-gray-50'>
-                        <tr>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Item
+            {/* Quote Details */}
+            <div className='lg:col-span-2 space-y-6'>
+              <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
+                <div className='p-6 border-b border-gray-200 flex justify-between items-center'>
+                  <h3 className='text-lg font-semibold text-gray-800 flex items-center'>
+                    <DollarSign className='h-5 w-5 text-gray-500 mr-2' />
+                    Quote Items
+                  </h3>
+                  {isEditMode && (
+                    <button className='flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700'>
+                      <PlusCircle size={16} className='mr-2' /> Add Item
+                    </button>
+                  )}
+                </div>
+
+                <div className='overflow-x-auto'>
+                  <table className='min-w-full divide-y divide-gray-200'>
+                    <thead className='bg-gray-50'>
+                      <tr>
+                        <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                          Item
+                        </th>
+                        <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                          Description
+                        </th>
+                        <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                          Qty
+                        </th>
+                        <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                          Price
+                        </th>
+                        <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                          Total
+                        </th>
+                        {isEditMode && (
+                          <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                            Actions
                           </th>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Description
-                          </th>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Qty
-                          </th>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Price
-                          </th>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Total
-                          </th>
-                          {isEditMode && (
-                            <th
-                              scope='col'
-                              className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'
-                            >
-                              Actions
-                            </th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody className='bg-white divide-y divide-gray-200'>
-                        {quote.lineItems.map((item) => (
-                          <tr key={item.id} className='hover:bg-gray-50'>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className='bg-white divide-y divide-gray-200'>
+                      {quote.lineItems.map((item) => (
+                        <tr key={item.lineItemId} className='hover:bg-gray-50'>
+                          <td className='px-6 py-4 whitespace-nowrap'>
+                            <div className='text-sm font-medium text-gray-900'>
                               {item.name}
-                            </td>
-                            <td className='px-6 py-4 text-sm text-gray-500'>
+                            </div>
+                          </td>
+                          <td className='px-6 py-4'>
+                            <div className='text-sm text-gray-500'>
                               {item.description}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right'>
-                              {item.quantity}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right'>
-                              {formatCurrency(item.price)}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium'>
-                              {formatCurrency(item.total)}
-                            </td>
-                            {isEditMode && (
-                              <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
-                                <button className='text-indigo-600 hover:text-indigo-900 mr-2'>
+                            </div>
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700'>
+                            {item.quantity}
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700'>
+                            {formatCurrency(item.unitPrice)}
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900'>
+                            {formatCurrency(item.totalPrice)}
+                          </td>
+                          {isEditMode && (
+                            <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
+                              <div className='flex justify-end space-x-2'>
+                                <button className='text-indigo-600 hover:text-indigo-900'>
                                   <Edit size={16} />
                                 </button>
                                 <button className='text-red-600 hover:text-red-900'>
                                   <Trash size={16} />
                                 </button>
-                              </td>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                  {/* Totals */}
-                  <div className='border-t border-gray-200 px-6 py-5 bg-gray-50'>
-                    <div className='flex flex-col sm:flex-row sm:justify-end'>
-                      <div className='w-full sm:w-64'>
-                        <div className='flex justify-between py-2 text-sm text-gray-700'>
+                {/* Totals */}
+                <div className='p-6 bg-gray-50'>
+                  <div className='flex justify-end'>
+                    <div className='w-full sm:w-80'>
+                      <div className='space-y-3'>
+                        <div className='flex justify-between text-sm font-medium text-gray-700'>
                           <span>Subtotal</span>
                           <span>{formatCurrency(quote.subtotal)}</span>
                         </div>
-                        <div className='flex justify-between py-2 text-sm text-gray-700'>
+                        <div className='flex justify-between text-sm font-medium text-gray-700'>
                           <span>
                             Discount (
-                            {quote.discount.type === 'percentage'
-                              ? `${quote.discount.value}%`
-                              : formatCurrency(quote.discount.value)}
+                            {quote.discountType === DiscountType.Percentage
+                              ? `${quote.discountAmount}%`
+                              : formatCurrency(quote.discountAmount)}
                             )
                           </span>
-                          <span>-{formatCurrency(quote.discount.amount)}</span>
+                          <span>-{formatCurrency(quote.discountAmount)}</span>
                         </div>
-                        <div className='flex justify-between py-2 text-sm text-gray-700'>
-                          <span>Tax ({quote.tax.rate}%)</span>
+                        <div className='flex justify-between text-sm font-medium text-gray-700'>
+                          <span>Tax ({quote.tax}%)</span>
                           <span>{formatCurrency(quote.tax.amount)}</span>
                         </div>
-                        <div className='flex justify-between py-2 text-base font-medium text-gray-900 border-t border-gray-200 mt-2 pt-2'>
+                        <div className='flex justify-between pt-3 text-lg font-bold text-indigo-600 border-t border-gray-200'>
                           <span>Total</span>
                           <span>{formatCurrency(quote.total)}</span>
                         </div>
@@ -555,37 +353,56 @@ const QuoteDetails = () => {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Attachments */}
-                <div className='bg-white shadow rounded-lg mt-6'>
-                  <div className='px-6 py-5 border-b border-gray-200 flex justify-between items-center'>
-                    <h3 className='text-lg font-medium text-gray-900'>
-                      Attachments
-                    </h3>
-                    {isEditMode && (
-                      <button className='inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'>
-                        <PlusCircle size={14} className='mr-1' /> Add Files
-                      </button>
-                    )}
+              {/* Activity Timeline */}
+              <div className='bg-white rounded-lg shadow-sm p-6'>
+                <h3 className='text-lg font-semibold text-gray-800 mb-4 flex items-center'>
+                  <Clock className='h-5 w-5 text-gray-500 mr-2' />
+                  Activity Timeline
+                </h3>
+                <div className='space-y-4'>
+                  <div className='flex items-start'>
+                    <div className='flex-shrink-0 h-8 w-8 rounded-full bg-green-500 flex items-center justify-center text-white mr-3 mt-1'>
+                      <Check size={16} />
+                    </div>
+                    <div className='flex-1'>
+                      <p className='text-sm font-medium text-gray-900'>
+                        Quote created
+                      </p>
+                      <p className='text-sm text-gray-500'>
+                        Created by Sarah Johnson
+                      </p>
+                      <p className='text-xs text-gray-400 mt-1'>May 1, 2023</p>
+                    </div>
                   </div>
-                  <div className='px-6 py-5'>
-                    {isEditMode ? (
-                      <div className='border-2 border-dashed border-gray-300 rounded-lg p-12 text-center'>
-                        <div className='flex justify-center'>
-                          <Paperclip size={24} className='text-gray-400' />
-                        </div>
-                        <p className='mt-2 text-sm text-gray-500'>
-                          Drag and drop files here, or click to select files
-                        </p>
-                        <p className='mt-1 text-xs text-gray-500'>
-                          PDF, PNG, JPG, GIF up to 10MB
-                        </p>
-                      </div>
-                    ) : (
-                      <div className='text-center py-6 text-gray-500 text-sm italic'>
-                        No attachments yet
-                      </div>
-                    )}
+                  <div className='flex items-start'>
+                    <div className='flex-shrink-0 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white mr-3 mt-1'>
+                      <Send size={16} />
+                    </div>
+                    <div className='flex-1'>
+                      <p className='text-sm font-medium text-gray-900'>
+                        Quote sent to customer
+                      </p>
+                      <p className='text-sm text-gray-500'>
+                        Sent via email to john.doe@acmecorp.com
+                      </p>
+                      <p className='text-xs text-gray-400 mt-1'>May 1, 2023</p>
+                    </div>
+                  </div>
+                  <div className='flex items-start'>
+                    <div className='flex-shrink-0 h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white mr-3 mt-1'>
+                      <Eye size={16} />
+                    </div>
+                    <div className='flex-1'>
+                      <p className='text-sm font-medium text-gray-900'>
+                        Quote viewed by customer
+                      </p>
+                      <p className='text-sm text-gray-500'>
+                        Customer opened the quote link
+                      </p>
+                      <p className='text-xs text-gray-400 mt-1'>May 2, 2023</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -596,100 +413,84 @@ const QuoteDetails = () => {
 
       {/* Email Modal */}
       {isEmailModalOpen && (
-        <div className='fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg shadow-xl w-full max-w-md p-6'>
-            <div className='flex justify-between items-center mb-4'>
-              <h3 className='text-lg font-medium text-gray-900'>
-                Send Quote to Customer
-              </h3>
-              <button
-                onClick={() => setIsEmailModalOpen(false)}
-                className='text-gray-400 hover:text-gray-500'
-              >
-                <X size={20} />
-              </button>
+        <div className='fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50'>
+          <div className='bg-white rounded-lg shadow-xl w-full max-w-2xl'>
+            <div className='p-4 border-b border-gray-200'>
+              <div className='flex items-center justify-between'>
+                <h3 className='text-lg font-semibold text-gray-800'>
+                  Send Quote
+                </h3>
+                <button
+                  onClick={() => setIsEmailModalOpen(false)}
+                  className='text-gray-400 hover:text-gray-600'
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
+            <div className='p-6'>
+              <div className='space-y-4'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    To
+                  </label>
+                  <input
+                    type='email'
+                    defaultValue={quote.customer.email?.[0]}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Subject
+                  </label>
+                  <input
+                    type='text'
+                    defaultValue={`Quote ${quote.id} from ${quote.createdBy}`}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Message
+                  </label>
+                  <textarea
+                    rows={6}
+                    defaultValue={`Hi ${
+                      quote.customer.customerPhones?.[0].phoneNumber
+                    },
 
-            <div className='space-y-4'>
-              <div>
-                <label
-                  htmlFor='email-to'
-                  className='block text-sm font-medium text-gray-700'
-                >
-                  To
-                </label>
-                <input
-                  type='email'
-                  id='email-to'
-                  className='mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
-                  value={quote.customer.email}
-                  readOnly
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor='email-subject'
-                  className='block text-sm font-medium text-gray-700'
-                >
-                  Subject
-                </label>
-                <input
-                  type='text'
-                  id='email-subject'
-                  className='mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
-                  defaultValue={`Your Quote #${quote.id} from Company Name`}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor='email-message'
-                  className='block text-sm font-medium text-gray-700'
-                >
-                  Message
-                </label>
-                <textarea
-                  id='email-message'
-                  rows={5}
-                  className='mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
-                  defaultValue={`Dear ${quote.customer.contact},
+Please find attached your quote for the requested services. This quote is valid until ${formatDate(
+                      quote.createdAt
+                    )}.
 
-Please find attached your quote #${quote.id}. You can review and approve this quote online by clicking the link in this email.
-
-Thank you for your business!
+If you have any questions or would like to proceed, please don't hesitate to contact us.
 
 Best regards,
-Company Name`}
-                />
-              </div>
-              <div className='flex items-center'>
-                <input
-                  id='attach-pdf'
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-                  defaultChecked
-                />
-                <label
-                  htmlFor='attach-pdf'
-                  className='ml-2 block text-sm text-gray-700'
-                >
-                  Attach PDF copy of quote
-                </label>
+${quote.createdBy}`}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
+                  />
+                </div>
+                <div className='flex items-center p-3 bg-blue-50 rounded-md'>
+                  <Paperclip size={16} className='text-blue-500 mr-2' />
+                  <span className='text-sm text-blue-700'>
+                    Quote {quote.id}.pdf will be attached
+                  </span>
+                </div>
               </div>
             </div>
-
-            <div className='mt-5 flex justify-end'>
+            <div className='p-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3'>
               <button
-                type='button'
                 onClick={() => setIsEmailModalOpen(false)}
-                className='mr-3 inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                className='px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100'
               >
                 Cancel
               </button>
               <button
-                type='button'
-                className='inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                onClick={() => setIsEmailModalOpen(false)}
+                className='px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700'
               >
-                <Send size={16} className='mr-2' /> Send Quote
+                Send Quote
               </button>
             </div>
           </div>

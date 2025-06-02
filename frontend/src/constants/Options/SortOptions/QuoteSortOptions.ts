@@ -1,16 +1,4 @@
-export const inoviceSortOptions = [
-  {
-    id: 'invoice-number-asc',
-    label: 'Invoice Number (A-Z)',
-    sortBy: 'invoice-number',
-    sort: 'asc',
-  },
-  {
-    id: 'invoice-number-desc',
-    label: 'Invoice Number (Z-A)',
-    sortBy: 'invoice-number',
-    sort: 'desc',
-  },
+export const quoteSortOptions = [
   {
     id: 'customer-asc',
     label: 'Customer (A-Z)',
@@ -24,15 +12,15 @@ export const inoviceSortOptions = [
     sort: 'desc',
   },
   {
-    id: 'due-date-asc',
-    label: 'Due Date (Oldest to Newest)',
-    sortBy: 'due-date',
+    id: 'created-asc',
+    label: 'Created (Oldest to Newest)',
+    sortBy: 'created',
     sort: 'asc',
   },
   {
-    id: 'due-date-desc',
-    label: 'Due Date (Newest to Oldest)',
-    sortBy: 'due-date',
+    id: 'created-desc',
+    label: 'Created (Oldest to Newest)',
+    sortBy: 'created',
     sort: 'desc',
   },
   {

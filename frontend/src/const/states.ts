@@ -1,25 +1,11 @@
+import { TAddCustomer } from '../types/Customer';
 import { TAddInvoice } from '../types/Invoice';
+import { TAddJob } from '../types/Job';
+import { TAddNote } from '../types/Note';
+import { TAddServiceItem } from '../types/ServiceItem';
 
-export const customerInitialState = {
-  customerId: '',
-  firstName: '',
-  lastName: '',
-  companyName: '',
-  isCompany: false,
-  email: [],
-  visitReminders: true,
-  jobFollowUps: true,
-  quoteFollowUps: true,
-  invoiceFollowUps: true,
-  archived: false,
-  tags: [],
-  properties: [],
-  customerPhones: [],
-  customFields: [],
-  notes: [],
-};
-
-export const addCustomerInitialState = {
+export const addCustomerInitialState: TAddCustomer = {
+  workspaceId: '',
   firstName: '',
   lastName: '',
   companyName: '',
@@ -34,18 +20,7 @@ export const addCustomerInitialState = {
   customFields: [],
 };
 
-export const initialPropertyState = {
-  id: '',
-  street: '',
-  city: '',
-  state: '',
-  country: '',
-  postalCode: '',
-  isBillingAddress: true,
-  customerId: '',
-};
-
-export const initialNoteState = {
+export const addNoteInitialState: TAddNote = {
   createdBy: '',
   createdAt: '',
   noteText: '',
@@ -53,7 +28,7 @@ export const initialNoteState = {
   customerId: '',
 };
 
-export const addServiceItemInitialState = {
+export const addServiceItemInitialState: TAddServiceItem = {
   name: '',
   description: '',
   type: 'service',
@@ -67,7 +42,7 @@ export const addServiceItemInitialState = {
   imageUrl: '',
 };
 
-export const addJobInitialState = {
+export const addJobInitialState: TAddJob = {
   title: '',
   description: '',
   customerId: '',

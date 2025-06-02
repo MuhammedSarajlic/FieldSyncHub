@@ -4,22 +4,65 @@ import icons from '../../../constants/icons';
 import CreateCustomerForm from './CreateCustomerForm';
 import { TAddCustomer } from '../../../types/Customer';
 import { addCustomerInitialState } from '../../../const/states';
+import { useState } from 'react';
+import { CreateCustomer } from '../../../services/Customer';
+import { useAuth } from '../../../context/AuthProvider';
 
 interface ICreateCustomerModal {
   setIsAddCustomerModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  handleCreateCustomer: () => Promise<void>;
-  setCustomer: React.Dispatch<React.SetStateAction<TAddCustomer>>;
-  customer: TAddCustomer;
+  getAllCustomersByWorkspace: () => Promise<void>;
 }
 
 const CreateCustomerModal = ({
-  handleCreateCustomer,
   setIsAddCustomerModalOpen,
-  setCustomer,
-  customer,
+  getAllCustomersByWorkspace,
 }: ICreateCustomerModal) => {
+  const { user } = useAuth();
+  const [customer, setCustomer] = useState<TAddCustomer>(
+    addCustomerInitialState
+  );
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const validateCustomer = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!customer.firstName?.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    if (!customer.lastName?.trim()) {
+      newErrors.lastName = 'Last name is required';
+    }
+
+    if (customer.isCompany && !customer.companyName?.trim()) {
+      newErrors.companyName = 'Company name is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleCreateCustomer = async () => {
+    if (!user) return;
+
+    const isValid = validateCustomer();
+    if (!isValid) return;
+
+    const updatedCustomer = {
+      ...customer,
+      workspaceId: user.workspace?.id,
+    };
+
+    const response = await CreateCustomer(updatedCustomer);
+    if (response.status === 200) {
+      getAllCustomersByWorkspace();
+      setIsAddCustomerModalOpen(false);
+      setCustomer(addCustomerInitialState);
+      setErrors({});
+    }
+  };
+
   return (
-    <div className='fixed top-0 left-0 w-full h-screen bg-black/50 flex items-center justify-center'>
+    <div className='fixed top-0 left-0 w-full h-screen bg-black/50 backdrop-blur-sm flex items-center justify-center'>
       <div className='py-6 bg-white rounded-lg w-2/3 h-[95vh] flex flex-col'>
         <div className='px-6 pb-4 h-14 flex items-center justify-between'>
           <p className='text-2xl font-bold text-heading'>New Customer</p>
@@ -35,7 +78,11 @@ const CreateCustomerModal = ({
         </div>
 
         <div className='flex-grow overflow-y-auto'>
-          <CreateCustomerForm customer={customer} setCustomer={setCustomer} />
+          <CreateCustomerForm
+            customer={customer}
+            setCustomer={setCustomer}
+            errors={errors}
+          />
         </div>
 
         <div className='px-6 pt-4 h-14 flex items-center justify-end space-x-3'>

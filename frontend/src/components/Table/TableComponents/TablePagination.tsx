@@ -81,7 +81,7 @@ const TablePagination = ({
             className={`group relative inline-flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               currentPage === 1
                 ? 'text-gray-300'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 focus:z-10 focus:outline-none cursor-pointer'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 focus:z-0 focus:outline-none cursor-pointer'
             }`}
             title='First page'
           >
@@ -95,7 +95,7 @@ const TablePagination = ({
             className={`group relative inline-flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               currentPage === 1
                 ? 'text-gray-300'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 focus:z-10 focus:outline-none cursor-pointer'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 focus:z-0 focus:outline-none cursor-pointer'
             }`}
             title='Previous page'
           >
@@ -118,10 +118,10 @@ const TablePagination = ({
                         typeof page === 'string' ? parseInt(page, 10) : page
                       )
                     }
-                    className={`relative inline-flex items-center px-3.5 py-2 text-sm font-semibold rounded-lg transition-all duration-200 focus:z-10 focus:outline-none cursor-pointer ${
+                    className={`relative inline-flex items-center px-3.5 py-2 text-sm font-semibold rounded-lg transition-all duration-200 focus:z-0 focus:outline-none cursor-pointer ${
                       currentPage ===
                       (typeof page === 'string' ? parseInt(page, 10) : page)
-                        ? 'z-10 bg-gradient-to-br from-bg-primary/90 to-emerald-800/90 text-white shadow-lg transform scale-105'
+                        ? 'z-0 bg-gradient-to-br from-bg-primary/90 to-emerald-800/90 text-white shadow-lg transform scale-105'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-md hover:scale-105'
                     }`}
                     aria-current={currentPage === page ? 'page' : undefined}
@@ -140,7 +140,7 @@ const TablePagination = ({
             className={`group relative inline-flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               currentPage === totalPages
                 ? 'text-gray-300'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 focus:z-10 focus:outline-none cursor-pointer'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 focus:z-0 focus:outline-none cursor-pointer'
             }`}
             title='Next page'
           >
@@ -155,7 +155,7 @@ const TablePagination = ({
             className={`group relative inline-flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               currentPage === totalPages
                 ? 'text-gray-300'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 focus:z-10 focus:outline-none cursor-pointer'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 focus:z-0 focus:outline-none cursor-pointer'
             }`}
             title='Last page'
           >

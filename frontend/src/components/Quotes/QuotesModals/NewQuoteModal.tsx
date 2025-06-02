@@ -1,724 +1,596 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Calendar, User, Home } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  X,
+  Plus,
+  Trash2,
+  User,
+  FileText,
+  Calculator,
+  Settings,
+  Building2,
+  Mail,
+  Phone,
+  ChevronDown,
+  Search,
+} from 'lucide-react';
+import { QuoteStatus } from '../../../constants/Enumeration/QuoteEnum';
+import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
+import { TAddQuote } from '../../../types/Quote';
+import { GetAllCustomers } from '../../../services/Customer';
+import { TCustomer } from '../../../types/Customer';
+import { GetServiceItems } from '../../../services/ServiceItem';
+import { TServiceItem } from '../../../types/ServiceItem';
+import { CreateQuote } from '../../../services/Quote';
+import { useAuth } from '../../../context/AuthProvider';
 
-interface NewQuoteModalProps {
-  isOpen: boolean;
-  onClose?: () => void;
-  onSubmit?: (quoteData: QuoteData) => void;
-  customers?: Customer[];
-  properties?: Property[];
-  priceBookItems?: PriceBookItem[];
+enum DiscountType {
+  Percentage,
+  FixedAmount,
 }
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-}
-
-interface Property {
-  id: string;
-  customerId: string;
-  address: string;
-}
-
-interface PriceBookItem {
-  id: string;
-  name: string;
-  description: string;
-  unitPrice: number;
-  unit: string;
-}
-
-interface QuoteItem {
-  id: string;
-  name: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  unit: string;
-  total: number;
-  fromPriceBook: boolean;
-  priceBookItemId?: string;
-}
-
-interface QuoteData {
-  customerId: string;
-  propertyId: string | null;
-  items: QuoteItem[];
-  subtotal: number;
-  taxRate: number;
-  taxAmount: number;
-  discountType: 'percentage' | 'fixed';
-  discountValue: number;
-  discountAmount: number;
-  totalAmount: number;
-  status: string;
-  notes: string;
-  customerMessage: string;
-  expirationDate: string;
-}
-
-const NewQuoteModal: React.FC<NewQuoteModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  customers,
-  properties,
-  priceBookItems,
-}) => {
-  const [quoteData, setQuoteData] = useState<QuoteData>({
+const NewQuoteModal = ({ isOpen = true, onClose }) => {
+  const { user } = useAuth();
+  const [customers, setCustomers] = useState<TCustomer[]>([]);
+  const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
+  const [newQuote, setNewQuote] = useState<TAddQuote>({
+    workspaceId: '',
+    status: QuoteStatus.Draft,
+    createdBy: '',
     customerId: '',
-    propertyId: null,
-    items: [],
-    subtotal: 0,
-    taxRate: 0,
-    taxAmount: 0,
-    discountType: 'percentage',
-    discountValue: 0,
+    lineItems: [],
+    discountType: DiscountType.Percentage,
     discountAmount: 0,
-    totalAmount: 0,
-    status: 'Draft',
+    tax: 0,
     notes: '',
-    customerMessage: '',
-    expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0], // 30 days from now
+    internalNotes: '',
+    attachmentUrls: [],
   });
 
-  const [selectedCustomer, setSelectedCustomer] = useState<string>('');
-  const [customerProperties, setCustomerProperties] = useState<Property[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filteredPriceBookItems, setFilteredPriceBookItems] = useState<
-    PriceBookItem[]
-  >([]);
-
-  // Filter properties when customer changes
-  useEffect(() => {
-    if (selectedCustomer) {
-      const filtered = properties.filter(
-        (prop) => prop.customerId === selectedCustomer
-      );
-      setCustomerProperties(filtered);
-
-      // Reset property selection if current selection doesn't belong to new customer
-      if (
-        quoteData.propertyId &&
-        !filtered.find((p) => p.id === quoteData.propertyId)
-      ) {
-        setQuoteData((prev) => ({
-          ...prev,
-          propertyId: null,
-        }));
-      }
-
-      // Update customerId in quoteData
-      setQuoteData((prev) => ({
-        ...prev,
-        customerId: selectedCustomer,
-      }));
-    } else {
-      setCustomerProperties([]);
-    }
-  }, [selectedCustomer, properties]);
-
-  // Filter pricebook items based on search
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredPriceBookItems(priceBookItems);
-    } else {
-      const lowercaseSearch = searchTerm.toLowerCase();
-      const filtered = priceBookItems.filter(
-        (item) =>
-          item.name.toLowerCase().includes(lowercaseSearch) ||
-          item.description.toLowerCase().includes(lowercaseSearch)
-      );
-      setFilteredPriceBookItems(filtered);
-    }
-  }, [searchTerm, priceBookItems]);
-
-  // Recalculate totals when items, tax rate, or discount changes
-  useEffect(() => {
-    const subtotal = quoteData.items.reduce((sum, item) => sum + item.total, 0);
-
-    let discountAmount = 0;
-    if (quoteData.discountType === 'percentage') {
-      discountAmount = subtotal * (quoteData.discountValue / 100);
-    } else {
-      discountAmount = quoteData.discountValue;
-    }
-
-    const afterDiscount = subtotal - discountAmount;
-    const taxAmount = afterDiscount * (quoteData.taxRate / 100);
-    const total = afterDiscount + taxAmount;
-
-    setQuoteData((prev) => ({
-      ...prev,
-      subtotal,
-      discountAmount,
-      taxAmount,
-      totalAmount: total,
-    }));
-  }, [
-    quoteData.items,
-    quoteData.taxRate,
-    quoteData.discountType,
-    quoteData.discountValue,
-  ]);
+  const [selectedCustomer, setSelectedCustomer] = useState('');
 
   const handleChange = (
     e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
     >
   ) => {
     const { name, value } = e.target;
-    setQuoteData((prev) => ({
+    const numericFields = ['status', 'discountType', 'tax', 'discountAmount'];
+    const parsedValue = numericFields.includes(name) ? Number(value) : value;
+
+    setNewQuote((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: parsedValue,
     }));
   };
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCustomer(e.target.value);
-  };
-
-  const handleAddPriceBookItem = (item: PriceBookItem) => {
-    const newItem: QuoteItem = {
-      id: Math.random().toString(36).substring(2, 9),
-      name: item.name,
-      description: item.description,
-      quantity: 1,
-      unitPrice: item.unitPrice,
-      unit: item.unit,
-      total: item.unitPrice,
-      fromPriceBook: true,
-      priceBookItemId: item.id,
-    };
-
-    setQuoteData((prev) => ({
+    setNewQuote((prev) => ({
       ...prev,
-      items: [...prev.items, newItem],
+      customerId: e.target.value,
     }));
   };
 
-  const handleAddCustomItem = () => {
-    const newItem: QuoteItem = {
-      id: Math.random().toString(36).substring(2, 9),
-      name: '',
-      description: '',
-      quantity: 1,
-      unitPrice: 0,
-      unit: 'ea',
-      total: 0,
-      fromPriceBook: false,
-    };
-
-    setQuoteData((prev) => ({
+  const handleAddLineItem = () => {
+    setNewQuote((prev) => ({
       ...prev,
-      items: [...prev.items, newItem],
+      lineItems: [
+        ...prev.lineItems,
+        {
+          quantity: 1,
+          name: '',
+          unitPrice: 0,
+          description: '',
+        },
+      ],
     }));
   };
 
-  const handleUpdateItem = (id: string, field: keyof QuoteItem, value: any) => {
-    setQuoteData((prev) => {
-      const updatedItems = prev.items.map((item) => {
-        if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
+  const handleUpdateLineItem = (index: number, field: string, value: any) => {
+    setNewQuote((prev) => {
+      const updatedItems = [...prev.lineItems];
+      updatedItems[index] = { ...updatedItems[index], [field]: value };
 
-          // Recalculate total if quantity or unit price changes
-          if (field === 'quantity' || field === 'unitPrice') {
-            updatedItem.total = updatedItem.quantity * updatedItem.unitPrice;
-          }
+      if (field === 'quantity' || field === 'unitPrice') {
+        updatedItems[index].total =
+          updatedItems[index].quantity * updatedItems[index].unitPrice;
+      }
 
-          return updatedItem;
-        }
-        return item;
-      });
-
-      return {
-        ...prev,
-        items: updatedItems,
-      };
+      return { ...prev, lineItems: updatedItems };
     });
   };
 
-  const handleRemoveItem = (id: string) => {
-    setQuoteData((prev) => ({
+  const handleRemoveLineItem = (index: number) => {
+    setNewQuote((prev) => ({
       ...prev,
-      items: prev.items.filter((item) => item.id !== id),
+      lineItems: prev.lineItems.filter((_, i) => i !== index),
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit(quoteData);
-    onClose();
+    if (!user) return;
+    const updatedQuote = {
+      ...newQuote,
+      workspaceId: user?.workspace.id,
+      createdBy: user?.id,
+    };
+    const response = await CreateQuote(updatedQuote);
+    if (response.status === 200) {
+      onClose();
+    }
+    console.log('Quote submitted:', newQuote);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+  // Calculate totals
+  const subtotal = newQuote.lineItems.reduce(
+    (sum, item) => sum + item.quantity * item.unitPrice,
+    0
+  );
+  const discountAmount =
+    newQuote.discountType === DiscountType.Percentage
+      ? subtotal * (newQuote.discountAmount / 100)
+      : newQuote.discountAmount;
+  const taxAmount = (subtotal - discountAmount) * (newQuote.tax / 100);
+  const total = subtotal - discountAmount + taxAmount;
+
+  const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
+
+  const fetchCustomers = async () => {
+    const response = await GetAllCustomers();
+    if (response.status === 200) {
+      setCustomers(response.data.payload);
+    }
   };
+
+  const fetchServiceItems = async () => {
+    const response = await GetServiceItems();
+    if (response.status === 200) {
+      setServiceItems(response.data.payload);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+    fetchServiceItems();
+  }, []);
 
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 bg-black/70 flex items-center justify-center z-50'>
-      <div className='bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto'>
-        <div className='flex justify-between items-center p-4 border-b'>
-          <h2 className='text-xl font-semibold text-gray-800'>
-            Create New Quote
-          </h2>
+    <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
+      <div className='bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col'>
+        {/* Header */}
+        <div className='flex justify-between items-center px-8 py-6 border-b border-gray-100'>
+          <div className='flex items-center space-x-4'>
+            <div className='w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center'>
+              <FileText className='w-6 h-6 text-white' />
+            </div>
+            <div>
+              <h2 className='text-2xl font-bold text-gray-900'>
+                Create New Quote
+              </h2>
+              <p className='text-gray-600 text-sm'>
+                Fill in all required fields to create a new quote
+              </p>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className='text-gray-500 hover:text-gray-700'
+            className='w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors'
           >
-            <X size={24} />
+            <X className='w-5 h-5 text-gray-500' />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className='p-6'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-            <div>
-              <h3 className='text-lg font-medium text-gray-800 mb-4'>
-                Customer Information
-              </h3>
+        <div className='flex-1 overflow-hidden flex'>
+          {/* Main Content */}
+          <div className='flex-1 overflow-y-auto p-8'>
+            <form onSubmit={handleSubmit} className='space-y-8'>
+              {/* Customer Section */}
+              <div className='space-y-6'>
+                <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
+                  <User className='w-5 h-5 mr-3 text-blue-600' />
+                  Customer Information
+                </h3>
 
-              <div className='space-y-4'>
-                {/* Customer Selection */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-1'>
-                    Customer*
-                  </label>
-                  <div className='relative'>
-                    <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                      <User size={16} className='text-gray-400' />
-                    </div>
-                    <select
-                      value={selectedCustomer}
-                      onChange={handleCustomerChange}
-                      required
-                      className='pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                    >
-                      <option value=''>Select Customer</option>
-                      {/* {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id}>
-                          {customer.name}
-                        </option>
-                      ))} */}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Property Selection */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-1'>
-                    Property (Optional)
-                  </label>
-                  <div className='relative'>
-                    <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                      <Home size={16} className='text-gray-400' />
-                    </div>
-                    <select
-                      name='propertyId'
-                      value={quoteData.propertyId || ''}
-                      onChange={handleChange}
-                      disabled={!selectedCustomer}
-                      className='pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                    >
-                      <option value=''>Select Property</option>
-                      {customerProperties.map((property) => (
-                        <option key={property.id} value={property.id}>
-                          {property.address}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Expiration Date */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-1'>
-                    Expiration Date
-                  </label>
-                  <div className='relative'>
-                    <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                      <Calendar size={16} className='text-gray-400' />
-                    </div>
-                    <input
-                      type='date'
-                      name='expirationDate'
-                      value={quoteData.expirationDate}
-                      onChange={handleChange}
-                      className='pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className='text-lg font-medium text-gray-800 mb-4'>
-                Quote Settings
-              </h3>
-
-              <div className='space-y-4'>
-                {/* Status */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-1'>
-                    Status
-                  </label>
-                  <select
-                    name='status'
-                    value={quoteData.status}
-                    onChange={handleChange}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  >
-                    <option value='Draft'>Draft</option>
-                    <option value='Awaiting Response'>Awaiting Response</option>
-                    <option value='Approved'>Approved</option>
-                    <option value='Declined'>Declined</option>
-                    <option value='Changes Requested'>Changes Requested</option>
-                  </select>
-                </div>
-
-                {/* Tax Rate */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-1'>
-                    Tax Rate (%)
-                  </label>
-                  <input
-                    type='number'
-                    name='taxRate'
-                    value={quoteData.taxRate}
-                    onChange={handleChange}
-                    min='0'
-                    step='0.01'
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  />
-                </div>
-
-                {/* Discount */}
-                <div className='grid grid-cols-3 gap-2'>
-                  <div className='col-span-1'>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>
-                      Discount Type
-                    </label>
-                    <select
-                      name='discountType'
-                      value={quoteData.discountType}
-                      onChange={handleChange}
-                      className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                    >
-                      <option value='percentage'>Percentage (%)</option>
-                      <option value='fixed'>Fixed Amount ($)</option>
-                    </select>
-                  </div>
-                  <div className='col-span-2'>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>
-                      Discount Value
-                    </label>
-                    <input
-                      type='number'
-                      name='discountValue'
-                      value={quoteData.discountValue}
-                      onChange={handleChange}
-                      min='0'
-                      step={
-                        quoteData.discountType === 'percentage' ? '0.01' : '1'
-                      }
-                      className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Line Items Section */}
-          <div className='mb-6'>
-            <div className='flex justify-between items-center mb-4'>
-              <h3 className='text-lg font-medium text-gray-800'>Quote Items</h3>
-              <button
-                type='button'
-                onClick={handleAddCustomItem}
-                className='px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm flex items-center'
-              >
-                <Plus size={16} className='mr-1' /> Add Custom Item
-              </button>
-            </div>
-
-            {/* Price Book Search */}
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Search Price Book
-              </label>
-              <input
-                type='text'
-                placeholder='Search for items...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-              />
-              {searchTerm && (
-                <div className='mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md'>
-                  {filteredPriceBookItems.length > 0 ? (
-                    <ul className='divide-y divide-gray-200'>
-                      {filteredPriceBookItems.map((item) => (
-                        <li
-                          key={item.id}
-                          className='p-2 hover:bg-gray-50 cursor-pointer flex justify-between items-center'
-                          onClick={() => handleAddPriceBookItem(item)}
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <div className='space-y-4'>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-2'>
+                        Select Customer
+                      </label>
+                      <div className='relative'>
+                        <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                          <Search className='w-5 h-5 text-gray-400' />
+                        </div>
+                        <select
+                          value={selectedCustomer}
+                          onChange={handleCustomerChange}
+                          required
+                          className='pl-10 pr-10 w-full py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none'
                         >
-                          <div>
-                            <div className='font-medium'>{item.name}</div>
-                            <div className='text-sm text-gray-500'>
-                              {item.description}
+                          <option value=''>Choose a customer...</option>
+                          {customers.map((customer) => (
+                            <option key={customer.id} value={customer.id}>
+                              {customer.fullName}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className='absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedCustomerData && (
+                    <div className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
+                      <div className='flex items-start space-x-3'>
+                        <div className='w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
+                          <Building2 className='w-5 h-5 text-blue-600' />
+                        </div>
+                        <div className='flex-1'>
+                          <h4 className='font-medium text-gray-900'>
+                            {selectedCustomerData.fullName}
+                          </h4>
+                          <div className='mt-1 space-y-1 text-sm text-gray-600'>
+                            <div className='flex items-center'>
+                              <Mail className='w-4 h-4 mr-2' />
+                              <span>{selectedCustomerData.email?.[0]}</span>
+                            </div>
+                            <div className='flex items-center'>
+                              <Phone className='w-4 h-4 mr-2' />
+                              <span>
+                                {
+                                  selectedCustomerData.customerPhones?.[0]
+                                    .phoneNumber
+                                }
+                              </span>
                             </div>
                           </div>
-                          <div className='flex items-center'>
-                            <span className='mr-3 font-medium'>
-                              {formatCurrency(item.unitPrice)}
-                            </span>
-                            <Plus size={16} className='text-blue-500' />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className='p-3 text-center text-gray-500'>
-                      No items found
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Quote Items Table */}
-            <div className='overflow-x-auto border border-gray-200 rounded-md'>
-              <table className='min-w-full divide-y divide-gray-200'>
-                <thead className='bg-gray-50'>
-                  <tr>
-                    <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3'>
-                      Item
-                    </th>
-                    <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Quantity
-                    </th>
-                    <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Unit
-                    </th>
-                    <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Unit Price
-                    </th>
-                    <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Total
-                    </th>
-                    <th className='px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'></th>
-                  </tr>
-                </thead>
-                <tbody className='bg-white divide-y divide-gray-200'>
-                  {quoteData.items.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className='px-4 py-4 text-center text-sm text-gray-500'
+              {/* Line Items Section */}
+              <div className='space-y-6'>
+                <div className='flex justify-between items-center'>
+                  <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
+                    <FileText className='w-5 h-5 mr-3 text-blue-600' />
+                    Line Items
+                  </h3>
+                  <button
+                    type='button'
+                    onClick={handleAddLineItem}
+                    className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition-colors text-sm'
+                  >
+                    <Plus className='w-4 h-4 mr-2' />
+                    Add Item
+                  </button>
+                </div>
+
+                {newQuote.lineItems.length === 0 ? (
+                  <div className='bg-gray-50 rounded-lg p-8 text-center border border-dashed border-gray-300'>
+                    <div className='w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4'>
+                      <FileText className='w-6 h-6 text-gray-500' />
+                    </div>
+                    <h4 className='text-base font-medium text-gray-900 mb-2'>
+                      No items added yet
+                    </h4>
+                    <p className='text-gray-500 mb-4 text-sm'>
+                      Add items to create your quote
+                    </p>
+                    <button
+                      type='button'
+                      onClick={handleAddLineItem}
+                      className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center mx-auto transition-colors text-sm'
+                    >
+                      <Plus className='w-4 h-4 mr-2' />
+                      Add First Item
+                    </button>
+                  </div>
+                ) : (
+                  <div className='space-y-4'>
+                    {newQuote.lineItems.map((item, index) => (
+                      <div
+                        key={index}
+                        className='bg-white rounded-lg border border-gray-200 p-4'
                       >
-                        No items added yet. Search the price book or add a
-                        custom item.
-                      </td>
-                    </tr>
-                  ) : (
-                    quoteData.items.map((item, index) => (
-                      <tr key={item.id}>
-                        <td className='px-4 py-2'>
-                          <input
-                            type='text'
-                            value={item.name}
-                            onChange={(e) =>
-                              handleUpdateItem(item.id, 'name', e.target.value)
-                            }
-                            placeholder='Item name'
-                            className='w-full p-1 border border-gray-300 rounded'
-                          />
-                          <textarea
-                            value={item.description}
-                            onChange={(e) =>
-                              handleUpdateItem(
-                                item.id,
-                                'description',
-                                e.target.value
-                              )
-                            }
-                            placeholder='Description'
-                            rows={2}
-                            className='w-full p-1 mt-1 border border-gray-300 rounded text-sm'
-                          />
-                        </td>
-                        <td className='px-4 py-2'>
-                          <input
-                            type='number'
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleUpdateItem(
-                                item.id,
-                                'quantity',
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            min='0.01'
-                            step='0.01'
-                            className='w-full p-1 border border-gray-300 rounded'
-                          />
-                        </td>
-                        <td className='px-4 py-2'>
-                          <input
-                            type='text'
-                            value={item.unit}
-                            onChange={(e) =>
-                              handleUpdateItem(item.id, 'unit', e.target.value)
-                            }
-                            className='w-full p-1 border border-gray-300 rounded'
-                          />
-                        </td>
-                        <td className='px-4 py-2'>
-                          <input
-                            type='number'
-                            value={item.unitPrice}
-                            onChange={(e) =>
-                              handleUpdateItem(
-                                item.id,
-                                'unitPrice',
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            min='0'
-                            step='0.01'
-                            className='w-full p-1 border border-gray-300 rounded'
-                          />
-                        </td>
-                        <td className='px-4 py-2 font-medium'>
-                          {formatCurrency(item.total)}
-                        </td>
-                        <td className='px-4 py-2 text-right'>
-                          <button
-                            type='button'
-                            onClick={() => handleRemoveItem(item.id)}
-                            className='text-red-500 hover:text-red-700'
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-                <tfoot className='bg-gray-50'>
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className='px-4 py-2 text-right font-medium'
-                    >
-                      Subtotal:
-                    </td>
-                    <td className='px-4 py-2 font-medium'>
-                      {formatCurrency(quoteData.subtotal)}
-                    </td>
-                    <td></td>
-                  </tr>
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className='px-4 py-2 text-right font-medium'
-                    >
-                      Discount (
-                      {quoteData.discountType === 'percentage'
-                        ? quoteData.discountValue + '%'
-                        : 'Fixed'}
-                      ):
-                    </td>
-                    <td className='px-4 py-2 font-medium text-red-500'>
-                      -{formatCurrency(quoteData.discountAmount)}
-                    </td>
-                    <td></td>
-                  </tr>
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className='px-4 py-2 text-right font-medium'
-                    >
-                      Tax ({quoteData.taxRate}%):
-                    </td>
-                    <td className='px-4 py-2 font-medium'>
-                      {formatCurrency(quoteData.taxAmount)}
-                    </td>
-                    <td></td>
-                  </tr>
-                  <tr className='border-t-2 border-gray-300'>
-                    <td
-                      colSpan={4}
-                      className='px-4 py-2 text-right font-bold text-lg'
-                    >
-                      Total:
-                    </td>
-                    <td className='px-4 py-2 font-bold text-lg'>
-                      {formatCurrency(quoteData.totalAmount)}
-                    </td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
+                        <div className='grid grid-cols-1 md:grid-cols-12 gap-4'>
+                          <div className='md:col-span-5'>
+                            <select
+                              value={item.serviceItemId || ''}
+                              onChange={(e) => {
+                                const selectedId = e.target.value;
+                                const selectedItem = serviceItems.find(
+                                  (si) => si.serviceItemId === selectedId
+                                );
+                                if (selectedItem) {
+                                  handleUpdateLineItem(
+                                    index,
+                                    'serviceItemId',
+                                    selectedId
+                                  );
+                                  handleUpdateLineItem(
+                                    index,
+                                    'name',
+                                    selectedItem.name
+                                  );
+                                  handleUpdateLineItem(
+                                    index,
+                                    'unitPrice',
+                                    selectedItem.unitPrice
+                                  );
+                                  handleUpdateLineItem(
+                                    index,
+                                    'description',
+                                    selectedItem.description
+                                  );
+                                }
+                              }}
+                              className='w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm'
+                            >
+                              <option value=''>Custom Item</option>
+                              {serviceItems.map((si) => (
+                                <option
+                                  key={si.serviceItemId}
+                                  value={si.serviceItemId}
+                                >
+                                  {si.name} - {formatCurrency(si.unitPrice)}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type='text'
+                              value={item.name}
+                              onChange={(e) =>
+                                handleUpdateLineItem(
+                                  index,
+                                  'name',
+                                  e.target.value
+                                )
+                              }
+                              placeholder='Item name'
+                              className='w-full p-2 mt-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm'
+                              required
+                            />
+                            <textarea
+                              value={item.description}
+                              onChange={(e) =>
+                                handleUpdateLineItem(
+                                  index,
+                                  'description',
+                                  e.target.value
+                                )
+                              }
+                              placeholder='Item description...'
+                              rows={2}
+                              className='w-full p-2 mt-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-600 resize-none'
+                            />
+                          </div>
 
-          {/* Message and Notes Section */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Customer Message (Visible to Customer)
-              </label>
-              <textarea
-                name='customerMessage'
-                value={quoteData.customerMessage}
-                onChange={handleChange}
-                rows={4}
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                placeholder='Enter a message that will be visible to the customer...'
-              ></textarea>
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Internal Notes (Not Visible to Customer)
-              </label>
-              <textarea
-                name='notes'
-                value={quoteData.notes}
-                onChange={handleChange}
-                rows={4}
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                placeholder='Enter notes for internal use only...'
-              ></textarea>
-            </div>
-          </div>
+                          <div className='md:col-span-2'>
+                            <label className='block text-xs font-medium text-gray-500 mb-1'>
+                              Quantity
+                            </label>
+                            <input
+                              type='number'
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleUpdateLineItem(
+                                  index,
+                                  'quantity',
+                                  parseFloat(e.target.value)
+                                )
+                              }
+                              min='0.01'
+                              step='0.01'
+                              className='w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm'
+                            />
+                          </div>
 
-          <div className='flex justify-end gap-3 mt-6'>
-            <button
-              type='button'
-              onClick={onClose}
-              className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50'
-            >
-              Cancel
-            </button>
-            <button
-              type='submit'
-              className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500'
-            >
-              Create Quote
-            </button>
+                          <div className='md:col-span-2'>
+                            <label className='block text-xs font-medium text-gray-500 mb-1'>
+                              Unit Price
+                            </label>
+                            <input
+                              type='number'
+                              value={item.unitPrice}
+                              onChange={(e) =>
+                                handleUpdateLineItem(
+                                  index,
+                                  'unitPrice',
+                                  parseFloat(e.target.value)
+                                )
+                              }
+                              step='0.01'
+                              min='0'
+                              className='w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm'
+                            />
+                          </div>
+
+                          <div className='md:col-span-2 flex items-end'>
+                            <div className='w-full'>
+                              <label className='block text-xs font-medium text-gray-500 mb-1'>
+                                Total
+                              </label>
+                              <div className='p-2 bg-gray-50 rounded-lg text-sm font-medium'>
+                                {formatCurrency(item.quantity * item.unitPrice)}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className='md:col-span-1 flex items-center justify-end'>
+                            <button
+                              type='button'
+                              onClick={() => handleRemoveLineItem(index)}
+                              className='w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-red-500 hover:text-red-700 transition-colors'
+                            >
+                              <Trash2 className='w-4 h-4' />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Pricing Section */}
+              <div className='space-y-6'>
+                <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
+                  <Calculator className='w-5 h-5 mr-3 text-blue-600' />
+                  Pricing & Adjustments
+                </h3>
+
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                  <div className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
+                    <h4 className='font-medium text-gray-900 mb-3'>Subtotal</h4>
+                    <div className='text-2xl font-bold text-gray-900'>
+                      {formatCurrency(subtotal)}
+                    </div>
+                  </div>
+
+                  <div className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
+                    <div className='flex justify-between items-center mb-2'>
+                      <label className='block text-sm font-medium text-gray-700'>
+                        Tax Rate (%)
+                      </label>
+                      <input
+                        type='number'
+                        name='tax'
+                        value={newQuote.tax}
+                        onChange={handleChange}
+                        min='0'
+                        step='0.01'
+                        className='w-20 p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm'
+                      />
+                    </div>
+                    <div className='text-lg font-medium text-gray-900'>
+                      Tax Amount: {formatCurrency(taxAmount)}
+                    </div>
+                  </div>
+
+                  <div className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
+                    <div className='space-y-3'>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                          Discount Type
+                        </label>
+                        <select
+                          name='discountType'
+                          value={newQuote.discountType}
+                          onChange={handleChange}
+                          className='w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm'
+                        >
+                          <option value={DiscountType.Percentage}>
+                            Percentage (%)
+                          </option>
+                          <option value={DiscountType.FixedAmount}>
+                            Fixed Amount ($)
+                          </option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                          Discount Value
+                        </label>
+                        <input
+                          type='number'
+                          name='discountAmount'
+                          value={newQuote.discountAmount}
+                          onChange={handleChange}
+                          min='0'
+                          step={
+                            newQuote.discountType === DiscountType.Percentage
+                              ? '0.01'
+                              : '1'
+                          }
+                          className='w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm'
+                        />
+                      </div>
+                      {newQuote.discountAmount > 0 && (
+                        <div className='text-green-600 font-medium'>
+                          -{formatCurrency(discountAmount)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes Section */}
+              <div className='space-y-6'>
+                <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
+                  <Settings className='w-5 h-5 mr-3 text-blue-600' />
+                  Notes
+                </h3>
+
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-2'>
+                      Customer Notes
+                    </label>
+                    <textarea
+                      name='notes'
+                      value={newQuote.notes}
+                      onChange={handleChange}
+                      rows={3}
+                      className='w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm'
+                      placeholder='Notes visible to customer...'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-2'>
+                      Internal Notes
+                    </label>
+                    <textarea
+                      name='internalNotes'
+                      value={newQuote.internalNotes}
+                      onChange={handleChange}
+                      rows={3}
+                      className='w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm'
+                      placeholder='Internal notes (not visible to customer)...'
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total & Actions */}
+              <div className='pt-6 border-t border-gray-200'>
+                <div className='flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0'>
+                  <div className='bg-blue-50 rounded-lg p-4 w-full md:w-auto'>
+                    <div className='flex items-center space-x-4'>
+                      <div className='text-sm text-gray-600'>Quote Total:</div>
+                      <div className='text-2xl font-bold text-blue-600'>
+                        {formatCurrency(total)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='flex space-x-3 w-full md:w-auto'>
+                    <button
+                      type='button'
+                      onClick={onClose}
+                      className='px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-full md:w-auto'
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type='submit'
+                      className='px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium w-full md:w-auto'
+                    >
+                      Create Quote
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

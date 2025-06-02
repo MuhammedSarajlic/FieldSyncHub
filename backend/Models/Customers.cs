@@ -7,7 +7,8 @@ namespace backend.Models;
 public class Customers
 {
     [Key]
-    public Guid CustomerId { get; set; }
+    public Guid Id { get; set; }
+    public Guid WorkspaceId { get; set; }
     [Required]
     public string? FirstName { get; set; }
     [Required]
@@ -28,7 +29,7 @@ public class Customers
     public ICollection<Notes>? Notes { get; set; }
     public ICollection<Property>? Properties { get; set; }
     public ICollection<CustomerPhone>? CustomerPhones { get; set; }
-    public DateTime CreatedAt { get; set; } =  DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } =  DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
 }

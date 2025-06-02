@@ -12,6 +12,8 @@ public class Property
     public string? State { get; set; }
     public string? Country { get; set; }
     public string? PostalCode { get; set; }
+    [NotMapped]
+    public string Address => $"{Street}, {City}, {State} {PostalCode}";
     public bool IsBillingAddress { get; set; }
     public Guid CustomerId { get; set; }
     [NotMapped]

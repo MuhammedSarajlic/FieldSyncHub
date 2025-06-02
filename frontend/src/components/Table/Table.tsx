@@ -11,10 +11,7 @@ interface ITable<T> {
   columns: TTableColumns;
 }
 
-const Table = <T extends { id: string | number }>({
-  data,
-  columns,
-}: ITable<T>) => {
+const Table = <T extends Record<string, any>>({ data, columns }: ITable<T>) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentPage, onPageChange } = usePagination(1, 'page');
@@ -23,6 +20,8 @@ const Table = <T extends { id: string | number }>({
     const newPath = `${location.pathname}/${item.id}`;
     navigate(newPath);
   };
+
+  const totalPages = Math.ceil(data.length / 10);
 
   return (
     <div className='bg-white rounded-lg shadow overflow-hidden'>
@@ -34,13 +33,13 @@ const Table = <T extends { id: string | number }>({
             columns={columns}
             onRowClick={handleRowClick}
             emptyState={<TableEmptyState />}
-            loading={false} // Set to true when loading data
+            loading={false}
           />
         </table>
       </div>
       <TablePagination
         currentPage={currentPage}
-        totalPages={9}
+        totalPages={totalPages}
         totalItems={data.length}
         onPageChange={onPageChange}
         itemsPerPage={10}
