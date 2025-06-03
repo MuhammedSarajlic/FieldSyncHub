@@ -41,3 +41,18 @@ export type TAddCustomer = {
   customerPhones: TAddCustomerPhone[];
   customFields: TAddCustomField[];
 };
+
+export type TImportCustomer = {
+  firstName: string;
+  lastName: string;
+  companyName?: string;
+  isCompany?: boolean;
+  email?: string[];
+  visitReminders?: boolean;
+  jobFollowUps?: boolean;
+  quoteFollowUps?: boolean;
+  invoiceFollowUps?: boolean;
+  archived?: boolean;
+  tags?: string[];
+  createdAt?: string;
+};

@@ -14,17 +14,22 @@ import {
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import { Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
-import { quoteFilterOptions } from '../../constants/Options/FilterOptions/QuoteFilterOptions';
 import Table from '../../components/Table/Table';
 import { customerColumns } from '../../constants/Columns/CustomerColumns';
 import { customerSortOptions } from '../../constants/Options/SortOptions/CustomerSortOptions';
 import { customerFilterOptions } from '../../constants/Options/FilterOptions/CustomerFilterOptions';
 
+export type TPaginationData = {
+  totalCount: number;
+  pageSize: number;
+};
+
 const Customers = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] =
     useState<boolean>(false);
   const [isImportCustomerModalOpen, setIsImportCustomerModalOpen] =
@@ -32,6 +37,10 @@ const Customers = () => {
   const [isSortModalOpen, setIsSortModalOpen] = useState<boolean>(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [customers, setCustomers] = useState<TCustomer[]>([]);
+  const [paginationData, setPaginationData] = useState<TPaginationData>({
+    totalCount: 0,
+    pageSize: 10,
+  });
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
 
@@ -46,26 +55,42 @@ const Customers = () => {
 
   const fetchAllCustomersByWorkspace = async () => {
     if (!user) return;
+
     const paramsObj: Record<string, string> = {};
+    let shouldResetPage = false;
+
     searchParams.forEach((value, key) => {
+      if (key === 'page') return;
       paramsObj[key] = value;
+      shouldResetPage = true;
     });
 
-    const hasAnyParam = Object.keys(paramsObj).length > 0;
-    if (hasAnyParam) {
-      const searchQueryString = new URLSearchParams(paramsObj).toString();
-      console.log(searchQueryString);
+    const currentPage = searchParams.get('page')
+      ? parseInt(searchParams.get('page')!)
+      : 1;
+    const finalPage = shouldResetPage ? 1 : currentPage;
 
-      const response = await GetCustomersByFilter(
-        searchQueryString,
-        user.workspace.id
-      );
-      console.log(response);
-      if (response.status === 200) setCustomers(response.data.payload);
-    } else {
-      const response = await GetCustomerByWorkspace(user.workspace.id);
-      console.log(response);
-      if (response.status === 200) setCustomers(response.data.payload);
+    const queryString = new URLSearchParams(paramsObj).toString();
+    const hasAnyParam = Object.keys(paramsObj).length > 0;
+
+    const response = hasAnyParam
+      ? await GetCustomersByFilter(
+          user.workspace.id,
+          finalPage,
+          10,
+          queryString
+        )
+      : await GetCustomerByWorkspace(user.workspace.id, finalPage, 10);
+
+    if (response.status === 200) {
+      const { items, totalCount, pageSize } = response.data.payload;
+      setCustomers(items);
+      setPaginationData({ totalCount, pageSize });
+
+      if (shouldResetPage && currentPage > 1) {
+        const newParams = new URLSearchParams(paramsObj);
+        navigate(`?${newParams.toString()}`);
+      }
     }
   };
 
@@ -85,7 +110,7 @@ const Customers = () => {
     };
   }, [isAddCustomerModalOpen]);
 
-  const totalCustomers = customers.length;
+  const totalCustomers = paginationData.totalCount;
   const newCustomersThisMonth = customers.filter(
     (c) => new Date(c.createdAt).getMonth() === new Date().getMonth()
   ).length;
@@ -219,7 +244,11 @@ const Customers = () => {
             {/* <CustomerTable data={customers} /> */}
             {/* Table */}
             <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
-              <Table<TCustomer> data={customers} columns={customerColumns} />
+              <Table<TCustomer>
+                data={customers}
+                columns={customerColumns}
+                paginationData={paginationData}
+              />
             </div>
           </div>
         </div>

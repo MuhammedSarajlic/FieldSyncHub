@@ -1,6 +1,8 @@
+using backend.Dtos.CustomerDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.CustomerService;
+using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -29,14 +31,16 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
-    public async Task<ApiResponse<List<Customers>>> GetCustomersByWorkspace(Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<Customers>>> GetCustomersByWorkspace(Guid workspaceId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
-        return await _customerService.GetCustomersByWorkspace(workspaceId);
+        return await _customerService.GetCustomersByWorkspace(workspaceId, pageNumber, pageSize);
     }
 
     [HttpGet("workspace/{workspaceId:guid}/filter")]
-    public async Task<ApiResponse<List<Customers>>> GetCustomersByFilter(
+    public async Task<ApiResponse<PagedResult<Customers>>> GetCustomersByFilter(
             Guid workspaceId,
+            [FromQuery] int pageNumber,
+            [FromQuery] int pageSize,
             [FromQuery] string? q,
             [FromQuery] string? sortBy,
             [FromQuery] string? sort,
@@ -50,8 +54,22 @@ public class CustomerController : ControllerBase
             [FromQuery] string? tags
         )
     {
-        return await _customerService.GetCustomersByFilter(workspaceId, q, sortBy, sort, customerType, createdDateMin, createdDateMax, propertiesMin, propertiesMax, hasEmail, hasPhone, tags);
+        return await _customerService.GetCustomersByFilter(pageNumber, pageSize, workspaceId, q, sortBy, sort, customerType, createdDateMin, createdDateMax, propertiesMin, propertiesMax, hasEmail, hasPhone, tags);
     }
+
+    [HttpPost("import")]
+    public async Task<IActionResult> ImportCustomers(
+        [FromBody] List<ImportedCustomerDto> customers,
+        Guid workspaceId)
+    {
+        var result = await _customerService.ImportCustomers(customers, workspaceId);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
 
     [HttpPost]
     public async Task<IActionResult> AddCustomer([FromBody] Customers newCustomer)

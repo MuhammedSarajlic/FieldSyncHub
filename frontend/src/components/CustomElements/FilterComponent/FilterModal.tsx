@@ -66,6 +66,8 @@ const FilterModal = <T extends Record<string, any>>({
           }
         } else if (option.type === 'dropdown' && value === 'all') {
           newParams.delete(option.name);
+        } else if (option.type === 'button-select' && value === 'all') {
+          newParams.delete(option.name);
         } else if (value) {
           newParams.set(option.name, value.toString());
         } else {

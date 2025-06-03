@@ -1,5 +1,7 @@
+using backend.Dtos.CustomerDto;
 using backend.Models;
 using backend.Response;
+using backend.Wrappers;
 
 namespace backend.Services.CustomerService;
 
@@ -7,9 +9,11 @@ public interface ICustomerService
 {
     Task<ApiResponse<List<Customers>>> GetCustomers();
     Task<ApiResponse<Customers>> GetCustomersById(Guid id);
-    Task<ApiResponse<List<Customers>>> GetCustomersByWorkspace(Guid workspaceId);
-    Task<ApiResponse<List<Customers>>> GetCustomersByFilter(
-        Guid workspaceId, string? q, string? sortBy, string? sort,
+    Task<ApiResponse<PagedResult<Customers>>> GetCustomersByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
+    Task<ApiResponse<PagedResult<Customers>>> GetCustomersByFilter(
+        int pageNumber, int pageSize,
+        Guid workspaceId,
+        string? q, string? sortBy, string? sort,
         string? customerType,
         string? createdDateMin,
         string? createdDateMax,
@@ -19,6 +23,7 @@ public interface ICustomerService
         string? hasPhone,
         string? tags
     );
+    Task<ApiResponse<object>> ImportCustomers(List<ImportedCustomerDto> customers, Guid workspaceId);
     Task AddCustomer(Customers newCustomer);
     Task UpdateCustomer(Customers updatedCustomer);
     Task UpdateCustomerTags(Guid id, string tag);

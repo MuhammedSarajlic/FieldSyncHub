@@ -5,13 +5,19 @@ import TablePagination from './TableComponents/TablePagination';
 import { useLocation, useNavigate } from 'react-router';
 import TableEmptyState from './TableComponents/TableEmptyState';
 import { TTableColumns } from '../../types/Table';
+import { TPaginationData } from '../../pages/customers/Customers';
 
 interface ITable<T> {
   data: T[];
   columns: TTableColumns;
+  paginationData: TPaginationData;
 }
 
-const Table = <T extends Record<string, any>>({ data, columns }: ITable<T>) => {
+const Table = <T extends Record<string, any>>({
+  data,
+  columns,
+  paginationData,
+}: ITable<T>) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentPage, onPageChange } = usePagination(1, 'page');
@@ -21,7 +27,7 @@ const Table = <T extends Record<string, any>>({ data, columns }: ITable<T>) => {
     navigate(newPath);
   };
 
-  const totalPages = Math.ceil(data.length / 10);
+  const totalPages = Math.ceil(paginationData.totalCount / 10);
 
   return (
     <div className='bg-white rounded-lg shadow overflow-hidden'>
@@ -40,9 +46,9 @@ const Table = <T extends Record<string, any>>({ data, columns }: ITable<T>) => {
       <TablePagination
         currentPage={currentPage}
         totalPages={totalPages}
-        totalItems={data.length}
+        totalItems={paginationData.totalCount}
         onPageChange={onPageChange}
-        itemsPerPage={10}
+        itemsPerPage={paginationData.pageSize}
       />
     </div>
   );

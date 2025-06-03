@@ -1,4 +1,4 @@
-import { TAddCustomer } from '../types/Customer';
+import { TAddCustomer, TImportCustomer } from '../types/Customer';
 import api from './api';
 
 export async function CreateCustomer(customer: TAddCustomer) {
@@ -16,17 +16,36 @@ export async function GetCustomerById(id: string) {
   return response;
 }
 
-export async function GetCustomerByWorkspace(workspaceId: string) {
-  const response = await api.get(`/customer/workspace/${workspaceId}`);
+export async function GetCustomerByWorkspace(
+  workspaceId: string,
+  pageNumber: number,
+  pageSize: number
+) {
+  const response = await api.get(
+    `/customer/workspace/${workspaceId}?pageNumber=${pageNumber}&pageSize=${pageSize}`
+  );
+  return response;
+}
+
+export async function ImportCustomers(
+  customers: TImportCustomer[],
+  workspaceId: string
+) {
+  const response = await api.post(
+    `/customer/import?workspaceId=${workspaceId}`,
+    customers
+  );
   return response;
 }
 
 export async function GetCustomersByFilter(
-  params: string,
-  workspaceId: string
+  workspaceId: string,
+  pageNumber: number,
+  pageSize: number,
+  params: string
 ) {
   const response = await api.get(
-    `/customer/workspace/${workspaceId}/filter?${params}`
+    `/customer/workspace/${workspaceId}/filter?${params}&pageNumber=${pageNumber}&pageSize=${pageSize}`
   );
   return response;
 }

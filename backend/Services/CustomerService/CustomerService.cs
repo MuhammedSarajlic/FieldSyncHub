@@ -1,6 +1,8 @@
 using backend.Data;
+using backend.Dtos.CustomerDto;
 using backend.Models;
 using backend.Response;
+using backend.Wrappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.CustomerService;
@@ -44,42 +46,56 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task<ApiResponse<List<Customers>>> GetCustomersByWorkspace(Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<Customers>>> GetCustomersByWorkspace(Guid workspaceId, int pageNumber, int pageSize)
     {
-        var customer = await _context.Customers.Include(c => c.CustomFields)
-                                               .Include(c => c.Properties)
-                                               .Include(c => c.CustomerPhones)
-                                               .Include(c => c.Notes)
-                                               .Where(c => c.WorkspaceId == workspaceId)
-                                               .ToListAsync();
-        return new ApiResponse<List<Customers>>()
+        var query = _context.Customers.Include(c => c.CustomFields)
+                                    .Where(c => c.WorkspaceId == workspaceId)
+                                    .Include(c => c.Properties)
+                                    .Include(c => c.CustomerPhones)
+                                    .Include(c => c.Notes);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query.Skip((pageNumber - 1) * pageSize)
+                            .Take(pageSize)
+                            .ToListAsync();
+
+        var result = new PagedResult<Customers>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return new ApiResponse<PagedResult<Customers>>()
         {
             Success = true,
-            Payload = customer,
+            Payload = result,
             ErrorMessage = null
         };
     }
 
-    public async Task<ApiResponse<List<Customers>>> GetCustomersByFilter(
-    Guid workspaceId,
-    string? q, string? sortBy, string? sort,
-    string? customerType,
-    string? createdDateMin,
-    string? createdDateMax,
-    string? propertiesMin,
-    string? propertiesMax,
-    string? hasEmail,
-    string? hasPhone,
-    string? tags
-)
+    public async Task<ApiResponse<PagedResult<Customers>>> GetCustomersByFilter(
+        int pageNumber, int pageSize,
+        Guid workspaceId,
+        string? q, string? sortBy, string? sort,
+        string? customerType,
+        string? createdDateMin,
+        string? createdDateMax,
+        string? propertiesMin,
+        string? propertiesMax,
+        string? hasEmail,
+        string? hasPhone,
+        string? tags
+    )
     {
-        var queryable = _context.Customers
-            .Where(c => c.WorkspaceId == workspaceId)
-            .Include(c => c.Properties)
-            .Include(c => c.CustomerPhones)
-            .AsQueryable();
+        var queryable = _context.Customers.Where(c => c.WorkspaceId == workspaceId)
+                                        .Include(c => c.Properties)
+                                        .Include(c => c.CustomerPhones)
+                                        .AsQueryable();
 
-        // 🔍 Server-side filters
+        // Apply filters
         if (!string.IsNullOrWhiteSpace(q))
         {
             queryable = queryable.Where(c =>
@@ -88,7 +104,7 @@ public class CustomerService : ICustomerService
 
         if (!string.IsNullOrWhiteSpace(customerType) && customerType.ToLower() != "all")
         {
-            queryable = customerType == "company"
+            queryable = customerType.ToLower() == "company"
                 ? queryable.Where(c => c.IsCompany)
                 : queryable.Where(c => !c.IsCompany);
         }
@@ -115,19 +131,12 @@ public class CustomerService : ICustomerService
 
         if (!string.IsNullOrWhiteSpace(hasPhone) && hasPhone.ToLower() != "any")
         {
-            if (hasPhone == "yes")
-                queryable = queryable.Where(c => c.CustomerPhones != null && c.CustomerPhones.Count > 0);
-            else if (hasPhone == "no")
-                queryable = queryable.Where(c => c.CustomerPhones == null || c.CustomerPhones.Count == 0);
+            queryable = hasPhone.ToLower() == "yes"
+                ? queryable.Where(c => c.CustomerPhones != null && c.CustomerPhones.Count > 0)
+                : queryable.Where(c => c.CustomerPhones == null || c.CustomerPhones.Count == 0);
         }
 
-        if (!string.IsNullOrWhiteSpace(tags))
-        {
-            var tagList = tags.Split(',').Select(t => t.Trim()).ToList();
-            queryable = queryable.Where(c => c.Tags != null && c.Tags.Any(tag => tagList.Contains(tag)));
-        }
-
-        // 🔄 Sorting (before executing query)
+        // Sorting
         queryable = sortBy?.ToLower() switch
         {
             "name" => sort == "desc"
@@ -136,43 +145,118 @@ public class CustomerService : ICustomerService
             "company" => sort == "desc"
                 ? queryable.OrderByDescending(c => c.CompanyName)
                 : queryable.OrderBy(c => c.CompanyName),
-            _ => queryable.OrderBy(c => c.CompanyName)
+            "created" => sort == "desc"
+                ? queryable.OrderByDescending(c => c.CreatedAt)
+                : queryable.OrderBy(c => c.CreatedAt),
+            _ => queryable.OrderBy(c => c.FirstName)
         };
 
-        // 💾 Execute query first (materialize results)
-        var customers = await queryable.ToListAsync();
+        // Now get paginated records
+        var pagedCustomers = await queryable
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
-        // 🔍 Client-side filter: Email (primitive list)
-        if (!string.IsNullOrWhiteSpace(hasEmail) && hasEmail == "yes")
+        // 🔍 Apply client-side filters on paged data
+        if (!string.IsNullOrWhiteSpace(hasEmail) && hasEmail.ToLower() != "any")
         {
-            customers = customers
-                .Where(c => c.Email != null && c.Email.Any(e => !string.IsNullOrWhiteSpace(e)))
+            pagedCustomers = hasEmail.ToLower() == "yes"
+                ? pagedCustomers.Where(c => c.Email != null && c.Email.Any(e => !string.IsNullOrWhiteSpace(e))).ToList()
+                : pagedCustomers.Where(c => c.Email == null || c.Email.All(string.IsNullOrWhiteSpace)).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(tags))
+        {
+            var tagList = tags.Split(',').Select(t => t.Trim().ToLower()).ToList();
+
+            pagedCustomers = pagedCustomers
+                .Where(c => c.Tags != null && c.Tags.Any(tag => tagList.Contains(tag.ToLower())))
                 .ToList();
         }
 
-        return new ApiResponse<List<Customers>>
+        var totalCount = await queryable.CountAsync();
+
+        return new ApiResponse<PagedResult<Customers>>
         {
             Success = true,
-            Payload = customers,
+            Payload = new PagedResult<Customers>
+            {
+                Items = pagedCustomers,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            },
             ErrorMessage = null
+        };
+
+    }
+
+    public async Task<ApiResponse<object>> ImportCustomers(List<ImportedCustomerDto> customers, Guid workspaceId)
+    {
+        var existingCustomers = await _context.Customers
+            .Where(c => c.WorkspaceId == workspaceId)
+            .ToListAsync();
+
+        var normalizedExisting = existingCustomers.Select(c => new
+        {
+            Key = $"{c.FirstName.Trim().ToLower()}|{c.LastName.Trim().ToLower()}|{(c.Email?.FirstOrDefault() ?? "").Trim().ToLower()}",
+            c.Id
+        }).ToHashSet();
+
+        var toImport = new List<Customers>();
+
+        foreach (var dto in customers)
+        {
+            var email = dto.Email?.FirstOrDefault()?.Trim().ToLower() ?? "";
+            var key = $"{dto.FirstName.Trim().ToLower()}|{dto.LastName.Trim().ToLower()}|{email}";
+
+            if (normalizedExisting.Any(c => c.Key == key)) continue;
+
+            var customer = new Customers
+            {
+                WorkspaceId = workspaceId,
+                FirstName = dto.FirstName.Trim(),
+                LastName = dto.LastName.Trim(),
+                CompanyName = dto.CompanyName,
+                IsCompany = dto.IsCompany,
+                Email = dto.Email,
+                Tags = dto.Tags,
+                VisitReminders = dto.VisitReminders,
+                JobFollowUps = dto.JobFollowUps,
+                QuoteFollowUps = dto.QuoteFollowUps,
+                InvoiceFollowUps = dto.InvoiceFollowUps,
+                Archived = dto.Archived,
+                CreatedAt = dto.CreatedAt ?? DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            toImport.Add(customer);
+        }
+
+        await _context.Customers.AddRangeAsync(toImport);
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<object>
+        {
+            Success = true,
+            Payload = new
+            {
+                Imported = toImport.Count,
+                Skipped = customers.Count - toImport.Count
+            }
         };
     }
 
-
-
     public async Task AddCustomer(Customers newCustomer)
     {
-        // Ensure CustomerId is correctly assigned
         if (newCustomer.Id == Guid.Empty)
         {
             newCustomer.Id = Guid.NewGuid();
         }
 
-        // Ensure collections are initialized if they are null
         newCustomer.CustomerPhones ??= new List<CustomerPhone>();
         newCustomer.CustomFields ??= new List<CustomFields>();
 
-        // Assign correct CustomerId to related entities
         foreach (var phone in newCustomer.CustomerPhones)
         {
             phone.CustomerId = newCustomer.Id;
