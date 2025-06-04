@@ -24,10 +24,15 @@ public interface ICustomerService
         string? tags
     );
     Task<ApiResponse<object>> ImportCustomers(List<ImportedCustomerDto> customers, Guid workspaceId);
+    Task<ApiResponse<List<ImportedCustomerDto>>> ExportCustomers(Guid workspaceId);
     Task AddCustomer(Customers newCustomer);
     Task UpdateCustomer(Customers updatedCustomer);
     Task UpdateCustomerTags(Guid id, string tag);
     Task RemoveCustomerTag(Guid id, string tag);
     Task ArchiveCustomer(Guid id);
     Task DeleteCustomer(Guid id);
+    Task<int> GetTotalCustomerCount();
+    Task<object> GetCompanyAndIndividualCount();
+    Task<int> GetNewCustomersCount();
+    Task<int> GetCustomerMissingInfoCount();
 }

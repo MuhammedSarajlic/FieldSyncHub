@@ -70,6 +70,44 @@ public class CustomerController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportCustomersAsCsv(Guid workspaceId)
+    {
+        var result = await _customerService.ExportCustomers(workspaceId);
+
+        if (!result.Success || result.Payload == null)
+            return BadRequest(result);
+
+        var csvContent = GenerateCsv(result.Payload);
+        var fileName = $"customers_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
+
+        return File(bytes, "text/csv", fileName);
+    }
+
+    private string GenerateCsv(List<ImportedCustomerDto> customers)
+    {
+        var csv = new System.Text.StringBuilder();
+        csv.AppendLine("FirstName,LastName,CompanyName,IsCompany,Email,Tags,VisitReminders,JobFollowUps,QuoteFollowUps,InvoiceFollowUps,Archived,CreatedAt");
+
+        foreach (var c in customers)
+        {
+            var emails = string.Join(";", c.Email ?? new List<string>());
+            var tags = string.Join(";", c.Tags ?? new List<string>());
+            var createdAt = c.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "";
+
+            csv.AppendLine($"{Escape(c.FirstName)},{Escape(c.LastName)},{Escape(c.CompanyName)},{c.IsCompany},{Escape(emails)},{Escape(tags)},{c.VisitReminders},{c.JobFollowUps},{c.QuoteFollowUps},{c.InvoiceFollowUps},{c.Archived},{createdAt}");
+        }
+
+        return csv.ToString();
+    }
+
+    private string Escape(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "";
+        value = value.Replace("\"", "\"\"");
+        return $"\"{value}\"";
+    }
 
     [HttpPost]
     public async Task<IActionResult> AddCustomer([FromBody] Customers newCustomer)
@@ -112,4 +150,33 @@ public class CustomerController : ControllerBase
         await _customerService.DeleteCustomer(id);
         return Ok();
     }
+
+    [HttpGet("total-count")]
+    public async Task<IActionResult> GetTotalCustomerCount()
+    {
+        var count = await _customerService.GetTotalCustomerCount();
+        return Ok(new { Total = count });
+    }
+
+    [HttpGet("company-individual-count")]
+    public async Task<IActionResult> GetCompanyAndIndividualCount()
+    {
+        var result = await _customerService.GetCompanyAndIndividualCount();
+        return Ok(result);
+    }
+
+    [HttpGet("new-customers-count")]
+    public async Task<IActionResult> GetNewCustomersCount()
+    {
+        var count = await _customerService.GetNewCustomersCount();
+        return Ok(new { NewCustomers = count });
+    }
+
+    [HttpGet("missing-info-count")]
+    public async Task<IActionResult> GetCustomerMissingInfoCount()
+    {
+        var count = await _customerService.GetCustomerMissingInfoCount();
+        return Ok(new { MissingInfoCustomers = count });
+    }
+
 }

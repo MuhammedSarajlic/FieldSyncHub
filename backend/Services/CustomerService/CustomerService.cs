@@ -247,6 +247,36 @@ public class CustomerService : ICustomerService
         };
     }
 
+    public async Task<ApiResponse<List<ImportedCustomerDto>>> ExportCustomers(Guid workspaceId)
+    {
+        var customers = await _context.Customers
+            .Where(c => c.WorkspaceId == workspaceId)
+            .ToListAsync();
+
+        var exported = customers.Select(c => new ImportedCustomerDto
+        {
+            FirstName = c.FirstName ?? string.Empty,
+            LastName = c.LastName ?? string.Empty,
+            CompanyName = c.CompanyName,
+            IsCompany = c.IsCompany,
+            Email = c.Email,
+            Tags = c.Tags,
+            VisitReminders = c.VisitReminders,
+            JobFollowUps = c.JobFollowUps,
+            QuoteFollowUps = c.QuoteFollowUps,
+            InvoiceFollowUps = c.InvoiceFollowUps,
+            Archived = c.Archived,
+            CreatedAt = c.CreatedAt
+        }).ToList();
+
+        return new ApiResponse<List<ImportedCustomerDto>>
+        {
+            Success = true,
+            Payload = exported
+        };
+    }
+
+
     public async Task AddCustomer(Customers newCustomer)
     {
         if (newCustomer.Id == Guid.Empty)
@@ -342,4 +372,45 @@ public class CustomerService : ICustomerService
 
         await _context.SaveChangesAsync();
     }
+
+    public async Task<int> GetTotalCustomerCount()
+    {
+        return await _context.Customers.CountAsync();
+    }
+
+    public async Task<object> GetCompanyAndIndividualCount()
+    {
+        var customers = await _context.Customers.ToListAsync();
+
+        var companies = customers.Count(c => c.IsCompany);
+        var individuals = customers.Count(c => !c.IsCompany);
+
+        return new
+        {
+            Companies = companies,
+            Individuals = individuals,
+            Total = companies + individuals
+        };
+    }
+
+    public async Task<int> GetNewCustomersCount()
+    {
+        var now = DateTime.UtcNow;
+        return await _context.Customers
+            .Where(c => c.CreatedAt.Month == now.Month && c.CreatedAt.Year == now.Year)
+            .CountAsync();
+    }
+
+    public async Task<int> GetCustomerMissingInfoCount()
+    {
+        var customers = await _context.Customers
+            .Include(c => c.CustomerPhones)
+            .ToListAsync();
+
+        return customers.Count(c =>
+            (c.Email == null ) ||
+            (c.CustomerPhones == null)
+        );
+    }
+
 }
