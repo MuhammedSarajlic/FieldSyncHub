@@ -89,5 +89,11 @@ namespace backend.Controllers
 
             return Ok(result);
         }
+        [HttpGet("customer/{customerId}")]
+        public async Task<ActionResult<List<Quote>>> GetQuotesByCustomerId(Guid customerId)
+        {
+            var result = await _quoteService.GetQuotesByCustomerId(customerId);
+            return result == null ? NotFound() : Ok(result);
+        }
     }
 }

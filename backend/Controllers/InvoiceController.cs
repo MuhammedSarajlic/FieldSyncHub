@@ -125,4 +125,14 @@ public class InvoiceController : ControllerBase
 
         return Ok(response);
     }
+    [HttpGet("customer/{customerId}")]
+    public async Task<ActionResult<Invoice>> GetByCustomerId(Guid customerId)
+    {
+        var invoice = await _invoiceService.GetInvoiceByCustomerId(customerId);
+        if (invoice == null)
+        {
+            return NotFound();
+        }
+        return Ok(invoice);
+    }
 }

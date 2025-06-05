@@ -382,4 +382,18 @@ public class InvoiceService : IInvoiceService
 
         return $"{prefix}{datePart}-{sequence:D3}";
     }
+
+    public async Task<Invoice?> GetInvoiceByCustomerId(Guid customerId)
+    {
+        return await _context.Invoices
+            .AsNoTracking()
+            .Include(i => i.Customer)
+            .ThenInclude(c => c.Properties)
+            .Include(i => i.Customer)
+            .ThenInclude(c => c.CustomerPhones)
+            .Include(i => i.Job)
+            .Include(i => i.Items)
+            .ThenInclude(item => item.ServiceItem)
+            .FirstOrDefaultAsync(i => i.CustomerId == customerId);
+    }
 }

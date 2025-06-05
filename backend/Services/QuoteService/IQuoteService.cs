@@ -9,6 +9,7 @@ public interface IQuoteService
     Task<List<Quote>> GetAllAsync();
     Task<Quote> GetByIdAsync(Guid id);
     Task<List<Quote>> GetQuotesByWorkspaceId(Guid workspaceId);
+    Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId);
     Task<Quote> CreateAsync(CreateQuoteDto dto);
     Task<Quote> UpdateAsync(Guid id, CreateQuoteDto dto);
     Task<bool> DeleteAsync(Guid id);

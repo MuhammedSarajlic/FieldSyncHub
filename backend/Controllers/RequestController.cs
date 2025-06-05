@@ -66,5 +66,10 @@ namespace backend.Controllers
 
             return Ok(result);
         }
+        [HttpGet("customer/{customerId}")]
+        public async Task<ActionResult<List<Request>>> GetRequestsByCustomerId(Guid customerId)
+        {
+            return Ok(await _requestService.GetRequestByCustomerId(customerId));
+        }
     }
 }

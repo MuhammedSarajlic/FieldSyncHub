@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.Dtos.RequestDto;
 using backend.Models.Request;
+using backend.Response;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -76,6 +77,13 @@ namespace backend.Services.RequestService
             return createRequestDto;
         }
 
+        public async Task<ApiResponse<List<Request>>> GetRequestByCustomerId(Guid customerId)
+        {
+            var requests = await _context.Requests
+                .Where(r => r.CustomerId == customerId)
+                .ToListAsync();
 
+            return new ApiResponse<List<Request>> { Success = true, Payload = requests };
+        }
     }
 }

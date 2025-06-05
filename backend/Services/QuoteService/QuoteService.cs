@@ -43,6 +43,16 @@ public class QuoteService : IQuoteService
         return quotes;
     }
 
+    public async Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId)
+    {
+        var quotes = await _context.Quotes.Include(q => q.LineItems)
+                                        .Include(q => q.Customer)
+                                        .ThenInclude(c => c.Properties)
+                                        .Where(q => q.CustomerId == customerId)
+                                        .ToListAsync();
+        return new ApiResponse<List<Quote>> { Success = true, Payload = quotes};
+    }
+
     public async Task<Quote> CreateAsync(CreateQuoteDto dto)
     {
         var quote = dto.Adapt<Quote>();
