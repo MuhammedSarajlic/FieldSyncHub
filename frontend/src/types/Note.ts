@@ -1,6 +1,7 @@
 export type TNote = {
   id: string;
   createdBy: string;
+  createdByName: string;
   createdAt: string;
   noteText: string;
   pathFile: string;
@@ -9,6 +10,7 @@ export type TNote = {
 
 export type TAddNote = {
   createdBy: string;
+  createdByName: string;
   createdAt: string;
   noteText: string;
   pathFile: string;

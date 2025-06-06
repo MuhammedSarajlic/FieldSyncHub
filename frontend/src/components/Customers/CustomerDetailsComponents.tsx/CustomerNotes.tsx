@@ -1,13 +1,10 @@
 import NoteFileUpload from '../../Notes/NoteFileUpload';
 import Note from '../../Notes/Note';
-import icons from '../../../constants/icons';
-import CustomSmallButton from '../../CustomElements/CustomSmallButton';
 import { TAddNote, TNote } from '../../../types/Note';
 import { useEffect, useState } from 'react';
-import CustomButton from '../../CustomElements/CustomButton';
-import ButtonIcon from '../../CustomElements/ButtonIcon';
 import { addNoteInitialState } from '../../../const/states';
 import { CreateNote } from '../../../services/Notes';
+import { useAuth } from '../../../context/AuthProvider';
 
 interface ICustomerNotes {
   notes: TNote[];
@@ -15,6 +12,7 @@ interface ICustomerNotes {
 }
 
 const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
+  const { user } = useAuth();
   const [isAddNote, setIsAddNote] = useState<boolean>(false);
   const [newNote, setNewNote] = useState<TAddNote>(addNoteInitialState);
 
@@ -23,62 +21,116 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
   }, [customerId]);
 
   const handleAddNote = async () => {
-    const updatedNote = { ...newNote, createdAt: new Date().toISOString() };
+    if (!user) return;
+    const updatedNote = {
+      ...newNote,
+      createdBy: user?.id,
+      createdByName: user?.fullName,
+      createdAt: new Date().toISOString(),
+    };
     const response = await CreateNote(updatedNote);
+    if (response.status === 200) {
+      setIsAddNote(false);
+      setNewNote(addNoteInitialState);
+    }
     console.log(response);
   };
 
   return (
-    <div className='p-4 border-[1px] border-border-primary rounded-lg bg-[#FAFAFA] space-y-4'>
+    <div className='p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-4'>
       <div className='flex items-center justify-between'>
-        <div className='flex items-center space-x-2'>
-          {/* <img src={icons.noteIcon} alt='tag' className='w-5 h-5' /> */}
-          <p className='font-semibold text-xl'>Notes</p>
+        <div className='flex items-center space-x-3'>
+          <div className='p-2 bg-white rounded-lg shadow-xs'>
+            <svg
+              className='w-5 h-5 text-gray-600'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+              />
+            </svg>
+          </div>
+          <p className='font-semibold text-lg text-gray-800'>Notes</p>
         </div>
         {!isAddNote && (
-          <CustomSmallButton
-            title='New note'
-            customStyle='px-4 border-transparent bg-bg-primary hover:bg-bg-primary-hover'
-            customTextStyle='text-white'
-            handleClick={() => setIsAddNote(true)}
-          />
+          <button
+            onClick={() => setIsAddNote(true)}
+            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200'
+          >
+            + New Note
+          </button>
         )}
       </div>
+
       {isAddNote && (
-        <div>
+        <div className='space-y-3'>
           <textarea
-            placeholder='Note details'
+            placeholder='Enter note details...'
             value={newNote.noteText}
             onChange={(e) =>
               setNewNote({ ...newNote, noteText: e.target.value })
             }
-            className='p-3 min-h-[100px] w-full bg-white text-sm text-heading border-[1px] border-border-primary rounded-lg outline-none'
-          ></textarea>
-
+            className='p-3 min-h-[100px] w-full bg-white text-sm text-gray-700 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all'
+          />
           <NoteFileUpload />
-          <div className='mt-4 flex items-center justify-end space-x-2'>
-            <ButtonIcon
-              name='Cancel'
-              handleBtnClick={() => setIsAddNote(false)}
-            />
-            <CustomButton title='Save' handleBtnClick={handleAddNote} />
+          <div className='flex items-center justify-end space-x-3 pt-2'>
+            <button
+              onClick={() => setIsAddNote(false)}
+              className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200'
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddNote}
+              className='px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-colors duration-200'
+            >
+              Save Note
+            </button>
           </div>
         </div>
       )}
+
       {notes && notes.length > 0 ? (
-        notes.map((note) => <Note key={note.id} note={note} />)
-      ) : (
-        <div className='flex items-center space-x-3'>
-          <div className='bg-white p-4 rounded-full flex items-center justify-center'>
-            <img src={icons.noteIcon} alt='office' className='w-5 h-5' />
-          </div>
-          <div>
-            <p className='font-bold text-heading'>No notes</p>
-            <p className='text-primary text-sm'>
-              No notes have been added for this customer yet.
-            </p>
-          </div>
+        <div className='space-y-3'>
+          {notes.map((note) => (
+            <Note key={note.id} note={note} />
+          ))}
         </div>
+      ) : (
+        !isAddNote && (
+          <div className='py-6 text-center bg-white rounded-lg border border-dashed border-gray-300'>
+            <svg
+              className='mx-auto h-10 w-10 text-gray-400'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='1'
+                d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+              />
+            </svg>
+            <h3 className='mt-2 text-sm font-medium text-gray-700'>
+              No notes yet
+            </h3>
+            <p className='mt-1 text-xs text-gray-500'>
+              Add your first note to get started
+            </p>
+            <button
+              onClick={() => setIsAddNote(true)}
+              className='mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200'
+            >
+              + Add Note
+            </button>
+          </div>
+        )
       )}
     </div>
   );

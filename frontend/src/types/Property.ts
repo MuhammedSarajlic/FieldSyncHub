@@ -17,4 +17,5 @@ export type TAddProperty = {
   country: string;
   postalCode: string;
   isBillingAddress: boolean;
+  customerId: string;
 };

@@ -36,7 +36,9 @@ public class CustomerService : ICustomerService
         var customer = await _context.Customers.Include(c => c.CustomFields)
                                                .Include(c => c.Properties)
                                                .Include(c => c.CustomerPhones)
-                                               .Include(c => c.Notes)
+                                               .Include(c => c.Notes
+                                                    .OrderByDescending(n => n.CreatedAt)
+                                                )
                                                .FirstOrDefaultAsync(c => c.Id == id);
         return new ApiResponse<Customers>()
         {
@@ -48,8 +50,8 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResponse<PagedResult<Customers>>> GetCustomersByWorkspace(Guid workspaceId, int pageNumber, int pageSize)
     {
-        var query = _context.Customers.Include(c => c.CustomFields)
-                                    .Where(c => c.WorkspaceId == workspaceId)
+        var query = _context.Customers.Where(c => c.WorkspaceId == workspaceId && c.Archived != true)
+                                    .Include(c => c.CustomFields)
                                     .Include(c => c.Properties)
                                     .Include(c => c.CustomerPhones)
                                     .Include(c => c.Notes);
@@ -90,7 +92,7 @@ public class CustomerService : ICustomerService
         string? tags
     )
     {
-        var queryable = _context.Customers.Where(c => c.WorkspaceId == workspaceId)
+        var queryable = _context.Customers.Where(c => c.WorkspaceId == workspaceId && c.Archived != true)
                                         .Include(c => c.Properties)
                                         .Include(c => c.CustomerPhones)
                                         .AsQueryable();
@@ -408,7 +410,7 @@ public class CustomerService : ICustomerService
             .ToListAsync();
 
         return customers.Count(c =>
-            (c.Email == null ) ||
+            (c.Email == null) ||
             (c.CustomerPhones == null)
         );
     }

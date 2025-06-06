@@ -14,23 +14,6 @@ namespace backend.Services.PropertyService
         {
             _context = context;
         }
-        public async Task AddProperty(AddPropertyDto newProperty, Guid customerId)
-        {
-            var property = newProperty.Adapt<Property>();
-            var customer = await _context.Customers.Where(c => c.Id == customerId).Include(c => c.Properties).FirstOrDefaultAsync();
-            newProperty.Id = Guid.NewGuid();
-            property.CustomerId = customerId;
-            await _context.Properties.AddAsync(property);
-            customer?.Properties?.Add(property);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task DeleteProperty(Guid id)
-        {
-            var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);
-            _context.Remove(property);
-            await _context.SaveChangesAsync();
-        }
 
         public async Task<ApiResponse<List<Property>>> GetProperties()
         {
@@ -54,9 +37,29 @@ namespace backend.Services.PropertyService
             };
         }
 
+        public async Task AddProperty(AddPropertyDto newProperty)
+        {
+            var property = newProperty.Adapt<Property>();
+            var customer = await _context.Customers.Where(c => c.Id == newProperty.CustomerId)
+                                                .Include(c => c.Properties)
+                                                .FirstOrDefaultAsync();
+            newProperty.Id = Guid.NewGuid();
+            property.CustomerId = newProperty.CustomerId;
+            await _context.Properties.AddAsync(property);
+            customer?.Properties?.Add(property);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task UpdateProperty(Property updatedProperty)
         {
             _context.Update(updatedProperty);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteProperty(Guid id)
+        {
+            var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);
+            _context.Remove(property);
             await _context.SaveChangesAsync();
         }
     }

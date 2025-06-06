@@ -30,9 +30,9 @@ public class PropertyController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddProperty([FromBody] AddPropertyDto newProperty, Guid customerId)
+    public async Task<IActionResult> AddProperty([FromBody] AddPropertyDto newProperty)
     {
-        await _propertyService.AddProperty(newProperty, customerId);
+        await _propertyService.AddProperty(newProperty);
         return Ok();
     }
 

@@ -7,6 +7,7 @@ export type TUser = {
   googleId: string;
   firstName: string;
   lastName: string;
+  fullName: string;
   createdAt: string;
   updatedAt: string;
   workspace: TWorkspace;

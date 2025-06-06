@@ -1,85 +1,100 @@
-import { useState } from 'react';
-import icons from '../../../constants/icons';
+import { useEffect, useState } from 'react';
+import { X, Tag, Plus } from 'lucide-react';
 import { AddCustomerTag, RemoveCustomerTag } from '../../../services/Customer';
-import CustomButton from '../../CustomElements/CustomButton';
-import CustomSmallButton from '../../CustomElements/CustomSmallButton';
 
 interface ICustomerTags {
-  tags: string[];
+  tags: string[] | null;
   customerId: string;
-  fetchCustomer: () => Promise<void>;
 }
 
-const CustomerTags = ({ tags, customerId, fetchCustomer }: ICustomerTags) => {
-  const [newTag, setNewTag] = useState<string>('');
-  const [isAddTagOpen, setIsAddTagOpen] = useState<boolean>(false);
+const CustomerTags = ({ tags, customerId }: ICustomerTags) => {
+  const [localTags, setLocalTags] = useState<string[]>(tags || []);
+  const [newTag, setNewTag] = useState('');
+  const [isAddingTag, setIsAddingTag] = useState(false);
 
   const addCustomerTag = async () => {
-    const response = await AddCustomerTag(customerId, newTag);
+    if (!newTag.trim()) return;
+
+    const response = await AddCustomerTag(customerId, newTag.trim());
     if (response.status === 200) {
-      await fetchCustomer();
+      setLocalTags((prev) => [...(prev || []), newTag.trim()]);
       setNewTag('');
+      setIsAddingTag(false);
     }
   };
 
   const removeCustomerTag = async (tag: string) => {
     const response = await RemoveCustomerTag(customerId, tag);
     if (response.status === 200) {
-      await fetchCustomer();
+      setLocalTags((prev) => (prev || []).filter((t) => t !== tag));
     }
   };
 
+  useEffect(() => {
+    setLocalTags(tags || []);
+  }, [tags]);
+
   return (
-    <div className='w-full space-y-6'>
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center space-x-2'>
-          <img src={icons.tagIcon} alt='tag' className='w-5 h-5' />
-          <p className='font-semibold text-xl'>Tags</p>
-        </div>
-        {!isAddTagOpen && (
-          <CustomSmallButton
-            title='New tag'
-            customStyle='px-4'
-            handleClick={() => setIsAddTagOpen(true)}
-          />
-        )}
+    <div className='bg-white rounded-lg border border-gray-100 shadow-sm p-6'>
+      <div className='flex items-center justify-between mb-4'>
+        <h3 className='text-lg font-semibold text-gray-800 flex items-center gap-2'>
+          <Tag className='w-5 h-5 text-gray-600' />
+          Tags
+        </h3>
+
+        {!isAddingTag ? (
+          <button
+            onClick={() => setIsAddingTag(true)}
+            className='text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1'
+          >
+            <Plus className='w-4 h-4' />
+            Add tag
+          </button>
+        ) : null}
       </div>
-      {isAddTagOpen && (
-        <div className='flex items-center space-x-2'>
+
+      {isAddingTag && (
+        <div className='flex gap-2 mb-4'>
           <input
             type='text'
-            placeholder='Tag name'
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
-            className={`w-full px-3 py-2 text-sm text-heading outline-none border-[1px] border-border-primary rounded-lg`}
+            placeholder='Enter tag name'
+            className='flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500'
+            onKeyDown={(e) => e.key === 'Enter' && addCustomerTag()}
           />
-          <CustomButton
-            title='Add tag'
-            customStyle='min-w-[110px]'
-            handleBtnClick={addCustomerTag}
-          />
+          <button
+            onClick={addCustomerTag}
+            className='cursor-pointer min-w-24 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700'
+          >
+            Add
+          </button>
         </div>
       )}
-      <div className='flex flex-wrap items-center space-x-2 gap-y-2'>
-        {tags && tags.length > 0 ? (
-          tags.map((tag, index) => (
-            <div
+
+      {localTags?.length > 0 ? (
+        <div className='flex flex-wrap gap-2 mr-8'>
+          {localTags.map((tag, index) => (
+            <span
               key={index}
-              className='flex items-center bg-bg-primary/20 px-3 py-1 rounded-full group'
+              className='group relative inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 hover:pr-8 transition-all duration-200'
             >
-              <p className='text-sm text-heading font-medium'>{tag}</p>
-              <img
-                onClick={() => removeCustomerTag(tag)}
-                src={icons.closeIcon}
-                alt='close'
-                className='hidden w-2.5 h-2.5 cursor-pointer group-hover:block group-hover:ml-1.5'
-              />
-            </div>
-          ))
-        ) : (
-          <p className='text-sm'>This client has no tags</p>
-        )}
-      </div>
+              {tag}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeCustomerTag(tag);
+                }}
+                className='absolute right-2 opacity-0 cursor-pointer group-hover:opacity-100 focus:opacity-100 transition-opacity duration-200'
+              >
+                <X className='w-4 h-4 text-blue-400 hover:text-blue-700' />
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className='text-gray-500 text-sm'>No tags assigned</p>
+      )}
     </div>
   );
 };
