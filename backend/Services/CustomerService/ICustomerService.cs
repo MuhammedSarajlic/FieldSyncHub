@@ -32,4 +32,6 @@ public interface ICustomerService
     Task ArchiveCustomer(Guid id);
     Task DeleteCustomer(Guid id);
     Task<CustomerStatsDto> GetCustomerStats(Guid workspaceId);
+    Task<ApiResponse<object>> SendCustomerMail(string to, string subject, string message);
+
 }

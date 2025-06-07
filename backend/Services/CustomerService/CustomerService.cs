@@ -2,6 +2,7 @@ using backend.Data;
 using backend.Dtos.CustomerDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.EmailService;
 using backend.Wrappers;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,9 +11,11 @@ namespace backend.Services.CustomerService;
 public class CustomerService : ICustomerService
 {
     private readonly DataContext _context;
-    public CustomerService(DataContext context)
+    private readonly IEmailService _emailService;
+    public CustomerService(DataContext context, IEmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
 
     public async Task<ApiResponse<List<Customers>>> GetCustomers()
@@ -389,7 +392,7 @@ public class CustomerService : ICustomerService
             .CountAsync();
 
         var newThisMonth = await _context.Customers
-            .Where(c => c.WorkspaceId == workspaceId && 
+            .Where(c => c.WorkspaceId == workspaceId &&
                         !c.Archived &&
                         c.CreatedAt.Month == now.Month &&
                         c.CreatedAt.Year == now.Year)
@@ -419,5 +422,48 @@ public class CustomerService : ICustomerService
             NewCustomers = newThisMonth,
             MissingInfoCustomers = missingInfo
         };
+    }
+
+    public async Task<ApiResponse<object>> SendCustomerMail(string to, string subject, string message)
+    {
+            if (!IsValidEmail(to))
+            {
+                return new ApiResponse<object>
+                {
+                    Success = false,
+                    Payload = "Invalid email address."
+                };
+            }
+
+            // Reuse message for both plain text and HTML if no HTML version is available
+            var emailResult = await _emailService.SendEmailAsync(to, subject, message, message);
+
+            if (emailResult)
+            {
+                return new ApiResponse<object>
+                {
+                    Success = true,
+                    Payload = "Email sent successfully."
+                };
+            }
+
+            return new ApiResponse<object>
+            {
+                Success = false,
+                Payload = "Failed to send email."
+            };
+        }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

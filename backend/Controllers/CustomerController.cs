@@ -157,4 +157,14 @@ public class CustomerController : ControllerBase
         CustomerStatsDto stats = await _customerService.GetCustomerStats(workspaceId);
         return Ok(stats);
     }
+
+    [HttpPost("send-mail")]
+    public async Task<IActionResult> SendCustomerMail([FromQuery] string to,[FromQuery]  string message, [FromQuery] string subject)
+    {
+        var result = await _customerService.SendCustomerMail(to, subject, message);
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
 }
