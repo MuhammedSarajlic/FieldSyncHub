@@ -375,44 +375,49 @@ public class CustomerService : ICustomerService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<int> GetTotalCustomerCount()
-    {
-        return await _context.Customers.CountAsync();
-    }
-
-    public async Task<object> GetCompanyAndIndividualCount()
-    {
-        var customers = await _context.Customers.ToListAsync();
-
-        var companies = customers.Count(c => c.IsCompany);
-        var individuals = customers.Count(c => !c.IsCompany);
-
-        return new
-        {
-            Companies = companies,
-            Individuals = individuals,
-            Total = companies + individuals
-        };
-    }
-
-    public async Task<int> GetNewCustomersCount()
+    public async Task<CustomerStatsDto> GetCustomerStats(Guid workspaceId)
     {
         var now = DateTime.UtcNow;
-        return await _context.Customers
-            .Where(c => c.CreatedAt.Month == now.Month && c.CreatedAt.Year == now.Year)
-            .CountAsync();
-    }
 
-    public async Task<int> GetCustomerMissingInfoCount()
-    {
-        var customers = await _context.Customers
+        // ✅ Filter all counts by workspaceId
+        var total = await _context.Customers
+            .Where(c => c.WorkspaceId == workspaceId && !c.Archived)
+            .CountAsync();
+
+        var companies = await _context.Customers
+            .Where(c => c.WorkspaceId == workspaceId && c.IsCompany && !c.Archived)
+            .CountAsync();
+
+        var newThisMonth = await _context.Customers
+            .Where(c => c.WorkspaceId == workspaceId && 
+                        !c.Archived &&
+                        c.CreatedAt.Month == now.Month &&
+                        c.CreatedAt.Year == now.Year)
+            .CountAsync();
+
+        // 🔍 Fetch minimal customer info for missing-info check
+        var customersSlim = await _context.Customers
+            .Where(c => c.WorkspaceId == workspaceId && !c.Archived)
             .Include(c => c.CustomerPhones)
+            .Select(c => new
+            {
+                c.Email,
+                PhoneCount = c.CustomerPhones.Count
+            })
+            .AsNoTracking()
             .ToListAsync();
 
-        return customers.Count(c =>
-            (c.Email == null) ||
-            (c.CustomerPhones == null)
-        );
-    }
+        var missingInfo = customersSlim.Count(c =>
+            (c.Email == null || c.Email.Count == 0) ||
+            (c.PhoneCount == 0));
 
+        return new CustomerStatsDto
+        {
+            Total = total,
+            Companies = companies,
+            Individuals = total - companies,
+            NewCustomers = newThisMonth,
+            MissingInfoCustomers = missingInfo
+        };
+    }
 }

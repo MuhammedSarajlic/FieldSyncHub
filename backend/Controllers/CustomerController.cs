@@ -151,32 +151,10 @@ public class CustomerController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("total-count")]
-    public async Task<IActionResult> GetTotalCustomerCount()
+    [HttpGet("stats/{workspaceId:guid}")]
+    public async Task<IActionResult> GetCustomerStats(Guid workspaceId)
     {
-        var count = await _customerService.GetTotalCustomerCount();
-        return Ok(new { Total = count });
+        CustomerStatsDto stats = await _customerService.GetCustomerStats(workspaceId);
+        return Ok(stats);
     }
-
-    [HttpGet("company-individual-count")]
-    public async Task<IActionResult> GetCompanyAndIndividualCount()
-    {
-        var result = await _customerService.GetCompanyAndIndividualCount();
-        return Ok(result);
-    }
-
-    [HttpGet("new-customers-count")]
-    public async Task<IActionResult> GetNewCustomersCount()
-    {
-        var count = await _customerService.GetNewCustomersCount();
-        return Ok(new { NewCustomers = count });
-    }
-
-    [HttpGet("missing-info-count")]
-    public async Task<IActionResult> GetCustomerMissingInfoCount()
-    {
-        var count = await _customerService.GetCustomerMissingInfoCount();
-        return Ok(new { MissingInfoCustomers = count });
-    }
-
 }

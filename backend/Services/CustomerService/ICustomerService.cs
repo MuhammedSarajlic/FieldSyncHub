@@ -31,8 +31,5 @@ public interface ICustomerService
     Task RemoveCustomerTag(Guid id, string tag);
     Task ArchiveCustomer(Guid id);
     Task DeleteCustomer(Guid id);
-    Task<int> GetTotalCustomerCount();
-    Task<object> GetCompanyAndIndividualCount();
-    Task<int> GetNewCustomersCount();
-    Task<int> GetCustomerMissingInfoCount();
+    Task<CustomerStatsDto> GetCustomerStats(Guid workspaceId);
 }
