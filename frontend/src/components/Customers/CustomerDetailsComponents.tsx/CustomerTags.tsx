@@ -45,7 +45,7 @@ const CustomerTags = ({ tags, customerId }: ICustomerTags) => {
         {!isAddingTag ? (
           <button
             onClick={() => setIsAddingTag(true)}
-            className='text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1'
+            className='text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 cursor-pointer'
           >
             <Plus className='w-4 h-4' />
             Add tag

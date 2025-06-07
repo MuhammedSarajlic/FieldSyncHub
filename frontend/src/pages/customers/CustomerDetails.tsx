@@ -11,21 +11,26 @@ import CustomerAddPropertyModal from '../../components/Customers/CustomerDetails
 import { TAddProperty } from '../../types/Property';
 import { CreateProperty } from '../../services/Property';
 import CustomerArchiveModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerArchiveModal';
+import { Briefcase, CalendarClock, FileText, Receipt } from 'lucide-react';
+import CustomerEmailModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerEmailModal';
+import CustomerEditModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerEditModal';
 
 const CustomerDetails = () => {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('jobs');
   const [customer, setCustomer] = useState<TCustomer>();
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddPropertyModalOpen, setIsAddPropertyModalOpen] = useState(false);
   const { customerId } = useParams();
 
-  const mockStats = {
-    lifetimeValue: 12580,
-    outstanding: 420,
-    totalJobs: 8,
-    lastActivity: '15/02/2025',
+  const customerStats = {
+    totalQuotes: 5,
+    totalJobs: 3,
+    totalInvoiced: 2850,
+    invoicesCount: 4,
+    lastActivity: '2024-06-30',
   };
 
   const fetchCustomer = async () => {
@@ -180,8 +185,8 @@ const CustomerDetails = () => {
 
               <div className='flex items-center space-x-3'>
                 <button
-                  onClick={() => setShowEmailModal(true)}
-                  className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2'
+                  onClick={() => setIsEmailModalOpen(true)}
+                  className='px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2'
                 >
                   <svg
                     className='w-4 h-4'
@@ -193,7 +198,7 @@ const CustomerDetails = () => {
                   </svg>
                   <span>Email</span>
                 </button>
-                <button className='px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2'>
+                <button className='px-4 py-2 cursor-pointer border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2'>
                   <svg
                     className='w-4 h-4'
                     fill='currentColor'
@@ -205,7 +210,7 @@ const CustomerDetails = () => {
                 </button>
                 <button
                   onClick={() => setIsArchiveModalOpen(true)}
-                  className='px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2'
+                  className='px-4 py-2 border border-red-200 text-red-600 cursor-pointer rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2'
                 >
                   <svg
                     className='w-4 h-4'
@@ -229,45 +234,76 @@ const CustomerDetails = () => {
             {/* Left Column - Main Content */}
             <div className='lg:col-span-2 space-y-6'>
               {/* Stats Cards */}
-              <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
-                <div className='bg-white p-4 rounded-lg border border-gray-100 shadow-sm'>
-                  <p className='text-sm text-gray-600 mb-1'>Lifetime Value</p>
-                  <p className='text-xl font-bold text-gray-800'>
-                    ${mockStats.lifetimeValue.toLocaleString()}
-                  </p>
-                  <div className='h-1 w-full bg-gray-100 mt-2'>
-                    <div className='h-1 bg-blue-500 w-3/4'></div>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+                {/* 1. Total Quotes */}
+                <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow'>
+                  <div className='flex items-center space-x-3 mb-4'>
+                    <div className='p-2 bg-blue-100 rounded-lg'>
+                      <FileText className='w-5 h-5 text-blue-600' />
+                    </div>
+                    <h3 className='text-sm font-medium text-gray-600'>
+                      Total Quotes
+                    </h3>
                   </div>
+                  <p className='text-2xl font-bold text-gray-900 mb-1'>
+                    {customerStats.totalQuotes}
+                  </p>
+                  <p className='text-sm text-gray-500'>Issued quotes</p>
                 </div>
 
-                <div className='bg-white p-4 rounded-lg border border-gray-100 shadow-sm'>
-                  <p className='text-sm text-gray-600 mb-1'>Outstanding</p>
-                  <p className='text-xl font-bold text-red-600'>
-                    ${mockStats.outstanding.toLocaleString()}
-                  </p>
-                  <div className='h-1 w-full bg-gray-100 mt-2'>
-                    <div className='h-1 bg-red-500 w-1/4'></div>
+                {/* 2. Total Jobs */}
+                <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow'>
+                  <div className='flex items-center space-x-3 mb-4'>
+                    <div className='p-2 bg-green-100 rounded-lg'>
+                      <Briefcase className='w-5 h-5 text-green-600' />
+                    </div>
+                    <h3 className='text-sm font-medium text-gray-600'>
+                      Total Jobs
+                    </h3>
                   </div>
+                  <p className='text-2xl font-bold text-gray-900 mb-1'>
+                    {customerStats.totalJobs}
+                  </p>
+                  <p className='text-sm text-gray-500'>
+                    Completed or active jobs
+                  </p>
                 </div>
 
-                <div className='bg-white p-4 rounded-lg border border-gray-100 shadow-sm'>
-                  <p className='text-sm text-gray-600 mb-1'>Total Jobs</p>
-                  <p className='text-xl font-bold text-gray-800'>
-                    {mockStats.totalJobs}
-                  </p>
-                  <div className='h-1 w-full bg-gray-100 mt-2'>
-                    <div className='h-1 bg-green-500 w-2/3'></div>
+                {/* 3. Invoices / Total Spent */}
+                <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow'>
+                  <div className='flex items-center space-x-3 mb-4'>
+                    <div className='p-2 bg-purple-100 rounded-lg'>
+                      <Receipt className='w-5 h-5 text-purple-600' />
+                    </div>
+                    <h3 className='text-sm font-medium text-gray-600'>
+                      Total Invoiced
+                    </h3>
                   </div>
+                  <p className='text-2xl font-bold text-gray-900 mb-1'>
+                    ${customerStats.totalInvoiced.toLocaleString()}
+                  </p>
+                  <p className='text-sm text-gray-500'>
+                    From {customerStats.invoicesCount} invoice
+                    {customerStats.invoicesCount !== 1 ? 's' : ''}
+                  </p>
                 </div>
 
-                <div className='bg-white p-4 rounded-lg border border-gray-100 shadow-sm'>
-                  <p className='text-sm text-gray-600 mb-1'>Last Activity</p>
-                  <p className='text-xl font-bold text-gray-800'>
-                    {mockStats.lastActivity}
-                  </p>
-                  <div className='h-1 w-full bg-gray-100 mt-2'>
-                    <div className='h-1 bg-purple-500 w-1/2'></div>
+                {/* 4. Last Activity */}
+                <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow'>
+                  <div className='flex items-center space-x-3 mb-4'>
+                    <div className='p-2 bg-yellow-100 rounded-lg'>
+                      <CalendarClock className='w-5 h-5 text-yellow-600' />
+                    </div>
+                    <h3 className='text-sm font-medium text-gray-600'>
+                      Last Activity
+                    </h3>
                   </div>
+                  <p className='text-2xl font-bold text-gray-900 mb-1'>
+                    {formatDate(customerStats.lastActivity)}
+                  </p>
+                  <p className='text-sm text-gray-500'>
+                    Most recent interaction
+                  </p>
                 </div>
               </div>
 
@@ -489,7 +525,7 @@ const CustomerDetails = () => {
                   </h3>
                   <button
                     onClick={() => setIsAddPropertyModalOpen(true)}
-                    className='text-sm text-blue-600 hover:text-blue-700 font-medium'
+                    className='text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer'
                   >
                     + Add property
                   </button>
@@ -593,56 +629,24 @@ const CustomerDetails = () => {
 
               {/* Notes */}
               <CustomerNotes notes={customer.notes} customerId={customer.id} />
-              {/* <div className='bg-white rounded-lg border border-gray-100 shadow-sm p-6'>
-                <div className='flex items-center justify-between mb-4'>
-                  <h3 className='text-lg font-semibold text-gray-800'>Notes</h3>
-                  <button className='text-sm text-blue-600 hover:text-blue-700 font-medium'>
-                    + Add note
-                  </button>
-                </div>
-                {customer.notes && customer.notes.length > 0 ? (
-                  <div className='space-y-4'>
-                    {customer.notes.map((note) => (
-                      <div
-                        key={note.id}
-                        className={`border-l-2 ${
-                          note.pathFile ? 'border-blue-400' : 'border-gray-300'
-                        } pl-4 py-2`}
-                      >
-                        <p className='text-gray-700 text-sm'>{note.noteText}</p>
-                        {note.pathFile && (
-                          <div className='mt-2 flex items-center text-blue-600 hover:text-blue-700 text-sm'>
-                            <svg
-                              className='w-4 h-4 mr-1'
-                              fill='currentColor'
-                              viewBox='0 0 20 20'
-                            >
-                              <path
-                                fillRule='evenodd'
-                                d='M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z'
-                                clipRule='evenodd'
-                              />
-                            </svg>
-                            <span>Download attachment</span>
-                          </div>
-                        )}
-                        <p className='text-xs text-gray-500 mt-2'>
-                          {note.createdBy} •{' '}
-                          {new Date(note.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className='text-gray-500 text-sm'>
-                    No notes have been added
-                  </p>
-                )}
-              </div> */}
             </div>
           </div>
         </div>
       </div>
+      <CustomerEditModal
+        customer={customer}
+        onClose={() => setIsEditModalOpen(false)}
+        // onSave={(updatedCustomer) => {
+        //   updateCustomerInDb(updatedCustomer);
+        // }}
+      />
+
+      <CustomerEmailModal
+        isOpen={isEmailModalOpen}
+        customerEmail={customer.email[0]}
+        onClose={() => setIsEmailModalOpen(false)}
+        // onSend={() => {}}
+      />
       <CustomerArchiveModal
         isOpen={isArchiveModalOpen}
         onClose={() => setIsArchiveModalOpen(false)}

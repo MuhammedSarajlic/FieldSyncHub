@@ -56,3 +56,11 @@ export type TImportCustomer = {
   tags?: string[];
   createdAt?: string;
 };
+
+export type TCustomerStats = {
+  total: number;
+  newCustomers: number;
+  companies: number;
+  individuals: number;
+  missingInfoCustomers: number;
+};

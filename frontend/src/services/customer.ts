@@ -82,3 +82,19 @@ export async function ArchiveCustomer(id: string) {
   const response = await api.patch(`/customer/${id}/archive`);
   return response;
 }
+
+export async function GetCustomerStats(workspaceId: string) {
+  const response = await api.get(`/customer/stats/${workspaceId}`);
+  return response;
+}
+
+export async function SendCustomerEmail(
+  email: string,
+  subject: string,
+  message: string
+) {
+  const response = await api.post(
+    `/customer/send-mail?to=${email}&subject=${subject}&message=${message}`
+  );
+  return response;
+}

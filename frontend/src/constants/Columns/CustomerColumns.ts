@@ -11,7 +11,7 @@ export const customerColumns: TTableColumns = [
   {
     header: 'Company',
     accessor: (customer: TCustomer) =>
-      customer.isCompany ? customer.companyName : 'N/A',
+      customer.isCompany ? customer.companyName : '-',
     type: 'text',
   },
   {
@@ -27,12 +27,12 @@ export const customerColumns: TTableColumns = [
   {
     header: 'Mobile',
     accessor: (customer: TCustomer) =>
-      customer.customerPhones?.[0]?.phoneNumber ?? 'N/A',
+      customer.customerPhones?.[0]?.phoneNumber ?? '-',
     type: 'text',
   },
   {
     header: 'Email',
-    accessor: (customer: TCustomer) => customer.email?.[0] ?? 'N/A',
+    accessor: (customer: TCustomer) => customer.email?.[0] ?? '-',
     type: 'text',
   },
   //   {

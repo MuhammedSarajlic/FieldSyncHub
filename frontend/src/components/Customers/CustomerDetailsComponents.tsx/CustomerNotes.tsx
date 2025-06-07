@@ -60,7 +60,7 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
         {!isAddNote && (
           <button
             onClick={() => setIsAddNote(true)}
-            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200'
+            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg cursor-pointer transition-colors duration-200'
           >
             + New Note
           </button>

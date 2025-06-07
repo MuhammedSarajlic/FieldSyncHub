@@ -5,11 +5,12 @@ import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import icons from '../../constants/icons';
 import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/CreateCustomerModal';
-import { TCustomer } from '../../types/Customer';
+import { TCustomer, TCustomerStats } from '../../types/Customer';
 import ImportCustomersModal from '../../components/Customers/ImportCustomer/ImportCustomersModal';
 import {
   GetCustomerByWorkspace,
   GetCustomersByFilter,
+  GetCustomerStats,
 } from '../../services/Customer';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import { Plus } from 'lucide-react';
@@ -37,6 +38,7 @@ const Customers = () => {
   const [isSortModalOpen, setIsSortModalOpen] = useState<boolean>(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [customers, setCustomers] = useState<TCustomer[]>([]);
+  const [customerStats, setCustomerStats] = useState<TCustomerStats>();
   const [paginationData, setPaginationData] = useState<TPaginationData>({
     totalCount: 0,
     pageSize: 10,
@@ -94,6 +96,28 @@ const Customers = () => {
     }
   };
 
+  const fetchCustomerStats = async () => {
+    if (!user) return;
+    const response = await GetCustomerStats(user.workspace.id);
+    if (response.status === 200) {
+      setCustomerStats(response.data);
+    }
+  };
+
+  // const totalCustomers = paginationData.totalCount;
+  // const newCustomersThisMonth = customers.filter(
+  //   (c) => new Date(c.createdAt).getMonth() === new Date().getMonth()
+  // ).length;
+  // const companyCount = customers.filter((c) => c.isCompany).length;
+  // const individualCount = totalCustomers - companyCount;
+  // const customersWithMissingInfo = customers.filter(
+  //   (c) => !c.email?.length || !c.customerPhones?.length
+  // ).length;
+
+  useEffect(() => {
+    fetchCustomerStats();
+  }, []);
+
   useEffect(() => {
     fetchAllCustomersByWorkspace();
   }, [searchParams]);
@@ -109,16 +133,6 @@ const Customers = () => {
       document.body.style.overflow = 'auto';
     };
   }, [isAddCustomerModalOpen]);
-
-  const totalCustomers = paginationData.totalCount;
-  const newCustomersThisMonth = customers.filter(
-    (c) => new Date(c.createdAt).getMonth() === new Date().getMonth()
-  ).length;
-  const companyCount = customers.filter((c) => c.isCompany).length;
-  const individualCount = totalCustomers - companyCount;
-  const customersWithMissingInfo = customers.filter(
-    (c) => !c.email?.length || !c.customerPhones?.length
-  ).length;
 
   return (
     <>
@@ -165,7 +179,7 @@ const Customers = () => {
                     Total Customers
                   </h3>
                   <div className='text-3xl font-bold text-gray-900'>
-                    {totalCustomers}
+                    {customerStats?.total}
                   </div>
                   <div className='text-sm text-gray-500'>All-time</div>
                 </div>
@@ -178,7 +192,7 @@ const Customers = () => {
                     New This Month
                   </h3>
                   <div className='text-3xl font-bold text-gray-900'>
-                    {newCustomersThisMonth}
+                    {customerStats?.newCustomers}
                   </div>
                   <div className='text-sm text-gray-500'>
                     Compared to last month
@@ -193,7 +207,7 @@ const Customers = () => {
                     Companies vs Individuals
                   </h3>
                   <div className='text-3xl font-bold text-gray-900'>
-                    {companyCount} / {individualCount}
+                    {customerStats?.companies} / {customerStats?.individuals}
                   </div>
                   <div className='text-sm text-gray-500'>
                     Companies / Individuals
@@ -208,7 +222,7 @@ const Customers = () => {
                     Missing Info
                   </h3>
                   <div className='text-3xl font-bold text-gray-900'>
-                    {customersWithMissingInfo}
+                    {customerStats?.missingInfoCustomers}
                   </div>
                   <div className='text-sm text-gray-500'>
                     No email or phone number
@@ -241,7 +255,6 @@ const Customers = () => {
               </div>
             </div>
 
-            {/* <CustomerTable data={customers} /> */}
             {/* Table */}
             <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
               <Table<TCustomer>
