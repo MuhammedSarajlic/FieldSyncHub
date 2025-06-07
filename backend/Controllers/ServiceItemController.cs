@@ -1,3 +1,4 @@
+using backend.Dtos.ServiceItemDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.ServiceItemService;
@@ -45,6 +46,21 @@ namespace backend.Controllers
         {
             await _serviceItemService.CreateServiceItem(serviceItem);
             return Ok();
+        }
+
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportServiceItems([FromBody] List<ImportedServiceItemDto> items)
+        {
+            var result = await _serviceItemService.ImportServiceItems(items);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportServiceItems()
+        {
+            var result = await _serviceItemService.ExportServiceItems();
+            return Ok(result);
         }
     }
 }

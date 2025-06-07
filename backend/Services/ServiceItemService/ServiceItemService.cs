@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Dtos.ServiceItemDto;
 using backend.Models;
 using backend.Response;
 using Microsoft.EntityFrameworkCore;
@@ -123,5 +124,83 @@ public class ServiceItemService : IServiceItemService
         _context.ServiceItems.Add(serviceItem);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<ApiResponse<List<ImportedServiceItemDto>>> ExportServiceItems()
+    {
+        var items = await _context.ServiceItems.ToListAsync();
+
+        var exported = items.Select(i => new ImportedServiceItemDto
+        {
+            Name = i.Name,
+            Description = i.Description,
+            Type = i.Type,
+            Category = i.Category,
+            SKU = i.SKU,
+            Hours = i.Hours,
+            UnitPrice = i.UnitPrice,
+            Cost = i.Cost,
+            TaxRate = i.TaxRate,
+            IsTaxable = i.IsTaxable,
+            IsActive = i.IsActive,
+            ImageUrl = i.ImageUrl
+        }).ToList();
+
+        return new ApiResponse<List<ImportedServiceItemDto>>
+        {
+            Success = true,
+            Payload = exported
+        };
+    }
+
+    public async Task<ApiResponse<object>> ImportServiceItems(List<ImportedServiceItemDto> items)
+    {
+        var existingItems = await _context.ServiceItems.ToListAsync();
+
+        var normalizedExisting = existingItems.Select(i =>
+            $"{i.Name.Trim().ToLower()}|{i.SKU.Trim().ToLower()}"
+        ).ToHashSet();
+
+        var toImport = new List<ServiceItem>();
+
+        foreach (var dto in items)
+        {
+            var key = $"{dto.Name.Trim().ToLower()}|{dto.SKU.Trim().ToLower()}";
+
+            if (normalizedExisting.Contains(key)) continue;
+
+            var item = new ServiceItem
+            {
+                ServiceItemId = Guid.NewGuid(),
+                Name = dto.Name.Trim(),
+                Description = dto.Description,
+                Type = dto.Type,
+                Category = dto.Category,
+                SKU = dto.SKU,
+                Hours = dto.Hours,
+                UnitPrice = dto.UnitPrice,
+                Cost = dto.Cost,
+                TaxRate = dto.TaxRate,
+                IsTaxable = dto.IsTaxable,
+                IsActive = dto.IsActive,
+                ImageUrl = dto.ImageUrl
+            };
+
+            toImport.Add(item);
+        }
+
+        await _context.ServiceItems.AddRangeAsync(toImport);
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<object>
+        {
+            Success = true,
+            Payload = new
+            {
+                Imported = toImport.Count,
+                Skipped = items.Count - toImport.Count
+            }
+        };
+    }
+
 
 }

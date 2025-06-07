@@ -1,3 +1,4 @@
+using backend.Dtos.ServiceItemDto;
 using backend.Models;
 using backend.Response;
 
@@ -12,4 +13,6 @@ public interface IServiceItemService
         string? status, string? images, string? description
     );
     Task CreateServiceItem(ServiceItem serviceItem);
+    Task<ApiResponse<List<ImportedServiceItemDto>>> ExportServiceItems();
+    Task<ApiResponse<object>> ImportServiceItems(List<ImportedServiceItemDto> items);
 }
