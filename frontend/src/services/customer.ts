@@ -1,4 +1,4 @@
-import { TAddCustomer, TImportCustomer } from '../types/Customer';
+import { TAddCustomer, TCustomer, TImportCustomer } from '../types/Customer';
 import api from './api';
 
 export async function CreateCustomer(customer: TAddCustomer) {
@@ -85,6 +85,11 @@ export async function ArchiveCustomer(id: string) {
 
 export async function GetCustomerStats(workspaceId: string) {
   const response = await api.get(`/customer/stats/${workspaceId}`);
+  return response;
+}
+
+export async function UpdateCustomer(customer: TCustomer) {
+  const response = await api.put(`/customer`, customer);
   return response;
 }
 

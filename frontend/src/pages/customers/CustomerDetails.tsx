@@ -186,7 +186,7 @@ const CustomerDetails = () => {
               <div className='flex items-center space-x-3'>
                 <button
                   onClick={() => setIsEmailModalOpen(true)}
-                  className='px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2'
+                  className='px-4 py-2 cursor-pointer bg-bg-primary text-white rounded-lg hover:bg-bg-primary-hover transition-colors flex items-center space-x-2'
                 >
                   <svg
                     className='w-4 h-4'
@@ -198,7 +198,10 @@ const CustomerDetails = () => {
                   </svg>
                   <span>Email</span>
                 </button>
-                <button className='px-4 py-2 cursor-pointer border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2'>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className='px-4 py-2 cursor-pointer border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2'
+                >
                   <svg
                     className='w-4 h-4'
                     fill='currentColor'
@@ -636,9 +639,8 @@ const CustomerDetails = () => {
       <CustomerEditModal
         customer={customer}
         onClose={() => setIsEditModalOpen(false)}
-        // onSave={(updatedCustomer) => {
-        //   updateCustomerInDb(updatedCustomer);
-        // }}
+        isOpen={isEditModalOpen}
+        fetchCustomer={fetchCustomer}
       />
 
       <CustomerEmailModal

@@ -7,7 +7,7 @@ export type TCustomerPhone = {
 };
 
 export type TAddCustomerPhone = {
-  phoneType: string;
+  phoneType: 'mobile' | 'work' | 'home' | 'other';
   phoneNumber: string;
   isReceiveMessage: boolean;
 };

@@ -101,6 +101,7 @@ public class InvoiceController : ControllerBase
 
         return File(document, "application/pdf", $"invoice-{id}.pdf");
     }
+
     [HttpGet("filter")]
     public async Task<ActionResult<ApiResponse<List<Invoice>>>> GetByFilter(
     [FromQuery] Guid? workspaceId,
@@ -125,6 +126,7 @@ public class InvoiceController : ControllerBase
 
         return Ok(response);
     }
+    
     [HttpGet("customer/{customerId}")]
     public async Task<ActionResult<Invoice>> GetByCustomerId(Guid customerId)
     {
