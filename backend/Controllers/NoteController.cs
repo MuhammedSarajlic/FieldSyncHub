@@ -36,10 +36,10 @@ public class NoteController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddNote([FromBody] AddNotesDto newNote)
+    public async Task<ActionResult<Notes>> AddNote([FromBody] AddNotesDto newNote)
     {
-        await _notesService.AddNote(newNote);
-        return Ok();
+        var note = await _notesService.AddNote(newNote);
+        return Ok(note);
     }
 
 

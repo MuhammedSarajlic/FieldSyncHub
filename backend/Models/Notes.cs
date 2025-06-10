@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace backend.Models;
 
@@ -13,6 +14,6 @@ public class Notes
     public string? NoteText { get; set; }
     public string? PathFile { get; set; }
     public Guid CustomerId { get; set; }
-    [NotMapped]
+    [JsonIgnore]
     public Customers? Customer { get; set; }
 }

@@ -128,13 +128,8 @@ public class InvoiceController : ControllerBase
     }
     
     [HttpGet("customer/{customerId}")]
-    public async Task<ActionResult<Invoice>> GetByCustomerId(Guid customerId)
+    public async Task<ActionResult<ApiResponse<List<Invoice>>>> GetByCustomerId(Guid customerId)
     {
-        var invoice = await _invoiceService.GetInvoiceByCustomerId(customerId);
-        if (invoice == null)
-        {
-            return NotFound();
-        }
-        return Ok(invoice);
+        return await _invoiceService.GetInvoicesByCustomerId(customerId);
     }
 }

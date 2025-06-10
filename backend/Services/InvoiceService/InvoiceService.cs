@@ -383,9 +383,10 @@ public class InvoiceService : IInvoiceService
         return $"{prefix}{datePart}-{sequence:D3}";
     }
 
-    public async Task<Invoice?> GetInvoiceByCustomerId(Guid customerId)
+    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId)
     {
-        return await _context.Invoices
+        var invoices = await _context.Invoices
+            .Where(i => i.CustomerId == customerId)
             .AsNoTracking()
             .Include(i => i.Customer)
             .ThenInclude(c => c.Properties)
@@ -394,6 +395,13 @@ public class InvoiceService : IInvoiceService
             .Include(i => i.Job)
             .Include(i => i.Items)
             .ThenInclude(item => item.ServiceItem)
-            .FirstOrDefaultAsync(i => i.CustomerId == customerId);
+            .ToListAsync();
+
+        return new ApiResponse<List<Invoice>>
+        {
+            Success = true,
+            ErrorMessage = null,
+            Payload = invoices
+        };
     }
 }

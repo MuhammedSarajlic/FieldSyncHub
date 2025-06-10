@@ -51,7 +51,7 @@ public class NotesService : INotesService
         };
     }
 
-    public async Task AddNote(AddNotesDto newNote)
+    public async Task<Notes> AddNote(AddNotesDto newNote)
     {
         var note = newNote.Adapt<Notes>();
         note.Id = Guid.NewGuid();
@@ -71,6 +71,8 @@ public class NotesService : INotesService
         customer.Notes.Add(note);
 
         await _context.SaveChangesAsync();
+
+        return note;
     }
 
     public async Task DeleteNote(Guid id)
