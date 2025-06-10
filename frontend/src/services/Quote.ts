@@ -11,6 +11,11 @@ export async function GetQuoteById(quoteId: string) {
   return response;
 }
 
+export async function GetQuotesByCustomer(customerId: string) {
+  const response = await api.get(`/quote/customer/${customerId}`);
+  return response;
+}
+
 export async function CreateQuote(quote: TAddQuote) {
   const response = await api.post('/quote', quote);
   return response;

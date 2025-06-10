@@ -103,3 +103,8 @@ export async function SendCustomerEmail(
   );
   return response;
 }
+
+export async function ExportCustomers(workspaceId: string) {
+  const response = await api.get(`/customer/export?workspaceId=${workspaceId}`);
+  return response;
+}

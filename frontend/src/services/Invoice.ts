@@ -1,11 +1,6 @@
 import { TAddInvoice, TUpdateInvoice } from '../types/Invoice';
 import api from './api';
 
-export async function CreateInvoice(invoice: TAddInvoice) {
-  const response = await api.post('/invoice', invoice);
-  return response;
-}
-
 export async function GetAllInvoices() {
   const response = await api.get('/invoice');
   return response;
@@ -18,6 +13,16 @@ export async function GetAllInvoicesByWorkspaceId(workspaceId: string) {
 
 export async function GetInvoiceByInvoiceNumber(invoiceNumber: string) {
   const response = await api.get(`/invoice/invoice-number/${invoiceNumber}`);
+  return response;
+}
+
+export async function GetInvoicesByCustomer(customerId: string) {
+  const response = await api.get(`/invoice/customer/${customerId}`);
+  return response;
+}
+
+export async function CreateInvoice(invoice: TAddInvoice) {
+  const response = await api.post('/invoice', invoice);
   return response;
 }
 

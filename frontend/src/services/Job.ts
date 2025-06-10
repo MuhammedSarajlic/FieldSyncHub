@@ -11,6 +11,11 @@ export async function GetJobById(jobId: string) {
   return response;
 }
 
+export async function GetJobsByCustomer(customerId: string) {
+  const response = await api.get(`/job/customer/${customerId}`);
+  return response;
+}
+
 export async function CreateJob(job: TAddJob) {
   const response = await api.post('/job', job);
   return response;
