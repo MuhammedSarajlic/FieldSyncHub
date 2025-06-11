@@ -21,6 +21,7 @@ import Search from '../../components/CustomElements/Search';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import { employeeFilterOptions } from '../../constants/Options/FilterOptions/EmployeeFilterOptions';
+import { downloadCSVFile } from '../../utils/FuntionHelpers/downloadCSVFile';
 
 const Employees = () => {
   const { user } = useAuth();
@@ -57,29 +58,29 @@ const Employees = () => {
     });
   };
 
-  const handleApplyFilters = (filters: any) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
+  // const handleApplyFilters = (filters: any) => {
+  //   setSearchParams((prev) => {
+  //     const newParams = new URLSearchParams(prev);
 
-      const flatFilters: Record<string, string | number> = {
-        hireDateMin: filters.hireDate.min,
-        hireDateMax: filters.hireDate.max,
-        status: filters.status !== 'all' ? filters.status : '',
-        position: filters.position,
-        department: filters.department,
-      };
+  //     const flatFilters: Record<string, string | number> = {
+  //       hireDateMin: filters.hireDate.min,
+  //       hireDateMax: filters.hireDate.max,
+  //       status: filters.status !== 'all' ? filters.status : '',
+  //       position: filters.position,
+  //       department: filters.department,
+  //     };
 
-      Object.entries(flatFilters).forEach(([key, value]) => {
-        if (value) {
-          newParams.set(key, value.toString());
-        } else {
-          newParams.delete(key);
-        }
-      });
+  //     Object.entries(flatFilters).forEach(([key, value]) => {
+  //       if (value) {
+  //         newParams.set(key, value.toString());
+  //       } else {
+  //         newParams.delete(key);
+  //       }
+  //     });
 
-      return newParams;
-    });
-  };
+  //     return newParams;
+  //   });
+  // };
 
   const fetchEmployees = async () => {
     try {
@@ -121,15 +122,10 @@ const Employees = () => {
         console.log('Error exporting employees');
         return;
       }
-      const blob = new Blob([response.data], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `employees_workspace_${user?.workspace.id}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      downloadCSVFile(
+        response.data,
+        `employees_workspace_${user?.workspace.id}.csv`
+      );
     } catch (error) {
       console.error('Failed to export employees:', error);
     }
@@ -260,7 +256,7 @@ const Employees = () => {
                 <Search
                   inputPlaceholder='Search employees...'
                   searchQuery={searchQuery}
-                  handleChange={handleSearch}
+                  // handleChange={handleSearch}
                 />
               </div>
 
