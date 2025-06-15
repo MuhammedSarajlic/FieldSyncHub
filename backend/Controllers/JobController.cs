@@ -1,3 +1,4 @@
+using backend.Dtos.JobDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.JobService;
@@ -27,26 +28,6 @@ public class JobController : ControllerBase
         return await _jobService.GetJobById(jobId);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateJob([FromBody] Job newJob)
-    {
-        await _jobService.CreateJob(newJob);
-        return Ok();
-    }
-
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteJob(Guid id)
-    {
-        await _jobService.DeleteJob(id);
-        return Ok();
-    }
-
-    [HttpPut("{jobId:guid}")]
-    public async Task<IActionResult> UpdateJob([FromBody] Job updatedJob)
-    {
-        await _jobService.UpdateJob(updatedJob);
-        return Ok();
-    }
     [HttpGet("customer/{customerId:guid}")]
     public async Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId)
     {
@@ -59,34 +40,39 @@ public class JobController : ControllerBase
         return await _jobService.GetAllJobsByEmployeeId(employeeId);
     }
 
-    [HttpGet("filter")]
-    public async Task<ApiResponse<List<Job>>> GetJobsFilteredSorted(
-        [FromQuery] DateTime? scheduleDateMin,
-        [FromQuery] DateTime? scheduleDateMax,
-        [FromQuery] decimal? totalMin,
-        [FromQuery] decimal? totalMax,
-        [FromQuery] string? priority,
-        [FromQuery] string? status,
-        [FromQuery] string? sortBy,
-        [FromQuery] string? sortDir
-    )
+    [HttpGet("workspace/{workspaceId}/filter")]
+    public async Task<ApiResponse<List<Job>>> GetJobsByFilter([FromQuery] JobFilterDto filterDto, Guid workspaceId)
     {
-        return await _jobService.GetJobsByFilter(
-            scheduleDateMin, scheduleDateMax,
-            totalMin, totalMax,
-            priority, status,
-            sortBy, sortDir
-        );
+        return await _jobService.GetJobsByFilter(filterDto, workspaceId);
     }
+
     [HttpGet("job-number/{jobNumber}")]
-    public async Task<ActionResult<Job>> GetByInvoiceNumber(string jobNumber)
+    public async Task<ActionResult<Job>> GetJobByJobNumber(string jobNumber)
     {
         var job = await _jobService.GetJobByJobNumber(jobNumber);
-        if (job == null)
-        {
-            return NotFound();
-        }
         return Ok(job);
+    }
+
+
+    [HttpPost]
+    public async Task<IActionResult> CreateJob([FromBody] CreateJobDto createJobDto)
+    {
+        await _jobService.CreateJob(createJobDto);
+        return Ok();
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateJob([FromBody] UpdateJobDto updatedJobDto)
+    {
+        await _jobService.UpdateJob(updatedJobDto);
+        return Ok();
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteJob(Guid id)
+    {
+        await _jobService.DeleteJob(id);
+        return Ok();
     }
 
     [HttpPatch("{jobId:guid}/tags")]

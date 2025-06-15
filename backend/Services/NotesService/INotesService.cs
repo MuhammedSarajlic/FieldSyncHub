@@ -6,10 +6,10 @@ namespace backend.Services.NotesService;
 
 public interface INotesService
 {
-    Task<ApiResponse<List<Notes>>> GetNotes();
-    Task<ApiResponse<Notes>> GetNoteById(Guid id);
-    Task<ApiResponse<List<Notes>>> GetNoteByCustomerId(Guid customerId);
-    Task<Notes> AddNote(AddNotesDto newNote);
-    Task UpdateNote(Notes updatedNote);
+    Task<ApiResponse<List<Note>>> GetNotes();
+    Task<ApiResponse<Note>> GetNoteById(Guid id);
+    Task<ApiResponse<List<Note>>> GetNoteByCustomerId(Guid customerId);
+    Task<Note> CreateNote(CreateNoteDto createNoteDto);
+    Task<Note> UpdateNote(UpdateNoteDto updatedNote);
     Task DeleteNote(Guid id);
 }

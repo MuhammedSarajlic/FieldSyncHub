@@ -1,20 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using backend.Models;
+using backend.Dtos.LineItemDto;
+using backend.Models.RequestModels;
 
-namespace backend.Dtos.RequestDto
+namespace backend.Dtos.RequestDto;
+
+public class UpdateRequestDto
 {
-    public class UpdateRequestDto
-    {
-        public Guid Id { get; set; }
-        public Guid CustomerId { get; set; }
-        public Guid WorkspaceId { get; set; }
-        public string? Description { get; set; }
-        public string? PreferredDate { get; set; }
-        public string? PreferredTime { get; set; }
-        public List<LineItem> LineItems { get; set; }
-        public string? Notes { get; set; }
-    }
+    public Guid Id { get; set; }
+    public DateTime? RequestedDate { get; set; }
+    public string? Description { get; set; }
+    public DateTime? PreferredDate { get; set; }
+    public string? PreferredTime { get; set; }
+    public RequestStatus? Status { get; set; }
+    public RequestPriority? Priority { get; set; }
+    public List<UpdateLineItemDto>? LineItems { get; set; } = [];
+    public string? Notes { get; set; }
 }

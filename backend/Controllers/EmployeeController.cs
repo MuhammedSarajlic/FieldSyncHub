@@ -4,71 +4,68 @@ using backend.Response;
 using backend.Services.EmployeeService;
 using Microsoft.AspNetCore.Mvc;
 
-namespace backend.Controllers
+namespace backend.Controllers;
+
+[ApiController]
+[Route("api/employee")]
+public class EmployeeController : Controller
 {
-    [Route("api/employee")]
-    public class EmployeeController : Controller
+    private readonly IEmployeeService _employeeService;
+
+    public EmployeeController(IEmployeeService employeeService)
     {
-        private readonly IEmployeeService _employeeService;
+        _employeeService = employeeService;
+    }
 
-        public EmployeeController(IEmployeeService employeeService)
-        {
-            _employeeService = employeeService;
-        }
+    [HttpGet]
+    public async Task<ApiResponse<List<Employee>>> GetEmployees()
+    {
+        return await _employeeService.GetEmployees();
+    }
 
-        [HttpGet]
-        public async Task<ApiResponse<List<Employee>>> GetEmployees()
-        {
-            return await _employeeService.GetEmployees();
-        }
+    [HttpGet("{id:guid}")]
+    public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
+    {
+        return await _employeeService.GetEmployeesById(id);
+    }
 
-        [HttpGet("{id:guid}")]
-        public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
-        {
-            return await _employeeService.GetEmployeesById(id);
-        }
+    [HttpGet("workspace/{workspaceId:guid}")]
+    public async Task<ApiResponse<List<Employee>>> GetEmployeesByWorkspaceId(Guid workspaceId)
+    {
+        return await _employeeService.GetEmployeesByWorkspaceId(workspaceId);
+    }
 
-        [HttpGet("workspace/{workspaceId:guid}")]
-        public async Task<ApiResponse<List<Employee>>> GetEmployeesByWorkspaceId(Guid workspaceId)
-        {
-            return await _employeeService.GetEmployeesByWorkspaceId(workspaceId);
-        }
+    [HttpGet("filter")]
+    public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter([FromQuery] EmployeeFilterDto employeeFilterDto)
+    {
+        return await _employeeService.GetEmployeesByFilter(employeeFilterDto);
+    }
 
-        [HttpGet("export/{workspaceId:guid}")]
-        public async Task<IActionResult> ExportEmployees(Guid workspaceId)
-        {
-            return await _employeeService.ExportEmployees(workspaceId);
-        }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateEmployee([FromBody] UpdateEmployeeDto updatedEmployee)
-        {
-            await _employeeService.UpdateEmployee(updatedEmployee);
-            return Ok();
-        }
+    [HttpPost]
+    public async Task<ActionResult<Employee>> CreateEmployee([FromBody] CreateEmployeeDto createEmployeeDto)
+    {
+        var createdEmployee = await _employeeService.CreateEmployee(createEmployeeDto);
+        return Ok(createdEmployee);
+    }
 
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> DeleteEmployee(Guid id)
-        {
-            await _employeeService.DeleteEmployee(id);
-            return Ok();
-        }
+    [HttpPut]
+    public async Task<ActionResult<Employee>> UpdateEmployee([FromBody] UpdateEmployeeDto updateEmployeeDto)
+    {
+        var updatedEmployee = await _employeeService.UpdateEmployee(updateEmployeeDto);
+        return Ok(updatedEmployee);
+    }
 
-        [HttpGet("filter")]
-        public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(
-        [FromQuery] string q,
-        [FromQuery] Guid? workspaceId,
-        [FromQuery] string? position,
-        [FromQuery] string? department,
-        [FromQuery] string? status,
-        [FromQuery] DateTime? hireDateMin,
-        [FromQuery] DateTime? hireDateMax,
-        [FromQuery] string? sortBy,
-        [FromQuery] string? sort)
-        {
-            return await _employeeService.GetEmployeesByFilter(
-                q, workspaceId, position, department, status, hireDateMin, hireDateMax, sortBy, sort
-            );
-        }
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteEmployee(Guid id)
+    {
+        await _employeeService.DeleteEmployee(id);
+        return Ok();
+    }
+
+    [HttpGet("export/{workspaceId:guid}")]
+    public async Task<IActionResult> ExportEmployees(Guid workspaceId)
+    {
+        return await _employeeService.ExportEmployees(workspaceId);
     }
 }

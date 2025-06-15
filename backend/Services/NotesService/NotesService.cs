@@ -15,10 +15,10 @@ public class NotesService : INotesService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<Notes>>> GetNotes()
+    public async Task<ApiResponse<List<Note>>> GetNotes()
     {
         var notes = await _context.Notes.ToListAsync();
-        return new ApiResponse<List<Notes>>()
+        return new ApiResponse<List<Note>>()
         {
             Success = true,
             Payload = notes,
@@ -26,10 +26,10 @@ public class NotesService : INotesService
         };
     }
 
-    public async Task<ApiResponse<Notes>> GetNoteById(Guid id)
+    public async Task<ApiResponse<Note>> GetNoteById(Guid id)
     {
         var note = await _context.Notes.FirstOrDefaultAsync(n => n.Id == id);
-        return new ApiResponse<Notes>()
+        return new ApiResponse<Note>()
         {
             Success = true,
             Payload = note,
@@ -37,13 +37,13 @@ public class NotesService : INotesService
         };
     }
 
-    public async Task<ApiResponse<List<Notes>>> GetNoteByCustomerId(Guid customerId)
+    public async Task<ApiResponse<List<Note>>> GetNoteByCustomerId(Guid customerId)
     {
         var notes = await _context.Notes.Where(n => n.CustomerId == customerId)
                                         .OrderByDescending(n => n.CreatedAt)
                                         .ToListAsync();
 
-        return new ApiResponse<List<Notes>>()
+        return new ApiResponse<List<Note>>()
         {
             Success = true,
             Payload = notes,
@@ -51,14 +51,15 @@ public class NotesService : INotesService
         };
     }
 
-    public async Task<Notes> AddNote(AddNotesDto newNote)
+    public async Task<Note> CreateNote(CreateNoteDto createNoteDto)
     {
-        var note = newNote.Adapt<Notes>();
+        var note = createNoteDto.Adapt<Note>();
         note.Id = Guid.NewGuid();
-        note.CustomerId = newNote.CustomerId;
+        //Check this I think this should be there
+        note.CustomerId = createNoteDto.CustomerId;
 
         var customer = await _context.Customers
-            .Where(c => c.Id == newNote.CustomerId)
+            .Where(c => c.Id == createNoteDto.CustomerId)
             .Include(c => c.Notes)
             .FirstOrDefaultAsync();
 
@@ -75,16 +76,20 @@ public class NotesService : INotesService
         return note;
     }
 
+    public async Task<Note> UpdateNote(UpdateNoteDto updateNoteDto)
+    {
+        var note = updateNoteDto.Adapt<Note>();
+        note.UpdatedAt = DateTime.UtcNow;
+        _context.Update(note);
+        await _context.SaveChangesAsync();
+
+        return note;
+    }
+
     public async Task DeleteNote(Guid id)
     {
         var note = await _context.Notes.FirstOrDefaultAsync(n => n.Id == id);
         _context.Remove(note);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task UpdateNote(Notes updatedNote)
-    {
-        _context.Update(updatedNote);
         await _context.SaveChangesAsync();
     }
 }

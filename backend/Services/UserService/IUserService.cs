@@ -1,20 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using backend.Dtos.UserDto;
 using backend.Models;
 using backend.Response;
 
-namespace backend.Services.UserService
+namespace backend.Services.UserService;
+
+public interface IUserService
 {
-    public interface IUserService
-    {
-        Task<ApiResponse<List<UserDto>>> GetAllUsers();
-        Task<ApiResponse<UserDto>> GetLoggedInUser(Guid userId);
-        Task<ApiResponse<UserDto>> GetUserById(Guid userId);
-        Task<ApiResponse<UserDto>> GetUserByEmail(string email);
-        Task<ApiResponse<User>> UpdateUser(UpdateUserDto updatedUser);
-        Task DeleteUser(Guid userId);
-    }
+    Task<ApiResponse<List<GetUserDto>>> GetAllUsers();
+    Task<ApiResponse<GetUserDto>> GetLoggedInUser(Guid userId);
+    Task<ApiResponse<GetUserDto>> GetUserById(Guid userId);
+    Task<ApiResponse<GetUserDto>> GetUserByEmail(string email);
+    Task<ApiResponse<GetUserDto>> UpdateUser(UpdateUserDto updatedUser);
+    Task DeleteUser(Guid userId);
 }

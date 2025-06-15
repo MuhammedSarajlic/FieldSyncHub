@@ -30,16 +30,16 @@ public class PropertyController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddProperty([FromBody] AddPropertyDto newProperty)
+    public async Task<IActionResult> CreateProperty([FromBody] CreatePropertyDto createPropertyDto)
     {
-        await _propertyService.AddProperty(newProperty);
+        await _propertyService.CreateProperty(createPropertyDto);
         return Ok();
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateProperty([FromQuery] Property updatedProperty)
+    public async Task<IActionResult> UpdateProperty([FromBody] UpdatePropertyDto updatePropertyDto)
     {
-        await _propertyService.UpdateProperty(updatedProperty);
+        await _propertyService.UpdateProperty(updatePropertyDto);
         return Ok();
     }
 

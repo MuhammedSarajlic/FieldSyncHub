@@ -1,89 +1,118 @@
 using backend.Data;
 using backend.Dtos.RequestDto;
-using backend.Models.Request;
+using backend.Models.RequestModels;
 using backend.Response;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
-namespace backend.Services.RequestService
+namespace backend.Services.RequestService;
+
+public class RequestService : IRequestService
 {
-    public class RequestService : IRequestService
+    private readonly DataContext _context;
+
+    public RequestService(DataContext context)
     {
-        private readonly DataContext _context;
+        _context = context;
+    }
 
-        public RequestService(DataContext context)
+    public async Task<ApiResponse<List<Request>>> GetAllRequests()
+    {
+        var requests = await _context.Requests.Include(r => r.Customer)
+                                    .Include(r => r.LineItems)
+                                    .ToListAsync();
+
+        return new ApiResponse<List<Request>>
         {
-            _context = context;
-        }
+            Success = true,
+            Payload = requests,
+            ErrorMessage = null
+        };
+    }
 
-        public async Task<List<Request>> GetAllRequests()
+    public async Task<ApiResponse<Request>> GetRequestById(Guid id)
+    {
+        var request = await _context.Requests.Where(r => r.Id == id)
+                                    .Include(r => r.Customer)
+                                    .Include(r => r.LineItems)
+                                    .FirstOrDefaultAsync();
+
+        return new ApiResponse<Request>
         {
-            return await _context.Requests.ToListAsync();
-        }
+            Success = true,
+            Payload = request,
+            ErrorMessage = null
+        };
+    }
 
-        public async Task<Request?> GetRequestById(Guid id)
+
+    public async Task<ApiResponse<List<Request>>> GetRequestsByWorkspaceId(Guid workspaceId)
+    {
+        var requests = await _context.Requests.Where(r => r.WorkspaceId == workspaceId)
+                                            .Include(r => r.Customer)
+                                            .Include(r => r.LineItems)
+                                            .ToListAsync();
+
+        return new ApiResponse<List<Request>>
         {
-            return await _context.Requests.FindAsync(id);
-        }
+            Success = true,
+            Payload = requests,
+            ErrorMessage = null
+        };
+    }
 
-        public async Task<List<Request>> GetRequestsByWorkspaceId(Guid workspaceId)
+    public async Task<ApiResponse<List<Request>>> GetRequestByCustomerId(Guid customerId)
+    {
+        var requests = await _context.Requests.Where(r => r.CustomerId == customerId)
+                                            .Include(r => r.Customer)
+                                            .Include(r => r.LineItems)
+                                            .ToListAsync();
+
+        return new ApiResponse<List<Request>>
         {
-            return await _context.Requests
-                .Where(r => r.WorkspaceId == workspaceId)
-                .ToListAsync();
-        }
-        public async Task UpdateRequest(UpdateRequestDto updatedRequest)
+            Success = true,
+            Payload = requests,
+            ErrorMessage = null
+        };
+    }
+
+    public async Task<ApiResponse<Request>> CreateRequest(CreateRequestDto createRequestDto)
+    {
+        var request = createRequestDto.Adapt<Request>();
+        request.Id = Guid.NewGuid();
+
+        await _context.Requests.AddAsync(request);
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<Request>
         {
-            var request = updatedRequest.Adapt<Request>();
-            _context.Update(request);
-            await _context.SaveChangesAsync();
-        }
+            Success = true,
+            Payload = request,
+            ErrorMessage = null
+        };
+    }
 
-        public async Task<bool> DeleteRequest(Guid id)
+    public async Task<ApiResponse<Request>> UpdateRequest(UpdateRequestDto updatedRequestDto)
+    {
+        var request = updatedRequestDto.Adapt<Request>();
+        request.UpdatedAt = DateTime.UtcNow;
+
+        _context.Update(request);
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<Request>
         {
-            var request = await _context.Requests.FindAsync(id);
-            if (request == null)
-                return false;
+            Success = true,
+            Payload = request,
+            ErrorMessage = null
+        };
+    }
 
-            _context.Requests.Remove(request);
-            await _context.SaveChangesAsync();
-            return true;
-        }
+    public async Task DeleteRequest(Guid id)
+    {
+        var request = await _context.Requests.FindAsync(id);
 
-        public async Task<CreateRequestDto> CreateRequest(CreateRequestDto createRequestDto)
-        {
-            var newRequest = new Request
-            {
-                Id = Guid.NewGuid(),
-                CustomerId = createRequestDto.CustomerId,
-                WorkspaceId = createRequestDto.WorkspaceId,
-                Description = createRequestDto.Description,
-                PreferredDate = createRequestDto.PreferredDate,
-                PreferredTime = createRequestDto.PreferredTime,
-                Notes = createRequestDto.Notes,
-            };
-
-            await _context.Requests.AddAsync(newRequest);
-
-            if (createRequestDto.LineItems != null && createRequestDto.LineItems.Any())
-            {
-                foreach (var item in createRequestDto.LineItems)
-                {
-                    item.LineItemId = Guid.NewGuid();
-                    await _context.LineItems.AddAsync(item);
-                }
-            }
-            await _context.SaveChangesAsync();
-            return createRequestDto;
-        }
-
-        public async Task<ApiResponse<List<Request>>> GetRequestByCustomerId(Guid customerId)
-        {
-            var requests = await _context.Requests
-                .Where(r => r.CustomerId == customerId)
-                .ToListAsync();
-
-            return new ApiResponse<List<Request>> { Success = true, Payload = requests };
-        }
+        _context.Requests.Remove(request);
+        await _context.SaveChangesAsync();
     }
 }

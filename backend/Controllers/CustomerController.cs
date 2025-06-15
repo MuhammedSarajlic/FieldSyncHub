@@ -12,115 +12,96 @@ namespace backend.Controllers;
 public class CustomerController : ControllerBase
 {
     private readonly ICustomerService _customerService;
+    private readonly ICustomerUnitOfWork _customerUnitOfWork;
 
-    public CustomerController(ICustomerService customerService)
+    public CustomerController(ICustomerService customerService, ICustomerUnitOfWork customerUnitOfWork)
     {
         _customerService = customerService;
+        _customerUnitOfWork = customerUnitOfWork;
     }
 
     [HttpGet]
-    public async Task<ApiResponse<List<Customers>>> GetCustomers()
+    public async Task<ApiResponse<List<Customer>>> GetCustomers()
     {
-        return await _customerService.GetCustomers();
+        var customers = await _customerService.GetCustomers();
+        return customers;
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ApiResponse<Customers>> GetCustomersById(Guid id)
+    public async Task<ApiResponse<Customer>> GetCustomerById(Guid id)
     {
-        return await _customerService.GetCustomersById(id);
+        return await _customerService.GetCustomerById(id);
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
-    public async Task<ApiResponse<PagedResult<Customers>>> GetCustomersByWorkspace(Guid workspaceId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
+    public async Task<ApiResponse<PagedResult<Customer>>> GetCustomersByWorkspace(Guid workspaceId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
         return await _customerService.GetCustomersByWorkspace(workspaceId, pageNumber, pageSize);
     }
 
-    [HttpGet("workspace/{workspaceId:guid}/filter")]
-    public async Task<ApiResponse<PagedResult<Customers>>> GetCustomersByFilter(
-            Guid workspaceId,
-            [FromQuery] int pageNumber,
-            [FromQuery] int pageSize,
-            [FromQuery] string? q,
-            [FromQuery] string? sortBy,
-            [FromQuery] string? sort,
-            [FromQuery] string? customerType,
-            [FromQuery] string? createdDateMin,
-            [FromQuery] string? createdDateMax,
-            [FromQuery] string? propertiesMin,
-            [FromQuery] string? propertiesMax,
-            [FromQuery] string? hasEmail,
-            [FromQuery] string? hasPhone,
-            [FromQuery] string? tags
-        )
+    [HttpGet("stats/{workspaceId:guid}")]
+    public async Task<IActionResult> GetCustomerStats(Guid workspaceId)
     {
-        return await _customerService.GetCustomersByFilter(pageNumber, pageSize, workspaceId, q, sortBy, sort, customerType, createdDateMin, createdDateMax, propertiesMin, propertiesMax, hasEmail, hasPhone, tags);
+        CustomerStatsDto stats = await _customerService.GetCustomerStats(workspaceId);
+        return Ok(stats);
+    }
+
+    [HttpGet("workspace/{workspaceId:guid}/filter")]
+    public async Task<ApiResponse<PagedResult<Customer>>> GetCustomersByFilter(
+        Guid workspaceId,
+        [FromQuery] int pageNumber,
+        [FromQuery] int pageSize,
+        [FromQuery] CustomerFilterDto filterDto
+    )
+    {
+        return await _customerService.GetCustomersByFilter(workspaceId, pageNumber, pageSize, filterDto);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<Customer>>> CreateCustomer([FromBody] CreateCustomerDto createCustomerDto)
+    {
+        var customer = await _customerService.CreateCustomer(createCustomerDto);
+        return Ok(customer);
+    }
+
+    [HttpPut]
+    public async Task<ActionResult<ApiResponse<Customer>>> UpdateCustomer([FromBody] UpdateCustomerDto updatedCustomerDto)
+    {
+        var customer = await _customerUnitOfWork.UpdateCustomerWithDependenciesAsync(updatedCustomerDto);
+        return Ok(customer);
+    }
+
+    [HttpPut("bulk/{id}")]
+    public async Task<ActionResult<ApiResponse<Customer>>> UpdateCustomerBulk(string id, [FromBody] UpdateCustomerDto updatedCustomerDto)
+    {
+        if (id != updatedCustomerDto.Id.ToString())
+        {
+            return BadRequest("ID mismatch");
+        }
+        var customer = await _customerUnitOfWork.UpdateCustomerWithDependenciesAsync(updatedCustomerDto);
+        return Ok(customer);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteCustomer(Guid id)
+    {
+        await _customerService.DeleteCustomer(id);
+        return Ok();
     }
 
     [HttpPost("import")]
-    public async Task<IActionResult> ImportCustomers(
+    public async Task<ActionResult<ApiResponse<List<Customer>>>> ImportCustomers(
         [FromBody] List<ImportedCustomerDto> customers,
         Guid workspaceId)
     {
         var result = await _customerService.ImportCustomers(customers, workspaceId);
-
-        if (!result.Success)
-            return BadRequest(result);
-
         return Ok(result);
     }
 
-    [HttpGet("export")]
-    public async Task<IActionResult> ExportCustomersAsCsv(Guid workspaceId)
+    [HttpGet("export/{workspaceId:guid}")]
+    public async Task<IActionResult> ExportCustomers(Guid workspaceId)
     {
-        var result = await _customerService.ExportCustomers(workspaceId);
-
-        if (!result.Success || result.Payload == null)
-            return BadRequest(result);
-
-        var csvContent = GenerateCsv(result.Payload);
-        var fileName = $"customers_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
-        var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
-
-        return File(bytes, "text/csv", fileName);
-    }
-
-    private string GenerateCsv(List<ImportedCustomerDto> customers)
-    {
-        var csv = new System.Text.StringBuilder();
-        csv.AppendLine("FirstName,LastName,CompanyName,IsCompany,Email,Tags,VisitReminders,JobFollowUps,QuoteFollowUps,InvoiceFollowUps,Archived,CreatedAt");
-
-        foreach (var c in customers)
-        {
-            var emails = string.Join(";", c.Email ?? new List<string>());
-            var tags = string.Join(";", c.Tags ?? new List<string>());
-            var createdAt = c.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "";
-
-            csv.AppendLine($"{Escape(c.FirstName)},{Escape(c.LastName)},{Escape(c.CompanyName)},{c.IsCompany},{Escape(emails)},{Escape(tags)},{c.VisitReminders},{c.JobFollowUps},{c.QuoteFollowUps},{c.InvoiceFollowUps},{c.Archived},{createdAt}");
-        }
-
-        return csv.ToString();
-    }
-
-    private string Escape(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return "";
-        value = value.Replace("\"", "\"\"");
-        return $"\"{value}\"";
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> AddCustomer([FromBody] Customers newCustomer)
-    {
-        await _customerService.AddCustomer(newCustomer);
-        return Ok();
-    }
-
-    [HttpPut]
-    public async Task<IActionResult> UpdateCustomer([FromBody] Customers updatedCustomer)
-    {
-        await _customerService.UpdateCustomer(updatedCustomer);
-        return Ok();
+        return await _customerService.ExportCustomers(workspaceId);
     }
 
     [HttpPatch("{id}/tags")]
@@ -144,27 +125,10 @@ public class CustomerController : ControllerBase
         return Ok();
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteCustomer(Guid id)
-    {
-        await _customerService.DeleteCustomer(id);
-        return Ok();
-    }
-
-    [HttpGet("stats/{workspaceId:guid}")]
-    public async Task<IActionResult> GetCustomerStats(Guid workspaceId)
-    {
-        CustomerStatsDto stats = await _customerService.GetCustomerStats(workspaceId);
-        return Ok(stats);
-    }
-
     [HttpPost("send-mail")]
-    public async Task<IActionResult> SendCustomerMail([FromQuery] string to,[FromQuery]  string message, [FromQuery] string subject)
+    public async Task<IActionResult> SendCustomerMail([FromQuery] string to, [FromQuery] string message, [FromQuery] string subject)
     {
         var result = await _customerService.SendCustomerMail(to, subject, message);
-        if (!result.Success)
-            return BadRequest(result);
-
         return Ok(result);
     }
 }

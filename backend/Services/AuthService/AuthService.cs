@@ -55,13 +55,13 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<ApiResponse<UserDto>> Login(UserLoginDto userLogin)
+    public async Task<ApiResponse<GetUserDto>> Login(UserLoginDto userLogin)
     {
         var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userLogin.Email);
 
         if (dbUser == null || !VerifyPassword(userLogin.Password, dbUser.PasswordHash))
         {
-            return new ApiResponse<UserDto>()
+            return new ApiResponse<GetUserDto>()
             {
                 Success = false,
                 ErrorMessage = "Invalid email or password",
@@ -69,7 +69,7 @@ public class AuthService : IAuthService
             };
         }
 
-        UserDto userDto = new()
+        GetUserDto userDto = new()
         {
             Id = dbUser.Id,
             FirstName = dbUser.FirstName,
@@ -79,7 +79,7 @@ public class AuthService : IAuthService
             UpdatedAt = dbUser.UpdatedAt
         };
 
-        return new ApiResponse<UserDto>()
+        return new ApiResponse<GetUserDto>()
         {
             Success = true,
             ErrorMessage = "",
@@ -87,18 +87,13 @@ public class AuthService : IAuthService
         };
     }
 
-    public Task<ApiResponse<User>> LoginGoogle(User user)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<ApiResponse<UserDto>> Register(UserLoginDto userLogin)
+    public async Task<ApiResponse<GetUserDto>> Register(UserRegisterDto userRegister)
     {
 
-        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userLogin.Email);
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userRegister.Email);
         if (dbUser != null)
         {
-            return new ApiResponse<UserDto>()
+            return new ApiResponse<GetUserDto>()
             {
                 Success = false,
                 ErrorMessage = "User already exists",
@@ -106,28 +101,25 @@ public class AuthService : IAuthService
             };
         }
 
-        if (!string.IsNullOrEmpty(userLogin.Password))
+        if (!string.IsNullOrEmpty(userRegister.Password))
         {
-            userLogin.Password = HashPassword(userLogin.Password);
+            userRegister.Password = HashPassword(userRegister.Password);
         }
 
-        User user = new(){
+        User user = new()
+        {
             Id = Guid.NewGuid(),
-            FirstName = userLogin.FirstName,
-            LastName = userLogin.LastName,
-            PasswordHash = userLogin.Password,
-            Email = userLogin.Email,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            FirstName = userRegister.FirstName,
+            LastName = userRegister.LastName,
+            PasswordHash = userRegister.Password,
+            Email = userRegister.Email,
+            Role = UserRole.Owner
         };
-
-
-        // userLogin.Id = Guid.NewGuid();
 
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
-        UserDto userDto = new UserDto
+        GetUserDto userDto = new()
         {
             Id = user.Id,
             FirstName = user.FirstName,
@@ -137,14 +129,18 @@ public class AuthService : IAuthService
             UpdatedAt = user.UpdatedAt
         };
 
-        return new ApiResponse<UserDto>()
+        return new ApiResponse<GetUserDto>()
         {
             Success = true,
-            ErrorMessage = "",
-            Payload = userDto
+            Payload = userDto,
+            ErrorMessage = ""
         };
     }
 
+    public Task<ApiResponse<User>> LoginGoogle(User user)
+    {
+        throw new NotImplementedException();
+    }
 
     public async Task<ApiResponse<string>> UpdatePassword(Guid userId, string currentPassword, string newPassword)
     {

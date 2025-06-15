@@ -1,4 +1,4 @@
-using backend.Dtos.CustomFiledValueDto;
+using backend.Dtos.CustomFieldValueDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.CustomFieldValueService;
@@ -18,28 +18,28 @@ public class CustomFieldValueController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ApiResponse<List<CustomFiledValue>>> GetCustomFieldValues()
+    public async Task<ApiResponse<List<CustomFieldValue>>> GetCustomFieldValues()
     {
         return await _customFieldServiceValue.GetCustomFieldValues();
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ApiResponse<CustomFiledValue>> GetCustomFieldValueById(Guid id)
+    public async Task<ApiResponse<CustomFieldValue>> GetCustomFieldValueById(Guid id)
     {
         return await _customFieldServiceValue.GetCustomFieldValuesById(id);
     }
 
-    [HttpPost("{customFieldId:guid}")]
-    public async Task<IActionResult> AddCustomField([FromBody] AddCustomFiledValueDto newCustomFieldValue, Guid customFieldId)
+    [HttpPost]
+    public async Task<IActionResult> CreateCustomField([FromBody] CreateCustomFieldValueDto createCustomFieldValueDto)
     {
-        await _customFieldServiceValue.AddCustomFieldValue(newCustomFieldValue, customFieldId);
+        await _customFieldServiceValue.CreateCustomFieldValue(createCustomFieldValueDto);
         return Ok();
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateCustomField([FromQuery] UpdateCustomFiledValueDto updatedCustomFieldValue)
+    public async Task<IActionResult> UpdateCustomField([FromBody] UpdateCustomFieldValueDto updatedCustomFieldValueDto)
     {
-        await _customFieldServiceValue.UpdateCustomFieldValue(updatedCustomFieldValue);
+        await _customFieldServiceValue.UpdateCustomFieldValue(updatedCustomFieldValueDto);
         return Ok();
     }
 

@@ -1,13 +1,14 @@
-using System.ComponentModel.DataAnnotations;
+using backend.Models;
 
 namespace backend.Dtos.CustomFieldDto;
 
 public class UpdateCustomFieldDto
 {
-    [Key]
-    public Guid CustomFieldId { get; set; }
-    public Guid CustomerId { get; set; }
-    public string? FieldName { get; set; }
-    public string? FieldType { get; set; }
+    public Guid? Id { get; set; }
+    public string? FieldName { get; set; } = string.Empty;
+    public CustomFieldType? FieldType { get; set; } = CustomFieldType.Text;
     public string? DefaultValue { get; set; }
+    public List<string>? DropdownOptions { get; set; }
+    public bool? IsRequired { get; set; } = false;
+    public bool? IsArchived { get; set; } = false;
 }

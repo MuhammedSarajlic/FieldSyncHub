@@ -1,23 +1,26 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using backend.Models;
 
-namespace backend.Dtos.CustomerDto
+namespace backend.Dtos.CustomerDto;
+
+public class ImportedCustomerDto
 {
-    public class ImportedCustomerDto
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string? CompanyName { get; set; }
-        public bool IsCompany { get; set; }
-        public List<string>? Email { get; set; }
-        public bool VisitReminders { get; set; } = true;
-        public bool JobFollowUps { get; set; } = true;
-        public bool QuoteFollowUps { get; set; } = true;
-        public bool InvoiceFollowUps { get; set; } = true;
-        public bool Archived { get; set; } = false;
-        public List<string>? Tags { get; set; }
-        public DateTime? CreatedAt { get; set; }
-    }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? CompanyName { get; set; }
+    public string DisplayName { get; set; } = string.Empty;
+    public List<string> Emails { get; set; } = [];
+
+    public bool IsReceiveJobNotifications { get; set; } = true;
+    public bool IsReceiveQuoteNotifications { get; set; } = true;
+    public bool IsReceiveInvoiceNotifications { get; set; } = true;
+
+    public string? BillingStreet { get; set; }
+    public string? BillingCity { get; set; }
+    public string? BillingState { get; set; }
+    public string? BillingCountry { get; set; }
+    public string? BillingPostalCode { get; set; }
+
+    public List<string> Tags { get; set; } = [];
+    public ICollection<Property> Properties { get; set; } = [];
+    public ICollection<CustomerPhone> CustomerPhones { get; set; } = [];
 }

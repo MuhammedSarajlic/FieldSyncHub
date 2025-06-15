@@ -1,13 +1,13 @@
-using backend.Models;
+using backend.Dtos.WorkspaceDto;
 using backend.Response;
 
 namespace backend.Services.WorkspaceService;
 
 public interface IWorkspaceService
 {
-    Task<ApiResponse<List<Workspace>>> GetWorkspaces();
-    Task<ApiResponse<Workspace>> GetWorkspaceById(Guid id);
-    Task AddWorkspace(Workspace newWorkspace);
-    Task UpdateWorkspace(Workspace updatedWorkspace);
+    Task<ApiResponse<List<GetWorkspaceDto>>> GetWorkspaces();
+    Task<ApiResponse<GetWorkspaceDto>> GetWorkspaceById(Guid id);
+    Task<ApiResponse<GetWorkspaceDto>> CreateWorkspace(CreateWorkspaceDto createWorkspaceDto, Guid createdById);
+    Task<ApiResponse<GetWorkspaceDto>> UpdateWorkspace(UpdateWorkspaceDto updateWorkspaceDto);
     Task DeleteWorkspace(Guid id);
 }

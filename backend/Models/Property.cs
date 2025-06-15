@@ -18,5 +18,7 @@ public class Property
     public bool IsBillingAddress { get; set; }
     public Guid CustomerId { get; set; }
     [JsonIgnore]
-    public Customers? Customer { get; set; }
+    public Customer? Customer { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

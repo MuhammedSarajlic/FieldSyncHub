@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using backend.Dtos.UserDto;
+using backend.Models;
 using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Services.TokenService;
@@ -16,7 +17,7 @@ public class TokenService : ITokenService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public (string accessToken, string refreshToken) GenerateTokens(UserDto user)
+    public (string accessToken, string refreshToken) GenerateTokens(GetUserDto user)
     {
         var accessToken = CreateToken(user, DateTime.UtcNow.AddMinutes(60));
         var refreshToken = CreateToken(user, DateTime.UtcNow.AddDays(30));
@@ -36,14 +37,14 @@ public class TokenService : ITokenService
         _httpContextAccessor.HttpContext?.Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
     }
 
-    private string CreateToken(UserDto user, DateTime expiresAt)
+    private string CreateToken(GetUserDto user, DateTime expiresAt)
     {
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim("workspaceId", user.Workspace?.Id.ToString() ?? ""),
-            new Claim(ClaimTypes.Role, user.Role?.ToString() ?? "user")
+            new Claim(ClaimTypes.Role, user.Role.ToString() ?? UserRole.Employee.ToString())
         };
 
         string? tokenKey = _configuration.GetSection("AppSettings:Token")?.Value;

@@ -1,4 +1,4 @@
-using backend.Models;
+using backend.Dtos.WorkspaceDto;
 using backend.Response;
 using backend.Services.WorkspaceService;
 using Microsoft.AspNetCore.Mvc;
@@ -17,29 +17,29 @@ public class WorkspaceController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ApiResponse<List<Workspace>>> GetWorkspaces()
+    public async Task<ApiResponse<List<GetWorkspaceDto>>> GetWorkspaces()
     {
         return await _workspaceService.GetWorkspaces();
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ApiResponse<Workspace>> GetWorkspaceById(Guid id)
+    public async Task<ApiResponse<GetWorkspaceDto>> GetWorkspaceById(Guid id)
     {
         return await _workspaceService.GetWorkspaceById(id);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> AddWorkspace([FromBody] Workspace newWorkspace)
+    [HttpPost("{createdById:guid}")]
+    public async Task<ActionResult<GetWorkspaceDto>> CreateWorkspace([FromBody] CreateWorkspaceDto createWorkspaceDto, Guid createdById)
     {
-        await _workspaceService.AddWorkspace(newWorkspace);
-        return Ok();
+        var workspace = await _workspaceService.CreateWorkspace(createWorkspaceDto, createdById);
+        return Ok(workspace);
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateWorkspace([FromBody] Workspace updatedWorkspace)
+    public async Task<ActionResult<GetWorkspaceDto>> UpdateWorkspace([FromBody] UpdateWorkspaceDto updateWorkspaceDto)
     {
-        await _workspaceService.UpdateWorkspace(updatedWorkspace);
-        return Ok();
+        var workspace = await _workspaceService.UpdateWorkspace(updateWorkspaceDto);
+        return Ok(workspace);
     }
 
     [HttpDelete("{id:guid}")]

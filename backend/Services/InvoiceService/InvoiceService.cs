@@ -1,7 +1,10 @@
+using System.Linq.Expressions;
 using backend.Data;
 using backend.Dtos.InvoiceDto;
 using backend.Models;
+using backend.Models.QuoteModels;
 using backend.Response;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -18,194 +21,272 @@ public class InvoiceService : IInvoiceService
         _context = context;
     }
 
-    public async Task<IEnumerable<Invoice>> GetAllInvoices()
+    public async Task<List<Invoice>> GetAllInvoices()
     {
         return await _context.Invoices
             .AsNoTracking()
             .Include(i => i.Customer)
             .Include(i => i.Job)
-            .Include(i => i.Items)
+            .Include(i => i.LineItems)
             .ThenInclude(item => item.ServiceItem)
             .ToListAsync();
     }
 
     public async Task<Invoice?> GetInvoiceById(Guid id)
     {
-        return await _context.Invoices
+        var invoice = await _context.Invoices
             .AsNoTracking()
             .Include(i => i.Customer)
             .Include(i => i.Job)
-            .Include(i => i.Items)
+            .Include(i => i.LineItems)
             .ThenInclude(item => item.ServiceItem)
-            .FirstOrDefaultAsync(i => i.InvoiceId == id);
+            .FirstOrDefaultAsync(i => i.Id == id);
+
+        return invoice ?? throw new KeyNotFoundException($"Invoice with ID {id} not found.");
     }
 
-    public async Task<Invoice?> GetInvoiceByInvoiceNumber(string invoiceNumber)
+    public async Task<Invoice> GetInvoiceByInvoiceNumber(Guid workspaceId, string invoiceNumber)
     {
-        return await _context.Invoices
+        var invoice = await _context.Invoices
             .AsNoTracking()
+            .Where(i => i.InvoiceNumber == invoiceNumber && i.WorkspaceId == workspaceId)
             .Include(i => i.Customer)
             .ThenInclude(c => c.Properties)
             .Include(i => i.Customer)
             .ThenInclude(c => c.CustomerPhones)
             .Include(i => i.Job)
-            .Include(i => i.Items)
+            .Include(i => i.LineItems)
             .ThenInclude(item => item.ServiceItem)
-            .FirstOrDefaultAsync(i => i.InvoiceNumber == invoiceNumber);
+            .FirstOrDefaultAsync();
+
+        return invoice ?? throw new KeyNotFoundException($"Invoice with number {invoiceNumber} not found in workspace {workspaceId}");
     }
 
-    public async Task<IEnumerable<Invoice>> GetInvoicesByWorkspaceId(Guid workspaceId)
+    public async Task<List<Invoice>> GetInvoicesByWorkspaceId(Guid workspaceId)
     {
         return await _context.Invoices
             .AsNoTracking()
             .Where(i => i.WorkspaceId == workspaceId)
             .Include(i => i.Customer)
             .Include(i => i.Job)
-            .Include(i => i.Items)
+            .Include(i => i.LineItems)
             .ThenInclude(item => item.ServiceItem)
             .ToListAsync();
     }
 
-    public async Task<Invoice> CreateInvoice(CreateInvoiceDto invoiceDto)
+    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByFilter(InvoiceFilterDto filterDto, Guid workspaceId)
     {
-        var invoice = new Invoice
+        if (workspaceId == Guid.Empty)
         {
-            CustomerId = invoiceDto.CustomerId,
-            JobId = invoiceDto.JobId,
-            WorkspaceId = invoiceDto.WorkspaceId,
-            InvoiceNumber = await GenerateInvoiceNumber(),
-            Items = invoiceDto.Items.Select(itemDto => new LineItem
+            return new ApiResponse<List<Invoice>>
             {
-                ServiceItemId = itemDto.ServiceItemId,
-                Name = itemDto.Name,
-                UnitPrice = itemDto.UnitPrice,
-                Description = itemDto.Description,
-                Quantity = itemDto.Quantity
-            }).ToList(),
-            TaxRate = invoiceDto.TaxRate,
-            Discount = invoiceDto.Discount,
-            DiscountType = invoiceDto.DiscountType,
-            IssueDate = invoiceDto.IssueDate,
-            PaymentTerms = invoiceDto.PaymentTerms,
-            Notes = invoiceDto.Notes,
-            InternalNotes = invoiceDto.InternalNotes,
-            Status = "draft",
-            IsPaid = false
+                Success = false,
+                ErrorMessage = "Workspace ID is required for filtering invoices.",
+                Payload = null
+            };
+        }
+
+        var queryable = _context.Invoices
+            .Where(i => i.WorkspaceId == workspaceId)
+            .AsNoTracking()
+            .Include(i => i.Customer)
+            .Include(i => i.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .AsQueryable();
+
+        // Workspace filter (mandatory)
+        queryable = queryable.Where(i => i.WorkspaceId == workspaceId);
+
+        // Status filter (InvoiceStatus enum)
+        if (Enum.TryParse<InvoiceStatus>(filterDto.Status, true, out var parsedStatus))
+        {
+            queryable = queryable.Where(i => i.Status == parsedStatus);
+        }
+
+        // Due Date range filter
+        if (filterDto.DueDateMin.HasValue)
+            queryable = queryable.Where(i => i.DueDate >= filterDto.DueDateMin.Value.Date);
+
+        if (filterDto.DueDateMax.HasValue)
+            queryable = queryable.Where(i => i.DueDate <= filterDto.DueDateMax.Value.Date.AddDays(1).AddTicks(-1));
+
+        // Search query (InvoiceNumber or Customer name)
+        if (!string.IsNullOrWhiteSpace(filterDto.Q))
+        {
+            var q = filterDto.Q.Trim().ToLower();
+            queryable = queryable.Where(i =>
+                i.InvoiceNumber.ToLower().Contains(q) ||
+                (i.Customer != null &&
+                    (i.Customer.FirstName.ToLower().Contains(q) ||
+                     i.Customer.LastName.ToLower().Contains(q) ||
+                     (i.Customer.FullName != null && i.Customer.FullName.ToLower().Contains(q)))
+                ));
+        }
+
+        // Materialize list to apply total-based filters (in-memory)
+        var resultList = await queryable.ToListAsync();
+
+        // Apply Total filtering in-memory
+        resultList = resultList.Where(i =>
+        {
+            var subtotal = i.LineItems.Sum(li => (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
+            var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
+            var total = subtotal - discount + ((subtotal - discount) * i.TaxRate);
+
+            return (!filterDto.TotalMin.HasValue || total >= filterDto.TotalMin.Value)
+                && (!filterDto.TotalMax.HasValue || total <= filterDto.TotalMax.Value);
+        }).ToList();
+
+        // Sorting (in-memory because total can't be sorted in SQL)
+        resultList = filterDto.SortBy?.ToLower() switch
+        {
+            "invoice-number" => filterDto.Sort == "desc"
+                ? resultList.OrderByDescending(i => i.InvoiceNumber).ToList()
+                : resultList.OrderBy(i => i.InvoiceNumber).ToList(),
+
+            "customer" => filterDto.Sort == "desc"
+                ? resultList.OrderByDescending(i => i.Customer?.FullName ?? "").ToList()
+                : resultList.OrderBy(i => i.Customer?.FullName ?? "").ToList(),
+
+            "due-date" => filterDto.Sort == "desc"
+                ? resultList.OrderByDescending(i => i.DueDate).ToList()
+                : resultList.OrderBy(i => i.DueDate).ToList(),
+
+            "total" => filterDto.Sort == "desc"
+                ? resultList.OrderByDescending(i =>
+                {
+                    var subtotal = i.LineItems.Sum(li => (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
+                    var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
+                    return subtotal - discount + ((subtotal - discount) * i.TaxRate);
+                }).ToList()
+                : resultList.OrderBy(i =>
+                {
+                    var subtotal = i.LineItems.Sum(li => (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
+                    var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
+                    return subtotal - discount + ((subtotal - discount) * i.TaxRate);
+                }).ToList(),
+
+            _ => resultList.OrderByDescending(i => i.IssueDate).ToList() // default: recent first
         };
 
-        invoice.DueDate = CalculateDueDate(invoice.IssueDate, invoice.PaymentTerms, invoiceDto.CustomDueDate);
+        return new ApiResponse<List<Invoice>>
+        {
+            Success = true,
+            Payload = resultList
+        };
+    }
+
+    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId)
+    {
+        var invoices = await _context.Invoices
+            .Where(i => i.CustomerId == customerId)
+            .AsNoTracking()
+            .Include(i => i.Customer)
+            .ThenInclude(c => c.Properties)
+            .Include(i => i.Customer)
+            .ThenInclude(c => c.CustomerPhones)
+            .Include(i => i.Job)
+            .Include(i => i.LineItems)
+            .ThenInclude(item => item.ServiceItem)
+            .ToListAsync();
+
+        return new ApiResponse<List<Invoice>>
+        {
+            Success = true,
+            ErrorMessage = null,
+            Payload = invoices
+        };
+    }
+
+    public async Task<Invoice> CreateInvoice(CreateInvoiceDto createInvoiceDto)
+    {
+        var invoice = createInvoiceDto.Adapt<Invoice>();
+        invoice.InvoiceNumber = await GenerateInvoiceNumber(createInvoiceDto.WorkspaceId);
+        invoice.DueDate = CalculateDueDate(invoice.IssueDate, invoice.PaymentTerms, createInvoiceDto.DueDate);
 
         _context.Invoices.Add(invoice);
         await _context.SaveChangesAsync();
+
         return invoice;
     }
 
-    public async Task<Invoice?> UpdateInvoice(Guid invoiceId, UpdateInvoiceDto invoiceDto)
+    public async Task<Invoice> UpdateInvoice(Guid invoiceId, UpdateInvoiceDto updatedInvoiceDto)
     {
-        var existingInvoice = await _context.Invoices
-            .Include(i => i.Items)
-            .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+        var invoice = await _context.Invoices
+            .Include(i => i.LineItems)
+            .FirstOrDefaultAsync(i => i.Id == invoiceId);
 
-        if (existingInvoice == null)
+        if (updatedInvoiceDto.TaxRate.HasValue) invoice.TaxRate = updatedInvoiceDto.TaxRate.Value;
+        if (updatedInvoiceDto.Discount.HasValue) invoice.Discount = updatedInvoiceDto.Discount.Value;
+        if (updatedInvoiceDto.DiscountType.HasValue) invoice.DiscountType = updatedInvoiceDto.DiscountType.Value;
+        if (updatedInvoiceDto.IssueDate.HasValue) invoice.IssueDate = updatedInvoiceDto.IssueDate.Value;
+        if (updatedInvoiceDto.Notes != null) invoice.Notes = updatedInvoiceDto.Notes;
+        if (updatedInvoiceDto.InternalNotes != null) invoice.InternalNotes = updatedInvoiceDto.InternalNotes;
+        if (updatedInvoiceDto.Status.HasValue) invoice.Status = updatedInvoiceDto.Status.Value;
+        if (updatedInvoiceDto.IsPaid.HasValue) invoice.IsPaid = updatedInvoiceDto.IsPaid.Value;
+
+        if (updatedInvoiceDto.PaymentTerms != null || updatedInvoiceDto.IssueDate.HasValue || updatedInvoiceDto.DueDate.HasValue)
         {
-            return null;
-        }
-
-        if (invoiceDto.CustomerId.HasValue) existingInvoice.CustomerId = invoiceDto.CustomerId.Value;
-        if (invoiceDto.JobId.HasValue) existingInvoice.JobId = invoiceDto.JobId;
-        if (invoiceDto.TaxRate.HasValue) existingInvoice.TaxRate = invoiceDto.TaxRate.Value;
-        if (invoiceDto.Discount.HasValue) existingInvoice.Discount = invoiceDto.Discount.Value;
-        if (invoiceDto.DiscountType != null) existingInvoice.DiscountType = invoiceDto.DiscountType;
-        if (invoiceDto.IssueDate.HasValue) existingInvoice.IssueDate = invoiceDto.IssueDate.Value;
-        if (invoiceDto.Notes != null) existingInvoice.Notes = invoiceDto.Notes;
-        if (invoiceDto.InternalNotes != null) existingInvoice.InternalNotes = invoiceDto.InternalNotes;
-        if (invoiceDto.Status != null) existingInvoice.Status = invoiceDto.Status;
-        if (invoiceDto.IsPaid.HasValue) existingInvoice.IsPaid = invoiceDto.IsPaid.Value;
-
-        if (invoiceDto.PaymentTerms != null || invoiceDto.IssueDate.HasValue || invoiceDto.CustomDueDate.HasValue)
-        {
-            existingInvoice.PaymentTerms = invoiceDto.PaymentTerms ?? existingInvoice.PaymentTerms;
-            existingInvoice.DueDate = CalculateDueDate(
-                invoiceDto.IssueDate ?? existingInvoice.IssueDate,
-                existingInvoice.PaymentTerms,
-                invoiceDto.CustomDueDate
+            invoice.PaymentTerms = updatedInvoiceDto.PaymentTerms ?? invoice.PaymentTerms;
+            invoice.DueDate = CalculateDueDate(
+                updatedInvoiceDto.IssueDate ?? invoice.IssueDate,
+                invoice.PaymentTerms,
+                updatedInvoiceDto.DueDate
             );
         }
 
-        if (invoiceDto.Items != null)
+        if (updatedInvoiceDto.LineItems != null)
         {
-            // Identify items to remove (existing items not present in the DTO's items with an ID)
-            var itemsToRemove = existingInvoice.Items
-                .Where(existingItem => !invoiceDto.Items.Any(dtoItem => dtoItem.LineItemId == existingItem.LineItemId && dtoItem.LineItemId.HasValue))
+            var itemsToRemove = invoice.LineItems
+                .Where(existingItem => !updatedInvoiceDto.LineItems.Any(dtoItem => dtoItem.Id == existingItem.Id && dtoItem.Id.HasValue))
                 .ToList();
             _context.LineItems.RemoveRange(itemsToRemove);
 
-            foreach (var itemDto in invoiceDto.Items)
+            foreach (var itemDto in updatedInvoiceDto.LineItems)
             {
-                if (itemDto.LineItemId.HasValue)
+                if (itemDto.Id.HasValue)
                 {
-                    var existingItem = existingInvoice.Items.FirstOrDefault(i => i.LineItemId == itemDto.LineItemId);
-                    if (existingItem != null)
+                    var existing = invoice.LineItems.FirstOrDefault(i => i.Id == itemDto.Id.Value);
+                    if (existing != null)
                     {
-                        if (itemDto.ServiceItemId.HasValue) existingItem.ServiceItemId = itemDto.ServiceItemId;
-                        if (itemDto.Name != null) existingItem.Name = itemDto.Name;
-                        if (itemDto.UnitPrice.HasValue) existingItem.UnitPrice = itemDto.UnitPrice;
-                        if (itemDto.Description != null) existingItem.Description = itemDto.Description;
-                        if (itemDto.Quantity.HasValue) existingItem.Quantity = itemDto.Quantity.Value;
+                        if (itemDto.Name != null) existing.Name = itemDto.Name;
+                        if (itemDto.UnitPrice.HasValue) existing.UnitPrice = itemDto.UnitPrice.Value;
+                        if (itemDto.Description != null) existing.Description = itemDto.Description;
+                        if (itemDto.Quantity.HasValue) existing.Quantity = itemDto.Quantity.Value;
                     }
                 }
                 else
                 {
-                    existingInvoice.Items.Add(new LineItem
+                    invoice.LineItems.Add(new LineItem
                     {
-                        LineItemId = Guid.NewGuid(),
-                        ServiceItemId = itemDto.ServiceItemId,
-                        Name = itemDto.Name,
-                        UnitPrice = itemDto.UnitPrice,
+                        Id = Guid.NewGuid(),
+                        Name = itemDto.Name ?? "",
+                        UnitPrice = itemDto.UnitPrice ?? 0,
                         Description = itemDto.Description,
                         Quantity = itemDto.Quantity ?? 1,
-                        InvoiceId = existingInvoice.InvoiceId
+                        InvoiceId = invoice.Id
                     });
                 }
             }
         }
 
+        invoice.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        return existingInvoice;
+
+        return invoice;
     }
 
-    public async Task<bool> DeleteInvoice(Guid id)
+    public async Task DeleteInvoice(Guid id)
     {
         var invoiceToDelete = await _context.Invoices.FindAsync(id);
-        if (invoiceToDelete == null)
-        {
-            return false;
-        }
 
         _context.Invoices.Remove(invoiceToDelete);
         await _context.SaveChangesAsync();
-        return true;
-    }
-
-    private DateTime CalculateDueDate(DateTime issueDate, string paymentTerms, DateTime? customDueDate)
-    {
-        if (paymentTerms.Equals("custom", StringComparison.OrdinalIgnoreCase) && customDueDate.HasValue)
-        {
-            return customDueDate.Value;
-        }
-
-        return paymentTerms.ToLower() switch
-        {
-            "uponreceipt" => issueDate,
-            "net15" => issueDate.AddDays(15),
-            "net30" => issueDate.AddDays(30),
-            _ => issueDate
-        };
     }
 
     public byte[] GenerateDocument(Invoice invoice)
     {
-        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+        QuestPDF.Settings.License = LicenseType.Community;
 
         var pdf = Document.Create(container =>
         {
@@ -257,7 +338,7 @@ public class InvoiceService : IInvoiceService
                             header.Cell().Text("Amount").Bold();
                         });
 
-                        foreach (var item in invoice.Items)
+                        foreach (var item in invoice.LineItems)
                         {
                             table.Cell().Text(item.Name);
                             table.Cell().Text($"{item.Quantity}");
@@ -284,88 +365,30 @@ public class InvoiceService : IInvoiceService
         return pdf.GeneratePdf();
     }
 
-    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByFilter(Guid? workspaceId, string? status, DateTime? dueDateMin, DateTime? dueDateMax, decimal? totalMin, decimal? totalMax, string? sortBy, string? sort)
+    private DateTime CalculateDueDate(DateTime issueDate, string paymentTerms, DateTime? dueDate)
     {
-        var queryable = _context.Invoices
-        .Include(i => i.Customer)
-        .Include(i => i.Items)
-            .ThenInclude(item => item.ServiceItem)
-        .AsQueryable();
-
-        if (workspaceId.HasValue && workspaceId != Guid.Empty)
+        if (paymentTerms.Equals("custom", StringComparison.OrdinalIgnoreCase) && dueDate.HasValue)
         {
-            queryable = queryable.Where(i => i.WorkspaceId == workspaceId);
+            return dueDate.Value;
         }
 
-        if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
+        return paymentTerms.ToLower() switch
         {
-            queryable = queryable.Where(i => i.Status.ToLower() == status.ToLower());
-        }
-
-        if (dueDateMin.HasValue)
-        {
-            queryable = queryable.Where(i => i.DueDate >= dueDateMin.Value);
-        }
-
-        if (dueDateMax.HasValue)
-        {
-            queryable = queryable.Where(i => i.DueDate <= dueDateMax.Value);
-        }
-
-        if (totalMin.HasValue)
-        {
-            queryable = queryable.Where(i =>
-                i.Items.Sum(x => (x.ServiceItem != null ? x.ServiceItem.UnitPrice : x.UnitPrice) * x.Quantity) +
-                (i.Items.Sum(x => (x.ServiceItem != null ? x.ServiceItem.UnitPrice : x.UnitPrice) * x.Quantity) * i.TaxRate) -
-                i.Discount >= totalMin.Value);
-        }
-
-        if (totalMax.HasValue)
-        {
-            queryable = queryable.Where(i =>
-                i.Items.Sum(x => (x.ServiceItem != null ? x.ServiceItem.UnitPrice : x.UnitPrice) * x.Quantity) +
-                (i.Items.Sum(x => (x.ServiceItem != null ? x.ServiceItem.UnitPrice : x.UnitPrice) * x.Quantity) * i.TaxRate) -
-                i.Discount <= totalMax.Value);
-        }
-
-        queryable = sortBy?.ToLower() switch
-        {
-            "invoice-number" => sort == "desc"
-                ? queryable.OrderByDescending(i => i.InvoiceNumber)
-                : queryable.OrderBy(i => i.InvoiceNumber),
-
-            "customer" => sort == "desc"
-                ? queryable.OrderByDescending(i => i.Customer.FullName)
-                : queryable.OrderBy(i => i.Customer.FullName),
-
-            "due-date" => sort == "desc"
-                ? queryable.OrderByDescending(i => i.DueDate)
-                : queryable.OrderBy(i => i.DueDate),
-
-            "total" => sort == "desc"
-                ? queryable.OrderByDescending(i => i.Total)
-                : queryable.OrderBy(i => i.Total),
-
-            _ => queryable.OrderBy(i => i.IssueDate)
-        };
-
-        var invoices = await queryable.ToListAsync();
-
-        return new ApiResponse<List<Invoice>>
-        {
-            Success = true,
-            Payload = invoices
+            "uponreceipt" => issueDate,
+            "net15" => issueDate.AddDays(15),
+            "net30" => issueDate.AddDays(30),
+            _ => issueDate
         };
     }
 
-    private async Task<string> GenerateInvoiceNumber()
+    private async Task<string> GenerateInvoiceNumber(Guid workspaceId)
     {
         var today = DateTime.UtcNow.Date;
         var prefix = "FSH-";
         var datePart = today.ToString("yyMMdd");
 
         var lastInvoice = await _context.Invoices
-            .Where(i => i.InvoiceNumber.StartsWith(prefix + datePart))
+            .Where(i => i.WorkspaceId == workspaceId && i.InvoiceNumber.StartsWith(prefix + datePart))
             .OrderByDescending(i => i.InvoiceNumber)
             .Select(i => i.InvoiceNumber)
             .FirstOrDefaultAsync();
@@ -380,28 +403,6 @@ public class InvoiceService : IInvoiceService
             }
         }
 
-        return $"{prefix}{datePart}-{sequence:D3}";
-    }
-
-    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId)
-    {
-        var invoices = await _context.Invoices
-            .Where(i => i.CustomerId == customerId)
-            .AsNoTracking()
-            .Include(i => i.Customer)
-            .ThenInclude(c => c.Properties)
-            .Include(i => i.Customer)
-            .ThenInclude(c => c.CustomerPhones)
-            .Include(i => i.Job)
-            .Include(i => i.Items)
-            .ThenInclude(item => item.ServiceItem)
-            .ToListAsync();
-
-        return new ApiResponse<List<Invoice>>
-        {
-            Success = true,
-            ErrorMessage = null,
-            Payload = invoices
-        };
+        return $"{prefix}{datePart}-{sequence:D4}";
     }
 }

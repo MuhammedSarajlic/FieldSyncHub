@@ -6,9 +6,10 @@ namespace backend.Services.CustomFieldService;
 
 public interface ICustomFieldService
 {
-    Task<ApiResponse<List<CustomFields>>> GetCustomFields();
-    Task<ApiResponse<CustomFields>> GetCustomFieldsById(Guid id);
-    Task AddCustomField(AddCustomFieldDto newCustomField, Guid customerId);
-    Task UpdateCustomField(UpdateCustomFieldDto updatedCustomField);
+    Task<ApiResponse<List<CustomField>>> GetCustomFields();
+    Task<ApiResponse<CustomField>> GetCustomFieldsById(Guid id);
+    Task<ApiResponse<List<CustomField>>> GetCustomFieldsByWorkspaceId(Guid workspaceId);
+    Task<CustomField> CreateCustomField(CreateCustomFieldDto createCustomFieldDto);
+    Task<CustomField> UpdateCustomField(UpdateCustomFieldDto updatedCustomField);
     Task DeleteCustomField(Guid id);
 }

@@ -7,144 +7,161 @@ using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace backend.Services.EmployeeService
+namespace backend.Services.EmployeeService;
+
+public class EmployeeService : IEmployeeService
 {
-    public class EmployeeService : IEmployeeService
+    private readonly DataContext _context;
+    public EmployeeService(DataContext context)
     {
-        private readonly DataContext _context;
-        public EmployeeService(DataContext context)
+        _context = context;
+    }
+
+    public async Task<ApiResponse<List<Employee>>> GetEmployees()
+    {
+        var employees = await _context.Employees.ToListAsync();
+        return new ApiResponse<List<Employee>>()
         {
-            _context = context;
-        }
-        public async Task DeleteEmployee(Guid id)
+            Success = true,
+            Payload = employees,
+            ErrorMessage = null
+        };
+    }
+
+    public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
+    {
+        var employee = await _context.Employees.Where(e => e.Id == id).Include(e => e.User).FirstOrDefaultAsync();
+        return new ApiResponse<Employee>()
         {
-            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
-            _context.Remove(employee);
-            await _context.SaveChangesAsync();
-        }
+            Success = true,
+            Payload = employee,
+            ErrorMessage = null
+        };
+    }
 
-        public async Task<ApiResponse<List<Employee>>> GetEmployees()
+    public async Task<ApiResponse<List<Employee>>> GetEmployeesByWorkspaceId(Guid workspaceId)
+    {
+        var employees = await _context.Employees.Where(e => e.WorkspaceId == workspaceId)
+                                                .Include(e => e.User)
+                                                .ToListAsync();
+        return new ApiResponse<List<Employee>>()
         {
-            var employees = await _context.Employees.ToListAsync();
-            return new ApiResponse<List<Employee>>()
-            {
-                Success = true,
-                Payload = employees,
-                ErrorMessage = null
-            };
-        }
+            Success = true,
+            Payload = employees,
+            ErrorMessage = null
+        };
+    }
 
-        public async Task<IActionResult> ExportEmployees(Guid workspaceId)
+    public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(EmployeeFilterDto employeeFilterDto)
+    {
+        var queryable = _context.Employees.Include(e => e.User).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(employeeFilterDto.Q))
         {
-            var employees = await _context.Employees
-                .Where(e => e.WorkspaceId == workspaceId)
-                .Include(e => e.User)
-                .ToListAsync();
-
-            if (employees == null || !employees.Any())
-            {
-                return new NotFoundResult();
-            }
-
-            var sb = new StringBuilder();
-
-            sb.AppendLine("EmployeeId,FirstName,LastName,Email,Position,Department,Status,HireDate,WorkspaceId");
-
-            foreach (var employee in employees)
-            {
-                string hireDateFormatted = employee.HireDate.ToString("yyyy-MM-dd");
-                sb.AppendLine($"{employee.Id},{employee.User?.FirstName},{employee.User?.LastName},{employee.User?.Email},{employee.Position},{employee.Department},{employee.Status},{hireDateFormatted},{employee.WorkspaceId}");
-            }
-
-            var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
-            return new FileContentResult(csvBytes, "text/csv")
-            {
-                FileDownloadName = $"employees_workspace_{workspaceId}.csv"
-            };
+            queryable = queryable.Where(e => e.User.FirstName.Contains(employeeFilterDto.Q) || e.User.LastName.Contains(employeeFilterDto.Q));
         }
 
-        public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(string q, Guid? workspaceId, string? position, string? department, string? status, DateTime? hireDateMin, DateTime? hireDateMax, string? sortBy, string? sort)
+        if (employeeFilterDto.WorkspaceId.HasValue && employeeFilterDto.WorkspaceId != Guid.Empty)
         {
-            var queryable = _context.Employees.Include(e => e.User).AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(q))
-            {
-                queryable = queryable.Where(s => s.User.FirstName.Contains(q));
-            }
-
-            if (workspaceId.HasValue && workspaceId != Guid.Empty)
-            {
-                queryable = queryable.Where(e => e.WorkspaceId == workspaceId);
-            }
-
-            if (!string.IsNullOrWhiteSpace(position))
-            {
-                queryable = queryable.Where(e => e.Position != null && e.Position.Contains(position));
-            }
-
-            if (!string.IsNullOrWhiteSpace(department))
-            {
-                queryable = queryable.Where(e => e.Department != null && e.Department.Contains(department));
-            }
-
-            if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
-            {
-                queryable = queryable.Where(e => e.Status.ToLower() == status.ToLower());
-            }
-
-            if (hireDateMin.HasValue)
-            {
-                queryable = queryable.Where(e => e.HireDate >= hireDateMin.Value);
-            }
-            if (hireDateMax.HasValue)
-            {
-                queryable = queryable.Where(e => e.HireDate <= hireDateMax.Value);
-            }
-
-            queryable = sortBy?.ToLower() switch
-            {
-                "name" => sort == "desc" ? queryable.OrderByDescending(s => s.User.FirstName) : queryable.OrderBy(s => s.User.FirstName),
-                _ => queryable.OrderBy(s => s.User.FirstName)
-            };
-
-            var employees = await queryable.ToListAsync();
-
-            return new ApiResponse<List<Employee>>
-            {
-                Success = true,
-                Payload = employees
-            };
+            queryable = queryable.Where(e => e.WorkspaceId == employeeFilterDto.WorkspaceId);
         }
 
-        public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
+        if (!string.IsNullOrWhiteSpace(employeeFilterDto.Position))
         {
-            var employee = await _context.Employees.Where(e => e.Id == id).Include(e => e.User).FirstOrDefaultAsync();
-            return new ApiResponse<Employee>()
-            {
-                Success = true,
-                Payload = employee,
-                ErrorMessage = null
-            };
+            queryable = queryable.Where(e => e.Position != null && e.Position.Contains(employeeFilterDto.Position));
         }
 
-        public async Task<ApiResponse<List<Employee>>> GetEmployeesByWorkspaceId(Guid workspaceId)
+        if (!string.IsNullOrWhiteSpace(employeeFilterDto.Department))
         {
-            var employees = await _context.Employees.Where(e => e.WorkspaceId == workspaceId)
-                                                    .Include(e => e.User)
-                                                    .ToListAsync();
-            return new ApiResponse<List<Employee>>()
-            {
-                Success = true,
-                Payload = employees,
-                ErrorMessage = null
-            };
+            queryable = queryable.Where(e => e.Department != null && e.Department.Contains(employeeFilterDto.Department));
         }
 
-        public async Task UpdateEmployee(UpdateEmployeeDto updatedEmployee)
+        if (!string.IsNullOrWhiteSpace(employeeFilterDto.Status) && employeeFilterDto.Status.ToLower() != "all")
         {
-            var employee = updatedEmployee.Adapt<Employee>();
-            _context.Update(employee);
-            await _context.SaveChangesAsync();
+            queryable = queryable.Where(e => e.Status.ToString().ToLower() == employeeFilterDto.Status.ToLower());
         }
+
+        if (employeeFilterDto.HireDateMin.HasValue)
+        {
+            queryable = queryable.Where(e => e.HireDate >= employeeFilterDto.HireDateMin.Value);
+        }
+
+        if (employeeFilterDto.HireDateMax.HasValue)
+        {
+            queryable = queryable.Where(e => e.HireDate <= employeeFilterDto.HireDateMax.Value);
+        }
+
+        queryable = employeeFilterDto.SortBy?.ToLower() switch
+        {
+            "name" => employeeFilterDto.Sort == "desc"
+                ? queryable.OrderByDescending(e => e.User.FirstName)
+                : queryable.OrderBy(e => e.User.FirstName),
+            _ => queryable.OrderBy(e => e.User.FirstName)
+        };
+
+        var employees = await queryable.ToListAsync();
+
+        return new ApiResponse<List<Employee>>
+        {
+            Success = true,
+            Payload = employees
+        };
+    }
+
+    public async Task<ActionResult<Employee>> CreateEmployee(CreateEmployeeDto createEmployeeDto)
+    {
+        var employee = createEmployeeDto.Adapt<Employee>();
+        employee.Id = Guid.NewGuid();
+        employee.CreatedAt = DateTime.UtcNow;
+        employee.UpdatedAt = DateTime.UtcNow;
+
+        _context.Employees.Add(employee);
+        await _context.SaveChangesAsync();
+
+        return new ActionResult<Employee>(employee);
+    }
+
+    public async Task<Employee> UpdateEmployee(UpdateEmployeeDto updateEmployeeDto)
+    {
+        var employee = updateEmployeeDto.Adapt<Employee>();
+        _context.Update(employee);
+        await _context.SaveChangesAsync();
+        return employee;
+    }
+
+    public async Task DeleteEmployee(Guid id)
+    {
+        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
+        _context.Remove(employee);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<IActionResult> ExportEmployees(Guid workspaceId)
+    {
+        var employees = await _context.Employees
+            .Where(e => e.WorkspaceId == workspaceId)
+            .Include(e => e.User)
+            .ToListAsync();
+
+        if (employees == null || !employees.Any())
+        {
+            return new NotFoundResult();
+        }
+
+        var sb = new StringBuilder();
+
+        sb.AppendLine("EmployeeId,FirstName,LastName,Email,Position,Department,Status,HireDate,WorkspaceId");
+
+        foreach (var employee in employees)
+        {
+            string hireDateFormatted = employee.HireDate.ToString("yyyy-MM-dd");
+            sb.AppendLine($"{employee.Id},{employee.User?.FirstName},{employee.User?.LastName},{employee.User?.Email},{employee.Position},{employee.Department},{employee.Status},{hireDateFormatted},{employee.WorkspaceId}");
+        }
+
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return new FileContentResult(csvBytes, "text/csv")
+        {
+            FileDownloadName = $"employees_workspace_{workspaceId}.csv"
+        };
     }
 }

@@ -5,62 +5,103 @@ using backend.Response;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
-namespace backend.Services.PropertyService
+namespace backend.Services.PropertyService;
+
+public class PropertyService : IPropertyService
 {
-    public class PropertyService : IPropertyService
+    private readonly DataContext _context;
+    public PropertyService(DataContext context)
     {
-        private readonly DataContext _context;
-        public PropertyService(DataContext context)
-        {
-            _context = context;
-        }
+        _context = context;
+    }
 
-        public async Task<ApiResponse<List<Property>>> GetProperties()
+    public async Task<ApiResponse<List<Property>>> GetProperties()
+    {
+        var properties = await _context.Properties.ToListAsync();
+        return new ApiResponse<List<Property>>()
         {
-            var properties = await _context.Properties.ToListAsync();
-            return new ApiResponse<List<Property>>()
+            Success = true,
+            Payload = properties,
+            ErrorMessage = null
+        };
+    }
+
+    public async Task<ApiResponse<Property>> GetPropertyById(Guid id)
+    {
+        var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);
+        return new ApiResponse<Property>()
+        {
+            Success = true,
+            Payload = property,
+            ErrorMessage = null
+        };
+    }
+
+    public async Task CreateProperty(CreatePropertyDto createPropertyDto)
+    {
+        var property = createPropertyDto.Adapt<Property>();
+        var customer = await _context.Customers.Where(c => c.Id == createPropertyDto.CustomerId)
+                                            .Include(c => c.Properties)
+                                            .FirstOrDefaultAsync();
+        property.Id = Guid.NewGuid();
+        property.CreatedAt = DateTime.UtcNow;
+        property.UpdatedAt = DateTime.UtcNow;
+        property.CustomerId = createPropertyDto.CustomerId;
+
+        await _context.Properties.AddAsync(property);
+
+        customer?.Properties?.Add(property);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateProperty(UpdatePropertyDto updatePropertyDto)
+    {
+        var property = updatePropertyDto.Adapt<Property>();
+        property.UpdatedAt = DateTime.UtcNow;
+
+        _context.Update(property);
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateProperties(ICollection<UpdatePropertyDto> updatePropertiesDto, Guid customerId)
+    {
+        var existingProperties = await _context.Properties
+            .Where(p => p.CustomerId == customerId)
+            .ToListAsync();
+
+        foreach (var propertyDto in updatePropertiesDto)
+        {
+            var existingProperty = existingProperties.FirstOrDefault(p => p.Id == propertyDto.Id);
+
+            if (existingProperty != null)
             {
-                Success = true,
-                Payload = properties,
-                ErrorMessage = null
-            };
-        }
-
-        public async Task<ApiResponse<Property>> GetPropertyById(Guid id)
-        {
-            var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);
-            return new ApiResponse<Property>()
+                propertyDto.Adapt(existingProperty);
+                existingProperty.UpdatedAt = DateTime.UtcNow;
+            }
+            else
             {
-                Success = true,
-                Payload = property,
-                ErrorMessage = null
-            };
+                var newProperty = propertyDto.Adapt<Property>();
+                newProperty.CustomerId = customerId;
+                _context.Properties.Add(newProperty);
+            }
         }
 
-        public async Task AddProperty(AddPropertyDto newProperty)
-        {
-            var property = newProperty.Adapt<Property>();
-            var customer = await _context.Customers.Where(c => c.Id == newProperty.CustomerId)
-                                                .Include(c => c.Properties)
-                                                .FirstOrDefaultAsync();
-            newProperty.Id = Guid.NewGuid();
-            property.CustomerId = newProperty.CustomerId;
-            await _context.Properties.AddAsync(property);
-            customer?.Properties?.Add(property);
-            await _context.SaveChangesAsync();
-        }
+        // Handle deletions
+        var removedProperties = existingProperties
+            .Where(ep => !updatePropertiesDto.Any(p => p.Id == ep.Id))
+            .ToList();
 
-        public async Task UpdateProperty(Property updatedProperty)
+        if (removedProperties.Count != 0)
         {
-            _context.Update(updatedProperty);
-            await _context.SaveChangesAsync();
+            _context.Properties.RemoveRange(removedProperties);
         }
+    }
 
-        public async Task DeleteProperty(Guid id)
-        {
-            var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);
-            _context.Remove(property);
-            await _context.SaveChangesAsync();
-        }
+    public async Task DeleteProperty(Guid id)
+    {
+        var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);
+        _context.Remove(property);
+        await _context.SaveChangesAsync();
     }
 }

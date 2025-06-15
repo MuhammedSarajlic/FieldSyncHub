@@ -2,36 +2,30 @@ using backend.Dtos.CustomerDto;
 using backend.Models;
 using backend.Response;
 using backend.Wrappers;
+using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Services.CustomerService;
 
 public interface ICustomerService
 {
-    Task<ApiResponse<List<Customers>>> GetCustomers();
-    Task<ApiResponse<Customers>> GetCustomersById(Guid id);
-    Task<ApiResponse<PagedResult<Customers>>> GetCustomersByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
-    Task<ApiResponse<PagedResult<Customers>>> GetCustomersByFilter(
-        int pageNumber, int pageSize,
+    Task<ApiResponse<List<Customer>>> GetCustomers();
+    Task<ApiResponse<Customer>> GetCustomerById(Guid id);
+    Task<ApiResponse<PagedResult<Customer>>> GetCustomersByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
+    Task<CustomerStatsDto> GetCustomerStats(Guid workspaceId);
+    Task<ApiResponse<PagedResult<Customer>>> GetCustomersByFilter(
         Guid workspaceId,
-        string? q, string? sortBy, string? sort,
-        string? customerType,
-        string? createdDateMin,
-        string? createdDateMax,
-        string? propertiesMin,
-        string? propertiesMax,
-        string? hasEmail,
-        string? hasPhone,
-        string? tags
+        int pageNumber,
+        int pageSize,
+        CustomerFilterDto filterDto
     );
-    Task<ApiResponse<object>> ImportCustomers(List<ImportedCustomerDto> customers, Guid workspaceId);
-    Task<ApiResponse<List<ImportedCustomerDto>>> ExportCustomers(Guid workspaceId);
-    Task AddCustomer(Customers newCustomer);
-    Task UpdateCustomer(Customers updatedCustomer);
+    Task<ApiResponse<Customer>> CreateCustomer(CreateCustomerDto createCustomerDto);
+    Task<ApiResponse<Customer>> UpdateCustomer(UpdateCustomerDto updatedCustomerDto);
+    Task DeleteCustomer(Guid id);
+    Task<ApiResponse<List<Customer>>> ImportCustomers(List<ImportedCustomerDto> customers, Guid workspaceId);
+    Task<IActionResult> ExportCustomers(Guid workspaceId);
     Task UpdateCustomerTags(Guid id, string tag);
     Task RemoveCustomerTag(Guid id, string tag);
     Task ArchiveCustomer(Guid id);
-    Task DeleteCustomer(Guid id);
-    Task<CustomerStatsDto> GetCustomerStats(Guid workspaceId);
     Task<ApiResponse<object>> SendCustomerMail(string to, string subject, string message);
 
 }

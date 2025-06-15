@@ -1,6 +1,8 @@
 using backend.Data;
+using backend.Dtos.JobDto;
 using backend.Models;
 using backend.Response;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.JobService;
@@ -16,9 +18,11 @@ public class JobService : IJobService
     public async Task<ApiResponse<List<Job>>> GetJobs()
     {
         var jobs = await _context.Jobs.Include(j => j.Customer)
-                                        .Include(j => j.Property)
-                                        .Include(j => j.LineItems)
-                                        .ToListAsync();
+                                    .Include(j => j.Property)
+                                    .Include(j => j.LineItems)
+                                        .ThenInclude(li => li.ServiceItem)
+                                    .ToListAsync();
+
         return new ApiResponse<List<Job>>()
         {
             Success = true,
@@ -29,7 +33,7 @@ public class JobService : IJobService
 
     public async Task<ApiResponse<Job>> GetJobById(Guid jobId)
     {
-        var job = await _context.Jobs.Where(j => j.JobId == jobId)
+        var job = await _context.Jobs.Where(j => j.Id == jobId)
                                     .Include(j => j.LineItems)
                                         .ThenInclude(l => l.ServiceItem)
                                     .Include(j => j.Customer)
@@ -45,152 +49,103 @@ public class JobService : IJobService
         };
     }
 
-    public async Task CreateJob(Job newJob)
-    {
-        // Generate JobId if it's empty
-        if (newJob.JobId == Guid.Empty)
-        {
-            newJob.JobId = Guid.NewGuid();
-        }
-
-        // Set CreatedAt and UpdatedAt timestamps
-        newJob.CreatedAt = DateTime.UtcNow;
-        newJob.UpdatedAt = DateTime.UtcNow;
-        newJob.JobNumber = await GenerateJobNumberAsync();
-        // Validate Customer
-        var customerExists = await _context.Customers.AnyAsync(c => c.Id == newJob.CustomerId);
-        if (!customerExists)
-        {
-            throw new Exception("Customer not found");
-        }
-
-        // Validate Property
-        if (newJob.PropertyId.HasValue)
-        {
-            var propertyExists = await _context.Properties.AnyAsync(p => p.Id == newJob.PropertyId.Value);
-            if (!propertyExists)
-            {
-                throw new Exception("Property not found");
-            }
-        }
-
-        // Handle LineItems
-        foreach (var item in newJob.LineItems)
-        {
-            // Validate ServiceItem exists
-            var serviceItemExists = await _context.ServiceItems.AnyAsync(s => s.ServiceItemId == item.ServiceItemId);
-            if (!serviceItemExists)
-            {
-                throw new Exception($"ServiceItem with ID {item.ServiceItemId} not found");
-            }
-
-            // Generate LineItemId if missing
-            if (item.LineItemId == Guid.Empty)
-            {
-                item.LineItemId = Guid.NewGuid();
-            }
-
-            // Link LineItem to the Job
-            item.JobId = newJob.JobId;
-        }
-
-        // Add job + line items in one go
-        await _context.Jobs.AddAsync(newJob);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task DeleteJob(Guid id)
-    {
-        var job = await _context.Jobs.FindAsync(id);
-
-        if (job == null)
-            throw new Exception("Job not found");
-
-        _context.Remove(job);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task<ApiResponse<Job>> UpdateJob(Job updatedJob)
-    {
-        var existingJob = await _context.Jobs
-        .Include(j => j.LineItems)
-        .FirstOrDefaultAsync(j => j.JobId == updatedJob.JobId);
-
-        if (existingJob == null)
-            return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
-
-        _context.Entry(existingJob).CurrentValues.SetValues(updatedJob);
-
-        existingJob.LineItems.Clear();
-        foreach (var item in updatedJob.LineItems)
-        {
-            item.LineItemId = item.LineItemId == Guid.Empty ? Guid.NewGuid() : item.LineItemId;
-            item.JobId = updatedJob.JobId;
-            existingJob.LineItems.Add(item);
-        }
-
-        existingJob.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-
-        return new ApiResponse<Job> { Success = true, Payload = existingJob };
-    }
-
     public async Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId)
     {
-        var jobs = await _context.Jobs
-    .Where(j => j.CustomerId == customerId)
-    .Include(j => j.LineItems)
-    .Include(j => j.Property)
-    .ToListAsync();
+        var jobs = await _context.Jobs.Where(j => j.CustomerId == customerId)
+                                    .Include(j => j.LineItems)
+                                        .ThenInclude(li => li.ServiceItem)
+                                    .Include(j => j.Property)
+                                    .ToListAsync();
 
         return new ApiResponse<List<Job>> { Success = true, Payload = jobs };
     }
+
     public async Task<ApiResponse<List<Job>>> GetAllJobsByEmployeeId(Guid employeeId)
     {
-        var jobs = await _context.Jobs
-            .Include(j => j.LineItems)
-            .Include(j => j.Property)
-            .Include(j => j.Customer)
-            .ToListAsync();
-
-        var filteredJobs = jobs
-            .Where(j => j.AssignedTeamMemberIds != null && j.AssignedTeamMemberIds.Contains(employeeId))
-            .ToList();
+        var filteredJobs = await _context.Jobs.Include(j => j.AssignedTeamMembers)
+                                            .Where(j => j.AssignedTeamMembers.Any(e => e.Id == employeeId))
+                                            .Include(j => j.LineItems)
+                                            .Include(j => j.Property)
+                                            .Include(j => j.Customer)
+                                            .ToListAsync();
 
         return new ApiResponse<List<Job>> { Success = true, Payload = filteredJobs };
     }
-    public async Task<ApiResponse<List<Job>>> GetJobsByFilter(DateTime? scheduleDateMin, DateTime? scheduleDateMax, decimal? totalMin, decimal? totalMax, string? priority, string? status, string? sortBy, string? sort)
+
+    public async Task<Job> GetJobByJobNumber(string jobNumber)
     {
-        var query = _context.Jobs
-        .Include(j => j.Customer)
-        .Include(j => j.Property)
-        .Include(j => j.LineItems)
-        .AsQueryable();
+        var job = await _context.Jobs.Where(j => j.JobNumber == jobNumber)
+                            .Include(j => j.LineItems)
+                                .ThenInclude(l => l.ServiceItem)
+                            .Include(j => j.Customer)
+                                .ThenInclude(c => c.CustomerPhones)
+                            .Include(j => j.Customer)
+                                .ThenInclude(c => c.Properties)
+                            .FirstOrDefaultAsync();
 
-        if (scheduleDateMin.HasValue)
-            query = query.Where(j => j.StartDate >= scheduleDateMin.Value);
+        return job ?? throw new Exception("Job not found");
 
-        if (scheduleDateMax.HasValue)
-            query = query.Where(j => j.StartDate <= scheduleDateMax.Value);
+    }
 
-        if (totalMin.HasValue)
-            query = query.Where(j => j.TotalAmount >= totalMin.Value);
+    public async Task<ApiResponse<List<Job>>> GetJobsByFilter(JobFilterDto filterDto, Guid workspaceId)
+    {
+        var query = _context.Jobs.Where(j => j.WorkspaceId == workspaceId)
+                                .Include(j => j.Customer)
+                                .Include(j => j.Property)
+                                .Include(j => j.LineItems)
+                                    .ThenInclude(li => li.ServiceItem)
+                                .AsNoTracking()
+                                .AsQueryable();
 
-        if (totalMax.HasValue)
-            query = query.Where(j => j.TotalAmount <= totalMax.Value);
+        // 🔍 Date range
+        if (filterDto.ScheduleDateMin.HasValue)
+            query = query.Where(j => j.StartDate >= filterDto.ScheduleDateMin.Value);
 
-        if (!string.IsNullOrWhiteSpace(priority))
-            query = query.Where(j => j.Priority.ToLower() == priority.ToLower());
+        if (filterDto.ScheduleDateMax.HasValue)
+            query = query.Where(j => j.StartDate <= filterDto.ScheduleDateMax.Value);
 
-        if (!string.IsNullOrWhiteSpace(status))
-            query = query.Where(j => j.Status.ToLower() == status.ToLower());
+        // 🔍 Total range
+        if (filterDto.TotalMin.HasValue)
+            query = query.Where(j => j.TotalAmount >= filterDto.TotalMin.Value);
 
-        query = sortBy?.ToLower() switch
+        if (filterDto.TotalMax.HasValue)
+            query = query.Where(j => j.TotalAmount <= filterDto.TotalMax.Value);
+
+        // 🔍 Priority
+        if (!string.IsNullOrWhiteSpace(filterDto.Priority))
+            query = query.Where(j => j.Priority.ToString().ToLower() == filterDto.Priority.ToLower());
+
+        // 🔍 Status
+        if (!string.IsNullOrWhiteSpace(filterDto.Status))
+            query = query.Where(j => j.Status.ToString().ToLower() == filterDto.Status.ToLower());
+
+        // 🔍 Search (job number, customer name, property address)
+        if (!string.IsNullOrWhiteSpace(filterDto.Q))
+        {
+            var q = filterDto.Q.ToLower();
+            query = query.Where(j =>
+                j.JobNumber.ToLower().Contains(q) ||
+                (j.Customer != null && (
+                    j.Customer.FirstName.ToLower().Contains(q) ||
+                    j.Customer.LastName.ToLower().Contains(q) ||
+                    j.Customer.FullName.ToLower().Contains(q)
+                )) ||
+                (j.Property != null && (
+                    j.Property.Street.ToLower().Contains(q) ||
+                    j.Property.City.ToLower().Contains(q)
+                ))
+            );
+        }
+
+        // 🔄 Sorting
+        var sortBy = filterDto.SortBy?.ToLower();
+        var sort = filterDto.Sort?.ToLower();
+
+        query = sortBy switch
         {
             "customer" => sort == "desc"
-                ? query.OrderByDescending(j => j.Customer.FirstName)
-                : query.OrderBy(j => j.Customer.FirstName),
+                ? query.OrderByDescending(j => j.Customer.FullName)
+                : query.OrderBy(j => j.Customer.FullName),
 
             "total" => sort == "desc"
                 ? query.OrderByDescending(j => j.TotalAmount)
@@ -205,48 +160,109 @@ public class JobService : IJobService
 
         var result = await query.ToListAsync();
 
-        return new ApiResponse<List<Job>> { Success = true, Payload = result };
+        return new ApiResponse<List<Job>>
+        {
+            Success = true,
+            Payload = result
+        };
     }
 
-    private async Task<string> GenerateJobNumberAsync()
+    public async Task<Job> CreateJob(CreateJobDto createJobDto)
     {
-        var today = DateTime.UtcNow.Date;
-        var prefix = "JOB-";
-        var datePart = today.ToString("yyMMdd");
+        var job = createJobDto.Adapt<Job>();
+        job.Id = Guid.NewGuid();
 
-        var lastJob = await _context.Jobs
-            .Where(j => j.JobNumber.StartsWith(prefix + datePart))
-            .OrderByDescending(j => j.JobNumber)
-            .Select(j => j.JobNumber)
-            .FirstOrDefaultAsync();
+        job.CreatedAt = DateTime.UtcNow;
+        job.UpdatedAt = DateTime.UtcNow;
+        job.JobNumber = await GenerateJobNumber(createJobDto.WorkspaceId);
 
-        int sequence = 1;
-        if (lastJob != null)
+        if (job.PropertyId.HasValue)
         {
-            var parts = lastJob.Split('-');
-            if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+            var propertyExists = await _context.Properties.AnyAsync(p => p.Id == job.PropertyId.Value);
+            if (!propertyExists)
             {
-                sequence = lastSequence + 1;
+                throw new Exception("Property not found");
             }
         }
 
-        return $"{prefix}{datePart}-{sequence:D3}";
-    }
-    public async Task<Job?> GetJobByJobNumber(string jobNumber)
-    {
-        return await _context.Jobs.Where(j => j.JobNumber == jobNumber)
-                            .Include(j => j.LineItems)
-                                .ThenInclude(l => l.ServiceItem)
-                            .Include(j => j.Customer)
-                                .ThenInclude(c => c.CustomerPhones)
-                            .Include(j => j.Customer)
-                                .ThenInclude(c => c.Properties)
-                            .FirstOrDefaultAsync();
+        foreach (var item in job.LineItems)
+        {
+            // Validate ServiceItem exists
+            var serviceItemExists = await _context.ServiceItems.AnyAsync(s => s.Id == item.ServiceItemId);
+            if (!serviceItemExists)
+            {
+                throw new Exception($"ServiceItem with ID {item.ServiceItemId} not found");
+            }
 
+            if (item.Id == Guid.Empty)
+            {
+                item.Id = Guid.NewGuid();
+            }
+
+            item.JobId = job.Id;
+        }
+
+        await _context.Jobs.AddAsync(job);
+        await _context.SaveChangesAsync();
+
+        return job;
     }
+
+    public async Task<ApiResponse<Job>> UpdateJob(UpdateJobDto updatedJobDto)
+    {
+        var existingJob = await _context.Jobs.Include(j => j.LineItems)
+                                            .FirstOrDefaultAsync(j => j.Id == updatedJobDto.Id);
+
+        if (existingJob == null)
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
+
+        _context.Entry(existingJob).CurrentValues.SetValues(updatedJobDto);
+
+        existingJob.AssignedTeamMembers = updatedJobDto.AssignedTeamMembers;
+
+        // 🔁 Update internal notes if needed
+        if (updatedJobDto.InternalNotes != null)
+        {
+            existingJob.InternalNotes = updatedJobDto.InternalNotes;
+        }
+
+        // 🔁 Replace line items
+        _context.LineItems.RemoveRange(existingJob.LineItems);
+        foreach (var item in updatedJobDto.LineItems)
+        {
+            existingJob.LineItems.Add(new LineItem
+            {
+                Id = (Guid)(item.Id != Guid.Empty ? item.Id : Guid.NewGuid()),
+                ServiceItemId = item.ServiceItemId,
+                Name = item.Name ?? string.Empty,
+                Description = item.Description,
+                UnitPrice = item.UnitPrice ?? 0,
+                Quantity = item.Quantity ?? 1,
+                JobId = existingJob.Id
+            });
+        }
+
+        existingJob.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<Job> { Success = true, Payload = existingJob };
+    }
+
+    public async Task DeleteJob(Guid id)
+    {
+        var job = await _context.Jobs.FindAsync(id);
+
+        if (job == null)
+            throw new Exception("Job not found");
+
+        _context.Remove(job);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace)
     {
-        var job = await _context.Jobs.FirstOrDefaultAsync(j => j.JobId == jobId);
+        var job = await _context.Jobs.FirstOrDefaultAsync(j => j.Id == jobId);
 
         if (job == null)
             return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
@@ -268,6 +284,30 @@ public class JobService : IJobService
         await _context.SaveChangesAsync();
 
         return new ApiResponse<Job> { Success = true, Payload = job };
+    }
+
+    private async Task<string> GenerateJobNumber(Guid workspaceId)
+    {
+        var today = DateTime.UtcNow.Date;
+        var prefix = "JOB-";
+        var datePart = today.ToString("yyMMdd");
+
+        var lastJob = await _context.Jobs.Where(j => j.JobNumber.StartsWith(prefix + datePart) && j.WorkspaceId == workspaceId)
+                                        .OrderByDescending(j => j.JobNumber)
+                                        .Select(j => j.JobNumber)
+                                        .FirstOrDefaultAsync();
+
+        int sequence = 1;
+        if (lastJob != null)
+        {
+            var parts = lastJob.Split('-');
+            if (parts.Length == 3 && int.TryParse(parts[2], out int lastSequence))
+            {
+                sequence = lastSequence + 1;
+            }
+        }
+
+        return $"{prefix}{datePart}-{sequence:D3}";
     }
 
 }

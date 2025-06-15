@@ -2,15 +2,15 @@ using backend.Dtos.CustomerPhoneDto;
 using backend.Models;
 using backend.Response;
 
-namespace backend.Services.Phones
+namespace backend.Services.Phones;
+
+public interface ICustomerPhoneService
 {
-    public interface ICustomerPhoneService
-    {
-        Task<ApiResponse<List<CustomerPhone>>> GetCustomerPhones();
-        Task<ApiResponse<CustomerPhone>> GetCustomerPhoneById(Guid id);
-        Task AddCustomerPhone(AddCustomerPhoneDto newCustomerPhone, Guid customerId);
-        Task UpdateCustomerPhone(CustomerPhone updatedCustomerPhone);
-        Task DeleteCustomerPhone(Guid id);
-        Task AddBulkPhone(List<AddCustomerPhoneDto> customerPhones, Guid customerId);
-    }
+    Task<ApiResponse<List<CustomerPhone>>> GetCustomerPhones();
+    Task<ApiResponse<CustomerPhone>> GetCustomerPhoneById(Guid id);
+    Task<ApiResponse<CustomerPhone>> CreateCustomerPhone(CreateCustomerPhoneDto createCustomerPhoneDto);
+    Task CreateCustomerPhoneBulk(List<CreateCustomerPhoneDto> createCustomerPhoneDtos, Guid customerId);
+    Task<CustomerPhone> UpdateCustomerPhone(UpdateCustomerPhoneDto updatedCustomerPhoneDto);
+    Task UpdateCustomerPhones(ICollection<UpdateCustomerPhoneDto> updatedCustomerPhonesDto, Guid customerId);
+    Task DeleteCustomerPhone(Guid id);
 }

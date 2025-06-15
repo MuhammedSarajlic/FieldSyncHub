@@ -1,75 +1,68 @@
 using backend.Dtos.RequestDto;
-using backend.Models.Request;
+using backend.Models.RequestModels;
+using backend.Response;
 using backend.Services.RequestService;
 using Microsoft.AspNetCore.Mvc;
 
-namespace backend.Controllers
+namespace backend.Controllers;
+
+[ApiController]
+[Route("api/request")]
+public class RequestController : Controller
 {
-    [Route("api/request")]
-    public class RequestController : Controller
+    private readonly IRequestService _requestService;
+
+    public RequestController(IRequestService requestService)
     {
-        private readonly IRequestService _requestService;
+        _requestService = requestService;
+    }
 
-        public RequestController(IRequestService requestService)
-        {
-            _requestService = requestService;
-        }
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<List<Request>>>> GetAllRequests()
+    {
+        var requests = await _requestService.GetAllRequests();
+        return Ok(requests);
+    }
 
-        [HttpGet]
-        public async Task<ActionResult<List<Request>>> GetAllRequests()
-        {
-            return Ok(await _requestService.GetAllRequests());
-        }
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ApiResponse<Request>>> GetRequestById(Guid id)
+    {
+        var request = await _requestService.GetRequestById(id);
+        return Ok(request);
+    }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Request>> GetRequestById(Guid id)
-        {
-            var request = await _requestService.GetRequestById(id);
-            if (request == null)
-                return NotFound();
+    [HttpGet("workspace/{workspaceId}")]
+    public async Task<ActionResult<ApiResponse<List<Request>>>> GetRequestsByWorkspaceId(Guid workspaceId)
+    {
+        var requests = await _requestService.GetRequestsByWorkspaceId(workspaceId);
+        return Ok(requests);
+    }
 
-            return Ok(request);
-        }
+    [HttpGet("customer/{customerId}")]
+    public async Task<ActionResult<ApiResponse<List<Request>>>> GetRequestsByCustomerId(Guid customerId)
+    {
+        var requests = await _requestService.GetRequestByCustomerId(customerId);
+        return Ok(requests);
+    }
 
-        [HttpGet("workspace/{workspaceId}")]
-        public async Task<ActionResult<List<Request>>> GetRequestsByWorkspaceId(Guid workspaceId)
-        {
-            return Ok(await _requestService.GetRequestsByWorkspaceId(workspaceId));
-        }
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<Request>>> CreateRequest([FromBody] CreateRequestDto createRequestDto)
+    {
+        var result = await _requestService.CreateRequest(createRequestDto);
+        return Ok(result);
+    }
 
-        [HttpPut]
-        public async Task<ActionResult> UpdateRequest([FromBody] UpdateRequestDto updatedRequest)
-        {
-            await _requestService.UpdateRequest(updatedRequest);
-            return Ok();
-        }
+    [HttpPut]
+    public async Task<ActionResult<ApiResponse<Request>>> UpdateRequest([FromBody] UpdateRequestDto updatedRequestDto)
+    {
+        var result = await _requestService.UpdateRequest(updatedRequestDto);
+        return Ok(result);
+    }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteRequest(Guid id)
-        {
-            var result = await _requestService.DeleteRequest(id);
-            if (!result)
-                return NotFound("Request not found.");
-
-            return NoContent();
-        }
-        [HttpPost]
-        public async Task<IActionResult> CreateRequest([FromBody] CreateRequestDto createRequestDto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var result = await _requestService.CreateRequest(createRequestDto);
-
-            if (result == null)
-                return StatusCode(500, "Something went wrong while creating the request.");
-
-            return Ok(result);
-        }
-        [HttpGet("customer/{customerId}")]
-        public async Task<ActionResult<List<Request>>> GetRequestsByCustomerId(Guid customerId)
-        {
-            return Ok(await _requestService.GetRequestByCustomerId(customerId));
-        }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteRequest(Guid id)
+    {
+        await _requestService.DeleteRequest(id);
+        return Ok();
     }
 }

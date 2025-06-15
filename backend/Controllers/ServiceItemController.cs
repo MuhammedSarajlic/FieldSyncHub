@@ -4,63 +4,69 @@ using backend.Response;
 using backend.Services.ServiceItemService;
 using Microsoft.AspNetCore.Mvc;
 
-namespace backend.Controllers
+namespace backend.Controllers;
+
+[ApiController]
+[Route("api/service-item")]
+public class ServiceItemController : ControllerBase
 {
-    [ApiController]
-    [Route("api/service-item")]
-    public class ServiceItemController : ControllerBase
+    private readonly IServiceItemService _serviceItemService;
+
+    public ServiceItemController(IServiceItemService serviceItemService)
     {
-        private readonly IServiceItemService _serviceItemService;
+        _serviceItemService = serviceItemService;
+    }
 
-        public ServiceItemController(IServiceItemService serviceItemService)
-        {
-            _serviceItemService = serviceItemService;
-        }
+    [HttpGet]
+    public async Task<ApiResponse<List<GetServiceItemDto>>> GetAllServiceItems()
+    {
+        return await _serviceItemService.GetServiceItems();
+    }
 
-        [HttpGet]
-        public async Task<ApiResponse<List<ServiceItem>>> GetServiceItems()
-        {
-            return await _serviceItemService.GetServiceItems();
-        }
+    [HttpGet("{id}")]
+    public async Task<ActionResult<GetServiceItemDto>> GetServiceItemById(Guid id)
+    {
+        var serviceItem = await _serviceItemService.GetServiceItemById(id);
+        if (serviceItem == null) return NotFound();
+        return Ok(serviceItem);
+    }
 
-        [HttpGet("filter")]
-        public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByFilter(
-            [FromQuery] string? q,
-            [FromQuery] string? sortBy,
-            [FromQuery] string? sort,
-            [FromQuery] string? category,
-            [FromQuery] string? priceMin,
-            [FromQuery] string? priceMax,
-            [FromQuery] string? hoursMin,
-            [FromQuery] string? hoursMax,
-            [FromQuery] string? status,
-            [FromQuery] string? images,
-            [FromQuery] string? description
-        )
-        {
-            return await _serviceItemService.GetServiceItemsByFilter(q, sortBy, sort, category, priceMin, priceMax, hoursMin, hoursMax, status, images, description);
-        }
+    [HttpGet("workspace/{workspaceId}")]
+    public async Task<ApiResponse<List<GetServiceItemDto>>> GetByWorkspace(Guid workspaceId)
+    {
+        var serviceItems = await _serviceItemService.GetServiceItemsByWorkspace(workspaceId);
+        return serviceItems;
+    }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateServiceItem([FromBody] ServiceItem serviceItem)
-        {
-            await _serviceItemService.CreateServiceItem(serviceItem);
-            return Ok();
-        }
+    [HttpGet("workspace/{workspaceId}/filter")]
+    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByFilter([FromQuery] ServiceItemFilterDto filterDto, Guid workspaceId)
+    {
+        return await _serviceItemService.GetServiceItemsByFilter(filterDto, workspaceId);
+    }
 
-        [HttpPost("import")]
-        public async Task<IActionResult> ImportServiceItems([FromBody] List<ImportedServiceItemDto> items)
-        {
-            var result = await _serviceItemService.ImportServiceItems(items);
-            if (!result.Success) return BadRequest(result);
-            return Ok(result);
-        }
+    [HttpPost]
+    public async Task<ActionResult<GetServiceItemDto>> CreateServiceItem([FromBody] CreateServiceItemDto createServiceItemDto)
+    {
+        var createdServiceItem = await _serviceItemService.CreateServiceItem(createServiceItemDto);
+        return Ok(createdServiceItem);
+    }
 
-        [HttpGet("export")]
-        public async Task<IActionResult> ExportServiceItems()
-        {
-            var result = await _serviceItemService.ExportServiceItems();
-            return Ok(result);
-        }
+    [HttpPut]
+    public async Task<ActionResult<GetServiceItemDto>> Update([FromBody] UpdateServiceItemDto updateServiceItemDto)
+    {
+        var updatedServiceItem = await _serviceItemService.UpdateServiceItem(updateServiceItemDto);
+        return Ok(updatedServiceItem);
+    }
+
+    [HttpPost("import/{workspaceId}")]
+    public async Task<ApiResponse<object>> ImportServiceItems([FromBody] List<ImportedServiceItemDto> serviceItems, Guid workspaceId)
+    {
+        return await _serviceItemService.ImportServiceItemsAsync(serviceItems, workspaceId);
+    }
+
+    [HttpGet("export/{workspaceId}")]
+    public async Task<IActionResult> ExportServiceItems(Guid workspaceId)
+    {
+        return await _serviceItemService.ExportServiceItemsToCsvAsync(workspaceId);
     }
 }

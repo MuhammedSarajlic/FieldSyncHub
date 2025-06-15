@@ -1,7 +1,10 @@
+using System.Text;
 using backend.Data;
 using backend.Dtos.ServiceItemDto;
 using backend.Models;
 using backend.Response;
+using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.ServiceItemService;
@@ -14,182 +17,190 @@ public class ServiceItemService : IServiceItemService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItems()
+    public async Task<ApiResponse<List<GetServiceItemDto>>> GetServiceItems()
     {
         var serviceItems = await _context.ServiceItems.ToListAsync();
-        return new ApiResponse<List<ServiceItem>>()
+        var getServiceItemsDto = serviceItems.Adapt<List<GetServiceItemDto>>();
+        return new ApiResponse<List<GetServiceItemDto>>()
         {
             Success = true,
-            Payload = serviceItems,
+            Payload = getServiceItemsDto,
             ErrorMessage = null
         };
     }
 
-    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByFilter(
-        string? q, string? sortBy, string? sort, string? category,
-        string? priceMin, string? priceMax, string? hoursMin, string? hoursMax,
-        string? status, string? images, string? description
-    )
+    public async Task<GetServiceItemDto> GetServiceItemById(Guid id)
     {
-        var queryable = _context.ServiceItems.AsQueryable();
+        var serviceItem = await _context.ServiceItems.FindAsync(id);
+        var getServiceItemDto = serviceItem.Adapt<GetServiceItemDto>();
+        return getServiceItemDto ?? throw new KeyNotFoundException("Service item not found");
+    }
 
-        // 🔎 Search by name (q)
-        if (!string.IsNullOrWhiteSpace(q))
+    public async Task<ApiResponse<List<GetServiceItemDto>>> GetServiceItemsByWorkspace(Guid workspaceId)
+    {
+        var items = await _context.ServiceItems
+            .Where(s => s.IsActive && s.Category != null && s.Category.ToLower() != "archived")
+            .ToListAsync();
+        var itemsDto = items.Adapt<List<GetServiceItemDto>>();
+        return new ApiResponse<List<GetServiceItemDto>> { Success = true, Payload = itemsDto };
+    }
+
+    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByFilter(ServiceItemFilterDto filterDto, Guid workspaceId)
+    {
+        var queryable = _context.ServiceItems.Where(s => s.WorkspaceId == workspaceId)
+                                            .AsQueryable();
+
+        // 🔍 Search by name
+        if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
-            queryable = queryable.Where(s => s.Name.Contains(q));
+            queryable = queryable.Where(s => s.Name.Contains(filterDto.Q));
         }
 
-        // 🔎 Filter: Category
-        if (!string.IsNullOrWhiteSpace(category))
+        // 🔍 Category
+        if (!string.IsNullOrWhiteSpace(filterDto.Category))
         {
-            queryable = queryable.Where(s => s.Category == category);
+            queryable = queryable.Where(s => s.Category == filterDto.Category);
         }
 
-        // 🔎 Filter: Price Range
-        if (decimal.TryParse(priceMin, out var minPrice))
+        // 🔍 Price range
+        if (filterDto.PriceMin.HasValue)
         {
-            queryable = queryable.Where(s => s.UnitPrice >= minPrice);
-        }
-        if (decimal.TryParse(priceMax, out var maxPrice))
-        {
-            queryable = queryable.Where(s => s.UnitPrice <= maxPrice);
+            queryable = queryable.Where(s => s.UnitPrice >= filterDto.PriceMin.Value);
         }
 
-        // 🔎 Filter: Hours Range
-        if (decimal.TryParse(hoursMin, out var minHours))
+        if (filterDto.PriceMax.HasValue)
         {
-            queryable = queryable.Where(s => s.Hours >= minHours);
-        }
-        if (decimal.TryParse(hoursMax, out var maxHours))
-        {
-            queryable = queryable.Where(s => s.Hours <= maxHours);
+            queryable = queryable.Where(s => s.UnitPrice <= filterDto.PriceMax.Value);
         }
 
-        // 🔎 Filter: Status
-        if (!string.IsNullOrWhiteSpace(status) && status != "all")
+        // 🔍 IsActive
+        if (filterDto.IsActive.HasValue)
         {
-            if (status == "active")
-            {
-                queryable = queryable.Where(s => s.IsActive == true);
-            }
-            else if (status == "inactive")
-            {
-                queryable = queryable.Where(s => s.IsActive == false);
-            }
+            queryable = queryable.Where(s => s.IsActive == filterDto.IsActive.Value);
         }
 
-
-        // 🔎 Filter: Images
-        if (!string.IsNullOrWhiteSpace(images) && images != "any")
+        // 🔍 Has Image
+        if (filterDto.HasImage.HasValue)
         {
-            if (images == "has")
-            {
-                queryable = queryable.Where(s => !string.IsNullOrEmpty(s.ImageUrl));
-            }
-            else if (images == "none")
-            {
-                queryable = queryable.Where(s => string.IsNullOrEmpty(s.ImageUrl));
-            }
+            queryable = filterDto.HasImage.Value
+                ? queryable.Where(s => !string.IsNullOrEmpty(s.ImageUrl))
+                : queryable.Where(s => string.IsNullOrEmpty(s.ImageUrl));
         }
 
-        // 🔎 Filter: Description search
-        if (!string.IsNullOrWhiteSpace(description))
+        // 🔍 Description search
+        if (!string.IsNullOrWhiteSpace(filterDto.Description))
         {
-            queryable = queryable.Where(s => s.Description.Contains(description));
+            queryable = queryable.Where(s => s.Description.Contains(filterDto.Description));
         }
 
         // 🔄 Sorting
-        queryable = sortBy switch
+        queryable = filterDto.SortBy?.ToLower() switch
         {
-            "name" => sort == "desc" ? queryable.OrderByDescending(s => s.Name) : queryable.OrderBy(s => s.Name),
-            "price" => sort == "desc" ? queryable.OrderByDescending(s => s.UnitPrice) : queryable.OrderBy(s => s.UnitPrice),
-            _ => queryable.OrderBy(s => s.Name) // default
+            "name" => filterDto.Sort == "desc" ? queryable.OrderByDescending(s => s.Name) : queryable.OrderBy(s => s.Name),
+            "price" => filterDto.Sort == "desc" ? queryable.OrderByDescending(s => s.UnitPrice) : queryable.OrderBy(s => s.UnitPrice),
+            _ => queryable.OrderBy(s => s.Name)
         };
 
-        var filteredItems = await queryable.ToListAsync();
+        var result = await queryable.ToListAsync();
 
         return new ApiResponse<List<ServiceItem>>
         {
             Success = true,
-            Payload = filteredItems,
-            ErrorMessage = null
+            Payload = result
         };
     }
 
-
-    public async Task CreateServiceItem(ServiceItem serviceItem)
+    public async Task<GetServiceItemDto> CreateServiceItem(CreateServiceItemDto createServiceItemDto)
     {
-        serviceItem.ServiceItemId = Guid.NewGuid();
-
-        _context.ServiceItems.Add(serviceItem);
+        var item = createServiceItemDto.Adapt<ServiceItem>();
+        item.Id = Guid.NewGuid();
+        _context.ServiceItems.Add(item);
         await _context.SaveChangesAsync();
+        return createServiceItemDto.Adapt<GetServiceItemDto>();
     }
 
-    public async Task<ApiResponse<List<ImportedServiceItemDto>>> ExportServiceItems()
+    public async Task<GetServiceItemDto> UpdateServiceItem(UpdateServiceItemDto updateServiceItemDto)
     {
-        var items = await _context.ServiceItems.ToListAsync();
-
-        var exported = items.Select(i => new ImportedServiceItemDto
-        {
-            Name = i.Name,
-            Description = i.Description,
-            Type = i.Type,
-            Category = i.Category,
-            SKU = i.SKU,
-            Hours = i.Hours,
-            UnitPrice = i.UnitPrice,
-            Cost = i.Cost,
-            TaxRate = i.TaxRate,
-            IsTaxable = i.IsTaxable,
-            IsActive = i.IsActive,
-            ImageUrl = i.ImageUrl
-        }).ToList();
-
-        return new ApiResponse<List<ImportedServiceItemDto>>
-        {
-            Success = true,
-            Payload = exported
-        };
+        var existingServiceItem = await _context.ServiceItems.FindAsync(updateServiceItemDto.Id) ?? throw new Exception("Service item not found");
+        updateServiceItemDto.Adapt(existingServiceItem);
+        existingServiceItem.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return existingServiceItem.Adapt<GetServiceItemDto>();
     }
 
-    public async Task<ApiResponse<object>> ImportServiceItems(List<ImportedServiceItemDto> items)
+    public async Task<ApiResponse<object>> ImportServiceItemsAsync(List<ImportedServiceItemDto> serviceItems, Guid workspaceId)
     {
-        var existingItems = await _context.ServiceItems.ToListAsync();
+        if (serviceItems == null || !serviceItems.Any())
+        {
+            return new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "No service items provided for import.",
+                Payload = new { Imported = 0, Skipped = 0 }
+            };
+        }
 
-        var normalizedExisting = existingItems.Select(i =>
-            $"{i.Name.Trim().ToLower()}|{i.SKU.Trim().ToLower()}"
-        ).ToHashSet();
+        var existingServiceItems = await _context.ServiceItems
+            .Where(si => si.WorkspaceId == workspaceId)
+            .ToListAsync();
+
+        var normalizedExisting = existingServiceItems.Select(si => new
+        {
+            Key = $"{si.Name.Trim().ToLower()}|{si.Type.ToString().Trim().ToLower()}|{si.SKU.Trim().ToLower()}",
+            si.Id
+        }).ToHashSet();
 
         var toImport = new List<ServiceItem>();
+        int skippedCount = 0;
 
-        foreach (var dto in items)
+        foreach (var dto in serviceItems)
         {
-            var key = $"{dto.Name.Trim().ToLower()}|{dto.SKU.Trim().ToLower()}";
-
-            if (normalizedExisting.Contains(key)) continue;
-
-            var item = new ServiceItem
+            if (string.IsNullOrWhiteSpace(dto.Name) || string.IsNullOrWhiteSpace(dto.SKU))
             {
-                ServiceItemId = Guid.NewGuid(),
+                skippedCount++;
+                continue;
+            }
+
+            ServiceItemType itemTypeParsed;
+            if (!Enum.TryParse<ServiceItemType>(dto.Type, true, out itemTypeParsed))
+            {
+                itemTypeParsed = ServiceItemType.Service;
+            }
+
+            var key = $"{dto.Name.Trim().ToLower()}|{itemTypeParsed.ToString().Trim().ToLower()}|{dto.SKU.Trim().ToLower()}";
+
+            if (normalizedExisting.Any(si => si.Key == key))
+            {
+                skippedCount++;
+                continue;
+            }
+
+            var serviceItem = new ServiceItem
+            {
+                WorkspaceId = workspaceId,
                 Name = dto.Name.Trim(),
                 Description = dto.Description,
-                Type = dto.Type,
+                Type = itemTypeParsed,
                 Category = dto.Category,
-                SKU = dto.SKU,
-                Hours = dto.Hours,
+                SKU = dto.SKU.Trim(),
                 UnitPrice = dto.UnitPrice,
                 Cost = dto.Cost,
                 TaxRate = dto.TaxRate,
                 IsTaxable = dto.IsTaxable,
                 IsActive = dto.IsActive,
-                ImageUrl = dto.ImageUrl
+                ImageUrl = dto.ImageUrl,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
-            toImport.Add(item);
+            toImport.Add(serviceItem);
         }
 
-        await _context.ServiceItems.AddRangeAsync(toImport);
-        await _context.SaveChangesAsync();
+        if (toImport.Any())
+        {
+            await _context.ServiceItems.AddRangeAsync(toImport);
+            await _context.SaveChangesAsync();
+        }
 
         return new ApiResponse<object>
         {
@@ -197,10 +208,48 @@ public class ServiceItemService : IServiceItemService
             Payload = new
             {
                 Imported = toImport.Count,
-                Skipped = items.Count - toImport.Count
-            }
+                Skipped = skippedCount
+            },
         };
     }
 
+    public async Task<IActionResult> ExportServiceItemsToCsvAsync(Guid workspaceId)
+    {
+        var serviceItems = await _context.ServiceItems
+            .Where(si => si.WorkspaceId == workspaceId)
+            .ToListAsync();
 
+        if (serviceItems == null || !serviceItems.Any())
+        {
+            return new NotFoundResult();
+        }
+
+        var sb = new StringBuilder();
+
+        sb.AppendLine("Id,WorkspaceId,Name,Description,Type,Category,SKU,UnitPrice,Cost,TaxRate,IsTaxable,IsActive,ImageUrl");
+
+        foreach (var item in serviceItems)
+        {
+            sb.AppendLine($"{item.Id},{item.WorkspaceId},{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{item.UnitPrice},{item.Cost},{item.TaxRate},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
+        }
+
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return new FileContentResult(csvBytes, "text/csv")
+        {
+            FileDownloadName = $"service_items_workspace_{workspaceId}.csv"
+        };
+    }
+
+    private string EscapeCsvField(string? field)
+    {
+        if (string.IsNullOrEmpty(field))
+        {
+            return "";
+        }
+        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n") || field.Contains("\r"))
+        {
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        }
+        return field;
+    }
 }

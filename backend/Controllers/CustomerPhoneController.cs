@@ -30,24 +30,24 @@ public class CustomerPhoneController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddCustomerPhone([FromQuery] AddCustomerPhoneDto newCustomerPhone, Guid customerId)
+    public async Task<ActionResult<ApiResponse<CustomerPhone>>> CreateCustomerPhone([FromBody] CreateCustomerPhoneDto createCustomerPhoneDto)
     {
-        await _customerPhoneService.AddCustomerPhone(newCustomerPhone, customerId);
-        return Ok();
+        var customerPhone = await _customerPhoneService.CreateCustomerPhone(createCustomerPhoneDto);
+        return Ok(customerPhone);
     }
 
     [HttpPost("bulk")]
-    public async Task<IActionResult> AddBulkPhone([FromBody] List<AddCustomerPhoneDto> customerPhones, Guid customerId)
+    public async Task<IActionResult> CreateCustomerPhoneBulk([FromBody] List<CreateCustomerPhoneDto> createCustomerPhoneDtos, [FromQuery] Guid customerId)
     {
-        await _customerPhoneService.AddBulkPhone(customerPhones, customerId);
+        await _customerPhoneService.CreateCustomerPhoneBulk(createCustomerPhoneDtos, customerId);
         return Ok();
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateCustomerPhone([FromQuery] CustomerPhone updatedCustomerPhone)
+    public async Task<ActionResult<CustomerPhone>> UpdateCustomerPhone([FromBody] UpdateCustomerPhoneDto updatedCustomerPhoneDto)
     {
-        await _customerPhoneService.UpdateCustomerPhone(updatedCustomerPhone);
-        return Ok();
+        var customerPhone = await _customerPhoneService.UpdateCustomerPhone(updatedCustomerPhoneDto);
+        return Ok(customerPhone);
     }
 
     [HttpDelete("{id:guid}")]

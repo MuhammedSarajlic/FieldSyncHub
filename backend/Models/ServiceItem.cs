@@ -1,27 +1,32 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace backend.Models
+namespace backend.Models;
+
+public enum ServiceItemType
 {
-    public class ServiceItem
-    {
-        [Key]
-        public Guid ServiceItemId { get; set; }
+    Service,
+    Product
+}
 
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Type { get; set; }
+public class ServiceItem
+{
+    [Key]
+    public Guid Id { get; set; }
+    public Guid WorkspaceId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public ServiceItemType Type { get; set; } = ServiceItemType.Service;
 
-        public string Category { get; set; }
-        public string SKU { get; set; }
-        public int Hours { get; set; }
-
-        public decimal UnitPrice { get; set; }
-        public decimal Cost { get; set; }
-        public decimal TaxRate { get; set; }
-
-        public bool IsTaxable { get; set; }
-        public bool IsActive { get; set; }
-
-        public string? ImageUrl { get; set; }
-    }
+    public string Category { get; set; } = string.Empty;
+    public string SKU { get; set; } = string.Empty;
+    [Range(0, double.MaxValue)]
+    public decimal UnitPrice { get; set; }
+    [Range(0, double.MaxValue)]
+    public decimal Cost { get; set; }
+    public decimal TaxRate { get; set; }
+    public bool IsTaxable { get; set; }
+    public bool IsActive { get; set; }
+    public string? ImageUrl { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

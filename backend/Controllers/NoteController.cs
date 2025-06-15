@@ -18,36 +18,36 @@ public class NoteController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ApiResponse<List<Notes>>> GetNotes()
+    public async Task<ApiResponse<List<Note>>> GetNotes()
     {
         return await _notesService.GetNotes();
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ApiResponse<Notes>> GetNoteById(Guid id)
+    public async Task<ApiResponse<Note>> GetNoteById(Guid id)
     {
         return await _notesService.GetNoteById(id);
     }
 
     [HttpGet("{customerId}/customer")]
-    public async Task<ApiResponse<List<Notes>>> GetNoteByCustomerId(Guid customerId)
+    public async Task<ApiResponse<List<Note>>> GetNoteByCustomerId(Guid customerId)
     {
         return await _notesService.GetNoteByCustomerId(customerId);
     }
 
     [HttpPost]
-    public async Task<ActionResult<Notes>> AddNote([FromBody] AddNotesDto newNote)
+    public async Task<ActionResult<Note>> CreateNote([FromBody] CreateNoteDto createNoteDto)
     {
-        var note = await _notesService.AddNote(newNote);
+        var note = await _notesService.CreateNote(createNoteDto);
         return Ok(note);
     }
 
 
     [HttpPut]
-    public async Task<IActionResult> UpdateNote([FromQuery] Notes updatedNote)
+    public async Task<ActionResult<Note>> UpdateNote([FromQuery] UpdateNoteDto updateNoteDto)
     {
-        await _notesService.UpdateNote(updatedNote);
-        return Ok();
+        var udpatedNote = await _notesService.UpdateNote(updateNoteDto);
+        return Ok(udpatedNote);
     }
 
     [HttpDelete("{id:guid}")]

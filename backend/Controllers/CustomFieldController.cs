@@ -18,29 +18,35 @@ public class CustomFieldController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ApiResponse<List<CustomFields>>> GetCustomFields()
+    public async Task<ApiResponse<List<CustomField>>> GetCustomFields()
     {
         return await _customFieldService.GetCustomFields();
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ApiResponse<CustomFields>> GetCustomFieldsById(Guid id)
+    public async Task<ApiResponse<CustomField>> GetCustomFieldsById(Guid id)
     {
         return await _customFieldService.GetCustomFieldsById(id);
     }
 
-    [HttpPost("{customerId:guid}")]
-    public async Task<IActionResult> AddCustomField([FromBody]AddCustomFieldDto newCustomField,Guid customerId)
+    [HttpGet("workspace/{workspaceId:guid}")]
+    public async Task<ApiResponse<List<CustomField>>> GetCustomFieldsByWorkspaceId(Guid workspaceId)
     {
-        await _customFieldService.AddCustomField(newCustomField, customerId);
-        return Ok();
+        return await _customFieldService.GetCustomFieldsByWorkspaceId(workspaceId);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<CustomField>> CreateCustomField([FromBody] CreateCustomFieldDto createCustomFieldDto)
+    {
+        var customField = await _customFieldService.CreateCustomField(createCustomFieldDto);
+        return Ok(customField);
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateCustomField([FromQuery] UpdateCustomFieldDto updatedCustomField)
+    public async Task<ActionResult<CustomField>> UpdateCustomField([FromBody] UpdateCustomFieldDto updatedCustomField)
     {
-        await _customFieldService.UpdateCustomField(updatedCustomField);
-        return Ok();
+        var customField = await _customFieldService.UpdateCustomField(updatedCustomField);
+        return Ok(customField);
     }
 
     [HttpDelete("{id:guid}")]

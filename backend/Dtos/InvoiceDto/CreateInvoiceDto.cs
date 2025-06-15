@@ -1,19 +1,25 @@
 using backend.Dtos.LineItemDto;
+using backend.Models;
+using backend.Models.QuoteModels;
 
 namespace backend.Dtos.InvoiceDto;
 
 public class CreateInvoiceDto
 {
     public Guid CustomerId { get; set; }
-    public Guid? JobId { get; set; }
     public Guid WorkspaceId { get; set; }
-    public List<CreateLineItemDto> Items { get; set; }
+
+    public Guid? JobId { get; set; }
+
+    public List<CreateLineItemDto> LineItems { get; set; } = [];
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }
-    public string DiscountType { get; set; }
-    public DateTime IssueDate { get; set; }
-    public string PaymentTerms { get; set; }
-    public DateTime? CustomDueDate { get; set; } 
-    public string Notes { get; set; }
-    public string InternalNotes { get; set; }
+    public DiscountType DiscountType { get; set; } = DiscountType.Percentage;
+
+    public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
+    public DateTime IssueDate { get; set; } = DateTime.UtcNow;
+    public DateTime DueDate { get; set; }
+    public string PaymentTerms { get; set; } = string.Empty;
+    public string Notes { get; set; } = string.Empty;
+    public string InternalNotes { get; set; } = string.Empty;
 }

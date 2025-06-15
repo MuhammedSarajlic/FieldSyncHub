@@ -1,34 +1,39 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using backend.Models.QuoteModels;
 
 namespace backend.Models;
 
 public class Invoice
 {
     [Key]
-    public Guid InvoiceId { get; set; }
+    public Guid Id { get; set; }
     public Guid CustomerId { get; set; }
-    public Customers Customer { get; set; }
+    public Customer? Customer { get; set; }
     public Guid WorkspaceId { get; set; }
-    public string InvoiceNumber { get; set; } = "";
+    public string InvoiceNumber { get; set; } = string.Empty;
 
     public Guid? JobId { get; set; }
     public Job? Job { get; set; }
 
-    public List<LineItem> Items { get; set; } = new();
-    public decimal Subtotal => Items.Sum(i => (i?.ServiceItem?.UnitPrice ?? i?.UnitPrice ?? 0) * i.Quantity);
+    public List<LineItem> LineItems { get; set; } = [];
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }
-    public string DiscountType { get; set; }
+    public DiscountType DiscountType { get; set; } = DiscountType.Percentage;
+    [NotMapped]
+    public decimal Subtotal => LineItems.Sum(li =>
+        (li?.ServiceItem?.UnitPrice ?? li?.UnitPrice ?? 0) * li.Quantity);
+    [NotMapped]
     public decimal Total
     {
         get
         {
             decimal discountedSubtotal = Subtotal;
-            if (DiscountType?.ToLower() == "percentage" && Discount > 0)
+            if (DiscountType == DiscountType.Percentage && Discount > 0)
             {
                 discountedSubtotal -= Subtotal * (Discount / 100);
             }
-            else if (DiscountType?.ToLower() == "fixed" && Discount > 0)
+            else if (DiscountType == DiscountType.FixedAmount && Discount > 0)
             {
                 discountedSubtotal -= Discount;
             }
@@ -37,11 +42,21 @@ public class Invoice
         }
     }
 
-    public string Status { get; set; } = "draft"; // draft, sent, paid, overdue
+    public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public DateTime IssueDate { get; set; } = DateTime.UtcNow;
     public DateTime DueDate { get; set; }
-    public string PaymentTerms { get; set; }
-    public string Notes { get; set; }
-    public string InternalNotes { get; set; }
+    public string PaymentTerms { get; set; } = string.Empty;
+    public string Notes { get; set; } = string.Empty;
+    public string InternalNotes { get; set; } = string.Empty;
     public bool IsPaid { get; set; } = false;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public enum InvoiceStatus
+{
+    Draft,
+    Sent,
+    Paid,
+    Overdue
 }
