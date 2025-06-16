@@ -7,6 +7,7 @@ import { TStatusHistory } from './StatusHistory';
 export type TJob = {
   jobId: string;
   title: string;
+  jobNumber: string;
   description: string;
   customerId: string;
   customer: TCustomer;

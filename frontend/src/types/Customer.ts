@@ -1,7 +1,12 @@
+import { LucideIcon } from 'lucide-react';
 import { TAddCustomerPhone, TCustomerPhone } from './CustomerPhone';
 import { TAddCustomField } from './CustomField';
+import { TInvoice } from './Invoice';
+import { TJob } from './Job';
 import { TNote } from './Note';
 import { TAddProperty, TProperty } from './Property';
+import { TQuote } from './Quote';
+import { TRequest } from './Request';
 
 export type TCustomer = {
   id: string;
@@ -63,4 +68,14 @@ export type TCustomerStats = {
   companies: number;
   individuals: number;
   missingInfoCustomers: number;
+};
+
+export type TCustomerTab = {
+  id: string;
+  label: string;
+  count: number;
+  loading: boolean;
+  loaded: boolean;
+  items: TQuote[] | TJob[] | TInvoice[] | TRequest[];
+  icon: LucideIcon;
 };
