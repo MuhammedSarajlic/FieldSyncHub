@@ -1,31 +1,42 @@
 import { TUser } from './User';
 import { TWorkspace } from './Workspace';
 
+export type TStatus = 'Active' | 'OnLeave' | 'Terminated';
+
 export type TEmployee = {
-  department: string;
-  hireDate: string;
   id: string;
-  position: string;
-  status: string;
-  user: TUser;
   userId: string;
-  workspace: TWorkspace;
+  user: TUser;
   workspaceId: string;
+  workspace: TWorkspace;
+  position?: string;
+  department?: string;
+  status: TStatus;
+  hireDate: string;
+  phoneNumber?: string;
   imageUrl?: string;
+  location?: string;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TUpdateEmployee = {
   id: string;
   userId: string;
   workspaceId: string;
-  position: string;
-  department: string;
-  status: string;
+  position?: string;
+  department?: string;
+  status: TStatus;
   hireDate: string;
+  phoneNumber?: string;
+  imageUrl?: string;
+  location?: string;
+  isAvailable: boolean;
 };
 
 export type TUpdateEmployeeError = {
-  position: string;
-  department: string;
-  hireDate: string;
+  position?: string;
+  department?: string;
+  hireDate?: string;
 };

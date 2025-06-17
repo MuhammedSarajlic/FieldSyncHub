@@ -1,39 +1,45 @@
 import { TCustomer } from './Customer';
-import { TAddLineItem, TLineItem } from './LineItem';
+import { TDiscountType } from './Invoice';
+import { TLineItem, TAddLineItem } from './LineItem';
+
+export type TStatusQuote = 'Draft' | 'Sent' | 'AwaitingResponse' | 'AwaitingApproval' | 'Approved' | 'Declined' | 'Expired' | 'ConvertedToJob';
 
 export type TQuote = {
   id: string;
   workspaceId: string;
-  quoteNumber: string;
-  status: number;
-  viewed: boolean;
-  viewedAt: string;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
   customerId: string;
-  customer: TCustomer;
+  customer?: TCustomer;
+  createdByUserId: string;
+  quoteNumber: string;
+  status: TStatusQuote;
+  sentAt: string;
+  viewed: boolean;
+  viewedAt?: string;
+  expiresAt?: string;
   lineItems: TLineItem[];
-  discountType: number;
-  discountAmount: number;
-  tax: number;
+  discountType: TDiscountType;
+  discountValue: number;
+  taxRate: number;
   subtotal: number;
+  discount: number;
+  taxAmount: number;
   total: number;
-  notes: string;
-  internalNotes: string;
-  attachmentUrls: string[];
+  customerNotes?: string;
+  internalNotes?: string;
+  attachmentUrls: string[]; 
 };
 
 export type TAddQuote = {
   workspaceId: string;
-  status: number;
-  createdBy: string;
   customerId: string;
+  createdByUserId: string;
+  status: TStatusQuote;
+  expiresAt?: string;
   lineItems: TAddLineItem[];
-  discountType: number;
-  discountAmount: number;
-  tax: number;
-  notes: string;
-  internalNotes: string;
-  attachmentUrls: string[];
+  discountType: TDiscountType;
+  discountValue: number;
+  taxRate: number;
+  customerNotes?: string;
+  internalNotes?: string;
+  attachmentUrls: string[]; 
 };

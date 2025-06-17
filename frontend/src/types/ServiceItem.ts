@@ -1,23 +1,28 @@
+export type TServiceItemType = 'Service' | 'Product';
+
 export type TServiceItem = {
-  serviceItemId: string;
+  id: string;
+  workspaceId: string;
   name: string;
-  description: string;
-  type: string;
+  description?: string;
+  type: TServiceItemType;
   category: string;
   sku: string;
-  hours: number;
   unitPrice: number;
   cost: number;
   taxRate: number;
   isTaxable: boolean;
   isActive: boolean;
-  imageUrl: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TAddServiceItem = {
+  workspaceId: string;
   name: string;
-  description: string;
-  type: string;
+  description?: string;
+  type: TServiceItemType;
   category: string;
   sku: string;
   unitPrice: number;
@@ -25,16 +30,19 @@ export type TAddServiceItem = {
   taxRate: number;
   isTaxable: boolean;
   isActive: boolean;
-  imageUrl: string;
+  imageUrl?: string;
 };
 
 export type TServiceItemFilter = {
-  category: string;
-  price: { min: number | string; max: number | string };
-  hours: { min: number | string; max: number | string };
-  status: string;
-  images: string;
-  description: string;
+  q?: string;
+  sortBy?: string;
+  sort?: string;
+  category?: string;
+  priceMin?: number;
+  priceMax?: number;
+  isActive?: boolean;
+  hasImage?: boolean;
+  description?: string;
 };
 
 export type TSortOption = {

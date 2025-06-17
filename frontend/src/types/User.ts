@@ -1,18 +1,20 @@
 import { TWorkspace } from './Workspace';
 
+export type TUserRole = 'Owner' | 'Admin' | 'Employee';
+
 export type TUser = {
   id: string;
   email: string;
-  passwordHash: string;
-  googleId: string;
+  passwordHash?: string;
+  googleId?: string;
   firstName: string;
   lastName: string;
   fullName: string;
-  createdAt: string;
-  updatedAt: string;
-  workspace: TWorkspace;
-  role: number;
+  workspaceId?: string;
+  workspace?: TWorkspace;
+  role?: TUserRole;
 };
+
 
 export type TUserLogin = {
   email: string;
