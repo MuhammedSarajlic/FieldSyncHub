@@ -1,12 +1,14 @@
 import { TWorkspace } from './Workspace';
 
+export type TRole = 'Admin' | 'Owner' | 'Employee';
+
 export type TEmployeeInvite = {
   id: string;
+  workspaceId: string;
+  workspace: TWorkspace;
   email: string;
   token: string;
-  expiresAt: string;
+  role: TRole; 
   isAccepted: boolean;
-  role: string;
-  workspace: TWorkspace;
-  workspaceId: string;
+  expiresAt: string;
 };

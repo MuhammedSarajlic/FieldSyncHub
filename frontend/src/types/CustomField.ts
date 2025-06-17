@@ -1,13 +1,17 @@
 import { TCustomFieldValue } from './CustomFieldValue';
 
+export type TCustomFieldType = 'Text' | 'Number' | 'Date' | 'Dropdown' | 'Checkbox';
+
 export type TCustomField = {
   customFieldId: string;
-  customerId: string;
+  workspaceId: string;
   fieldName: string;
-  fieldType: string;
-  defaultValue: string;
+  fieldType: TCustomFieldType;
+  defaultValue?: string;
   dropdownOptions?: string[];
-  customFiledValue?: TCustomFieldValue[];
+  isRequired: boolean;
+  isArchived: boolean;
+  customFieldValue?: TCustomFieldValue[];
 };
 
 export type TAddCustomField = {

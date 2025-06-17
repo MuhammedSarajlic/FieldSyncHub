@@ -4,13 +4,20 @@ export type TLineItem = {
   lineItemId: string;
   serviceItemId?: string;
   serviceItem?: TServiceItem;
-  name?: string;
-  unitPrice?: number;
+  name: string;
   description?: string;
+  unitPrice: number;
+  cost: number;
+  taxRate: number;
+  isTaxable: boolean;
   quantity: number;
+  subtotal: number;
+  taxAmount: number;
   totalPrice: number;
   jobId?: string;
   invoiceId?: string;
+  quoteId?: string;
+  requestId?: string;
 };
 
 export type TModalLineItem = {
@@ -21,8 +28,15 @@ export type TModalLineItem = {
 
 export type TAddLineItem = {
   serviceItemId?: string;
-  quantity: number;
-  name?: string;
-  unitPrice?: number;
+  name: string;
   description?: string;
+  unitPrice: number;
+  cost?: number;
+  taxRate?: number;
+  isTaxable?: boolean;
+  quantity: number;
+  jobId?: string;
+  invoiceId?: string;
+  quoteId?: string;
+  requestId?: string;
 };
