@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using backend.Dtos.UserDto;
-using backend.Models;
 using backend.Response;
 using backend.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
@@ -10,9 +9,14 @@ namespace backend.Controllers;
 
 [Route("api/user")]
 [ApiController]
-public class UserController(IUserService userService) : ControllerBase
+public class UserController : ControllerBase
 {
-    private readonly IUserService _userService = userService;
+    private readonly IUserService _userService;
+
+    public UserController(IUserService userService)
+    {
+        _userService = userService;
+    }
 
     [HttpGet]
     public async Task<ApiResponse<List<GetUserDto>>> GetAllUsers()

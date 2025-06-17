@@ -8,8 +8,8 @@ public interface IPropertyService
 {
     Task<ApiResponse<List<Property>>> GetProperties();
     Task<ApiResponse<Property>> GetPropertyById(Guid id);
-    Task CreateProperty(CreatePropertyDto createPropertyDto);
-    Task UpdateProperty(UpdatePropertyDto updatePropertyDto);
+    Task<ApiResponse<Property>> CreateProperty(CreatePropertyDto createPropertyDto);
+    Task<ApiResponse<Property>> UpdateProperty(UpdatePropertyDto updatePropertyDto);
     Task UpdateProperties(ICollection<UpdatePropertyDto> updatedPropertiesDto, Guid customerId);
     Task DeleteProperty(Guid id);
 }

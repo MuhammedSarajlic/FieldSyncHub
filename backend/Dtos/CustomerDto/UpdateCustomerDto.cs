@@ -7,16 +7,16 @@ namespace backend.Dtos.CustomerDto;
 public class UpdateCustomerDto
 {
     public Guid Id { get; set; }
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
     public string? CompanyName { get; set; }
-    public string DisplayName { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
 
-    public List<string> Emails { get; set; } = [];
+    public List<string>? Emails { get; set; }
 
-    public bool IsReceiveJobNotifications { get; set; }
-    public bool IsReceiveQuoteNotifications { get; set; }
-    public bool IsReceiveInvoiceNotifications { get; set; }
+    public bool? IsReceiveJobNotifications { get; set; }
+    public bool? IsReceiveQuoteNotifications { get; set; }
+    public bool? IsReceiveInvoiceNotifications { get; set; }
 
     public string? BillingStreet { get; set; }
     public string? BillingCity { get; set; }

@@ -18,8 +18,8 @@ public class Employee
     public string? ImageUrl { get; set; }
     public string? Location { get; set; }
     public bool IsAvailable { get; set; } = true;
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
 

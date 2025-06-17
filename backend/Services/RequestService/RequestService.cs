@@ -20,6 +20,7 @@ public class RequestService : IRequestService
     {
         var requests = await _context.Requests.Include(r => r.Customer)
                                     .Include(r => r.LineItems)
+                                        .ThenInclude(l => l.ServiceItem)
                                     .ToListAsync();
 
         return new ApiResponse<List<Request>>
@@ -76,6 +77,7 @@ public class RequestService : IRequestService
         };
     }
 
+    //TODO: line item data not added after adding service item that already exist
     public async Task<ApiResponse<Request>> CreateRequest(CreateRequestDto createRequestDto)
     {
         var request = createRequestDto.Adapt<Request>();
@@ -92,6 +94,7 @@ public class RequestService : IRequestService
         };
     }
 
+    //TODO: Fix update standard problem first fetch from db then do other like on quote
     public async Task<ApiResponse<Request>> UpdateRequest(UpdateRequestDto updatedRequestDto)
     {
         var request = updatedRequestDto.Adapt<Request>();

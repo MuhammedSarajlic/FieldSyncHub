@@ -8,7 +8,7 @@ using backend.Services.EmployeeService;
 using backend.Services.InvoiceService;
 using backend.Services.JobService;
 using backend.Services.NotesService;
-using backend.Services.Phones;
+using backend.Services.CustomerPhoneService;
 using backend.Services.PropertyService;
 using backend.Services.QuoteService;
 using backend.Services.RequestService;
@@ -25,6 +25,7 @@ public static class ServiceExtension
     {
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ICustomerUnitOfWork, CustomerUnitOfWork>();
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<ICustomFieldService, CustomFieldService>();
         services.AddScoped<ICustomFieldServiceValue, CustomFieldServiceValue>();

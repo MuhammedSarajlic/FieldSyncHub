@@ -45,7 +45,7 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<GetServiceItemDto>> CreateServiceItem([FromBody] CreateServiceItemDto createServiceItemDto)
+    public async Task<ActionResult<ServiceItem>> CreateServiceItem([FromBody] CreateServiceItemDto createServiceItemDto)
     {
         var createdServiceItem = await _serviceItemService.CreateServiceItem(createServiceItemDto);
         return Ok(createdServiceItem);
@@ -56,6 +56,13 @@ public class ServiceItemController : ControllerBase
     {
         var updatedServiceItem = await _serviceItemService.UpdateServiceItem(updateServiceItemDto);
         return Ok(updatedServiceItem);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteServiceItem(Guid id)
+    {
+        await _serviceItemService.DeleteServiceItem(id);
+        return Ok();
     }
 
     [HttpPost("import/{workspaceId}")]

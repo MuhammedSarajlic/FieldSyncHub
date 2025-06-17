@@ -17,7 +17,7 @@ public class CustomFieldServiceValue : ICustomFieldServiceValue
 
     public async Task<ApiResponse<List<CustomFieldValue>>> GetCustomFieldValues()
     {
-        var customFieldValues = await _context.CustomFieldValues.ToListAsync();
+        var customFieldValues = await _context.CustomFieldValues.Include(c => c.CustomField).ToListAsync();
         return new ApiResponse<List<CustomFieldValue>>()
         {
             Success = true,
@@ -28,7 +28,7 @@ public class CustomFieldServiceValue : ICustomFieldServiceValue
 
     public async Task<ApiResponse<CustomFieldValue>> GetCustomFieldValuesById(Guid id)
     {
-        var customFieldValue = await _context.CustomFieldValues.FirstOrDefaultAsync(c => c.Id == id);
+        var customFieldValue = await _context.CustomFieldValues.Include(c => c.CustomField).FirstOrDefaultAsync(c => c.Id == id);
         return new ApiResponse<CustomFieldValue>()
         {
             Success = true,
@@ -51,21 +51,22 @@ public class CustomFieldServiceValue : ICustomFieldServiceValue
 
     public async Task<CustomFieldValue> UpdateCustomFieldValue(UpdateCustomFieldValueDto updatedCustomFieldValueDto)
     {
-        var customFieldValue = updatedCustomFieldValueDto.Adapt<CustomFieldValue>();
-        customFieldValue.UpdatedAt = DateTime.UtcNow;
-        _context.Update(customFieldValue);
+        var existingCustomFieldValue = await _context.CustomFieldValues.FirstOrDefaultAsync(c => c.Id == updatedCustomFieldValueDto.Id);
+        updatedCustomFieldValueDto.Adapt(existingCustomFieldValue);
+        existingCustomFieldValue.UpdatedAt = DateTime.UtcNow;
+        _context.Update(existingCustomFieldValue);
         await _context.SaveChangesAsync();
 
-        return customFieldValue;
+        return existingCustomFieldValue;
     }
 
-    public async Task UpdateCustomFieldValues(ICollection<UpdateCustomFieldValueDto> updateCustomFieldValuesDto, Guid customerId)
+    public async Task UpdateCustomFieldValues(ICollection<UpdateCustomFieldValueDto> updatedCustomFieldValuesDto, Guid customerId)
     {
         var existingFieldValues = await _context.CustomFieldValues
             .Where(f => f.CustomerId == customerId)
             .ToListAsync();
 
-        foreach (var fieldValueDto in updateCustomFieldValuesDto)
+        foreach (var fieldValueDto in updatedCustomFieldValuesDto)
         {
             var existingFieldValue = existingFieldValues.FirstOrDefault(f => f.Id == fieldValueDto.Id);
 
@@ -84,7 +85,7 @@ public class CustomFieldServiceValue : ICustomFieldServiceValue
 
         // Handle deletions
         var removedFieldValues = existingFieldValues
-            .Where(ef => !updateCustomFieldValuesDto.Any(f => f.Id == ef.Id))
+            .Where(ef => !updatedCustomFieldValuesDto.Any(f => f.Id == ef.Id))
             .ToList();
 
         if (removedFieldValues.Count != 0)

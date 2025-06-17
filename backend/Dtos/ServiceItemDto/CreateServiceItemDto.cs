@@ -9,7 +9,7 @@ public class CreateServiceItemDto
     public string? Description { get; set; }
     public ServiceItemType Type { get; set; } = ServiceItemType.Service;
     public string Category { get; set; } = string.Empty;
-    public string SKU { get; set; } = string.Empty;
+    public string? SKU { get; set; }
 
     public decimal UnitPrice { get; set; }
     public decimal Cost { get; set; }

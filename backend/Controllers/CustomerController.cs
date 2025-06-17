@@ -71,17 +71,6 @@ public class CustomerController : ControllerBase
         return Ok(customer);
     }
 
-    [HttpPut("bulk/{id}")]
-    public async Task<ActionResult<ApiResponse<Customer>>> UpdateCustomerBulk(string id, [FromBody] UpdateCustomerDto updatedCustomerDto)
-    {
-        if (id != updatedCustomerDto.Id.ToString())
-        {
-            return BadRequest("ID mismatch");
-        }
-        var customer = await _customerUnitOfWork.UpdateCustomerWithDependenciesAsync(updatedCustomerDto);
-        return Ok(customer);
-    }
-
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteCustomer(Guid id)
     {

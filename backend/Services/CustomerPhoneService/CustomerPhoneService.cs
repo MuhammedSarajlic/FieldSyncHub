@@ -5,7 +5,7 @@ using backend.Response;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
-namespace backend.Services.Phones;
+namespace backend.Services.CustomerPhoneService;
 
 public class CustomerPhoneService : ICustomerPhoneService
 {
@@ -77,22 +77,28 @@ public class CustomerPhoneService : ICustomerPhoneService
 
     public async Task<CustomerPhone> UpdateCustomerPhone(UpdateCustomerPhoneDto updatedCustomerPhoneDto)
     {
-        var customerPhone = updatedCustomerPhoneDto.Adapt<CustomerPhone>();
-        customerPhone.UpdatedAt = DateTime.UtcNow;
+        var existingCustomerPhone = await _context.CustomerPhones.Where(p => p.Id == updatedCustomerPhoneDto.Id).FirstOrDefaultAsync();
 
-        _context.Update(customerPhone);
+        existingCustomerPhone.PhoneType = updatedCustomerPhoneDto.PhoneType ?? existingCustomerPhone.PhoneType;
+        existingCustomerPhone.PhoneNumber = updatedCustomerPhoneDto.PhoneNumber ?? existingCustomerPhone.PhoneNumber;
+        if (updatedCustomerPhoneDto.IsReceiveMessage.HasValue)
+        {
+            existingCustomerPhone.IsReceiveMessage = updatedCustomerPhoneDto.IsReceiveMessage.Value;
+        }
+
+        existingCustomerPhone.UpdatedAt = DateTime.UtcNow;
+
+        _context.Update(existingCustomerPhone);
         await _context.SaveChangesAsync();
 
-        return customerPhone;
+        return existingCustomerPhone;
     }
 
-    public async Task UpdateCustomerPhones(ICollection<UpdateCustomerPhoneDto> updateCustomerPhonesDto, Guid customerId)
+    public async Task UpdateCustomerPhones(ICollection<UpdateCustomerPhoneDto> updatedCustomerPhonesDto, Guid customerId)
     {
-        var existingPhones = await _context.CustomerPhones
-            .Where(p => p.CustomerId == customerId)
-            .ToListAsync();
+        var existingPhones = await _context.CustomerPhones.Where(p => p.CustomerId == customerId).ToListAsync();
 
-        foreach (var phoneDto in updateCustomerPhonesDto)
+        foreach (var phoneDto in updatedCustomerPhonesDto)
         {
             var existingPhone = existingPhones.FirstOrDefault(p => p.Id == phoneDto.Id);
 
@@ -111,7 +117,7 @@ public class CustomerPhoneService : ICustomerPhoneService
 
         // Handle deletions
         var removedPhones = existingPhones
-            .Where(ep => !updateCustomerPhonesDto.Any(p => p.Id == ep.Id))
+            .Where(ep => !updatedCustomerPhonesDto.Any(p => p.Id == ep.Id))
             .ToList();
 
         if (removedPhones.Count != 0)

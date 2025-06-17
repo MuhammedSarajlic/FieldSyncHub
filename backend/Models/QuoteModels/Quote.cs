@@ -18,7 +18,7 @@ public class Quote
     public string QuoteNumber { get; set; } = string.Empty;
     public QuoteStatus Status { get; set; } = QuoteStatus.Draft;
     //sentAt is the date when the quote was sent to the customer with email or text message
-    public DateTime SentAt { get; set; }
+    public DateTime? SentAt { get; set; }
     public bool Viewed { get; set; } = false;
     public DateTime? ViewedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }

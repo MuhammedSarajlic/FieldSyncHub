@@ -65,10 +65,10 @@ public class InvoiceController : ControllerBase
         return Ok(createdInvoice);
     }
 
-    [HttpPut("{invoiceId}")]
-    public async Task<ActionResult<Invoice>> UpdateInvoice(Guid invoiceId, [FromBody] UpdateInvoiceDto updatedInvoiceDto)
+    [HttpPut]
+    public async Task<ActionResult<Invoice>> UpdateInvoice([FromBody] UpdateInvoiceDto updatedInvoiceDto)
     {
-        var updatedInvoice = await _invoiceService.UpdateInvoice(invoiceId, updatedInvoiceDto);
+        var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto);
         return Ok(updatedInvoice);
     }
 

@@ -19,7 +19,7 @@ public class EmployeeService : IEmployeeService
 
     public async Task<ApiResponse<List<Employee>>> GetEmployees()
     {
-        var employees = await _context.Employees.ToListAsync();
+        var employees = await _context.Employees.Include(e => e.User).ToListAsync();
         return new ApiResponse<List<Employee>>()
         {
             Success = true,
@@ -121,12 +121,41 @@ public class EmployeeService : IEmployeeService
         return new ActionResult<Employee>(employee);
     }
 
+    //Fix update mothod
     public async Task<Employee> UpdateEmployee(UpdateEmployeeDto updateEmployeeDto)
     {
-        var employee = updateEmployeeDto.Adapt<Employee>();
-        _context.Update(employee);
+        var existingEmployee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == updateEmployeeDto.Id);
+
+        if (existingEmployee == null)
+        {
+            throw new KeyNotFoundException($"Employee with ID {updateEmployeeDto.Id} not found.");
+        }
+
+        existingEmployee.Position = updateEmployeeDto.Position ?? existingEmployee.Position;
+        existingEmployee.Department = updateEmployeeDto.Department ?? existingEmployee.Department;
+
+        if (updateEmployeeDto.Status.HasValue)
+        {
+            existingEmployee.Status = updateEmployeeDto.Status.Value;
+        }
+        if (updateEmployeeDto.HireDate.HasValue)
+        {
+            existingEmployee.HireDate = updateEmployeeDto.HireDate.Value;
+        }
+
+        existingEmployee.PhoneNumber = updateEmployeeDto.PhoneNumber ?? existingEmployee.PhoneNumber;
+        existingEmployee.ImageUrl = updateEmployeeDto.ImageUrl ?? existingEmployee.ImageUrl;
+        existingEmployee.Location = updateEmployeeDto.Location ?? existingEmployee.Location;
+
+        if (updateEmployeeDto.IsAvailable.HasValue)
+        {
+            existingEmployee.IsAvailable = updateEmployeeDto.IsAvailable.Value;
+        }
+
+        existingEmployee.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        return employee;
+
+        return existingEmployee;
     }
 
     public async Task DeleteEmployee(Guid id)

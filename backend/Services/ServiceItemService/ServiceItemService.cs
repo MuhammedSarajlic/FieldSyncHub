@@ -110,13 +110,13 @@ public class ServiceItemService : IServiceItemService
         };
     }
 
-    public async Task<GetServiceItemDto> CreateServiceItem(CreateServiceItemDto createServiceItemDto)
+    public async Task<ServiceItem> CreateServiceItem(CreateServiceItemDto createServiceItemDto)
     {
         var item = createServiceItemDto.Adapt<ServiceItem>();
         item.Id = Guid.NewGuid();
-        _context.ServiceItems.Add(item);
+        await _context.ServiceItems.AddAsync(item);
         await _context.SaveChangesAsync();
-        return createServiceItemDto.Adapt<GetServiceItemDto>();
+        return item;
     }
 
     public async Task<GetServiceItemDto> UpdateServiceItem(UpdateServiceItemDto updateServiceItemDto)
@@ -128,9 +128,18 @@ public class ServiceItemService : IServiceItemService
         return existingServiceItem.Adapt<GetServiceItemDto>();
     }
 
+    public async Task DeleteServiceItem(Guid id)
+    {
+        var serviceItem = await _context.ServiceItems.FirstOrDefaultAsync(s => s.Id == id);
+        if (serviceItem == null) return;
+
+        _context.ServiceItems.Remove(serviceItem);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<ApiResponse<object>> ImportServiceItemsAsync(List<ImportedServiceItemDto> serviceItems, Guid workspaceId)
     {
-        if (serviceItems == null || !serviceItems.Any())
+        if (serviceItems == null || serviceItems.Count == 0)
         {
             return new ApiResponse<object>
             {
@@ -146,7 +155,11 @@ public class ServiceItemService : IServiceItemService
 
         var normalizedExisting = existingServiceItems.Select(si => new
         {
-            Key = $"{si.Name.Trim().ToLower()}|{si.Type.ToString().Trim().ToLower()}|{si.SKU.Trim().ToLower()}",
+            // Use null-conditional operator ?. and null-coalescing operator ?? ""
+            // to handle potential null SKUs from existing database records.
+            // Also apply .Trim().ToLower() on Name which might contain leading/trailing spaces or be null/empty
+            // although you're checking for it later for DTOs, for existing, assume they might exist without clean data.
+            Key = $"{si.Name?.Trim().ToLower() ?? ""}|{si.Type.ToString().Trim().ToLower()}|{si.SKU?.Trim().ToLower() ?? ""}",
             si.Id
         }).ToHashSet();
 
@@ -155,19 +168,16 @@ public class ServiceItemService : IServiceItemService
 
         foreach (var dto in serviceItems)
         {
-            if (string.IsNullOrWhiteSpace(dto.Name) || string.IsNullOrWhiteSpace(dto.SKU))
+            if (string.IsNullOrWhiteSpace(dto.Name)) // Only check Name if SKU can be optional
             {
                 skippedCount++;
                 continue;
             }
 
-            ServiceItemType itemTypeParsed;
-            if (!Enum.TryParse<ServiceItemType>(dto.Type, true, out itemTypeParsed))
-            {
-                itemTypeParsed = ServiceItemType.Service;
-            }
+            ServiceItemType itemTypeForComparison = dto.Type;
 
-            var key = $"{dto.Name.Trim().ToLower()}|{itemTypeParsed.ToString().Trim().ToLower()}|{dto.SKU.Trim().ToLower()}";
+            // Handle dto.SKU potentially being null/empty when forming the key
+            var key = $"{dto.Name.Trim().ToLower()}|{itemTypeForComparison.ToString().Trim().ToLower()}|{dto.SKU?.Trim().ToLower() ?? ""}";
 
             if (normalizedExisting.Any(si => si.Key == key))
             {
@@ -180,9 +190,9 @@ public class ServiceItemService : IServiceItemService
                 WorkspaceId = workspaceId,
                 Name = dto.Name.Trim(),
                 Description = dto.Description,
-                Type = itemTypeParsed,
+                Type = itemTypeForComparison,
                 Category = dto.Category,
-                SKU = dto.SKU.Trim(),
+                SKU = dto.SKU?.Trim() ?? null, // Store as null if it was null/empty in DTO
                 UnitPrice = dto.UnitPrice,
                 Cost = dto.Cost,
                 TaxRate = dto.TaxRate,
@@ -252,4 +262,5 @@ public class ServiceItemService : IServiceItemService
         }
         return field;
     }
+
 }

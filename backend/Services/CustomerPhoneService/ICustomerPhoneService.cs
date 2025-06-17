@@ -2,7 +2,7 @@ using backend.Dtos.CustomerPhoneDto;
 using backend.Models;
 using backend.Response;
 
-namespace backend.Services.Phones;
+namespace backend.Services.CustomerPhoneService;
 
 public interface ICustomerPhoneService
 {

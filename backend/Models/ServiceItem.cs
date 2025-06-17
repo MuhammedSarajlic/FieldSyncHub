@@ -18,7 +18,7 @@ public class ServiceItem
     public ServiceItemType Type { get; set; } = ServiceItemType.Service;
 
     public string Category { get; set; } = string.Empty;
-    public string SKU { get; set; } = string.Empty;
+    public string? SKU { get; set; }
     [Range(0, double.MaxValue)]
     public decimal UnitPrice { get; set; }
     [Range(0, double.MaxValue)]

@@ -6,17 +6,17 @@ public class UpdateServiceItemDto
 {
     public Guid Id { get; set; }
 
-    public string Name { get; set; } = string.Empty;
+    public string? Name { get; set; }
     public string? Description { get; set; }
-    public ServiceItemType Type { get; set; } = ServiceItemType.Service;
-    public string Category { get; set; } = string.Empty;
-    public string SKU { get; set; } = string.Empty;
+    public ServiceItemType? Type { get; set; }
+    public string? Category { get; set; }
+    public string? SKU { get; set; }
 
-    public decimal UnitPrice { get; set; }
-    public decimal Cost { get; set; }
-    public decimal TaxRate { get; set; }
-    public bool IsTaxable { get; set; }
-    public bool IsActive { get; set; } = true;
+    public decimal? UnitPrice { get; set; }
+    public decimal? Cost { get; set; }
+    public decimal? TaxRate { get; set; }
+    public bool? IsTaxable { get; set; }
+    public bool? IsActive { get; set; }
 
     public string? ImageUrl { get; set; }
 }

@@ -8,7 +8,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/employee")]
-public class EmployeeController : Controller
+public class EmployeeController : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
 

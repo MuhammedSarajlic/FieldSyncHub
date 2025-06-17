@@ -8,7 +8,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/request")]
-public class RequestController : Controller
+public class RequestController : ControllerBase
 {
     private readonly IRequestService _requestService;
 

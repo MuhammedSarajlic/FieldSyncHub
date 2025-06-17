@@ -88,7 +88,6 @@ public class InvoiceService : IInvoiceService
 
         var queryable = _context.Invoices
             .Where(i => i.WorkspaceId == workspaceId)
-            .AsNoTracking()
             .Include(i => i.Customer)
             .Include(i => i.LineItems)
                 .ThenInclude(li => li.ServiceItem)
@@ -118,8 +117,7 @@ public class InvoiceService : IInvoiceService
                 i.InvoiceNumber.ToLower().Contains(q) ||
                 (i.Customer != null &&
                     (i.Customer.FirstName.ToLower().Contains(q) ||
-                     i.Customer.LastName.ToLower().Contains(q) ||
-                     (i.Customer.FullName != null && i.Customer.FullName.ToLower().Contains(q)))
+                     i.Customer.LastName.ToLower().Contains(q))
                 ));
         }
 
@@ -210,11 +208,17 @@ public class InvoiceService : IInvoiceService
         return invoice;
     }
 
-    public async Task<Invoice> UpdateInvoice(Guid invoiceId, UpdateInvoiceDto updatedInvoiceDto)
+    //TODO: Later refactor and make update like on customer to use other repositories to update child elements
+    public async Task<Invoice> UpdateInvoice(UpdateInvoiceDto updatedInvoiceDto)
     {
         var invoice = await _context.Invoices
             .Include(i => i.LineItems)
-            .FirstOrDefaultAsync(i => i.Id == invoiceId);
+            .FirstOrDefaultAsync(i => i.Id == updatedInvoiceDto.Id);
+
+        if (invoice == null)
+        {
+            throw new KeyNotFoundException($"Invoice with ID {updatedInvoiceDto.Id} not found.");
+        }
 
         if (updatedInvoiceDto.TaxRate.HasValue) invoice.TaxRate = updatedInvoiceDto.TaxRate.Value;
         if (updatedInvoiceDto.Discount.HasValue) invoice.Discount = updatedInvoiceDto.Discount.Value;
@@ -237,35 +241,49 @@ public class InvoiceService : IInvoiceService
 
         if (updatedInvoiceDto.LineItems != null)
         {
-            var itemsToRemove = invoice.LineItems
-                .Where(existingItem => !updatedInvoiceDto.LineItems.Any(dtoItem => dtoItem.Id == existingItem.Id && dtoItem.Id.HasValue))
-                .ToList();
-            _context.LineItems.RemoveRange(itemsToRemove);
-
-            foreach (var itemDto in updatedInvoiceDto.LineItems)
+            if (updatedInvoiceDto.LineItems.Count == 0)
             {
-                if (itemDto.Id.HasValue)
+                _context.LineItems.RemoveRange(invoice.LineItems);
+                invoice.LineItems.Clear();
+            }
+            else
+            {
+                var itemsToRemove = invoice.LineItems
+                    .Where(existingItem => !updatedInvoiceDto.LineItems.Any(dtoItem => dtoItem.Id == existingItem.Id && dtoItem.Id.HasValue))
+                    .ToList();
+                _context.LineItems.RemoveRange(itemsToRemove);
+
+                foreach (var itemDto in updatedInvoiceDto.LineItems)
                 {
-                    var existing = invoice.LineItems.FirstOrDefault(i => i.Id == itemDto.Id.Value);
-                    if (existing != null)
+                    if (itemDto.Id.HasValue)
                     {
-                        if (itemDto.Name != null) existing.Name = itemDto.Name;
-                        if (itemDto.UnitPrice.HasValue) existing.UnitPrice = itemDto.UnitPrice.Value;
-                        if (itemDto.Description != null) existing.Description = itemDto.Description;
-                        if (itemDto.Quantity.HasValue) existing.Quantity = itemDto.Quantity.Value;
+                        var existing = invoice.LineItems.FirstOrDefault(i => i.Id == itemDto.Id.Value);
+                        if (existing != null)
+                        {
+                            existing.Name = itemDto.Name ?? existing.Name;
+                            if (itemDto.UnitPrice.HasValue) existing.UnitPrice = itemDto.UnitPrice.Value;
+                            existing.Description = itemDto.Description ?? existing.Description;
+                            if (itemDto.Quantity.HasValue) existing.Quantity = itemDto.Quantity.Value;
+                            existing.UpdatedAt = DateTime.UtcNow;
+                        }
+                        // TODO: Handle case where itemDto.Id.Value exists but not found in current invoice.LineItems.
+                        // This could happen if an item ID is sent that belongs to another invoice, or is invalid.
+                        // You might want to throw an error or log it.
                     }
-                }
-                else
-                {
-                    invoice.LineItems.Add(new LineItem
+                    else
                     {
-                        Id = Guid.NewGuid(),
-                        Name = itemDto.Name ?? "",
-                        UnitPrice = itemDto.UnitPrice ?? 0,
-                        Description = itemDto.Description,
-                        Quantity = itemDto.Quantity ?? 1,
-                        InvoiceId = invoice.Id
-                    });
+                        invoice.LineItems.Add(new LineItem
+                        {
+                            Id = Guid.NewGuid(),
+                            Name = itemDto.Name ?? "",
+                            UnitPrice = itemDto.UnitPrice ?? 0,
+                            Description = itemDto.Description,
+                            Quantity = itemDto.Quantity ?? 1,
+                            InvoiceId = invoice.Id,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        });
+                    }
                 }
             }
         }

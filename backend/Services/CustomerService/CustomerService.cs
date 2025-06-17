@@ -194,7 +194,7 @@ public class CustomerService : ICustomerService
             .CountAsync();
 
         var companies = await _context.Customers
-            .Where(c => c.WorkspaceId == workspaceId && c.IsCompany && !c.IsArchived)
+            .Where(c => c.WorkspaceId == workspaceId && !string.IsNullOrWhiteSpace(c.CompanyName) && !c.IsArchived)
             .CountAsync();
 
         var newThisMonth = await _context.Customers

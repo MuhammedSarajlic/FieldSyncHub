@@ -6,6 +6,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
+using backend.Dtos.QuoteDto;
+using backend.Models.QuoteModels;
+using Mapster;
+using backend.Dtos.LineItemDto;
+using backend.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +36,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
+TypeAdapterConfig<UpdateQuoteDto, Quote>.NewConfig()
+    .IgnoreNullValues(true);
+TypeAdapterConfig<UpdateLineItemDto, LineItem>.NewConfig()
+    .IgnoreNullValues(true);
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });

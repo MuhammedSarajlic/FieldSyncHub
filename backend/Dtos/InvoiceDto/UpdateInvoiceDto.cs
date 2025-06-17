@@ -7,7 +7,7 @@ namespace backend.Dtos.InvoiceDto;
 public class UpdateInvoiceDto
 {
     public Guid Id { get; set; }
-    public List<UpdateLineItemDto> LineItems { get; set; } = [];
+    public List<UpdateLineItemDto>? LineItems { get; set; }
     public decimal? TaxRate { get; set; }
     public decimal? Discount { get; set; }
     public DiscountType? DiscountType { get; set; }

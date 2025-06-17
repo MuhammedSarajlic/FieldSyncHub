@@ -52,14 +52,14 @@ public class QuoteController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Quote>> CreateQuote(CreateQuoteDto dto)
+    public async Task<ActionResult<Quote>> CreateQuote(CreateQuoteDto createQuoteDto)
     {
-        var result = await _quoteService.CreateAsync(dto);
+        var result = await _quoteService.CreateAsync(createQuoteDto);
         return Ok(result);
     }
 
 
-    [HttpPut("{id}")]
+    [HttpPut]
     public async Task<ActionResult<Quote>> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
     {
         var result = await _quoteService.UpdateAsync(updatedQuoteDto);

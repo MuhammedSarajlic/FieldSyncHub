@@ -2,9 +2,8 @@ using backend.Data;
 using backend.Dtos.CustomerDto;
 using backend.Models;
 using backend.Response;
-using backend.Services.CustomFieldService;
 using backend.Services.CustomFieldValueService;
-using backend.Services.Phones;
+using backend.Services.CustomerPhoneService;
 using backend.Services.PropertyService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -38,42 +37,76 @@ public class CustomerUnitOfWork : ICustomerUnitOfWork
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // Load customer with all related data
-            var customer = await _context.Customers.Include(c => c.Properties)
-                                                .Include(c => c.CustomFieldValues)
-                                                .Include(c => c.CustomerPhones)
-                                                .FirstOrDefaultAsync(c => c.Id == updatedCustomerDto.Id);
+            var customer = await _context.Customers.Where(c => c.Id == updatedCustomerDto.Id)
+                                                 .Include(c => c.CustomFieldValues)
+                                                 .Include(c => c.Properties)
+                                                 .Include(c => c.CustomerPhones)
+                                                 .FirstOrDefaultAsync();
 
             if (customer == null)
             {
                 return new ApiResponse<Customer>
                 {
                     Success = false,
+                    Payload = null,
                     ErrorMessage = "Customer not found."
                 };
             }
 
-            // Update main customer entity
-            updatedCustomerDto.Adapt(customer);
-            customer.UpdatedAt = DateTime.UtcNow;
+            customer.CompanyName = updatedCustomerDto.CompanyName ?? customer.CompanyName;
+            customer.BillingStreet = updatedCustomerDto.BillingStreet ?? customer.BillingStreet;
+            customer.BillingCity = updatedCustomerDto.BillingCity ?? customer.BillingCity;
+            customer.BillingState = updatedCustomerDto.BillingState ?? customer.BillingState;
+            customer.BillingCountry = updatedCustomerDto.BillingCountry ?? customer.BillingCountry;
+            customer.BillingPostalCode = updatedCustomerDto.BillingPostalCode ?? customer.BillingPostalCode;
 
-            // Update Properties (batch update)
+            if (!string.IsNullOrEmpty(updatedCustomerDto.FirstName))
+            {
+                customer.FirstName = updatedCustomerDto.FirstName;
+            }
+            if (!string.IsNullOrEmpty(updatedCustomerDto.LastName))
+            {
+                customer.LastName = updatedCustomerDto.LastName;
+            }
+            if (!string.IsNullOrEmpty(updatedCustomerDto.DisplayName))
+            {
+                customer.DisplayName = updatedCustomerDto.DisplayName;
+            }
+
+            if (updatedCustomerDto.IsReceiveJobNotifications.HasValue)
+            {
+                customer.IsReceiveJobNotifications = updatedCustomerDto.IsReceiveJobNotifications.Value;
+            }
+            if (updatedCustomerDto.IsReceiveQuoteNotifications.HasValue)
+            {
+                customer.IsReceiveQuoteNotifications = updatedCustomerDto.IsReceiveQuoteNotifications.Value;
+            }
+            if (updatedCustomerDto.IsReceiveInvoiceNotifications.HasValue)
+            {
+                customer.IsReceiveInvoiceNotifications = updatedCustomerDto.IsReceiveInvoiceNotifications.Value;
+            }
+            if (updatedCustomerDto.Emails != null)
+            {
+                customer.Emails = updatedCustomerDto.Emails;
+            }
+
+
             if (updatedCustomerDto.Properties != null)
             {
                 await _propertyService.UpdateProperties(updatedCustomerDto.Properties, customer.Id);
             }
 
-            // Update Custom Fields (batch update)
             if (updatedCustomerDto.CustomFieldValues != null)
             {
                 await _customFieldServiceValue.UpdateCustomFieldValues(updatedCustomerDto.CustomFieldValues, customer.Id);
             }
 
-            // Update Phones (batch update)
             if (updatedCustomerDto.CustomerPhones != null)
             {
                 await _customerPhoneService.UpdateCustomerPhones(updatedCustomerDto.CustomerPhones, customer.Id);
             }
+
+            customer.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();

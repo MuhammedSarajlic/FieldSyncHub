@@ -1,14 +1,14 @@
 using backend.Dtos.CustomerPhoneDto;
 using backend.Models;
 using backend.Response;
-using backend.Services.Phones;
+using backend.Services.CustomerPhoneService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/customerphone")]
-public class CustomerPhoneController : Controller
+public class CustomerPhoneController : ControllerBase
 {
     private readonly ICustomerPhoneService _customerPhoneService;
 
