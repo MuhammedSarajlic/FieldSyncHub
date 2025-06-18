@@ -6,7 +6,6 @@ public class CustomerFilterDto
     public string? SortBy { get; set; }
     public string? Sort { get; set; }
     public string? CustomerType { get; set; }
-    public string? customerType { get; set; }
     public DateTime? CreatedDateMin { get; set; }
     public DateTime? CreatedDateMax { get; set; }
     public int? PropertiesMin { get; set; }

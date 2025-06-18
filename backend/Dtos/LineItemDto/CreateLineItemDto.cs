@@ -7,7 +7,7 @@ public class CreateLineItemDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
 
-    public decimal UnitPrice { get; set; }
+    public decimal UnitPrice { get; set; } = 0;
     public decimal? Cost { get; set; }
     public decimal? TaxRate { get; set; }
     public bool? IsTaxable { get; set; }

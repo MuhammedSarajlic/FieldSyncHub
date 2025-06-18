@@ -1,6 +1,5 @@
+import { UserRole } from '../constants/Enumeration/UserEnum/UserEnum';
 import { TWorkspace, TWorkspaceLookup } from './Workspace';
-
-export type TUserRole = 'Owner' | 'Admin' | 'Employee';
 
 export type TUser = {
   id: string;
@@ -12,7 +11,7 @@ export type TUser = {
   fullName: string;
   workspaceId?: string;
   workspace?: TWorkspace;
-  role: TUserRole;
+  role: UserRole;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,7 +22,7 @@ export type TGetUser = {
   firstName: string;
   lastName: string;
   fullName: string;
-  role: TUserRole;
+  role: UserRole;
   workspace?: TWorkspaceLookup;
   createdAt: string;
   updatedAt: string;
@@ -34,7 +33,7 @@ export type TUpdateUser = {
   email: string;
   firstName: string;
   lastName: string;
-  role: TUserRole;
+  role: UserRole;
 };
 
 export type TUserLogin = {

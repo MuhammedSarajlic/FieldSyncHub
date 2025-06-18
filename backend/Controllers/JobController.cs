@@ -55,17 +55,17 @@ public class JobController : ControllerBase
 
 
     [HttpPost]
-    public async Task<IActionResult> CreateJob([FromBody] CreateJobDto createJobDto)
+    public async Task<ActionResult<ApiResponse<Job>>> CreateJob([FromBody] CreateJobDto createJobDto)
     {
-        await _jobService.CreateJob(createJobDto);
-        return Ok();
+        var job = await _jobService.CreateJob(createJobDto);
+        return Ok(job);
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateJob([FromBody] UpdateJobDto updatedJobDto)
+    public async Task<ActionResult<ApiResponse<Job>>> UpdateJob([FromBody] UpdateJobDto updatedJobDto)
     {
-        await _jobService.UpdateJob(updatedJobDto);
-        return Ok();
+        var job = await _jobService.UpdateJob(updatedJobDto);
+        return Ok(job);
     }
 
     [HttpDelete("{id:guid}")]

@@ -2,12 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace backend.Models;
 
-public enum ServiceItemType
-{
-    Service,
-    Product
-}
-
 public class ServiceItem
 {
     [Key]
@@ -29,4 +23,10 @@ public class ServiceItem
     public string? ImageUrl { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public enum ServiceItemType
+{
+    Service,
+    Product
 }

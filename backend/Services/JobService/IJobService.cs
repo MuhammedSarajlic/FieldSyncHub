@@ -12,7 +12,7 @@ public interface IJobService
     Task<ApiResponse<List<Job>>> GetAllJobsByEmployeeId(Guid employeeId);
     Task<Job> GetJobByJobNumber(string jobNumber);
     Task<ApiResponse<List<Job>>> GetJobsByFilter(JobFilterDto filterDto, Guid workspaceId);
-    Task<Job> CreateJob(CreateJobDto createJobDto);
+    Task<ApiResponse<Job>> CreateJob(CreateJobDto createJobDto);
     Task<ApiResponse<Job>> UpdateJob(UpdateJobDto updatedJobDto);
     Task DeleteJob(Guid id);
     Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace);

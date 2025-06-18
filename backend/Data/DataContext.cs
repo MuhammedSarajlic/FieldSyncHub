@@ -131,6 +131,26 @@ public class DataContext : DbContext
             .HasForeignKey(r => r.QuoteId)
             .OnDelete(DeleteBehavior.SetNull); // keep quote, clear ref in request
 
+        //many-to-many job<->employee
+        modelBuilder.Entity<Job>()
+        .HasMany(j => j.AssignedTeamMembers) // Job has many AssignedTeamMembers
+        .WithMany() // Employees can be assigned to many Jobs (no navigation property on Employee side)
+        // You can explicitly name the join table if you want more control:
+        //.UsingEntity(j => j.ToTable("JobAssignedEmployees")) // Optional: name your join table
+
+        // This is the CRUCIAL part for cascade deletes:
+        // By default, many-to-many join tables often get Cascade on both sides.
+        // But we need to ensure the foreign key *from the join table to Job* cascades its deletion.
+        // The default for EF Core's implicit many-to-many is often Cascade.
+        // If it's not working, we need to be more explicit about it or ensure the DB schema is clean.
+        // Let's explicitly define how the join table relates to Job and Employee.
+        // This implicitly handles the join table creation and behavior.
+        .UsingEntity(
+            "JobAssignedEmployees", // Name of the join table EF Core will create
+            l => l.HasOne(typeof(Employee)).WithMany().HasForeignKey("EmployeeId").OnDelete(DeleteBehavior.Cascade),
+            r => r.HasOne(typeof(Job)).WithMany().HasForeignKey("JobId").OnDelete(DeleteBehavior.Cascade)
+        );
+
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
         modelBuilder.Entity<Invoice>().HasIndex(i => i.WorkspaceId);

@@ -12,8 +12,8 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250617154137_QuoteFix")]
-    partial class QuoteFix
+    [Migration("20250618130506_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,21 @@ namespace backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+            modelBuilder.Entity("JobAssignedEmployees", b =>
+                {
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("EmployeeId", "JobId");
+
+                    b.HasIndex("JobId");
+
+                    b.ToTable("JobAssignedEmployees");
+                });
 
             modelBuilder.Entity("backend.Models.CustomField", b =>
                 {
@@ -185,9 +200,8 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("PhoneType")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("PhoneType")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -220,9 +234,6 @@ namespace backend.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<Guid?>("JobId")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("Location")
                         .HasColumnType("longtext");
 
@@ -245,8 +256,6 @@ namespace backend.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("JobId");
 
                     b.HasIndex("UserId");
 
@@ -412,6 +421,9 @@ namespace backend.Migrations
                     b.Property<int>("EstimatedDurationMinutes")
                         .HasColumnType("int");
 
+                    b.Property<string>("InternalNotes")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("InvoiceSent")
                         .HasColumnType("tinyint(1)");
 
@@ -575,9 +587,6 @@ namespace backend.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("JobId")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("NoteText")
                         .HasColumnType("longtext");
 
@@ -590,8 +599,6 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
-
-                    b.HasIndex("JobId");
 
                     b.ToTable("Notes");
                 });
@@ -964,6 +971,21 @@ namespace backend.Migrations
                     b.ToTable("Workspaces");
                 });
 
+            modelBuilder.Entity("JobAssignedEmployees", b =>
+                {
+                    b.HasOne("backend.Models.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Job", null)
+                        .WithMany()
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("backend.Models.CustomFieldValue", b =>
                 {
                     b.HasOne("backend.Models.CustomField", "CustomField")
@@ -996,10 +1018,6 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Employee", b =>
                 {
-                    b.HasOne("backend.Models.Job", null)
-                        .WithMany("AssignedTeamMembers")
-                        .HasForeignKey("JobId");
-
                     b.HasOne("backend.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1106,10 +1124,6 @@ namespace backend.Migrations
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("backend.Models.Job", null)
-                        .WithMany("InternalNotes")
-                        .HasForeignKey("JobId");
 
                     b.Navigation("Customer");
                 });
@@ -1228,10 +1242,6 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Job", b =>
                 {
-                    b.Navigation("AssignedTeamMembers");
-
-                    b.Navigation("InternalNotes");
-
                     b.Navigation("LineItems");
 
                     b.Navigation("StatusHistory");

@@ -18,13 +18,13 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ApiResponse<List<GetServiceItemDto>>> GetAllServiceItems()
+    public async Task<ApiResponse<List<ServiceItem>>> GetAllServiceItems()
     {
         return await _serviceItemService.GetServiceItems();
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<GetServiceItemDto>> GetServiceItemById(Guid id)
+    public async Task<ActionResult<ServiceItem>> GetServiceItemById(Guid id)
     {
         var serviceItem = await _serviceItemService.GetServiceItemById(id);
         if (serviceItem == null) return NotFound();
@@ -32,7 +32,7 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpGet("workspace/{workspaceId}")]
-    public async Task<ApiResponse<List<GetServiceItemDto>>> GetByWorkspace(Guid workspaceId)
+    public async Task<ApiResponse<List<ServiceItem>>> GetByWorkspace(Guid workspaceId)
     {
         var serviceItems = await _serviceItemService.GetServiceItemsByWorkspace(workspaceId);
         return serviceItems;
@@ -52,7 +52,7 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpPut]
-    public async Task<ActionResult<GetServiceItemDto>> Update([FromBody] UpdateServiceItemDto updateServiceItemDto)
+    public async Task<ActionResult<ApiResponse<ServiceItem>>> UpdateServiceItem([FromBody] UpdateServiceItemDto updateServiceItemDto)
     {
         var updatedServiceItem = await _serviceItemService.UpdateServiceItem(updateServiceItemDto);
         return Ok(updatedServiceItem);

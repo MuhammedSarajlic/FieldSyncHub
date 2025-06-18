@@ -12,6 +12,6 @@ public class UpdateRequestDto
     public string? PreferredTime { get; set; }
     public RequestStatus? Status { get; set; }
     public RequestPriority? Priority { get; set; }
-    public List<UpdateLineItemDto>? LineItems { get; set; } = [];
+    public List<UpdateLineItemDto>? LineItems { get; set; }
     public string? Notes { get; set; }
 }

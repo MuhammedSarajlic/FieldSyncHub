@@ -61,7 +61,7 @@ public class Job
     public string? Source { get; set; } // "web", "phone", "email", "walk-in", etc.
     public List<string> Tags { get; set; } = [];
     public string? CustomerNotes { get; set; }
-    public ICollection<Note>? InternalNotes { get; set; }
+    public string? InternalNotes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

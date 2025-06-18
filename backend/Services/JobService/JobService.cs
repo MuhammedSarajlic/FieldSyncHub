@@ -19,6 +19,7 @@ public class JobService : IJobService
     {
         var jobs = await _context.Jobs.Include(j => j.Customer)
                                     .Include(j => j.Property)
+                                    .Include(j => j.AssignedTeamMembers)
                                     .Include(j => j.LineItems)
                                         .ThenInclude(li => li.ServiceItem)
                                     .ToListAsync();
@@ -167,96 +168,242 @@ public class JobService : IJobService
         };
     }
 
-    public async Task<Job> CreateJob(CreateJobDto createJobDto)
+    public async Task<ApiResponse<Job>> CreateJob(CreateJobDto dto)
     {
-        var job = createJobDto.Adapt<Job>();
+        var job = dto.Adapt<Job>();
         job.Id = Guid.NewGuid();
+        job.JobNumber = await GenerateJobNumber(dto.WorkspaceId);
 
-        job.CreatedAt = DateTime.UtcNow;
-        job.UpdatedAt = DateTime.UtcNow;
-        job.JobNumber = await GenerateJobNumber(createJobDto.WorkspaceId);
-
-        if (job.PropertyId.HasValue)
+        if (dto.PropertyId.HasValue)
         {
-            var propertyExists = await _context.Properties.AnyAsync(p => p.Id == job.PropertyId.Value);
+            var propertyExists = await _context.Properties.AnyAsync(p => p.Id == dto.PropertyId.Value);
             if (!propertyExists)
-            {
-                throw new Exception("Property not found");
-            }
+                return new ApiResponse<Job>
+                {
+                    Success = false,
+                    Payload = null,
+                    ErrorMessage = "Property not found."
+                };
         }
 
-        foreach (var item in job.LineItems)
+        job.AssignedTeamMembers = [];
+        if (dto.AssignedTeamMembers?.Any() == true)
         {
-            // Validate ServiceItem exists
-            var serviceItemExists = await _context.ServiceItems.AnyAsync(s => s.Id == item.ServiceItemId);
-            if (!serviceItemExists)
-            {
-                throw new Exception($"ServiceItem with ID {item.ServiceItemId} not found");
-            }
+            var employeeIds = dto.AssignedTeamMembers.Select(e => e.Id).ToList();
+            var employees = _context.Employees
+                .AsEnumerable()
+                .Where(e => employeeIds.Contains(e.Id))
+                .ToList();
 
-            if (item.Id == Guid.Empty)
-            {
-                item.Id = Guid.NewGuid();
-            }
-
-            item.JobId = job.Id;
+            var missing = employeeIds.Except(employees.Select(e => e.Id)).ToList();
+            if (missing.Count != 0)
+                return new ApiResponse<Job>
+                {
+                    Success = false,
+                    Payload = null,
+                    ErrorMessage = $"Missing team members: {string.Join(", ", missing)}"
+                };
+            job.AssignedTeamMembers.AddRange(employees);
         }
+
+        job.LineItems = [];
+        if (dto.LineItems?.Any() == true)
+        {
+            foreach (var lineItemDto in dto.LineItems)
+            {
+                var lineItem = new LineItem
+                {
+                    Id = Guid.NewGuid(),
+                    JobId = job.Id,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    Quantity = lineItemDto.Quantity
+                };
+
+                if (lineItemDto.ServiceItemId.HasValue)
+                {
+                    var serviceItem = await _context.ServiceItems.FirstOrDefaultAsync(s => s.Id == lineItemDto.ServiceItemId.Value);
+                    if (serviceItem == null)
+                        return new ApiResponse<Job>
+                        {
+                            Success = false,
+                            Payload = null,
+                            ErrorMessage = $"Service item {lineItemDto.ServiceItemId.Value} not found."
+                        };
+
+                    lineItem.ServiceItemId = serviceItem.Id;
+                    lineItem.Name = serviceItem.Name;
+                    lineItem.Description = serviceItem.Description;
+                    lineItem.UnitPrice = serviceItem.UnitPrice;
+                    lineItem.Cost = serviceItem.Cost;
+                    lineItem.TaxRate = serviceItem.TaxRate;
+                    lineItem.IsTaxable = serviceItem.IsTaxable;
+                }
+                else
+                {
+                    lineItem.Name = lineItemDto.Name ?? "Custom Item";
+                    lineItem.Description = lineItemDto.Description;
+                    lineItem.UnitPrice = lineItemDto.UnitPrice;
+                    lineItem.Cost = 0m;
+                    lineItem.TaxRate = 0m;
+                    lineItem.IsTaxable = false;
+                }
+
+                job.LineItems.Add(lineItem);
+            }
+        }
+
+        job.Tags = dto.Tags ?? [];
+
+        job.StatusHistory = dto.StatusHistory ?? [];
 
         await _context.Jobs.AddAsync(job);
         await _context.SaveChangesAsync();
 
-        return job;
+
+        return new ApiResponse<Job>
+        {
+            Success = true,
+            Payload = job,
+            ErrorMessage = null
+        };
     }
+
 
     public async Task<ApiResponse<Job>> UpdateJob(UpdateJobDto updatedJobDto)
     {
-        var existingJob = await _context.Jobs.Include(j => j.LineItems)
-                                            .FirstOrDefaultAsync(j => j.Id == updatedJobDto.Id);
+        var existingJob = await _context.Jobs
+                                        .Include(j => j.LineItems)
+                                        .Include(j => j.AssignedTeamMembers)
+                                            .ThenInclude(e => e.User)
+                                        .FirstOrDefaultAsync(j => j.Id == updatedJobDto.Id);
 
         if (existingJob == null)
-            return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
-
-        _context.Entry(existingJob).CurrentValues.SetValues(updatedJobDto);
-
-        existingJob.AssignedTeamMembers = updatedJobDto.AssignedTeamMembers;
-
-        // 🔁 Update internal notes if needed
-        if (updatedJobDto.InternalNotes != null)
         {
-            existingJob.InternalNotes = updatedJobDto.InternalNotes;
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
         }
 
-        // 🔁 Replace line items
-        _context.LineItems.RemoveRange(existingJob.LineItems);
-        foreach (var item in updatedJobDto.LineItems)
+        existingJob.Title = updatedJobDto.Title ?? existingJob.Title;
+        existingJob.Description = updatedJobDto.Description ?? existingJob.Description;
+        existingJob.PropertyId = updatedJobDto.PropertyId;
+        existingJob.JobType = updatedJobDto.JobType ?? existingJob.JobType;
+        existingJob.Repeats = updatedJobDto.Repeats ?? existingJob.Repeats;
+        existingJob.Priority = updatedJobDto.Priority ?? existingJob.Priority;
+        existingJob.StartDate = updatedJobDto.StartDate ?? existingJob.StartDate;
+        existingJob.StartTime = updatedJobDto.StartTime ?? existingJob.StartTime;
+        existingJob.ArrivalWindowStart = updatedJobDto.ArrivalWindowStart;
+        existingJob.ArrivalWindowEnd = updatedJobDto.ArrivalWindowEnd;
+        existingJob.Duration = updatedJobDto.Duration;
+        existingJob.EstimatedDurationMinutes = updatedJobDto.EstimatedDurationMinutes ?? existingJob.EstimatedDurationMinutes;
+        existingJob.DepositAmount = updatedJobDto.DepositAmount ?? existingJob.DepositAmount;
+        existingJob.TaxAmount = updatedJobDto.TaxAmount ?? existingJob.TaxAmount;
+        existingJob.DiscountType = updatedJobDto.DiscountType ?? existingJob.DiscountType;
+        existingJob.DiscountAmount = updatedJobDto.DiscountAmount ?? existingJob.DiscountAmount;
+        existingJob.SendInvoice = updatedJobDto.SendInvoice ?? existingJob.SendInvoice;
+        existingJob.SendReminder = updatedJobDto.SendReminder ?? existingJob.SendReminder;
+        existingJob.ReminderDaysBefore = updatedJobDto.ReminderDaysBefore ?? existingJob.ReminderDaysBefore;
+        existingJob.ConfirmationSent = updatedJobDto.ConfirmationSent ?? existingJob.ConfirmationSent;
+        existingJob.ReminderSent = updatedJobDto.ReminderSent ?? existingJob.ReminderSent;
+        existingJob.InvoiceSent = updatedJobDto.InvoiceSent ?? existingJob.InvoiceSent;
+        existingJob.Source = updatedJobDto.Source ?? existingJob.Source;
+        existingJob.CustomerNotes = updatedJobDto.CustomerNotes ?? existingJob.CustomerNotes;
+        existingJob.Tags = updatedJobDto.Tags ?? existingJob.Tags;
+
+        if (updatedJobDto.AssignedTeamMembers != null)
         {
-            existingJob.LineItems.Add(new LineItem
+            var incomingIds = updatedJobDto.AssignedTeamMembers.Select(e => e.Id).ToHashSet();
+            var existingIds = existingJob.AssignedTeamMembers.Select(e => e.Id).ToHashSet();
+
+            var idsToAdd = incomingIds.Except(existingIds).ToList();
+            var idsToRemove = existingIds.Except(incomingIds).ToList();
+
+            if (idsToAdd.Any())
             {
-                Id = (Guid)(item.Id != Guid.Empty ? item.Id : Guid.NewGuid()),
-                ServiceItemId = item.ServiceItemId,
-                Name = item.Name ?? string.Empty,
-                Description = item.Description,
-                UnitPrice = item.UnitPrice ?? 0,
-                Quantity = item.Quantity ?? 1,
-                JobId = existingJob.Id
-            });
+                var employeesToAdd = _context.Employees.AsEnumerable().Where(e => idsToAdd.Contains(e.Id)).ToList();
+                foreach (var e in employeesToAdd)
+                {
+                    existingJob.AssignedTeamMembers.Add(e);
+                }
+            }
+
+            var employeesToRemove = existingJob.AssignedTeamMembers.Where(e => idsToRemove.Contains(e.Id)).ToList();
+            foreach (var e in employeesToRemove)
+            {
+                existingJob.AssignedTeamMembers.Remove(e);
+            }
+        }
+
+        if (updatedJobDto.LineItems != null)
+        {
+            var dtoItems = updatedJobDto.LineItems;
+
+            var itemsToRemove = existingJob.LineItems
+                .Where(existing => !dtoItems.Any(dto => dto.Id.HasValue && dto.Id == existing.Id))
+                .ToList();
+            _context.LineItems.RemoveRange(itemsToRemove);
+
+            foreach (var dto in dtoItems)
+            {
+                LineItem lineItem;
+                bool isNew = !dto.Id.HasValue || dto.Id == Guid.Empty;
+
+                if (!isNew)
+                {
+                    lineItem = existingJob.LineItems.FirstOrDefault(i => i.Id == dto.Id.Value);
+                    if (lineItem == null) continue;
+                }
+                else
+                {
+                    lineItem = new LineItem
+                    {
+                        Id = Guid.NewGuid(),
+                        JobId = existingJob.Id,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    existingJob.LineItems.Add(lineItem);
+                }
+
+                lineItem.UpdatedAt = DateTime.UtcNow;
+
+                if (dto.ServiceItemId.HasValue && dto.ServiceItemId != Guid.Empty)
+                {
+                    var serviceItem = await _context.ServiceItems.AsNoTracking()
+                                                                .FirstOrDefaultAsync(si => si.Id == dto.ServiceItemId.Value)
+                                                                ?? throw new Exception($"ServiceItem with ID {dto.ServiceItemId.Value} not found.");
+                    lineItem.ServiceItemId = serviceItem.Id;
+                    lineItem.Name = serviceItem.Name;
+                    lineItem.Description = serviceItem.Description;
+                    lineItem.UnitPrice = serviceItem.UnitPrice;
+                    lineItem.Cost = serviceItem.Cost;
+                    lineItem.TaxRate = serviceItem.TaxRate;
+                    lineItem.IsTaxable = serviceItem.IsTaxable;
+                }
+                else
+                {
+                    lineItem.ServiceItemId = null;
+                    lineItem.Name = dto.Name ?? lineItem.Name;
+                    lineItem.Description = dto.Description ?? lineItem.Description;
+                    lineItem.UnitPrice = dto.UnitPrice ?? lineItem.UnitPrice;
+                    lineItem.Cost = 0m;
+                    lineItem.TaxRate = 0m;
+                    lineItem.IsTaxable = false;
+                }
+
+                lineItem.Quantity = dto.Quantity ?? lineItem.Quantity;
+            }
         }
 
         existingJob.UpdatedAt = DateTime.UtcNow;
-
         await _context.SaveChangesAsync();
 
         return new ApiResponse<Job> { Success = true, Payload = existingJob };
     }
 
+
     public async Task DeleteJob(Guid id)
     {
-        var job = await _context.Jobs.FindAsync(id);
-
-        if (job == null)
-            throw new Exception("Job not found");
-
-        _context.Remove(job);
+        var job = await _context.Jobs.FindAsync(id) ?? throw new Exception("Job not found");
+        _context.Jobs.Remove(job);
         await _context.SaveChangesAsync();
     }
 
@@ -307,7 +454,7 @@ public class JobService : IJobService
             }
         }
 
-        return $"{prefix}{datePart}-{sequence:D3}";
+        return $"{prefix}{datePart}-{sequence:D4}";
     }
 
 }

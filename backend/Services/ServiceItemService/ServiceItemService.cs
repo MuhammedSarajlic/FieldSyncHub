@@ -17,32 +17,29 @@ public class ServiceItemService : IServiceItemService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<GetServiceItemDto>>> GetServiceItems()
+    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItems()
     {
         var serviceItems = await _context.ServiceItems.ToListAsync();
-        var getServiceItemsDto = serviceItems.Adapt<List<GetServiceItemDto>>();
-        return new ApiResponse<List<GetServiceItemDto>>()
+        return new ApiResponse<List<ServiceItem>>()
         {
             Success = true,
-            Payload = getServiceItemsDto,
+            Payload = serviceItems,
             ErrorMessage = null
         };
     }
 
-    public async Task<GetServiceItemDto> GetServiceItemById(Guid id)
+    public async Task<ServiceItem> GetServiceItemById(Guid id)
     {
         var serviceItem = await _context.ServiceItems.FindAsync(id);
-        var getServiceItemDto = serviceItem.Adapt<GetServiceItemDto>();
-        return getServiceItemDto ?? throw new KeyNotFoundException("Service item not found");
+        return serviceItem ?? throw new KeyNotFoundException("Service item not found");
     }
 
-    public async Task<ApiResponse<List<GetServiceItemDto>>> GetServiceItemsByWorkspace(Guid workspaceId)
+    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByWorkspace(Guid workspaceId)
     {
-        var items = await _context.ServiceItems
+        var serviceItems = await _context.ServiceItems
             .Where(s => s.IsActive && s.Category != null && s.Category.ToLower() != "archived")
             .ToListAsync();
-        var itemsDto = items.Adapt<List<GetServiceItemDto>>();
-        return new ApiResponse<List<GetServiceItemDto>> { Success = true, Payload = itemsDto };
+        return new ApiResponse<List<ServiceItem>> { Success = true, Payload = serviceItems };
     }
 
     public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByFilter(ServiceItemFilterDto filterDto, Guid workspaceId)
@@ -119,13 +116,61 @@ public class ServiceItemService : IServiceItemService
         return item;
     }
 
-    public async Task<GetServiceItemDto> UpdateServiceItem(UpdateServiceItemDto updateServiceItemDto)
+    public async Task<ApiResponse<ServiceItem>> UpdateServiceItem(UpdateServiceItemDto updateServiceItemDto)
     {
-        var existingServiceItem = await _context.ServiceItems.FindAsync(updateServiceItemDto.Id) ?? throw new Exception("Service item not found");
-        updateServiceItemDto.Adapt(existingServiceItem);
+        var existingServiceItem = await _context.ServiceItems.FindAsync(updateServiceItemDto.Id);
+
+        if (existingServiceItem == null)
+        {
+            return new ApiResponse<ServiceItem>
+            {
+                Success = false,
+                Payload = null,
+                ErrorMessage = "Service item not found."
+            };
+        }
+
+        existingServiceItem.Name = updateServiceItemDto.Name ?? existingServiceItem.Name;
+        existingServiceItem.Description = updateServiceItemDto.Description ?? existingServiceItem.Description;
+        existingServiceItem.Category = updateServiceItemDto.Category ?? existingServiceItem.Category;
+        existingServiceItem.SKU = updateServiceItemDto.SKU ?? existingServiceItem.SKU;
+        existingServiceItem.ImageUrl = updateServiceItemDto.ImageUrl ?? existingServiceItem.ImageUrl;
+
+        if (updateServiceItemDto.Type.HasValue)
+        {
+            existingServiceItem.Type = updateServiceItemDto.Type.Value;
+        }
+        if (updateServiceItemDto.UnitPrice.HasValue)
+        {
+            existingServiceItem.UnitPrice = updateServiceItemDto.UnitPrice.Value;
+        }
+        if (updateServiceItemDto.Cost.HasValue)
+        {
+            existingServiceItem.Cost = updateServiceItemDto.Cost.Value;
+        }
+        if (updateServiceItemDto.TaxRate.HasValue)
+        {
+            existingServiceItem.TaxRate = updateServiceItemDto.TaxRate.Value;
+        }
+        if (updateServiceItemDto.IsTaxable.HasValue)
+        {
+            existingServiceItem.IsTaxable = updateServiceItemDto.IsTaxable.Value;
+        }
+        if (updateServiceItemDto.IsActive.HasValue)
+        {
+            existingServiceItem.IsActive = updateServiceItemDto.IsActive.Value;
+        }
+
         existingServiceItem.UpdatedAt = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
-        return existingServiceItem.Adapt<GetServiceItemDto>();
+
+        return new ApiResponse<ServiceItem>
+        {
+            Success = true,
+            Payload = existingServiceItem,
+            ErrorMessage = null
+        };
     }
 
     public async Task DeleteServiceItem(Guid id)

@@ -7,7 +7,7 @@ public class CustomerPhone
 {
     [Key]
     public Guid Id { get; set; }
-    public string PhoneType { get; set; } = string.Empty;
+    public PhoneType PhoneType { get; set; } = PhoneType.Work;
     public string PhoneNumber { get; set; } = string.Empty;
     public bool IsReceiveMessage { get; set; }
     public Guid CustomerId { get; set; }
@@ -15,4 +15,12 @@ public class CustomerPhone
     public Customer? Customer { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public enum PhoneType
+{
+    Work,
+    Mobile,
+    Home,
+    Other
 }

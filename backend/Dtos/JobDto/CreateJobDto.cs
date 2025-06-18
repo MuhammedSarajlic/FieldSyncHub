@@ -14,6 +14,7 @@ public class CreateJobDto
     public JobType JobType { get; set; } = JobType.OneTime;
     public string Repeats { get; set; } = string.Empty;
     public ICollection<CreateLineItemDto> LineItems { get; set; } = [];
+    public JobStatus Status { get; set; } = JobStatus.Scheduled;
     public ICollection<StatusChange> StatusHistory { get; set; } = [];
     public JobPriority Priority { get; set; } = JobPriority.Normal;
     public DateTime StartDate { get; set; }
@@ -24,7 +25,6 @@ public class CreateJobDto
     public string TimeZone { get; set; } = "UTC";
     public int EstimatedDurationMinutes { get; set; }
     public List<Employee> AssignedTeamMembers { get; set; } = [];
-    public ICollection<Note>? TeamNotes { get; set; }
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     public decimal DepositAmount { get; set; }
     public decimal TaxAmount { get; set; }
@@ -38,6 +38,7 @@ public class CreateJobDto
     public bool InvoiceSent { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public string? Source { get; set; }
-    // Maybe will be used in the future
-    // public List<string> Tags { get; set; } = [];
+    public List<string> Tags { get; set; } = [];
+    public string? CustomerNotes { get; set; }
+    public string? InternalNotes { get; set; }
 }

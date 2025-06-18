@@ -79,12 +79,12 @@ public class CustomerPhoneService : ICustomerPhoneService
     {
         var existingCustomerPhone = await _context.CustomerPhones.Where(p => p.Id == updatedCustomerPhoneDto.Id).FirstOrDefaultAsync();
 
-        existingCustomerPhone.PhoneType = updatedCustomerPhoneDto.PhoneType ?? existingCustomerPhone.PhoneType;
         existingCustomerPhone.PhoneNumber = updatedCustomerPhoneDto.PhoneNumber ?? existingCustomerPhone.PhoneNumber;
         if (updatedCustomerPhoneDto.IsReceiveMessage.HasValue)
         {
             existingCustomerPhone.IsReceiveMessage = updatedCustomerPhoneDto.IsReceiveMessage.Value;
         }
+        if (updatedCustomerPhoneDto.PhoneType.HasValue) existingCustomerPhone.PhoneType = updatedCustomerPhoneDto.PhoneType.Value;
 
         existingCustomerPhone.UpdatedAt = DateTime.UtcNow;
 

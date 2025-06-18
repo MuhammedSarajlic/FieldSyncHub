@@ -1,6 +1,5 @@
 import { LucideIcon } from 'lucide-react';
 import { TAddCustomerPhone, TCustomerPhone } from './CustomerPhone';
-import { TAddCustomField } from './CustomField';
 import { TInvoice } from './Invoice';
 import { TJob } from './Job';
 import { TNote } from './Note';
