@@ -8,8 +8,3 @@ export enum QuoteStatus {
   Expired,
   ConvertedToJob,
 }
-
-export enum DiscountType {
-  Percentage,
-  FixedAmount,
-}

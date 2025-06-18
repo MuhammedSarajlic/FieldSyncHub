@@ -5,6 +5,8 @@ export type TNote = {
   noteText?: string;
   pathFile?: string;
   customerId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TAddNote = {
@@ -13,4 +15,10 @@ export type TAddNote = {
   noteText?: string;
   pathFile?: string;
   customerId: string;
+};
+
+export type TUpdateNote = {
+  id: string;
+  noteText?: string;
+  pathFile?: string;
 };

@@ -1,11 +1,11 @@
-export type TServiceItemType = 'Service' | 'Product';
+import { ServiceItemType } from '../constants/Enumeration/ServiceItem/ServiceItem';
 
 export type TServiceItem = {
   id: string;
   workspaceId: string;
   name: string;
   description?: string;
-  type: TServiceItemType;
+  type: ServiceItemType;
   category: string;
   sku: string;
   unitPrice: number;
@@ -22,14 +22,44 @@ export type TAddServiceItem = {
   workspaceId: string;
   name: string;
   description?: string;
-  type: TServiceItemType;
+  type: ServiceItemType;
   category: string;
-  sku: string;
+  sku?: string;
   unitPrice: number;
   cost: number;
   taxRate: number;
   isTaxable: boolean;
   isActive: boolean;
+  imageUrl?: string;
+};
+
+export type TUpdateServiceItem = {
+  id: string;
+  name?: string;
+  description?: string;
+  type?: ServiceItemType;
+  category?: string;
+  sku?: string;
+  unitPrice?: number;
+  cost?: number;
+  taxRate?: number;
+  isTaxable?: boolean;
+  isActive?: boolean;
+  imageUrl?: string;
+};
+
+export type TImportServiceItem = {
+  workspaceId: string;
+  name?: string;
+  description?: string;
+  type?: ServiceItemType;
+  category?: string;
+  sku?: string;
+  unitPrice?: number;
+  cost?: number;
+  taxRate?: number;
+  isTaxable?: boolean;
+  isActive?: boolean;
   imageUrl?: string;
 };
 

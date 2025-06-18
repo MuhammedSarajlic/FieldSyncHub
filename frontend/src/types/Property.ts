@@ -8,6 +8,8 @@ export type TProperty = {
   address: string;
   isBillingAddress: boolean;
   customerId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TAddProperty = {
@@ -18,4 +20,14 @@ export type TAddProperty = {
   postalCode?: string;
   isBillingAddress?: boolean;
   customerId: string;
+};
+
+export type TUpdateProperty = {
+  id: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  isBillingAddress?: boolean;
 };

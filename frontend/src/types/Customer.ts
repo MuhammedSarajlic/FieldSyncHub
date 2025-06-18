@@ -7,6 +7,7 @@ import { TNote } from './Note';
 import { TAddProperty, TProperty } from './Property';
 import { TQuote } from './Quote';
 import { TRequest } from './Request';
+import { TAddCustomFieldValue, TCustomFieldValue } from './CustomFieldValue';
 
 export type TCustomer = {
   id: string;
@@ -17,7 +18,7 @@ export type TCustomer = {
   companyName?: string;
   displayName: string;
   isCompany: boolean;
-  email: string[];
+  emails: string[];
   isReceiveJobNotifications: boolean;
   isReceiveQuoteNotifications: boolean;
   isReceiveInvoiceNotifications: boolean;
@@ -26,12 +27,15 @@ export type TCustomer = {
   billingState?: string;
   billingCountry?: string;
   billingPostalCode?: string;
-  archived: boolean;
+  billingAddress: string;
+  isArchived: boolean;
   tags: string[];
+  customFieldValues: TCustomFieldValue[];
+  notes: TNote[];
   properties: TProperty[];
   customerPhones: TCustomerPhone[];
-  customFields: TAddCustomField[]; 
-  notes: TNote[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TAddCustomer = {
@@ -40,7 +44,7 @@ export type TAddCustomer = {
   lastName: string;
   companyName?: string;
   displayName: string;
-  email: string[];
+  emails: string[];
   isReceiveJobNotifications: boolean;
   isReceiveQuoteNotifications: boolean;
   isReceiveInvoiceNotifications: boolean;
@@ -49,32 +53,70 @@ export type TAddCustomer = {
   billingState?: string;
   billingCountry?: string;
   billingPostalCode?: string;
-  properties: TAddProperty[];
-  customerPhones: TAddCustomerPhone[];
-  customFields: TAddCustomField[];
+  customFieldValues?: TAddCustomFieldValue[];
+  properties?: TAddProperty[];
+  customerPhones?: TAddCustomerPhone[];
+};
+
+export type TUpdateCustomer = {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  displayName?: string;
+  emails?: string[];
+  isReceiveJobNotifications?: boolean;
+  isReceiveQuoteNotifications?: boolean;
+  isReceiveInvoiceNotifications?: boolean;
+  billingStreet?: string;
+  billingCity?: string;
+  billingState?: string;
+  billingCountry?: string;
+  billingPostalCode?: string;
+  customFieldValues?: TAddCustomFieldValue[];
+  properties?: TAddProperty[];
+  customerPhones?: TAddCustomerPhone[];
 };
 
 export type TImportCustomer = {
   firstName: string;
   lastName: string;
   companyName?: string;
-  isCompany?: boolean;
-  email?: string[];
-  visitReminders?: boolean;
-  jobFollowUps?: boolean;
-  quoteFollowUps?: boolean;
-  invoiceFollowUps?: boolean;
-  archived?: boolean;
-  tags?: string[];
-  createdAt?: string;
+  displayName: boolean;
+  emails: string[];
+  isReceiveJobNotifications: boolean;
+  isReceiveQuoteNotifications: boolean;
+  isReceiveInvoiceNotifications: boolean;
+  billingStreet?: string;
+  billingCity?: string;
+  billingState?: string;
+  billingCountry?: string;
+  billingPostalCode?: string;
+  tags: string[];
+  properties: TAddProperty[];
+  customerPhones: TAddCustomerPhone[];
 };
 
 export type TCustomerStats = {
   total: number;
-  newCustomers: number;
   companies: number;
   individuals: number;
+  newCustomers: number;
   missingInfoCustomers: number;
+};
+
+export type TCustomerFilter = {
+  q?: string;
+  sortBy?: string;
+  sort?: string;
+  customerType?: string;
+  createdDateMin?: string;
+  createdDateMax?: string;
+  propertiesMin?: number;
+  propertiesMax?: number;
+  hasEmail?: boolean;
+  hasPhone?: boolean;
+  tags?: string;
 };
 
 export type TCustomerTab = {

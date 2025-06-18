@@ -1,7 +1,7 @@
 import { TServiceItem } from './ServiceItem';
 
 export type TLineItem = {
-  lineItemId: string;
+  id: string;
   serviceItemId?: string;
   serviceItem?: TServiceItem;
   name: string;
@@ -18,6 +18,19 @@ export type TLineItem = {
   invoiceId?: string;
   quoteId?: string;
   requestId?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TGetLineItem = {
+  id: string;
+  name: string;
+  description?: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+  taxAmount: number;
+  totalPrice: number;
 };
 
 export type TModalLineItem = {
@@ -39,4 +52,13 @@ export type TAddLineItem = {
   invoiceId?: string;
   quoteId?: string;
   requestId?: string;
+};
+
+export type TUpdateLineItem = {
+  id?: string;
+  serviceItemId?: string;
+  name: string;
+  description?: string;
+  unitPrice: number;
+  quantity: number;
 };

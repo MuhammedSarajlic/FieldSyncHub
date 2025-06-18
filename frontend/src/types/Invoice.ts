@@ -1,26 +1,24 @@
+import { DiscountType } from '../constants/Enumeration/CommonEnum/DiscountEnum';
+import { InvoiceStatus } from '../constants/Enumeration/InvoiceEnum/InvoiceEnum';
 import { TCustomer } from './Customer';
 import { TJob } from './Job';
-import { TAddLineItem, TLineItem } from './LineItem';
-
-export type TDiscountType = 'Percentage' | 'FixedAmount';
-
-export type TStatus = 'Draft' | 'Sent' | 'AwaitingResponse' | 'AwaitingApproval' | 'Approved' | 'Declined' | 'Expired' | 'ConvertedToJob';
+import { TAddLineItem, TLineItem, TUpdateLineItem } from './LineItem';
 
 export type TInvoice = {
-  invoiceId: string;
+  id: string;
   customerId: string;
   customer: TCustomer;
   workspaceId: string;
   invoiceNumber: string;
   jobId?: string;
   job?: TJob;
-  items: TLineItem[];
-  subtotal: number;
+  lineItems: TLineItem[];
   taxRate: number;
   discount: number;
-  discountType: TDiscountType;
+  discountType: DiscountType;
+  subtotal: number;
   total: number;
-  status: TStatus;
+  status: InvoiceStatus;
   issueDate: string;
   dueDate: string;
   paymentTerms: string;
@@ -35,11 +33,11 @@ export type TAddInvoice = {
   customerId: string;
   workspaceId: string;
   jobId?: string;
-  items: TAddLineItem[];
+  lineItems: TAddLineItem[];
   taxRate: number;
   discount: number;
-  discountType: TDiscountType;
-  status: TStatus;
+  discountType: DiscountType;
+  status: InvoiceStatus;
   issueDate: string;
   dueDate: string;
   paymentTerms: string;
@@ -49,15 +47,26 @@ export type TAddInvoice = {
 
 export type TUpdateInvoice = {
   id: string;
-  items: TAddLineItem[];
+  lineItems: TUpdateLineItem[];
   taxRate?: number;
   discount?: number;
-  discountType?: TDiscountType;
-  status?: TStatus;
+  discountType?: DiscountType;
+  status?: InvoiceStatus;
   issueDate?: string;
   dueDate?: string;
   paymentTerms?: string;
   notes?: string;
   internalNotes?: string;
   isPaid?: boolean;
+};
+
+export type TInvoiceFilter = {
+  q?: string;
+  sortBy?: string;
+  sort?: string;
+  status?: string;
+  dueDateMin?: string;
+  dueDateMax?: string;
+  totalMin?: number;
+  totalMax?: number;
 };

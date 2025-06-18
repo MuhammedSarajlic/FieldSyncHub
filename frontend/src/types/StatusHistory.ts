@@ -1,5 +1,5 @@
-export type TStatusHistory = {
-  statusChangeId: string;
+export type TStatusChange = {
+  id: string;
   fromStatus: string;
   toStatus: string;
   changedAt: string;

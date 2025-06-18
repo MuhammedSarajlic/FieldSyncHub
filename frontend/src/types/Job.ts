@@ -1,21 +1,18 @@
 import { TCustomer } from './Customer';
-import { TAddLineItem, TLineItem } from './LineItem';
-import { TNote } from './Note';
+import { TAddLineItem, TLineItem, TUpdateLineItem } from './LineItem';
 import { TProperty } from './Property';
-import { TStatusHistory } from './StatusHistory';
 import { TEmployee } from './Employee';
-import { TDiscountType } from './Invoice';
-
-export type TJobType = 'OneTime' | 'Recurring';
-
-export type TJobStatus = 'Scheduled' | 'Dispatched' | 'InProgress' | 'Completed' | 'Cancelled';
-
-export type TJobPriority = 'Low' | 'Normal' | 'High' | 'Urgent';
-
-export type TPaymentStatus = 'Unpaid' | 'Partial' | 'Paid' | 'Refunded';
+import {
+  JobPriority,
+  JobStatus,
+  JobType,
+  PaymentStatus,
+} from '../constants/Enumeration/JobEnum/JobEnum';
+import { TStatusChange } from './StatusHistory';
+import { DiscountType } from '../constants/Enumeration/CommonEnum/DiscountEnum';
 
 export type TJob = {
-  jobId: string;
+  id: string;
   workspaceId: string;
   title: string;
   description?: string;
@@ -23,26 +20,25 @@ export type TJob = {
   customer?: TCustomer;
   propertyId?: string;
   property?: TProperty;
-  jobType: TJobType;
+  jobType: JobType;
   repeats: string;
   lineItems: TLineItem[];
-  status: TJobStatus;
-  statusHistory: TStatusHistory[];
-  priority: TJobPriority;
+  status: JobStatus;
+  statusHistory: TStatusChange[];
+  priority: JobPriority;
   startDate: string;
   startTime: string;
   arrivalWindowStart?: string;
   arrivalWindowEnd?: string;
   duration?: number;
-  estimatedDurationMinutes: number;
   timeZone: string;
+  estimatedDurationMinutes: number;
   assignedTeamMembers: TEmployee[];
-  teamNotes?: TNote[];
-  paymentStatus: TPaymentStatus;
+  paymentStatus: PaymentStatus;
   depositAmount: number;
   subtotal: number;
   taxAmount: number;
-  discountType: TDiscountType; 
+  discountType: DiscountType;
   discountAmount: number;
   calculatedDiscount: number;
   totalAmount: number;
@@ -58,12 +54,10 @@ export type TJob = {
   source?: string;
   tags: string[];
   customerNotes?: string;
-  internalNotes?: TNote[];
+  internalNotes?: string;
   createdAt: string;
   updatedAt: string;
 };
-
-
 
 export type TAddJob = {
   workspaceId: string;
@@ -71,24 +65,24 @@ export type TAddJob = {
   description?: string;
   customerId: string;
   propertyId?: string;
-  jobType: TJobType;
+  jobType: JobType;
   repeats: string;
   lineItems: TAddLineItem[];
-  statusHistory: any[]; 
-  priority: TJobPriority;
+  status: JobStatus;
+  statusHistory: TStatusChange[];
+  priority: JobPriority;
   startDate: string;
   startTime: string;
   arrivalWindowStart?: string;
   arrivalWindowEnd?: string;
   duration?: number;
-  estimatedDurationMinutes: number;
   timeZone: string;
+  estimatedDurationMinutes: number;
   assignedTeamMembers: TEmployee[];
-  teamNotes?: TNote[];
-  paymentStatus: TPaymentStatus;
+  paymentStatus: PaymentStatus;
   depositAmount: number;
   taxAmount: number;
-  discountType: TDiscountType; 
+  discountType: DiscountType;
   discountAmount: number;
   sendInvoice: boolean;
   sendReminder: boolean;
@@ -98,4 +92,51 @@ export type TAddJob = {
   invoiceSent: boolean;
   createdBy: string;
   source?: string;
+  tags?: string[];
+  customerNotes?: string;
+  internalNotes?: string;
+};
+
+export type TUpdateJob = {
+  id: string;
+  title?: string;
+  description?: string;
+  propertyId?: string;
+  jobType?: JobType;
+  repeats?: string;
+  lineItems?: TUpdateLineItem[];
+  priority?: JobPriority;
+  startDate?: string;
+  startTime?: string;
+  arrivalWindowStart?: string;
+  arrivalWindowEnd?: string;
+  duration?: number;
+  estimatedDurationMinutes?: number;
+  assignedTeamMembers?: TEmployee[];
+  depositAmount?: number;
+  taxAmount?: number;
+  discountType?: DiscountType;
+  discountAmount?: number;
+  sendInvoice?: boolean;
+  sendReminder?: boolean;
+  reminderDaysBefore?: number;
+  confirmationSent?: boolean;
+  reminderSent?: boolean;
+  invoiceSent?: boolean;
+  source?: string;
+  tags?: string[];
+  customerNotes?: string;
+  internalNotes?: string;
+};
+
+export type JobFilter = {
+  q?: string;
+  sortBy?: string;
+  sort?: string;
+  scheduleDateMin?: string;
+  scheduleDateMax?: string;
+  totalMin?: number;
+  totalMax?: number;
+  priority?: string;
+  status?: string;
 };

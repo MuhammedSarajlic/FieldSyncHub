@@ -1,22 +1,33 @@
-import { TCustomFieldValue } from './CustomFieldValue';
-
-export type TCustomFieldType = 'Text' | 'Number' | 'Date' | 'Dropdown' | 'Checkbox';
+import { CustomFieldType } from '../constants/Enumeration/CustomFieldEnum/CustomFieldEnum';
 
 export type TCustomField = {
-  customFieldId: string;
+  id: string;
   workspaceId: string;
   fieldName: string;
-  fieldType: TCustomFieldType;
+  fieldType: CustomFieldType;
   defaultValue?: string;
   dropdownOptions?: string[];
   isRequired: boolean;
   isArchived: boolean;
-  customFieldValue?: TCustomFieldValue[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TAddCustomField = {
+  workspaceId: string;
   fieldName: string;
-  fieldType: string;
-  defaultValue: string;
+  fieldType: CustomFieldType;
+  defaultValue?: string;
   dropdownOptions?: string[];
+  isRequired: boolean;
+};
+
+export type TUpdateCustomField = {
+  id: string;
+  fieldName?: string;
+  fieldType?: CustomFieldType;
+  defaultValue?: string;
+  dropdownOptions?: string[];
+  isRequired?: boolean;
+  isArchived?: boolean;
 };
