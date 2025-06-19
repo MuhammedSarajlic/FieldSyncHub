@@ -8,6 +8,7 @@ import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/
 import { TCustomer, TCustomerStats } from '../../types/Customer';
 import ImportCustomersModal from '../../components/Customers/ImportCustomer/ImportCustomersModal';
 import {
+  ExportCustomers,
   GetCustomerByWorkspace,
   GetCustomersByFilter,
   GetCustomerStats,
@@ -22,6 +23,7 @@ import Table from '../../components/Table/Table';
 import { customerColumns } from '../../constants/Columns/CustomerColumns';
 import { customerSortOptions } from '../../constants/Options/SortOptions/CustomerSortOptions';
 import { customerFilterOptions } from '../../constants/Options/FilterOptions/CustomerFilterOptions';
+import { downloadCSVFile } from '../../utils/FuntionHelpers/downloadCSVFile';
 
 export type TPaginationData = {
   totalCount: number;
@@ -56,7 +58,7 @@ const Customers = () => {
   };
 
   const fetchAllCustomersByWorkspace = async () => {
-    if (!user) return;
+    if (!user?.workspace) return;
 
     const paramsObj: Record<string, string> = {};
     let shouldResetPage = false;
@@ -97,22 +99,29 @@ const Customers = () => {
   };
 
   const fetchCustomerStats = async () => {
-    if (!user) return;
+    if (!user?.workspace) return;
     const response = await GetCustomerStats(user.workspace.id);
     if (response.status === 200) {
       setCustomerStats(response.data);
     }
   };
 
-  // const totalCustomers = paginationData.totalCount;
-  // const newCustomersThisMonth = customers.filter(
-  //   (c) => new Date(c.createdAt).getMonth() === new Date().getMonth()
-  // ).length;
-  // const companyCount = customers.filter((c) => c.isCompany).length;
-  // const individualCount = totalCustomers - companyCount;
-  // const customersWithMissingInfo = customers.filter(
-  //   (c) => !c.email?.length || !c.customerPhones?.length
-  // ).length;
+  const handleExportCustomers = async () => {
+    if (!user?.workspace) return;
+    try {
+      const response = await ExportCustomers(user.workspace.id as string);
+      if (response.status !== 200) {
+        console.log('Error exporting customers');
+        return;
+      }
+      downloadCSVFile(
+        response.data,
+        `customers_workspace_${user.workspace.id}.csv`
+      );
+    } catch (error) {
+      console.error('Failed to export customers:', error);
+    }
+  };
 
   useEffect(() => {
     fetchCustomerStats();
@@ -160,7 +169,11 @@ const Customers = () => {
                   handleBtnClick={() => setIsImportCustomerModalOpen(true)}
                 />
 
-                <ButtonIcon name='Export' icon={icons.exportIcon} />
+                <ButtonIcon
+                  name='Export'
+                  icon={icons.exportIcon}
+                  handleBtnClick={handleExportCustomers}
+                />
                 <div className='w-[1px] h-[38px] bg-border-primary'></div>
                 <CustomIconButton
                   icon={<Plus className='w-4 h-4 mr-1' />}
@@ -270,6 +283,7 @@ const Customers = () => {
         <CreateCustomerModal
           setIsAddCustomerModalOpen={setIsAddCustomerModalOpen}
           getAllCustomersByWorkspace={fetchAllCustomersByWorkspace}
+          getCustomersStats={fetchCustomerStats}
         />
       )}
       {isImportCustomerModalOpen && (

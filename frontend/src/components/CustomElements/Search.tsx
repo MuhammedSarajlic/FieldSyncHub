@@ -11,6 +11,7 @@ const Search = ({
   searchQuery /*handleChange*/,
 }: ISearch) => {
   const [_, setSearchParams] = useSearchParams();
+
   const handleSearch = async (query: string) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
@@ -22,6 +23,7 @@ const Search = ({
       return newParams;
     });
   };
+
   return (
     <div className='relative w-full md:w-64'>
       <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>

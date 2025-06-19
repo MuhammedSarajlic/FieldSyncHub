@@ -5,6 +5,7 @@ import images from '../../constants/images';
 import { Register } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TUserRegister } from '../../types/User';
 
 // Slides for the left panel (can be shared with sign-in or customized)
 const slides = [
@@ -32,7 +33,7 @@ const Signup = () => {
   const navigate = useNavigate();
   const { setAccessToken, user, loading } = useAuth();
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
-  const [userLoginData, setUserLoginData] = useState({
+  const [userLoginData, setUserLoginData] = useState<TUserRegister>({
     firstName: '',
     lastName: '',
     email: '',

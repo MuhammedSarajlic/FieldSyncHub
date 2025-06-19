@@ -14,7 +14,7 @@ export type TAddCustomerPhone = {
   phoneType: PhoneType;
   phoneNumber: string;
   isReceiveMessage: boolean;
-  customerId: string;
+  customerId?: string;
 };
 
 export type TUpdateCustomerPhone = {

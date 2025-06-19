@@ -1,26 +1,25 @@
-import icons from '../../../../../constants/icons';
+import { TCustomerTab } from '../../../../../types/Customer';
+import { TInvoice } from '../../../../../types/Invoice';
 import EmptyTabTable from '../EmptyTabTable';
 import CustomerDetailsInvoiceItem from './CustomerDetailsInvoiceItem';
 
-const CustomerInvoices = () => {
-  const invoices = [
-    {
-      jobId: 'J-1234',
-      schedule: 20,
-      property: 'Hamida 25, Zenica 72000, Federacija Bosne i Hercegovine',
-      total: 120.0,
-    },
-  ];
+interface ICustomerInvoices {
+  invoices: TInvoice[];
+  tab: TCustomerTab;
+}
+
+const CustomerInvoices = ({ invoices, tab }: ICustomerInvoices) => {
   return (
     <div className='w-full'>
       {invoices.length > 0 ? (
-        invoices.map((job) => <CustomerDetailsInvoiceItem key={job.jobId} />)
+        invoices.map((invoice) => (
+          <CustomerDetailsInvoiceItem
+            key={invoice.invoiceId}
+            invoice={invoice}
+          />
+        ))
       ) : (
-        <EmptyTabTable
-          name='invoices'
-          btnName='invoice'
-          icon={icons.invoiceIcon}
-        />
+        <EmptyTabTable tab={tab} onButtonClick={() => {}} />
       )}
     </div>
   );

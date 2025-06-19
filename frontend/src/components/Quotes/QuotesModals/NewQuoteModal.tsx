@@ -13,7 +13,7 @@ import {
   ChevronDown,
   Search,
 } from 'lucide-react';
-import { QuoteStatus } from '../../../constants/Enumeration/QuoteEnum';
+import { QuoteStatus } from '../../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
 import { TAddQuote } from '../../../types/Quote';
 import { GetAllCustomers } from '../../../services/Customer';
@@ -242,7 +242,7 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
                               <span>
                                 {
                                   selectedCustomerData.customerPhones?.[0]
-                                    .phoneNumber
+                                    ?.phoneNumber
                                 }
                               </span>
                             </div>

@@ -22,10 +22,7 @@ import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import { GetQuoteById } from '../../services/Quote';
 import { useParams } from 'react-router';
 import { TQuote } from '../../types/Quote';
-import {
-  DiscountType,
-  QuoteStatus,
-} from '../../constants/Enumeration/QuoteEnum';
+import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { getQuoteStatus } from '../../utils/FuntionHelpers/getQuoteStatus';
 
 const QuoteDetails = () => {

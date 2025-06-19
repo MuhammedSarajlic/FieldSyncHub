@@ -1,22 +1,22 @@
-import icons from '../../../../../constants/icons';
+import { TCustomerTab } from '../../../../../types/Customer';
+import { TQuote } from '../../../../../types/Quote';
 import EmptyTabTable from '../EmptyTabTable';
 import CustomerDetailsQuoteItem from './CustomerDetailsQuoteItem';
 
-const CustomerQuotes = () => {
-  const quotes = [
-    {
-      jobId: 'J-1234',
-      schedule: 20,
-      property: 'Hamida 25, Zenica 72000, Federacija Bosne i Hercegovine',
-      total: 120.0,
-    },
-  ];
+interface ICustomerQuotes {
+  quotes: TQuote[];
+  tab: TCustomerTab;
+}
+
+const CustomerQuotes = ({ quotes, tab }: ICustomerQuotes) => {
   return (
     <div className='w-full'>
       {quotes.length > 0 ? (
-        quotes.map((job) => <CustomerDetailsQuoteItem key={job.jobId} />)
+        quotes.map((quote) => (
+          <CustomerDetailsQuoteItem key={quote.id} quote={quote} />
+        ))
       ) : (
-        <EmptyTabTable name='quotes' btnName='quote' icon={icons.hammerIcons} />
+        <EmptyTabTable tab={tab} onButtonClick={() => {}} />
       )}
     </div>
   );

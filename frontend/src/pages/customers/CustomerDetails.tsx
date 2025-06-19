@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
-import { TCustomer } from '../../types/Customer';
+import { TCustomer, TCustomerTab } from '../../types/Customer';
 import { ArchiveCustomer, GetCustomerById } from '../../services/Customer';
 import { formatDate } from '../../utils/FuntionHelpers/formatDate';
 import CustomerNotes from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerNotes';
@@ -11,9 +11,33 @@ import CustomerAddPropertyModal from '../../components/Customers/CustomerDetails
 import { TAddProperty } from '../../types/Property';
 import { CreateProperty } from '../../services/Property';
 import CustomerArchiveModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerArchiveModal';
-import { Briefcase, CalendarClock, FileText, Receipt } from 'lucide-react';
+import {
+  Briefcase,
+  CalendarClock,
+  ClipboardList,
+  FileText,
+  Receipt,
+} from 'lucide-react';
 import CustomerEmailModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerEmailModal';
 import CustomerEditModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerEditModal';
+import { GetJobsByCustomer } from '../../services/Job';
+import { GetQuotesByCustomer } from '../../services/Quote';
+import { GetInvoicesByCustomer } from '../../services/Invoice';
+import { GetRequestsByCustomer } from '../../services/Request';
+import EmptyTabTable from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/EmptyTabTable';
+import { TJob } from '../../types/Job';
+import { TInvoice } from '../../types/Invoice';
+import { TQuote } from '../../types/Quote';
+import CustomerDetailsQuoteItem from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerQuoteTab/CustomerDetailsQuoteItem';
+import CustomerDetailsInvoiceItem from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerInvoiceTab/CustomerDetailsInvoiceItem';
+import CustomerDetailsRequestItem from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerRequestTab/CustomerDetailsRequestItem';
+import CustomerDetailsJobItem from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerJobTab/CustomerDetailsJobItem';
+import { TRequest } from '../../types/Request';
+import CustomerJobs from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerJobTab/CustomerJobs';
+import CustomerRequests from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerRequestTab/CustomerRequests';
+import CustomerQuotes from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerQuoteTab/CustomerQuotes';
+import CustomerInvoices from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerInvoiceTab/CustomerInvoices';
+import { PhoneType } from '../../constants/Enumeration/CustomerEnum/CustomerPhone';
 
 const CustomerDetails = () => {
   const navigate = useNavigate();
@@ -33,12 +57,123 @@ const CustomerDetails = () => {
     lastActivity: '2024-06-30',
   };
 
+  const [tabs, setTabs] = useState<TCustomerTab[]>([
+    {
+      id: 'jobs',
+      label: 'Jobs',
+      count: 0,
+      loaded: false,
+      loading: false,
+      items: [] as TJob[],
+      icon: Briefcase,
+    },
+    {
+      id: 'requests',
+      label: 'Requests',
+      count: 0,
+      loaded: false,
+      loading: false,
+      items: [],
+      icon: ClipboardList,
+    },
+    {
+      id: 'quotes',
+      label: 'Quotes',
+      count: 0,
+      loaded: false,
+      loading: false,
+      items: [] as TQuote[],
+      icon: FileText,
+    },
+    {
+      id: 'invoices',
+      label: 'Invoices',
+      count: 0,
+      loaded: false,
+      loading: false,
+      items: [] as TInvoice[],
+      icon: Receipt,
+    },
+  ]);
+
+  const fetchTabData = async () => {
+    setTabs((prev) =>
+      prev.map((tab) => ({
+        ...tab,
+        loaded: false,
+        loading: true,
+      }))
+    );
+    const jobs = await GetJobsByCustomer(customerId as string);
+    const quotes = await GetQuotesByCustomer(customerId as string);
+    const invoices = await GetInvoicesByCustomer(customerId as string);
+    const requests = await GetRequestsByCustomer(customerId as string);
+    console.log('invoices', invoices);
+
+    if (jobs.status === 200) {
+      setTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === 'jobs'
+            ? {
+                ...tab,
+                loaded: true,
+                loading: false,
+                items: jobs.data.payload,
+                count: jobs.data.payload.length,
+              }
+            : tab
+        )
+      );
+    }
+    if (requests.status === 200) {
+      setTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === 'requests'
+            ? {
+                ...tab,
+                loaded: true,
+                items: requests.data.payload,
+                count: requests.data.payload.length,
+              }
+            : tab
+        )
+      );
+    }
+    if (quotes.status === 200) {
+      setTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === 'quotes'
+            ? {
+                ...tab,
+                loaded: true,
+                items: quotes.data.payload,
+                count: quotes.data.payload.length,
+              }
+            : tab
+        )
+      );
+    }
+    if (invoices.status === 200) {
+      setTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === 'invoices'
+            ? {
+                ...tab,
+                loaded: true,
+                items: invoices.data.payload,
+                count: invoices.data.payload.length,
+              }
+            : tab
+        )
+      );
+    }
+  };
+
   const fetchCustomer = async () => {
     const response = await GetCustomerById(customerId as string);
     if (response.data.success) {
       setCustomer(response.data.payload);
     }
-    console.log(response);
   };
 
   const handleArchive = async () => {
@@ -64,10 +199,11 @@ const CustomerDetails = () => {
   };
 
   useEffect(() => {
+    fetchTabData();
     fetchCustomer();
   }, [customerId]);
 
-  const getPhoneIcon = (type) => {
+  const getPhoneIcon = (type: string) => {
     switch (type) {
       case 'Mobile':
         return (
@@ -105,6 +241,40 @@ const CustomerDetails = () => {
     }
   };
 
+  const renderContent = () => {
+    const activeTab = tabs.find((t) => t.id === selectedTab);
+    const items = (activeTab?.items || []) as any[];
+
+    switch (selectedTab) {
+      case 'jobs':
+        return (
+          <div className='space-y-3'>
+            <CustomerJobs jobs={items} tab={activeTab} />
+          </div>
+        );
+      case 'requests':
+        return (
+          <div className='space-y-3'>
+            <CustomerRequests requests={items} tab={activeTab} />
+          </div>
+        );
+      case 'quotes':
+        return (
+          <div className='space-y-3'>
+            <CustomerQuotes quotes={items} tab={activeTab} />
+          </div>
+        );
+      case 'invoices':
+        return (
+          <div className='space-y-3'>
+            <CustomerInvoices invoices={items} tab={activeTab} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (!customer) {
     return (
       <div className='flex'>
@@ -118,13 +288,6 @@ const CustomerDetails = () => {
       </div>
     );
   }
-
-  const tabs = [
-    { id: 'jobs', label: 'Jobs', count: 8 },
-    { id: 'requests', label: 'Requests', count: 3 },
-    { id: 'quotes', label: 'Quotes', count: 5 },
-    { id: 'invoices', label: 'Invoices', count: 12 },
-  ];
 
   const displayName = customer.isCompany
     ? customer.companyName
@@ -318,7 +481,7 @@ const CustomerDetails = () => {
                       <button
                         key={tab.id}
                         onClick={() => setSelectedTab(tab.id)}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                        className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
                           selectedTab === tab.id
                             ? 'border-blue-600 text-blue-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -335,106 +498,7 @@ const CustomerDetails = () => {
                   </nav>
                 </div>
 
-                <div className=''>
-                  {selectedTab === 'jobs' && (
-                    <div className='space-y-3'>
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div className='px-6 py-4 flex items-start justify-between w-full border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors duration-150'>
-                          <div className='w-[30%] flex flex-col'>
-                            <p className='font-semibold text-gray-900'>
-                              J-1234
-                            </p>
-                            <div className='mt-2 inline-flex items-center'>
-                              <span className='relative flex h-2 w-2 mr-2'>
-                                <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75'></span>
-                                <span className='relative inline-flex rounded-full h-2 w-2 bg-blue-500'></span>
-                              </span>
-                              <span className='text-xs font-medium text-blue-700'>
-                                Upcoming
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className='w-[25%]'>
-                            <p className='text-xs text-gray-500 mb-1'>
-                              Scheduled for
-                            </p>
-                            <p className='font-medium text-sm text-gray-900'>
-                              Feb 20, 2025
-                            </p>
-                          </div>
-
-                          <div className='w-[30%]'>
-                            <p className='text-sm text-gray-600 line-clamp-1'>
-                              Hamida 25, Zenica 72000, Federacija Bosne i
-                              Hercegovine
-                            </p>
-                          </div>
-
-                          <div className='w-[15%] text-right'>
-                            <p className='font-semibold text-gray-900'>
-                              $120.00
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {selectedTab === 'requests' && (
-                    <div className='text-center py-8'>
-                      <svg
-                        className='mx-auto h-12 w-12 text-gray-400'
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        stroke='currentColor'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={1}
-                          d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-                        />
-                      </svg>
-                      <p className='text-gray-500 mt-2'>No requests found</p>
-                    </div>
-                  )}
-                  {selectedTab === 'quotes' && (
-                    <div className='text-center py-8'>
-                      <svg
-                        className='mx-auto h-12 w-12 text-gray-400'
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        stroke='currentColor'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={1}
-                          d='M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z'
-                        />
-                      </svg>
-                      <p className='text-gray-500 mt-2'>No quotes found</p>
-                    </div>
-                  )}
-                  {selectedTab === 'invoices' && (
-                    <div className='text-center py-8'>
-                      <svg
-                        className='mx-auto h-12 w-12 text-gray-400'
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        stroke='currentColor'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={1}
-                          d='M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-                        />
-                      </svg>
-                      <p className='text-gray-500 mt-2'>No invoices found</p>
-                    </div>
-                  )}
-                </div>
+                <div className=''>{renderContent()}</div>
               </div>
             </div>
 
@@ -446,7 +510,7 @@ const CustomerDetails = () => {
                   Contact Information
                 </h3>
                 <div className='space-y-4'>
-                  {customer.email && customer.email.length > 0 ? (
+                  {customer.emails && customer.emails.length > 0 ? (
                     <div>
                       <div className='flex items-center space-x-3 mb-2'>
                         <div className='w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
@@ -462,7 +526,7 @@ const CustomerDetails = () => {
                         <span className='text-gray-700 font-medium'>Email</span>
                       </div>
                       <div className='pl-11 space-y-1'>
-                        {customer.email.map((email, index) => (
+                        {customer.emails.map((email, index) => (
                           <p key={index} className='text-gray-600 text-sm'>
                             {email}
                           </p>
@@ -499,7 +563,7 @@ const CustomerDetails = () => {
                               className='flex items-start space-x-3'
                             >
                               <div className='w-6 h-6 bg-blue-50 rounded-full flex items-center justify-center mt-0.5'>
-                                {getPhoneIcon(phone.phoneType)}
+                                {getPhoneIcon(PhoneType[phone.phoneType])}
                               </div>
                               <div>
                                 <p className='text-gray-600 text-sm'>
@@ -645,7 +709,7 @@ const CustomerDetails = () => {
 
       <CustomerEmailModal
         isOpen={isEmailModalOpen}
-        customerEmail={customer.email[0]}
+        customerEmail={customer.emails[0]}
         onClose={() => setIsEmailModalOpen(false)}
         // onSend={() => {}}
       />
@@ -653,9 +717,7 @@ const CustomerDetails = () => {
         isOpen={isArchiveModalOpen}
         onClose={() => setIsArchiveModalOpen(false)}
         onConfirm={handleArchive}
-        customerName={
-          customer.isCompany ? customer.companyName : customer.fullName
-        }
+        customerName={customer.displayName}
       />
       <CustomerAddPropertyModal
         existingProperties={customer.properties || []}

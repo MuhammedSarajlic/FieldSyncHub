@@ -1,40 +1,56 @@
 import { useState } from 'react';
 import icons from '../../constants/icons';
-import { TAddCustomer } from '../../types/Customer';
 import ButtonIcon from '../CustomElements/ButtonIcon';
 import CustomButton from '../CustomElements/CustomButton';
 import CustomFieldForm from './CustomFieldForm';
-import { TAddCustomField } from '../../types/CustomField';
+import { TAddCustomField, TCustomField } from '../../types/CustomField';
+import { CustomFieldType } from '../../constants/Enumeration/CustomFieldEnum/CustomFieldEnum';
+import { CreateCustomField } from '../../services/CustomField';
 
 interface INewCustomFieldModal {
   setIsCreateCustomFieldModalOpen: React.Dispatch<
     React.SetStateAction<boolean>
   >;
-  customer: TAddCustomer;
-  setCustomer: React.Dispatch<React.SetStateAction<TAddCustomer>>;
+  workspaceId: string;
+  setCustomFields: React.Dispatch<React.SetStateAction<TCustomField[]>>;
 }
 
 const customFieldInitialValue = {
+  workspaceId: '',
   fieldName: '',
-  fieldType: 'text',
+  fieldType: CustomFieldType.Text,
   defaultValue: '',
-  dropdownOptions: [''],
+  dropdownOptions: [],
+  isRequired: true,
 };
 
 const NewCustomFieldModal = ({
   setIsCreateCustomFieldModalOpen,
-  customer,
-  setCustomer,
+  workspaceId,
+  setCustomFields,
 }: INewCustomFieldModal) => {
   const [customField, setCustomField] = useState<TAddCustomField>(
     customFieldInitialValue
   );
 
-  const addCustomField = () => {
-    setCustomer({
-      ...customer,
-      customFields: [...customer.customFields, customField],
-    });
+  const addCustomField = async () => {
+    const trimmedOptions = (customField.dropdownOptions || []).filter(
+      (opt) => opt.trim() !== ''
+    );
+
+    const updatedCustomField: TAddCustomField = {
+      ...customField,
+      dropdownOptions: trimmedOptions,
+      workspaceId,
+    };
+
+    console.log(updatedCustomField);
+    const response = await CreateCustomField(updatedCustomField);
+    if (response.status === 200) {
+      console.log(response);
+      setCustomFields((prev) => [...prev, response.data]);
+      setCustomField(customFieldInitialValue);
+    }
   };
 
   return (

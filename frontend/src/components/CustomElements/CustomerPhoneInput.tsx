@@ -1,10 +1,11 @@
+import { PhoneType } from '../../constants/Enumeration/CustomerEnum/CustomerPhone';
 import ModalInputField from './ModalInputField';
 
-interface CustomerPhoneInputProps {
-  phoneType: string;
+interface ICustomerPhoneInput {
+  phoneType: PhoneType;
   phoneNumber: string;
   isReceiveMessage: boolean;
-  onPhoneTypeChange: (value: string) => void;
+  onPhoneTypeChange: (value: PhoneType) => void;
   onPhoneChange: (value: string) => void;
   onReceiveMessageChange: (value: boolean) => void;
 }
@@ -16,7 +17,7 @@ const CustomerPhoneInput = ({
   onPhoneTypeChange,
   onPhoneChange,
   onReceiveMessageChange,
-}: CustomerPhoneInputProps) => {
+}: ICustomerPhoneInput) => {
   return (
     <div className='space-y-1.5'>
       <div className='flex h-10 items-center border-[1px] border-border-primary rounded-lg'>
@@ -24,13 +25,20 @@ const CustomerPhoneInput = ({
           name='customer_phone_attributes'
           id='customer_phone_attributes'
           className='h-full px-2 text-sm min-w-[100px] outline-none text-heading border-r-[1px] border-border-primary'
-          value={phoneType}
-          onChange={(e) => onPhoneTypeChange(e.target.value)}
+          value={PhoneType[phoneType]}
+          onChange={(e) =>
+            onPhoneTypeChange(
+              PhoneType[e.target.value as keyof typeof PhoneType]
+            )
+          }
         >
-          <option value='Work'>Work</option>
-          <option value='Mobile'>Mobile</option>
-          <option value='Home'>Home</option>
-          <option value='Other'>Other</option>
+          {Object.keys(PhoneType)
+            .filter((key) => isNaN(Number(key)))
+            .map((key) => (
+              <option key={key} value={key}>
+                {key}
+              </option>
+            ))}
         </select>
         <ModalInputField
           inputType='text'

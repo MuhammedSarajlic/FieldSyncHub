@@ -1,28 +1,22 @@
-import icons from '../../../../../constants/icons';
+import { TCustomerTab } from '../../../../../types/Customer';
+import { TRequest } from '../../../../../types/Request';
 import EmptyTabTable from '../EmptyTabTable';
 import CustomerDetailsRequestItem from './CustomerDetailsRequestItem';
 
-const CustomerRequests = () => {
-  const requests = [
-    {
-      requestId: 'R-1234',
-      schedule: 20,
-      property: 'Hamida 25, Zenica 72000, Federacija Bosne i Hercegovine',
-      total: 120.0,
-    },
-  ];
+interface ICustomerRequests {
+  requests: TRequest[];
+  tab: TCustomerTab;
+}
+
+const CustomerRequests = ({ requests, tab }: ICustomerRequests) => {
   return (
     <div className='w-full'>
       {requests.length > 0 ? (
-        requests.map((job) => (
-          <CustomerDetailsRequestItem key={job.requestId} />
+        requests.map((request) => (
+          <CustomerDetailsRequestItem key={request.id} request={request} />
         ))
       ) : (
-        <EmptyTabTable
-          name='requests'
-          btnName='request'
-          icon={icons.invoiceIcon}
-        />
+        <EmptyTabTable tab={tab} onButtonClick={() => {}} />
       )}
     </div>
   );

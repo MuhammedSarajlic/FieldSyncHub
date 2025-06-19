@@ -1,6 +1,6 @@
 import { TTableColumns } from '../../types/Table';
 import { getQuoteStatus } from '../../utils/FuntionHelpers/getQuoteStatus';
-import { QuoteStatus } from '../Enumeration/QuoteEnum';
+import { QuoteStatus } from '../Enumeration/QuoteEnum/QuoteEnum';
 
 export const quoteColumns: TTableColumns = [
   {

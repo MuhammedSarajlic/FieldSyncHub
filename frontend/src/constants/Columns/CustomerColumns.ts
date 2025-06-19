@@ -32,7 +32,7 @@ export const customerColumns: TTableColumns = [
   },
   {
     header: 'Email',
-    accessor: (customer: TCustomer) => customer.email?.[0] ?? '-',
+    accessor: (customer: TCustomer) => customer.emails?.[0] ?? '-',
     type: 'text',
   },
   //   {

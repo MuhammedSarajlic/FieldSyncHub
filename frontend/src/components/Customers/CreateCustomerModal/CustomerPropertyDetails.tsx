@@ -6,9 +6,13 @@ import { TAddProperty } from '../../../types/Property';
 
 interface ICustomerPropertyDetails {
   setCustomer: React.Dispatch<React.SetStateAction<TAddCustomer>>;
+  customer: TAddCustomer;
 }
 
-const CustomerPropertyDetails = ({ setCustomer }: ICustomerPropertyDetails) => {
+const CustomerPropertyDetails = ({
+  setCustomer,
+  customer,
+}: ICustomerPropertyDetails) => {
   const [property, setProperty] = useState<TAddProperty>({
     street: '',
     city: '',
@@ -18,68 +22,37 @@ const CustomerPropertyDetails = ({ setCustomer }: ICustomerPropertyDetails) => {
     isBillingAddress: true,
   });
 
-  const [billingProperty, setBillingProperty] = useState<TAddProperty>({
-    street: '',
-    city: '',
-    state: '',
-    country: '',
-    postalCode: '',
-    isBillingAddress: true,
-  });
-
-  const clearBillingProperty = () => {
-    setBillingProperty({
-      street: '',
-      city: '',
-      state: '',
-      country: '',
-      postalCode: '',
-      isBillingAddress: true,
-    });
-  };
-
   const addPropertyToCustomer = () => {
-    const propertyList: TAddProperty[] = [];
-
-    const isMainPropertyNotEmpty = Object.entries(property).some(
-      ([key, value]) => key !== 'isBillingAddress' && value !== ''
-    );
-    const isBillingPropertyNotEmpty = Object.entries(billingProperty).some(
-      ([key, value]) => key !== 'isBillingAddress' && value !== ''
+    const hasMainAddress = Object.values(property).some(
+      (val, i) => val !== '' && i !== 5
     );
 
-    if (isMainPropertyNotEmpty)
-      propertyList.push({
-        ...property,
-        isBillingAddress: property.isBillingAddress,
-      });
+    const properties: TAddProperty[] = [];
 
-    if (!property.isBillingAddress && isBillingPropertyNotEmpty)
-      propertyList.push({ ...billingProperty, isBillingAddress: true });
+    if (hasMainAddress) {
+      properties.push(property);
+    }
 
-    setCustomer((prevCustomer) => ({
-      ...prevCustomer,
-      properties: propertyList,
+    setCustomer((prev) => ({
+      ...prev,
+      properties,
     }));
   };
 
-  // Watch for billing checkbox toggle to reset billing property if needed
-  useEffect(() => {
-    if (property.isBillingAddress) {
-      clearBillingProperty();
-    }
-  }, [property.isBillingAddress]);
-
   useEffect(() => {
     addPropertyToCustomer();
-  }, [
-    property,
-    billingProperty.street,
-    billingProperty.city,
-    billingProperty.state,
-    billingProperty.postalCode,
-    billingProperty.country,
-  ]);
+
+    if (property.isBillingAddress) {
+      setCustomer((prev) => ({
+        ...prev,
+        billingStreet: '',
+        billingCity: '',
+        billingState: '',
+        billingCountry: '',
+        billingPostalCode: '',
+      }));
+    }
+  }, [property]);
 
   return (
     <>
@@ -120,7 +93,10 @@ const CustomerPropertyDetails = ({ setCustomer }: ICustomerPropertyDetails) => {
               setProperty({ ...property, postalCode: e.target.value })
             }
           />
-          <CountryDropdown property={property} setProperty={setProperty} />
+          <CountryDropdown
+            value={property.country || ''}
+            onChange={(country) => setProperty({ ...property, country })}
+          />
         </div>
         <div className='px-1 flex items-center space-x-2'>
           <input
@@ -142,11 +118,11 @@ const CustomerPropertyDetails = ({ setCustomer }: ICustomerPropertyDetails) => {
           <p className='font-medium text-lg'>Billing Address</p>
           <ModalInputField
             inputType='text'
-            placeholder='Billing Address'
+            placeholder='Street'
             label='Street'
-            value={billingProperty.street}
+            value={customer.billingStreet || ''}
             onChange={(e) =>
-              setBillingProperty({ ...billingProperty, street: e.target.value })
+              setCustomer({ ...customer, billingStreet: e.target.value })
             }
           />
           <div className='flex items-center space-x-3'>
@@ -154,21 +130,18 @@ const CustomerPropertyDetails = ({ setCustomer }: ICustomerPropertyDetails) => {
               inputType='text'
               placeholder='City'
               label='City'
-              value={billingProperty.city}
+              value={customer.billingCity || ''}
               onChange={(e) =>
-                setBillingProperty({ ...billingProperty, city: e.target.value })
+                setCustomer({ ...customer, billingCity: e.target.value })
               }
             />
             <ModalInputField
               inputType='text'
               placeholder='State'
               label='State'
-              value={billingProperty.state}
+              value={customer.billingState || ''}
               onChange={(e) =>
-                setBillingProperty({
-                  ...billingProperty,
-                  state: e.target.value,
-                })
+                setCustomer({ ...customer, billingState: e.target.value })
               }
             />
           </div>
@@ -177,17 +150,16 @@ const CustomerPropertyDetails = ({ setCustomer }: ICustomerPropertyDetails) => {
               inputType='text'
               placeholder='Zip code'
               label='Zip Code'
-              value={billingProperty.postalCode}
+              value={customer.billingPostalCode || ''}
               onChange={(e) =>
-                setBillingProperty({
-                  ...billingProperty,
-                  postalCode: e.target.value,
-                })
+                setCustomer({ ...customer, billingPostalCode: e.target.value })
               }
             />
             <CountryDropdown
-              property={billingProperty}
-              setProperty={setBillingProperty}
+              value={customer.billingCountry || ''}
+              onChange={(country) =>
+                setCustomer({ ...customer, billingCountry: country })
+              }
             />
           </div>
         </div>

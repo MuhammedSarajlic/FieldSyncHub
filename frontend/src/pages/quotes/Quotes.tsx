@@ -14,14 +14,19 @@ import { quoteFilterOptions } from '../../constants/Options/FilterOptions/QuoteF
 import { useSearchParams } from 'react-router';
 import { GetQuoteByWorkspace } from '../../services/Quote';
 import { useAuth } from '../../context/AuthProvider';
-import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum';
+import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { quoteColumns } from '../../constants/Columns/QuoteColumns';
+import { TPaginationData } from '../customers/Customers';
 
 const Quotes = () => {
   const { user } = useAuth();
   const [isNewQuoteModalOpen, setIsNewQuoteModalOpen] =
     useState<boolean>(false);
   const [quotes, setQuotes] = useState<TQuote[]>([]);
+  const [paginationData, setPaginationData] = useState<TPaginationData>({
+    totalCount: 0,
+    pageSize: 10,
+  });
 
   const totalQuotes = quotes.length;
   const totalValue = quotes.reduce((sum, quote) => sum + quote.total, 0);
@@ -211,7 +216,11 @@ const Quotes = () => {
 
           {/* Quotes table section */}
           <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
-            <Table<TQuote> data={quotes} columns={quoteColumns} />
+            <Table<TQuote>
+              data={quotes}
+              columns={quoteColumns}
+              paginationData={paginationData}
+            />
           </div>
         </div>
       </div>

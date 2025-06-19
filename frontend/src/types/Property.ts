@@ -19,7 +19,16 @@ export type TAddProperty = {
   country?: string;
   postalCode?: string;
   isBillingAddress?: boolean;
-  customerId: string;
+  customerId?: string;
+};
+
+export type TAddBilingProperty = {
+  street?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  customerId?: string;
 };
 
 export type TUpdateProperty = {

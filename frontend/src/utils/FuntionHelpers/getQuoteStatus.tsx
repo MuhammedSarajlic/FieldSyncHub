@@ -9,7 +9,7 @@ import {
   ClipboardCheck,
   Send,
 } from 'lucide-react';
-import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum';
+import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum/QuoteEnum';
 
 export const getQuoteStatus = (status: number) => {
   switch (status) {

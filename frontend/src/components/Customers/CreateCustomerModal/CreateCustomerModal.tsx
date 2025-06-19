@@ -11,16 +11,20 @@ import { useAuth } from '../../../context/AuthProvider';
 interface ICreateCustomerModal {
   setIsAddCustomerModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   getAllCustomersByWorkspace: () => Promise<void>;
+  getCustomersStats: () => Promise<void>;
 }
 
 const CreateCustomerModal = ({
   setIsAddCustomerModalOpen,
   getAllCustomersByWorkspace,
+  getCustomersStats,
 }: ICreateCustomerModal) => {
   const { user } = useAuth();
   const [customer, setCustomer] = useState<TAddCustomer>(
     addCustomerInitialState
   );
+  const [isCompanyDisplayName, setIsCompanyDisplayName] =
+    useState<boolean>(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const validateCustomer = (): boolean => {
@@ -33,7 +37,7 @@ const CreateCustomerModal = ({
       newErrors.lastName = 'Last name is required';
     }
 
-    if (customer.isCompany && !customer.companyName?.trim()) {
+    if (isCompanyDisplayName && !customer.companyName?.trim()) {
       newErrors.companyName = 'Company name is required';
     }
 
@@ -42,19 +46,24 @@ const CreateCustomerModal = ({
   };
 
   const handleCreateCustomer = async () => {
-    if (!user) return;
+    if (!user?.workspace) return;
 
     const isValid = validateCustomer();
     if (!isValid) return;
 
     const updatedCustomer = {
       ...customer,
-      workspaceId: user.workspace?.id,
+      displayName: isCompanyDisplayName
+        ? customer.companyName?.trim() ?? ''
+        : `${customer.firstName.trim()} ${customer.lastName.trim()}`,
+      workspaceId: user.workspace.id,
     };
+    console.log(updatedCustomer);
 
     const response = await CreateCustomer(updatedCustomer);
     if (response.status === 200) {
       getAllCustomersByWorkspace();
+      getCustomersStats();
       setIsAddCustomerModalOpen(false);
       setCustomer(addCustomerInitialState);
       setErrors({});
@@ -81,6 +90,8 @@ const CreateCustomerModal = ({
           <CreateCustomerForm
             customer={customer}
             setCustomer={setCustomer}
+            setIsCompanyDisplayName={setIsCompanyDisplayName}
+            isCompanyDisplayName={isCompanyDisplayName}
             errors={errors}
           />
         </div>

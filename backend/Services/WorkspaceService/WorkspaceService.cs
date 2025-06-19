@@ -142,8 +142,23 @@ public class WorkspaceService : IWorkspaceService
 
     public async Task DeleteWorkspace(Guid id)
     {
-        var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == id);
-        _context.Remove(workspace);
+        // Get the workspace with related users
+        var workspace = await _context.Workspaces
+            .Include(w => w.Users)
+            .FirstOrDefaultAsync(w => w.Id == id);
+
+        if (workspace == null) return;
+
+        // Detach all users from the workspace
+        foreach (var user in workspace.Users)
+        {
+            user.WorkspaceId = null; // Detach user
+        }
+
+        _context.Users.UpdateRange(workspace.Users);
+        _context.Workspaces.Remove(workspace);
+
         await _context.SaveChangesAsync();
     }
+
 }

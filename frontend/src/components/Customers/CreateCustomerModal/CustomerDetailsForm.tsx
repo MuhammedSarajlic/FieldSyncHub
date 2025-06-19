@@ -5,12 +5,16 @@ interface ICustomerDetailsForm {
   customer: TAddCustomer;
   setCustomer: React.Dispatch<React.SetStateAction<TAddCustomer>>;
   errors: { [key: string]: string };
+  setIsCompanyDisplayName: React.Dispatch<React.SetStateAction<boolean>>;
+  isCompanyDisplayName: boolean;
 }
 
 const CustomerDetailsForm = ({
   customer,
   setCustomer,
   errors,
+  setIsCompanyDisplayName,
+  isCompanyDisplayName,
 }: ICustomerDetailsForm) => {
   return (
     <div className='space-y-2'>
@@ -54,10 +58,8 @@ const CustomerDetailsForm = ({
             <input
               type='checkbox'
               className='w-4 h-4'
-              checked={customer.isCompany}
-              onChange={(e) =>
-                setCustomer({ ...customer, isCompany: e.target.checked })
-              }
+              checked={isCompanyDisplayName}
+              onChange={(e) => setIsCompanyDisplayName(e.target.checked)}
             />
             <p className='text-sm text-primary'>
               Use company name as the primary name

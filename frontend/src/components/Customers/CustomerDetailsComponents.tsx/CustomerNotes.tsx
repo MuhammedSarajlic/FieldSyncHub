@@ -1,7 +1,7 @@
 import NoteFileUpload from '../../Notes/NoteFileUpload';
 import Note from '../../Notes/Note';
 import { TAddNote, TNote } from '../../../types/Note';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { addNoteInitialState } from '../../../const/states';
 import { CreateNote } from '../../../services/Notes';
 import { useAuth } from '../../../context/AuthProvider';
@@ -13,27 +13,26 @@ interface ICustomerNotes {
 
 const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
   const { user } = useAuth();
+  const [notesList, setNotesList] = useState<TNote[]>(notes);
   const [isAddNote, setIsAddNote] = useState<boolean>(false);
   const [newNote, setNewNote] = useState<TAddNote>(addNoteInitialState);
-
-  useEffect(() => {
-    setNewNote({ ...newNote, customerId: customerId });
-  }, [customerId]);
 
   const handleAddNote = async () => {
     if (!user) return;
     const updatedNote = {
       ...newNote,
-      createdBy: user?.id,
-      createdByName: user?.fullName,
+      createdBy: user.id,
+      createdByName: user.fullName,
       createdAt: new Date().toISOString(),
+      customerId: customerId,
     };
+
     const response = await CreateNote(updatedNote);
     if (response.status === 200) {
       setIsAddNote(false);
       setNewNote(addNoteInitialState);
+      setNotesList((prevNotes) => [response.data, ...prevNotes]);
     }
-    console.log(response);
   };
 
   return (
@@ -95,9 +94,9 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
         </div>
       )}
 
-      {notes && notes.length > 0 ? (
+      {notesList && notesList.length > 0 ? (
         <div className='space-y-3'>
-          {notes.map((note) => (
+          {notesList.map((note) => (
             <Note key={note.id} note={note} />
           ))}
         </div>

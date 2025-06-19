@@ -5,8 +5,8 @@ import images from '../../constants/images';
 import { Login } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TUserLogin } from '../../types/User';
 
-// Slides for the left panel
 const slides = [
   {
     title: 'Welcome Back',
@@ -32,7 +32,7 @@ const Signin = () => {
   const navigate = useNavigate();
   const { user, loading, setAccessToken } = useAuth();
   const [isPasswordHidden, setIsPasswordHidden] = useState(false);
-  const [userLoginData, setUserLoginData] = useState({
+  const [userLoginData, setUserLoginData] = useState<TUserLogin>({
     email: '',
     password: '',
   });
@@ -42,7 +42,6 @@ const Signin = () => {
   });
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Auto-rotate slides
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
