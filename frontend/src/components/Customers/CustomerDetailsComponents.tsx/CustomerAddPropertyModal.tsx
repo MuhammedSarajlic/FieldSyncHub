@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Check, MapPin } from 'lucide-react';
+import { Check, MapPin, X } from 'lucide-react';
 import { TAddProperty, TProperty } from '../../../types/Property';
+import CountryDropdown from '../../CustomElements/CountryDropdown';
+import CustomButton from '../../CustomElements/CustomButton';
 
 interface AddPropertyModalProps {
   existingProperties: TProperty[] | [];
@@ -48,18 +50,18 @@ const CustomerAddPropertyModal = ({
 
   return (
     <div className='fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50'>
-      <div className='bg-white rounded-lg shadow-xl w-full max-w-md'>
+      <div className='bg-white rounded-lg shadow-xl w-full max-w-xl'>
         <div className='p-6'>
           <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-semibold text-gray-800 flex items-center gap-2'>
-              <MapPin className='w-5 h-5' />
+            <h3 className='text-xl font-bold text-heading flex items-center gap-2'>
+              <MapPin className='w-5.5 h-5.5' />
               Add New Property
             </h3>
             <button
               onClick={onClose}
-              className='text-gray-400 hover:text-gray-500'
+              className='text-gray-400 hover:text-gray-500 cursor-pointer'
             >
-              &times;
+              <X />
             </button>
           </div>
 
@@ -75,7 +77,7 @@ const CustomerAddPropertyModal = ({
                   onChange={(e) =>
                     setFormData({ ...formData, street: e.target.value })
                   }
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
+                  className='w-full px-3 py-2 border text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
                   required
                 />
               </div>
@@ -91,7 +93,7 @@ const CustomerAddPropertyModal = ({
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
+                    className='w-full px-3 py-2 border text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
                     required
                   />
                 </div>
@@ -105,7 +107,7 @@ const CustomerAddPropertyModal = ({
                     onChange={(e) =>
                       setFormData({ ...formData, state: e.target.value })
                     }
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
+                    className='w-full px-3 py-2 border text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
                     required
                   />
                 </div>
@@ -122,11 +124,11 @@ const CustomerAddPropertyModal = ({
                     onChange={(e) =>
                       setFormData({ ...formData, postalCode: e.target.value })
                     }
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
+                    className='w-full px-3 py-2 border text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
                     required
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className='block text-sm font-medium text-gray-700 mb-1'>
                     Country
                   </label>
@@ -139,7 +141,11 @@ const CustomerAddPropertyModal = ({
                     className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
                     required
                   />
-                </div>
+                </div> */}
+                <CountryDropdown
+                  value={formData.country}
+                  onChange={(country) => setFormData({ ...formData, country })}
+                />
               </div>
 
               {existingProperties.length === 0 && (
@@ -160,12 +166,13 @@ const CustomerAddPropertyModal = ({
               >
                 Cancel
               </button>
-              <button
+              <CustomButton title='Add property' />
+              {/* <button
                 type='submit'
                 className='px-4 py-2 text-sm font-medium cursor-pointer text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
               >
                 Save Property
-              </button>
+              </button> */}
             </div>
           </form>
         </div>

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { addNoteInitialState } from '../../../const/states';
 import { CreateNote } from '../../../services/Notes';
 import { useAuth } from '../../../context/AuthProvider';
+import CustomButton from '../../CustomElements/CustomButton';
 
 interface ICustomerNotes {
   notes: TNote[];
@@ -56,12 +57,12 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
           </div>
           <p className='font-semibold text-lg text-gray-800'>Notes</p>
         </div>
-        {!isAddNote && (
+        {!isAddNote && notesList.length > 0 && (
           <button
             onClick={() => setIsAddNote(true)}
-            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg cursor-pointer transition-colors duration-200'
+            className='px-4 py-2 bg-bg-primary hover:bg-bg-primary-hover text-white text-sm font-medium rounded-lg cursor-pointer transition-colors duration-200'
           >
-            + New Note
+            + Add Note
           </button>
         )}
       </div>
@@ -84,12 +85,13 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
             >
               Cancel
             </button>
-            <button
+            <CustomButton title='Add note' handleBtnClick={handleAddNote} />
+            {/* <button
               onClick={handleAddNote}
               className='px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-colors duration-200'
             >
               Save Note
-            </button>
+            </button> */}
           </div>
         </div>
       )}
@@ -124,7 +126,7 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
             </p>
             <button
               onClick={() => setIsAddNote(true)}
-              className='mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200'
+              className='mt-4 px-4 py-2 cursor-pointer bg-bg-primary hover:bg-bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors duration-200'
             >
               + Add Note
             </button>

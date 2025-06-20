@@ -248,9 +248,8 @@ const Customers = () => {
             <div className='flex items-center justify-between gap-4 mb-8'>
               <div className='flex-1 max-w-md'>
                 <Search
-                  inputPlaceholder='Search quotes...'
+                  inputPlaceholder='Search customers...'
                   searchQuery={searchQuery}
-                  // handleChange={handleSearch}
                 />
               </div>
               <div className='flex items-center gap-2'>

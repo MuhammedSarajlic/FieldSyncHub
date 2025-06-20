@@ -16,6 +16,7 @@ import {
   CalendarClock,
   ClipboardList,
   FileText,
+  MapPin,
   Receipt,
 } from 'lucide-react';
 import CustomerEmailModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerEmailModal';
@@ -38,6 +39,7 @@ import CustomerRequests from '../../components/Customers/CustomerDetailsComponen
 import CustomerQuotes from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerQuoteTab/CustomerQuotes';
 import CustomerInvoices from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerInvoiceTab/CustomerInvoices';
 import { PhoneType } from '../../constants/Enumeration/CustomerEnum/CustomerPhone';
+import CustomerInformation from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerInformation';
 
 const CustomerDetails = () => {
   const navigate = useNavigate();
@@ -202,44 +204,6 @@ const CustomerDetails = () => {
     fetchTabData();
     fetchCustomer();
   }, [customerId]);
-
-  const getPhoneIcon = (type: string) => {
-    switch (type) {
-      case 'Mobile':
-        return (
-          <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
-            <path
-              fillRule='evenodd'
-              d='M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z'
-              clipRule='evenodd'
-            />
-          </svg>
-        );
-      case 'Work':
-        return (
-          <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
-            <path
-              fillRule='evenodd'
-              d='M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z'
-              clipRule='evenodd'
-            />
-            <path d='M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z' />
-          </svg>
-        );
-      case 'Home':
-        return (
-          <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
-            <path d='M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z' />
-          </svg>
-        );
-      default:
-        return (
-          <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
-            <path d='M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z' />
-          </svg>
-        );
-    }
-  };
 
   const renderContent = () => {
     const activeTab = tabs.find((t) => t.id === selectedTab);
@@ -505,81 +469,7 @@ const CustomerDetails = () => {
             {/* Right Column - Sidebar */}
             <div className='space-y-6'>
               {/* Contact Information */}
-              <div className='bg-white rounded-lg border border-gray-100 shadow-sm p-6'>
-                <h3 className='text-lg font-semibold text-gray-800 mb-4'>
-                  Contact Information
-                </h3>
-                <div className='space-y-4'>
-                  {customer.emails && customer.emails.length > 0 ? (
-                    <div>
-                      <div className='flex items-center space-x-3 mb-2'>
-                        <div className='w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
-                          <svg
-                            className='w-4 h-4 text-gray-600'
-                            fill='currentColor'
-                            viewBox='0 0 20 20'
-                          >
-                            <path d='M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z' />
-                            <path d='M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z' />
-                          </svg>
-                        </div>
-                        <span className='text-gray-700 font-medium'>Email</span>
-                      </div>
-                      <div className='pl-11 space-y-1'>
-                        {customer.emails.map((email, index) => (
-                          <p key={index} className='text-gray-600 text-sm'>
-                            {email}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className='text-gray-500 text-sm'>
-                      No contact information provided
-                    </p>
-                  )}
-
-                  {customer.customerPhones &&
-                    customer.customerPhones.length > 0 && (
-                      <div>
-                        <div className='flex items-center space-x-3 mb-2'>
-                          <div className='w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
-                            <svg
-                              className='w-4 h-4 text-gray-600'
-                              fill='currentColor'
-                              viewBox='0 0 20 20'
-                            >
-                              <path d='M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z' />
-                            </svg>
-                          </div>
-                          <span className='text-gray-700 font-medium'>
-                            Phone
-                          </span>
-                        </div>
-                        <div className='pl-11 space-y-3'>
-                          {customer.customerPhones.map((phone) => (
-                            <div
-                              key={phone.id}
-                              className='flex items-start space-x-3'
-                            >
-                              <div className='w-6 h-6 bg-blue-50 rounded-full flex items-center justify-center mt-0.5'>
-                                {getPhoneIcon(PhoneType[phone.phoneType])}
-                              </div>
-                              <div>
-                                <p className='text-gray-600 text-sm'>
-                                  {phone.phoneNumber}
-                                </p>
-                                <p className='text-xs text-gray-500'>
-                                  {phone.phoneType}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                </div>
-              </div>
+              <CustomerInformation customer={customer} />
 
               {/* Tags */}
               <CustomerTags tags={customer.tags} customerId={customer.id} />
@@ -587,7 +477,8 @@ const CustomerDetails = () => {
               {/* Properties */}
               <div className='bg-white rounded-lg border border-gray-100 shadow-sm p-6'>
                 <div className='flex items-center justify-between mb-4'>
-                  <h3 className='text-lg font-semibold text-gray-800'>
+                  <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-800'>
+                    <MapPin className='w-5 h-5 text-gray-600' />
                     Properties
                   </h3>
                   <button
@@ -659,9 +550,16 @@ const CustomerDetails = () => {
                           <button className='text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline'>
                             View Details
                           </button>
-                          <button className='text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline'>
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                              `${property.street}, ${property.city}, ${property.state} ${property.postalCode}, ${property.country}`
+                            )}`}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline'
+                          >
                             Directions
-                          </button>
+                          </a>
                         </div>
                       </div>
                     ))}
