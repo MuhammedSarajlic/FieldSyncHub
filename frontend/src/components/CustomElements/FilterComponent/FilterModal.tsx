@@ -6,6 +6,7 @@ import { renderFilterComponent } from '../../../utils/RenderHelpers/RenderFilter
 import useClearFilters from '../../../hooks/useClearFilters';
 import { useSearchParams } from 'react-router';
 import { TFilterOption } from '../../../types/FilterOption';
+import { useClickOutside } from '../../../hooks/useClickOutside';
 
 interface IFilterModal<T> {
   initialFilters: T;
@@ -23,6 +24,9 @@ const FilterModal = <T extends Record<string, any>>({
   const [filters, setFilters] = useState<T>(initialFilters);
   const [searchParams, setSearchParams] = useSearchParams();
   const { clearFilterURLParams } = useClearFilters();
+  const ref = useClickOutside<HTMLDivElement>(() =>
+    setIsFilterModalOpen(false)
+  );
 
   const handleFilterChange = (filterName: keyof T, value: any) => {
     setFilters((prev) => ({
@@ -153,7 +157,7 @@ const FilterModal = <T extends Record<string, any>>({
   }, [searchParams]);
 
   return (
-    <div className='relative'>
+    <div ref={ref} className='relative'>
       <button
         onClick={() => setIsFilterModalOpen(!isFilterModalOpen)}
         className='relative inline-flex items-center px-3 py-2 cursor-pointer border border-gray-300 rounded-lg text-sm font-semibold text-heading bg-white hover:bg-gray-50'

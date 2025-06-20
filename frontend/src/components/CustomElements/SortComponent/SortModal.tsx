@@ -2,6 +2,7 @@ import { ArrowUpDown, Check } from 'lucide-react';
 import { TSortOption } from '../../../types/ServiceItem';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { useClickOutside } from '../../../hooks/useClickOutside';
 
 interface ISortModal {
   setIsSortModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,6 +17,7 @@ const SortModal = ({
 }: ISortModal) => {
   const [currentSort, setCurrentSort] = useState<string>('');
   const [searchParams, setSearchParams] = useSearchParams();
+  const ref = useClickOutside<HTMLDivElement>(() => setIsSortModalOpen(false));
 
   const handleSort = (optionId: string) => {
     setCurrentSort(optionId);
@@ -57,7 +59,7 @@ const SortModal = ({
   }, [searchParams]);
 
   return (
-    <div className='relative'>
+    <div ref={ref} className='relative'>
       <button
         onClick={() => setIsSortModalOpen(!isSortModalOpen)}
         className='inline-flex items-center px-3 py-2 cursor-pointer border border-gray-300 rounded-lg text-sm font-semibold text-heading bg-white hover:bg-gray-50'

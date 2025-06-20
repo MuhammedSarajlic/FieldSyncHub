@@ -107,10 +107,18 @@ public class CustomerService : ICustomerService
 
         if (!string.IsNullOrWhiteSpace(filterDto.CustomerType) && filterDto.CustomerType.ToLower() != "all")
         {
-            queryable = filterDto.CustomerType.ToLower() == "company"
-                ? queryable.Where(c => c.IsCompany)
-                : queryable.Where(c => !c.IsCompany);
+            var isCompany = filterDto.CustomerType.ToLower() == "company";
+
+            if (isCompany)
+            {
+                queryable = queryable.Where(c => c.CompanyName != null && c.CompanyName.Trim() != "");
+            }
+            else
+            {
+                queryable = queryable.Where(c => c.CompanyName == null || c.CompanyName.Trim() == "");
+            }
         }
+
 
         if (filterDto.CreatedDateMin.HasValue)
             queryable = queryable.Where(c => c.CreatedAt >= filterDto.CreatedDateMin.Value);
@@ -131,6 +139,14 @@ public class CustomerService : ICustomerService
             else
                 queryable = queryable.Where(c => !c.CustomerPhones.Any());
         }
+
+        // if (filterDto.HasEmail.HasValue)
+        // {
+        //     if (filterDto.HasEmail.Value)
+        //         queryable = queryable.Where(c => c.Emails != null && c.Emails.Any(e => !string.IsNullOrWhiteSpace(e)));
+        //     else
+        //         queryable = queryable.Where(c => c.Emails == null || c.Emails.All(string.IsNullOrWhiteSpace));
+        // }
 
         queryable = filterDto.SortBy?.ToLower() switch
         {
@@ -388,15 +404,12 @@ public class CustomerService : ICustomerService
 
         var sb = new StringBuilder();
 
-        sb.AppendLine("FirstName,LastName,CompanyName,DisplayName,IsCompany,Emails,JobNotifications,QuoteNotifications,InvoiceNotifications,BillingStreet,BillingCity,BillingState,BillingCountry,BillingPostalCode,IsArchived,Tags,CreatedAt,UpdatedAt");
+        sb.AppendLine("FirstName,LastName,CompanyName,DisplayName,IsCompany,Emails,JobNotifications,QuoteNotifications,InvoiceNotifications,BillingStreet,BillingCity,BillingState,BillingCountry,BillingPostalCode,IsArchived,Tags");
 
         foreach (var customer in customers)
         {
             var emails = Escape(string.Join(";", customer.Emails));
             var tags = Escape(string.Join(";", customer.Tags));
-
-            string createdAtFormatted = customer.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
-            string updatedAtFormatted = customer.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss");
 
             sb.AppendLine(
                 $"{Escape(customer.FirstName)}," +
@@ -414,9 +427,7 @@ public class CustomerService : ICustomerService
                 $"{Escape(customer.BillingCountry)}," +
                 $"{Escape(customer.BillingPostalCode)}," +
                 $"{customer.IsArchived}," +
-                $"{tags}," +
-                $"{createdAtFormatted}," +
-                $"{updatedAtFormatted}"
+                $"{tags}"
             );
         }
 

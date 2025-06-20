@@ -9,7 +9,7 @@ export type TCustomFieldValue = {
 };
 
 export type TAddCustomFieldValue = {
-  customerId: string;
+  customerId?: string;
   customFieldId: string;
   value: string | boolean;
 };

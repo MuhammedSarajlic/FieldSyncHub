@@ -25,18 +25,18 @@ export const customerFilterOptions: TFilterOption[] = [
     name: 'hasEmail',
     label: 'Has Email',
     type: 'button-select',
-    options: ['all', 'yes', 'no'],
+    options: ['all', 'true', 'false'],
   },
   {
     name: 'hasPhone',
     label: 'Has Phone',
     type: 'button-select',
-    options: ['all', 'yes', 'no'],
+    options: ['all', 'true', 'false'],
   },
   {
     name: 'tags',
     label: 'Tags',
-    type: 'dropdown',
-    dropdownOptions: ['VIP', 'Lead', 'Repeat', 'High Priority'],
+    type: 'input',
+    placeholder: 'Tags',
   },
 ];

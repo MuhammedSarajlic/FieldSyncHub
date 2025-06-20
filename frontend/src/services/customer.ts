@@ -105,6 +105,6 @@ export async function SendCustomerEmail(
 }
 
 export async function ExportCustomers(workspaceId: string) {
-  const response = await api.get(`/customer/export?workspaceId=${workspaceId}`);
+  const response = await api.get(`/customer/export/${workspaceId}`);
   return response;
 }

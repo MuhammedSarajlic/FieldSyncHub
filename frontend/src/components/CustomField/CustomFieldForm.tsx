@@ -6,9 +6,14 @@ import { CustomFieldType } from '../../constants/Enumeration/CustomFieldEnum/Cus
 interface ICustomFieldForm {
   customField: TAddCustomField;
   setCustomField: React.Dispatch<React.SetStateAction<TAddCustomField>>;
+  error: boolean;
 }
 
-const CustomFieldForm = ({ customField, setCustomField }: ICustomFieldForm) => {
+const CustomFieldForm = ({
+  customField,
+  setCustomField,
+  error,
+}: ICustomFieldForm) => {
   const handleAddOption = () => {
     setCustomField({
       ...customField,
@@ -115,6 +120,7 @@ const CustomFieldForm = ({ customField, setCustomField }: ICustomFieldForm) => {
         onChange={(e) =>
           setCustomField({ ...customField, fieldName: e.target.value })
         }
+        error={error ? 'Field name is required' : ''}
       />
 
       <div className='flex flex-col space-y-1'>

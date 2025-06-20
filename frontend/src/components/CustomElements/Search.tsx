@@ -1,28 +1,30 @@
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface ISearch {
   inputPlaceholder: string;
   searchQuery?: string;
-  // handleChange?: (q: string) => void;
 }
 
-const Search = ({
-  inputPlaceholder,
-  searchQuery /*handleChange*/,
-}: ISearch) => {
-  const [_, setSearchParams] = useSearchParams();
+const Search = ({ inputPlaceholder, searchQuery }: ISearch) => {
+  const [, setSearchParams] = useSearchParams();
 
-  const handleSearch = async (query: string) => {
+  const [inputValue, setInputValue] = useState<string>(searchQuery ?? '');
+
+  const debouncedValue: string = useDebounce(inputValue, 600);
+
+  useEffect(() => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
-      if (query) {
-        newParams.set('q', query);
+      if (debouncedValue.trim()) {
+        newParams.set('q', debouncedValue.trim());
       } else {
         newParams.delete('q');
       }
       return newParams;
     });
-  };
+  }, [debouncedValue]);
 
   return (
     <div className='relative w-full md:w-64'>
@@ -45,8 +47,8 @@ const Search = ({
       </div>
       <input
         type='search'
-        value={searchQuery}
-        onChange={(e) => handleSearch(e.target.value)}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
         className='block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-bg-primary focus:border-bg-primary outline-none'
         placeholder={inputPlaceholder}
       />

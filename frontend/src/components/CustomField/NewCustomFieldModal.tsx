@@ -6,6 +6,7 @@ import CustomFieldForm from './CustomFieldForm';
 import { TAddCustomField, TCustomField } from '../../types/CustomField';
 import { CustomFieldType } from '../../constants/Enumeration/CustomFieldEnum/CustomFieldEnum';
 import { CreateCustomField } from '../../services/CustomField';
+import { TAddCustomer } from '../../types/Customer';
 
 interface INewCustomFieldModal {
   setIsCreateCustomFieldModalOpen: React.Dispatch<
@@ -13,6 +14,7 @@ interface INewCustomFieldModal {
   >;
   workspaceId: string;
   setCustomFields: React.Dispatch<React.SetStateAction<TCustomField[]>>;
+  setCustomer: React.Dispatch<React.SetStateAction<TAddCustomer>>;
 }
 
 const customFieldInitialValue = {
@@ -28,12 +30,19 @@ const NewCustomFieldModal = ({
   setIsCreateCustomFieldModalOpen,
   workspaceId,
   setCustomFields,
+  setCustomer,
 }: INewCustomFieldModal) => {
   const [customField, setCustomField] = useState<TAddCustomField>(
     customFieldInitialValue
   );
+  const [error, setError] = useState<boolean>(false);
 
   const addCustomField = async () => {
+    if (!customField.fieldName.trim()) {
+      setError(true);
+      return;
+    }
+
     const trimmedOptions = (customField.dropdownOptions || []).filter(
       (opt) => opt.trim() !== ''
     );
@@ -44,12 +53,34 @@ const NewCustomFieldModal = ({
       workspaceId,
     };
 
-    console.log(updatedCustomField);
     const response = await CreateCustomField(updatedCustomField);
+
     if (response.status === 200) {
-      console.log(response);
-      setCustomFields((prev) => [...prev, response.data]);
+      const newField = response.data as TCustomField;
+
+      // Add to UI
+      setCustomFields((prev) => [...prev, newField]);
+
+      // Add to customer.customFieldValues if has default value
+      if (
+        newField.defaultValue !== undefined &&
+        newField.defaultValue !== null &&
+        newField.defaultValue !== ''
+      ) {
+        setCustomer((prev) => {
+          const existing = prev.customFieldValues ?? [];
+          return {
+            ...prev,
+            customFieldValues: [
+              ...existing,
+              { customFieldId: newField.id, value: newField.defaultValue! },
+            ],
+          };
+        });
+      }
+
       setCustomField(customFieldInitialValue);
+      setIsCreateCustomFieldModalOpen(false);
     }
   };
 
@@ -70,6 +101,7 @@ const NewCustomFieldModal = ({
           <CustomFieldForm
             customField={customField}
             setCustomField={setCustomField}
+            error={error}
           />
         </div>
 
@@ -83,10 +115,7 @@ const NewCustomFieldModal = ({
           />
           <CustomButton
             title='Create Custom Field'
-            handleBtnClick={() => {
-              addCustomField();
-              setIsCreateCustomFieldModalOpen(false);
-            }}
+            handleBtnClick={addCustomField}
           />
         </div>
       </div>
