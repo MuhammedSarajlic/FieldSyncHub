@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ChevronRight, Mail, Phone, User } from 'lucide-react';
 import { TEmployee } from '../../types/Employee';
 import { useNavigate } from 'react-router';
+import { EmployeeStatus } from '../../constants/Enumeration/EmployeeEnum/EmployeeEnum';
 import { getStatusBadge } from '../../utils/FuntionHelpers/getStatusBadge';
 
 interface IEmployeeCard {
@@ -22,7 +23,8 @@ const EmployeeCard = ({ employee }: IEmployeeCard) => {
           <span
             className={`h-1.5 w-1.5 mr-1.5 rounded-full ${indicator}`}
           ></span>
-          {employee.status.charAt(0).toUpperCase() + employee.status.slice(1)}
+          {EmployeeStatus[employee.status].charAt(0).toUpperCase() +
+            EmployeeStatus[employee.status].slice(1)}
         </span>
       </div>
 
@@ -58,7 +60,7 @@ const EmployeeCard = ({ employee }: IEmployeeCard) => {
               </div>
               <div className='flex items-start text-gray-600'>
                 <Phone className='h-4 w-4 text-gray-400 mr-1.5 mt-0.5 flex-shrink-0' />
-                <span>{employee.user.phone || 'N/A'}</span>
+                <span>{employee.phoneNumber ?? 'N/A'}</span>
               </div>
             </div>
           </div>

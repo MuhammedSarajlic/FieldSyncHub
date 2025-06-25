@@ -1,23 +1,24 @@
 import { CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
+import { InvoiceStatus } from '../../constants/Enumeration/InvoiceEnum/InvoiceEnum';
 
-export const getInvoiceStatus = (status: string) => {
+export const getInvoiceStatus = (status: InvoiceStatus) => {
   switch (status) {
-    case 'paid':
+    case InvoiceStatus.Paid:
       return {
         color: 'bg-green-50 text-green-700 border-green-100',
         icon: <CheckCircle className='w-4 h-4 text-green-500' />,
       };
-    case 'sent':
+    case InvoiceStatus.Sent:
       return {
         color: 'bg-blue-50 text-blue-700 border-blue-100',
         icon: <Clock className='w-4 h-4 text-blue-500' />,
       };
-    case 'overdue':
+    case InvoiceStatus.Overdue:
       return {
         color: 'bg-red-50 text-red-700 border-red-100',
         icon: <AlertCircle className='w-4 h-4 text-red-500' />,
       };
-    case 'draft':
+    case InvoiceStatus.Draft:
       return {
         color: 'bg-gray-50 text-gray-700 border-gray-100',
         icon: <FileText className='w-4 h-4 text-gray-500' />,

@@ -28,6 +28,8 @@ export type TQuote = {
   customerNotes?: string;
   internalNotes?: string;
   attachments: TQuoteAttachment[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TAddQuote = {

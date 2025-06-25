@@ -41,6 +41,8 @@ public class JobService : IJobService
                                         .ThenInclude(c => c.CustomerPhones)
                                     .Include(j => j.Customer)
                                         .ThenInclude(c => c.Properties)
+                                    .Include(j => j.AssignedTeamMembers)
+                                        .ThenInclude(a => a.User)
                                     .FirstOrDefaultAsync();
         return new ApiResponse<Job>()
         {
@@ -285,20 +287,20 @@ public class JobService : IJobService
 
         existingJob.Title = updatedJobDto.Title ?? existingJob.Title;
         existingJob.Description = updatedJobDto.Description ?? existingJob.Description;
-        existingJob.PropertyId = updatedJobDto.PropertyId;
+        existingJob.PropertyId = updatedJobDto.PropertyId ?? existingJob.PropertyId;
         existingJob.JobType = updatedJobDto.JobType ?? existingJob.JobType;
         existingJob.Repeats = updatedJobDto.Repeats ?? existingJob.Repeats;
         existingJob.Priority = updatedJobDto.Priority ?? existingJob.Priority;
         existingJob.StartDate = updatedJobDto.StartDate ?? existingJob.StartDate;
         existingJob.StartTime = updatedJobDto.StartTime ?? existingJob.StartTime;
-        existingJob.ArrivalWindowStart = updatedJobDto.ArrivalWindowStart;
-        existingJob.ArrivalWindowEnd = updatedJobDto.ArrivalWindowEnd;
-        existingJob.Duration = updatedJobDto.Duration;
+        existingJob.ArrivalWindowStart = updatedJobDto.ArrivalWindowStart ?? existingJob.ArrivalWindowStart;
+        existingJob.ArrivalWindowEnd = updatedJobDto.ArrivalWindowEnd ?? existingJob.ArrivalWindowEnd;
+        existingJob.Duration = updatedJobDto.Duration ?? existingJob.Duration;
         existingJob.EstimatedDurationMinutes = updatedJobDto.EstimatedDurationMinutes ?? existingJob.EstimatedDurationMinutes;
         existingJob.DepositAmount = updatedJobDto.DepositAmount ?? existingJob.DepositAmount;
-        existingJob.TaxAmount = updatedJobDto.TaxAmount ?? existingJob.TaxAmount;
         existingJob.DiscountType = updatedJobDto.DiscountType ?? existingJob.DiscountType;
-        existingJob.DiscountAmount = updatedJobDto.DiscountAmount ?? existingJob.DiscountAmount;
+        existingJob.DiscountValue = updatedJobDto.DiscountValue ?? existingJob.DiscountValue;
+        existingJob.TaxRate = updatedJobDto.TaxRate ?? existingJob.TaxRate;
         existingJob.SendInvoice = updatedJobDto.SendInvoice ?? existingJob.SendInvoice;
         existingJob.SendReminder = updatedJobDto.SendReminder ?? existingJob.SendReminder;
         existingJob.ReminderDaysBefore = updatedJobDto.ReminderDaysBefore ?? existingJob.ReminderDaysBefore;

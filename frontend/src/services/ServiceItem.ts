@@ -6,8 +6,13 @@ export async function GetServiceItems() {
   return response;
 }
 
-export async function GetServiceItemsByFilter(params: string) {
-  const response = await api.get(`/service-item/filter?${params}`);
+export async function GetServiceItemsByFilter(
+  workspaceId: string,
+  params: string
+) {
+  const response = await api.get(
+    `/service-item/workspace/${workspaceId}/filter?${params}`
+  );
   return response;
 }
 

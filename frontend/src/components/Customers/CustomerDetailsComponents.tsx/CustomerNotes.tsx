@@ -6,6 +6,7 @@ import { addNoteInitialState } from '../../../const/states';
 import { CreateNote } from '../../../services/Notes';
 import { useAuth } from '../../../context/AuthProvider';
 import CustomButton from '../../CustomElements/CustomButton';
+import { uploadNoteFile } from '../../../firebase/uploadNoteFile';
 
 interface ICustomerNotes {
   notes: TNote[];
@@ -17,23 +18,50 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
   const [notesList, setNotesList] = useState<TNote[]>(notes);
   const [isAddNote, setIsAddNote] = useState<boolean>(false);
   const [newNote, setNewNote] = useState<TAddNote>(addNoteInitialState);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   const handleAddNote = async () => {
-    if (!user) return;
+    if (!user || (!newNote.noteText && !selectedFile)) return;
+
+    setIsUploading(true);
+
+    let uploadedURL: string | null = null;
+
+    if (selectedFile) {
+      const result = await uploadNoteFile(selectedFile, (progress) => {
+        setUploadProgress(progress);
+      });
+
+      if (result.status === 'Completed' && result.downloadURL) {
+        uploadedURL = result.downloadURL;
+      } else {
+        alert('File upload failed.');
+        setIsUploading(false);
+        return;
+      }
+    }
+
     const updatedNote = {
       ...newNote,
       createdBy: user.id,
       createdByName: user.fullName,
       createdAt: new Date().toISOString(),
-      customerId: customerId,
+      customerId,
+      pathFile: uploadedURL ?? '',
     };
 
     const response = await CreateNote(updatedNote);
     if (response.status === 200) {
+      setNotesList((prevNotes) => [response.data, ...prevNotes]);
       setIsAddNote(false);
       setNewNote(addNoteInitialState);
-      setNotesList((prevNotes) => [response.data, ...prevNotes]);
+      setSelectedFile(null);
+      setUploadProgress(0);
     }
+
+    setIsUploading(false);
   };
 
   return (
@@ -77,21 +105,33 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
             }
             className='p-3 min-h-[100px] w-full bg-white text-sm text-gray-700 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all'
           />
-          <NoteFileUpload />
+          <NoteFileUpload
+            selectedFile={selectedFile}
+            setSelectedFile={setSelectedFile}
+          />
+
+          {isUploading && (
+            <div className='w-full h-2 bg-gray-200 rounded-full overflow-hidden'>
+              <div
+                className='h-full bg-blue-500 transition-all'
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          )}
+
           <div className='flex items-center justify-end space-x-3 pt-2'>
             <button
               onClick={() => setIsAddNote(false)}
-              className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200'
+              className='px-4 py-2 cursor-pointer text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200'
+              disabled={isUploading}
             >
               Cancel
             </button>
-            <CustomButton title='Add note' handleBtnClick={handleAddNote} />
-            {/* <button
-              onClick={handleAddNote}
-              className='px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-colors duration-200'
-            >
-              Save Note
-            </button> */}
+            <CustomButton
+              title='Add note'
+              handleBtnClick={handleAddNote}
+              isDisabled={isUploading || (!newNote.noteText && !selectedFile)}
+            />
           </div>
         </div>
       )}

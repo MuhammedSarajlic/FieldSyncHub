@@ -22,7 +22,7 @@ const Note = ({ note }: INote) => {
       <div className='flex items-start justify-between'>
         <div className='flex items-start space-x-3'>
           <div className='flex-shrink-0'>
-            <div className='bg-blue-500 rounded-full w-9 h-9 flex items-center justify-center text-white font-medium text-sm'>
+            <div className='bg-bg-primary rounded-full w-9 h-9 flex items-center justify-center text-white font-medium text-sm'>
               {userInitials.slice(0, 2)}
             </div>
           </div>

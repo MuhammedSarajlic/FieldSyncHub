@@ -22,9 +22,9 @@ public class UpdateJobDto
     public int? EstimatedDurationMinutes { get; set; }
     public List<Employee>? AssignedTeamMembers { get; set; }
     public decimal? DepositAmount { get; set; }
-    public decimal? TaxAmount { get; set; }
     public DiscountType? DiscountType { get; set; }
-    public decimal? DiscountAmount { get; set; }
+    public decimal? DiscountValue { get; set; }
+    public decimal? TaxRate { get; set; }
     public bool? SendInvoice { get; set; }
     public bool? SendReminder { get; set; }
     public int? ReminderDaysBefore { get; set; }

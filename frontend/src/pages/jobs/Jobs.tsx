@@ -1,36 +1,41 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
-import JobsTable from '../../components/Jobs/JobsTable/JobsTable';
-import CustomButton from '../../components/CustomElements/CustomButton';
-import ButtonIcon from '../../components/CustomElements/ButtonIcon';
 import Search from '../../components/CustomElements/Search';
-import icons from '../../constants/icons';
-import JobFilterModal from '../../components/Jobs/JobsFilter/JobFilterModal';
 import NewJobModal from '../../components/Jobs/JobsModal/NewJobModal';
-import JobsSortModal from '../../components/Jobs/JobsModal/JobsSortModal';
 import { Plus } from 'lucide-react';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import { TAddJob, TJob } from '../../types/Job';
 import { CreateJob, GetJobs } from '../../services/Job';
 import { AxiosResponse } from 'axios';
+import Table from '../../components/Table/Table';
+import { TPaginationData } from '../customers/Customers';
+import { jobColumns } from '../../constants/Columns/JobColumns';
+import SortModal from '../../components/CustomElements/SortComponent/SortModal';
+import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
+import { jobSortOptions } from '../../constants/Options/SortOptions/JobSortOptions';
+import { useSearchParams } from 'react-router';
+import { jobFilterOptions } from '../../constants/Options/FilterOptions/JobFilterOptions';
+import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 
 const Jobs = () => {
   const [jobs, setJobs] = useState<TJob[]>([]);
-
-  const [filterStatus, setFilterStatus] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const totalJobs = jobs.length;
-
   const [isNewJobModalOpen, setIsNewJobModalOpen] = useState(false);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [filters, setFilters] = useState({
+  const [isSortModalOpen, setIsSortModalOpen] = useState<boolean>(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
+  const [paginationData, setPaginationData] = useState<TPaginationData>({
+    totalCount: 0,
+    pageSize: 10,
+  });
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') ?? '';
+
+  const initialJobFilters = {
+    scheduleDate: { min: '', max: '' },
+    total: { min: '', max: '' },
     status: '',
     priority: '',
-    dateFrom: '',
-    dateTo: '',
-  });
+  };
 
   const handleAddJob = async (
     job: TAddJob
@@ -45,6 +50,14 @@ const Jobs = () => {
       setJobs(response.data.payload);
     }
   };
+
+  const totalJobs = jobs.length;
+  const completedJobs = jobs.filter((j) => j.status !== 3).length;
+  const scheduledJobs = jobs.filter((j) => j.status !== 1).length;
+  const totalValue = jobs.reduce(
+    (accumulator, job) => accumulator + job.totalAmount,
+    0
+  );
 
   useEffect(() => {
     fetchJobs();
@@ -72,121 +85,61 @@ const Jobs = () => {
             </div>
           </div>
 
-          {/* Overview cards */}
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
-            <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
-              <div className='flex items-center'>
-                <div className='p-3 rounded-full bg-bg-primary/10 text-bg-primary mr-4'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'
-                    />
-                  </svg>
+          {/* Cards */}
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8'>
+            {/* Total Jobs */}
+            <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-gray-600'>
+                  Total Jobs
+                </h3>
+                <div className='text-3xl font-bold text-gray-900'>
+                  {totalJobs}
                 </div>
-                <div>
-                  <p className='text-sm text-gray-500 font-medium'>
-                    Total Jobs
-                  </p>
-                  <p className='text-xl font-bold'>{totalJobs}</p>
-                </div>
+                <div className='text-sm text-gray-500'>All-time</div>
               </div>
             </div>
 
-            <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
-              <div className='flex items-center'>
-                <div className='p-3 rounded-full bg-bg-primary/10 text-bg-primary mr-4'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M5 13l4 4L19 7'
-                    />
-                  </svg>
+            {/* Completed Jobs */}
+            <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-gray-600'>Completed</h3>
+                <div className='text-3xl font-bold text-gray-900'>
+                  {completedJobs}
                 </div>
-                <div>
-                  <p className='text-sm text-gray-500 font-medium'>Completed</p>
-                  {/* <p className='text-xl font-bold'>{completedJobs}</p> */}
-                  <p className='text-xl font-bold'>1</p>
-                </div>
+                <div className='text-sm text-gray-500'>Finished jobs</div>
               </div>
             </div>
 
-            <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
-              <div className='flex items-center'>
-                <div className='p-3 rounded-full bg-bg-primary/10 text-bg-primary mr-4'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
-                    />
-                  </svg>
+            {/* Scheduled Jobs */}
+            <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-gray-600'>Scheduled</h3>
+                <div className='text-3xl font-bold text-gray-900'>
+                  {scheduledJobs}
                 </div>
-                <div>
-                  <p className='text-sm text-gray-500 font-medium'>Scheduled</p>
-                  {/* <p className='text-xl font-bold'>{scheduledJobs}</p> */}
-                  <p className='text-xl font-bold'>5</p>
-                </div>
+                <div className='text-sm text-gray-500'>Upcoming jobs</div>
               </div>
             </div>
 
-            <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
-              <div className='flex items-center'>
-                <div className='p-3 rounded-full bg-bg-primary/10 text-bg-primary mr-4'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    className='h-6 w-6'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                    />
-                  </svg>
+            {/* Total Value */}
+            <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-gray-600'>
+                  Total Value
+                </h3>
+                <div className='text-3xl font-bold text-gray-900'>
+                  {formatCurrency(totalValue)}
                 </div>
-                <div>
-                  <p className='text-sm text-gray-500 font-medium'>
-                    Total Value
-                  </p>
-                  <p className='text-xl font-bold'>$100</p>
-                  {/* <p className='text-xl font-bold'>${totalValue.toFixed(2)}</p> */}
-                </div>
+                <div className='text-sm text-gray-500'>Combined job value</div>
               </div>
             </div>
           </div>
 
           {/* Filters and search */}
-          <div className='flex items-center justify-between mb-4'>
+          {/* <div className='flex items-center justify-between mb-4'>
             <Search inputPlaceholder='Search jobs...' />
             <div className='relative flex items-center space-x-3'>
-              {/* <ButtonIcon name='Sort' icon={icons.sortIcon} /> */}
               {<JobsSortModal />}
               <ButtonIcon
                 name='Filter'
@@ -201,10 +154,38 @@ const Jobs = () => {
                 />
               )}
             </div>
+          </div> */}
+
+          {/* Filters */}
+          <div className='flex items-center justify-between gap-4 mb-8'>
+            <div className='flex-1 max-w-md'>
+              <Search
+                inputPlaceholder='Search customers...'
+                searchQuery={searchQuery}
+              />
+            </div>
+            <div className='flex items-center gap-2'>
+              <SortModal
+                setIsSortModalOpen={setIsSortModalOpen}
+                isSortModalOpen={isSortModalOpen}
+                sortOptions={jobSortOptions}
+              />
+              <FilterModal
+                initialFilters={initialJobFilters}
+                filterOptions={jobFilterOptions}
+                setIsFilterModalOpen={setIsFilterModalOpen}
+                isFilterModalOpen={isFilterModalOpen}
+              />
+            </div>
           </div>
 
-          <div className='flex flex-col lg:flex-row gap-6'>
-            <JobsTable jobs={jobs} />
+          {/* Table */}
+          <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
+            <Table<TJob>
+              data={jobs}
+              columns={jobColumns}
+              paginationData={paginationData}
+            />
           </div>
         </div>
       </div>

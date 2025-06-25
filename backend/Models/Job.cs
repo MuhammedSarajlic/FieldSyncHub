@@ -31,24 +31,20 @@ public class Job
     public List<Employee> AssignedTeamMembers { get; set; } = [];
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     public decimal DepositAmount { get; set; }
+    public DiscountType DiscountType { get; set; }
+    public decimal DiscountValue { get; set; }
     [NotMapped]
     public decimal Subtotal => LineItems.Sum(li => li.TotalPrice);
-    public decimal TaxAmount { get; set; }
-    public DiscountType DiscountType { get; set; }
-    public decimal DiscountAmount { get; set; }
     [NotMapped]
-    public decimal CalculatedDiscount
-    {
-        get
-        {
-            if (string.Equals(DiscountType.ToString(), "percent", StringComparison.OrdinalIgnoreCase))
-                return Math.Round(Subtotal * (DiscountAmount / 100m), 2);
-
-            return DiscountAmount;
-        }
-    }
+    public decimal Discount =>
+        DiscountType == DiscountType.Percentage
+            ? Math.Round(Subtotal * DiscountValue / 100, 2)
+            : Math.Round(DiscountValue, 2);
+    public decimal TaxRate { get; set; }
     [NotMapped]
-    public decimal TotalAmount => Subtotal + TaxAmount - CalculatedDiscount;
+    public decimal TaxAmount => Math.Round((Subtotal - Discount) * TaxRate, 2);
+    [NotMapped]
+    public decimal TotalAmount => Math.Round(Subtotal + TaxAmount - Discount, 2);
     public bool SendInvoice { get; set; }
     public bool SendReminder { get; set; }
     public int ReminderDaysBefore { get; set; } = 1;

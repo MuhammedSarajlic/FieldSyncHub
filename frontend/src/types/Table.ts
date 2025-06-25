@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-interface BaseColumn<T = any> {
+export interface BaseColumn<T = any> {
   header: string;
   accessor: keyof T | ((arg: T) => any);
   align?: 'left' | 'center' | 'right';
@@ -9,58 +9,65 @@ interface BaseColumn<T = any> {
   cellClassName?: string;
 }
 
-interface StatusConfig {
+export interface StatusConfig {
   label?: string;
   color: string;
   icon: ReactNode | null;
 }
 
-interface TextColumn extends BaseColumn {
+export interface TextColumn extends BaseColumn {
   type: 'text';
   bold?: boolean;
 }
 
-interface CurrencyColumn extends BaseColumn {
+export interface CurrencyColumn extends BaseColumn {
   type: 'currency';
+  bold?: boolean;
 }
 
-interface DateColumn extends BaseColumn {
+export interface DateColumn extends BaseColumn {
   type: 'date';
 }
 
-interface StatusColumn extends BaseColumn {
+export interface StatusColumn extends BaseColumn {
   type: 'status';
   statusConfig?: (value: string | number) => StatusConfig;
   enumMap: Record<number, string>;
 }
 
-interface ImageColumn extends BaseColumn {
+export interface PriorityColumn extends BaseColumn {
+  type: 'priority';
+  priorityConfig?: (value: string | number) => string; // This function will return just the color string
+  enumMap: Record<number, string>; // To map numerical priority to string labels (e.g., 0 to "Low")
+}
+
+export interface ImageColumn extends BaseColumn {
   type: 'image';
   imageSize?: string;
 }
 
-interface UserColumn extends BaseColumn {
+export interface UserColumn extends BaseColumn {
   type: 'user';
   imageSize?: string;
   imageAccessor: string;
   subtitle?: string;
 }
 
-interface BadgeColumn extends BaseColumn {
+export interface BadgeColumn extends BaseColumn {
   type: 'badge';
   badgeColor?: (value: any) => string;
 }
 
-interface CustomColumn extends BaseColumn {
+export interface CustomColumn extends BaseColumn {
   type: 'custom';
   component?: (value: any, item: any, rowIndex: number) => ReactNode;
 }
 
-interface DefaultColumn extends BaseColumn {
+export interface DefaultColumn extends BaseColumn {
   type?: 'default' | undefined;
 }
 
-interface ColumnWithRender extends BaseColumn {
+export interface ColumnWithRender extends BaseColumn {
   type?:
     | 'text'
     | 'currency'
@@ -70,7 +77,8 @@ interface ColumnWithRender extends BaseColumn {
     | 'user'
     | 'badge'
     | 'custom'
-    | 'default';
+    | 'default'
+    | 'priority';
   render: (value: any, item: any, rowIndex: number) => ReactNode;
   bold?: boolean;
   statusConfig?: (value: string | number) => StatusConfig;
@@ -79,6 +87,8 @@ interface ColumnWithRender extends BaseColumn {
   subtitle?: string;
   badgeColor?: (value: any) => string;
   component?: (value: any, item: any, rowIndex: number) => ReactNode;
+  priorityConfig?: (value: string | number) => string;
+  enumMap?: Record<number, string>;
 }
 
 export type TTableColumn =
@@ -91,6 +101,7 @@ export type TTableColumn =
   | BadgeColumn
   | CustomColumn
   | DefaultColumn
+  | PriorityColumn
   | ColumnWithRender;
 
 export type TTableColumns = TTableColumn[];

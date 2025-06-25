@@ -27,6 +27,11 @@ const Quotes = () => {
     totalCount: 0,
     pageSize: 10,
   });
+  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') ?? '';
+  const conversionRate = 1;
 
   const totalQuotes = quotes.length;
   const totalValue = quotes.reduce((sum, quote) => sum + quote.total, 0);
@@ -40,19 +45,12 @@ const Quotes = () => {
     status: '',
   };
 
-  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const searchQuery = searchParams.get('q') ?? '';
-  const conversionRate = 1;
-
   const fetchQuotesByWorkspace = async () => {
-    if (!user) return;
-    const response = await GetQuoteByWorkspace(user?.workspace.id);
+    if (!user || !user.workspace) return;
+    const response = await GetQuoteByWorkspace(user.workspace.id);
     if (response.status === 200) {
       setQuotes(response.data);
     }
-    console.log(response);
   };
 
   useEffect(() => {
@@ -196,7 +194,6 @@ const Quotes = () => {
               <Search
                 inputPlaceholder='Search quotes...'
                 searchQuery={searchQuery}
-                // handleChange={handleSearch}
               />
             </div>
             <div className='flex items-center gap-2'>

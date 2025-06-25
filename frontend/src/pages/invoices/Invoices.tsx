@@ -15,6 +15,8 @@ import { GetAllInvoicesByWorkspaceId } from '../../services/Invoice';
 import { TInvoice } from '../../types/Invoice';
 import { useAuth } from '../../context/AuthProvider';
 import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
+import Table from '../../components/Table/Table';
+import { invoiceColumns } from '../../constants/Columns/InvoiceColumns';
 
 const Invoices = () => {
   const { user } = useAuth();
@@ -22,6 +24,10 @@ const Invoices = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [paginationData, setPaginationData] = useState<TPaginationData>({
+    totalCount: 0,
+    pageSize: 10,
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
 
@@ -53,74 +59,6 @@ const Invoices = () => {
     }
     console.log(response);
   };
-
-  // const invoices = [
-  //   {
-  //     id: 'INV-00123',
-  //     customer: 'Sarah Johnson',
-  //     email: 'sarah@example.com',
-  //     date: '2024-06-18',
-  //     dueDate: '2024-07-03',
-  //     amount: 350.0,
-  //     status: 'sent',
-  //     jobId: 'JOB-4567',
-  //     items: 3,
-  //     paymentMethod: null,
-  //     technician: 'Mike T.',
-  //   },
-  //   {
-  //     id: 'INV-00124',
-  //     customer: "Mike's Restaurant",
-  //     email: 'mike@restaurant.com',
-  //     date: '2024-06-20',
-  //     dueDate: '2024-07-05',
-  //     amount: 1250.0,
-  //     status: 'paid',
-  //     jobId: 'JOB-4568',
-  //     items: 5,
-  //     paymentMethod: 'stripe',
-  //     technician: 'John D.',
-  //   },
-  //   {
-  //     id: 'INV-00125',
-  //     customer: 'Downtown Office LLC',
-  //     email: 'admin@downtown.com',
-  //     date: '2024-06-15',
-  //     dueDate: '2024-06-30',
-  //     amount: 875.5,
-  //     status: 'overdue',
-  //     jobId: 'JOB-4569',
-  //     items: 4,
-  //     paymentMethod: null,
-  //     technician: 'Sarah M.',
-  //   },
-  //   {
-  //     id: 'INV-00126',
-  //     customer: 'Green Valley Apartments',
-  //     email: 'manager@greenvalley.com',
-  //     date: '2024-06-22',
-  //     dueDate: '2024-07-07',
-  //     amount: 2100.0,
-  //     status: 'draft',
-  //     jobId: 'JOB-4570',
-  //     items: 8,
-  //     paymentMethod: null,
-  //     technician: 'Alex R.',
-  //   },
-  //   {
-  //     id: 'INV-00127',
-  //     customer: 'Tech Solutions Inc',
-  //     email: 'billing@techsolutions.com',
-  //     date: '2024-06-21',
-  //     dueDate: '2024-07-06',
-  //     amount: 650.0,
-  //     status: 'sent',
-  //     jobId: 'JOB-4571',
-  //     items: 2,
-  //     paymentMethod: null,
-  //     technician: 'Mike T.',
-  //   },
-  // ];
 
   // Summary calculations
   const totalOutstanding = invoices
@@ -292,8 +230,17 @@ const Invoices = () => {
             </div>
           </div>
 
+          {/* Table */}
+          <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
+            <Table<TInvoice>
+              data={invoices}
+              columns={invoiceColumns}
+              paginationData={paginationData}
+            />
+          </div>
+
           {/* Invoice Table */}
-          <div className='bg-white rounded-lg shadow-xs border border-gray-200 overflow-hidden'>
+          {/* <div className='bg-white rounded-lg shadow-xs border border-gray-200 overflow-hidden'>
             <div className='overflow-x-auto'>
               <table className='min-w-full divide-y divide-gray-200'>
                 <thead className='bg-gray-50'>
@@ -372,10 +319,10 @@ const Invoices = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+          </div> */}
 
           {/* Pagination */}
-          <div className='flex items-center justify-between mt-6'>
+          {/* <div className='flex items-center justify-between mt-6'>
             <div className='text-sm text-gray-700'>
               Showing <span className='font-medium'>1</span> to{' '}
               <span className='font-medium'>{invoices.length}</span> of{' '}
@@ -395,7 +342,7 @@ const Invoices = () => {
                 Next
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       {isInvoiceModalOpen && (

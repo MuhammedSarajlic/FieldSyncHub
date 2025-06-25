@@ -22,6 +22,7 @@ import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import { employeeFilterOptions } from '../../constants/Options/FilterOptions/EmployeeFilterOptions';
 import { downloadCSVFile } from '../../utils/FuntionHelpers/downloadCSVFile';
+import { EmployeeStatus } from '../../constants/Enumeration/EmployeeEnum/EmployeeEnum';
 
 const Employees = () => {
   const { user } = useAuth();
@@ -46,43 +47,8 @@ const Employees = () => {
     department: '',
   };
 
-  const handleSearch = async (query: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      if (query) {
-        newParams.set('q', query);
-      } else {
-        newParams.delete('q');
-      }
-      return newParams;
-    });
-  };
-
-  // const handleApplyFilters = (filters: any) => {
-  //   setSearchParams((prev) => {
-  //     const newParams = new URLSearchParams(prev);
-
-  //     const flatFilters: Record<string, string | number> = {
-  //       hireDateMin: filters.hireDate.min,
-  //       hireDateMax: filters.hireDate.max,
-  //       status: filters.status !== 'all' ? filters.status : '',
-  //       position: filters.position,
-  //       department: filters.department,
-  //     };
-
-  //     Object.entries(flatFilters).forEach(([key, value]) => {
-  //       if (value) {
-  //         newParams.set(key, value.toString());
-  //       } else {
-  //         newParams.delete(key);
-  //       }
-  //     });
-
-  //     return newParams;
-  //   });
-  // };
-
   const fetchEmployees = async () => {
+    if (!user?.workspace) return;
     try {
       const paramsObj: Record<string, string> = {};
       searchParams.forEach((value, key) => {
@@ -97,9 +63,7 @@ const Employees = () => {
         const response = await GetEmployeesByFilter(searchQueryString);
         setEmployees(response.data.payload);
       } else {
-        const response = await GetEmployeesByWorkspace(
-          user?.workspace.id as string
-        );
+        const response = await GetEmployeesByWorkspace(user.workspace.id);
         if (response.status === 200) {
           setEmployees(response.data.payload);
         }
@@ -116,8 +80,9 @@ const Employees = () => {
   }, [searchParams]);
 
   const handleExportEmployees = async () => {
+    if (!user?.workspace) return;
     try {
-      const response = await ExportEmployees(user?.workspace.id as string);
+      const response = await ExportEmployees(user.workspace.id as string);
       if (response.status !== 200) {
         console.log('Error exporting employees');
         return;
@@ -189,7 +154,10 @@ const Employees = () => {
                 <h3 className='text-sm font-medium text-gray-600'>Active</h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  {employees.filter((e) => e.status === 'active').length}
+                  {
+                    employees.filter((e) => e.status === EmployeeStatus.Active)
+                      .length
+                  }
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -210,7 +178,10 @@ const Employees = () => {
                 <h3 className='text-sm font-medium text-gray-600'>On Leave</h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  {employees.filter((e) => e.status === 'on-leave').length}
+                  {
+                    employees.filter((e) => e.status === EmployeeStatus.OnLeave)
+                      .length
+                  }
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -256,7 +227,6 @@ const Employees = () => {
                 <Search
                   inputPlaceholder='Search employees...'
                   searchQuery={searchQuery}
-                  // handleChange={handleSearch}
                 />
               </div>
 
@@ -271,7 +241,6 @@ const Employees = () => {
                   filterOptions={employeeFilterOptions}
                   setIsFilterModalOpen={setIsFilterModalOpen}
                   isFilterModalOpen={isFilterModalOpen}
-                  // onApply={handleApplyFilters}
                 />
 
                 <div className='flex items-center bg-gray-100 rounded-lg p-1'>

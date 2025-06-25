@@ -29,6 +29,7 @@ public class QuoteService : IQuoteService
     public async Task<Quote> GetByIdAsync(Guid id)
     {
         var quote = await _context.Quotes.Include(q => q.LineItems)
+                                        .Include(q => q.CreatedByUser)
                                         .Include(q => q.Customer)
                                         .ThenInclude(c => c.CustomerPhones)
                                         .Include(q => q.Customer)
@@ -131,8 +132,6 @@ public class QuoteService : IQuoteService
         var quote = createQuoteDto.Adapt<Quote>();
         quote.Id = Guid.NewGuid();
         quote.QuoteNumber = await GenerateQuoteNumber(createQuoteDto.WorkspaceId);
-        quote.CreatedAt = DateTime.UtcNow;
-        quote.UpdatedAt = DateTime.UtcNow;
 
         if (quote.LineItems == null)
         {

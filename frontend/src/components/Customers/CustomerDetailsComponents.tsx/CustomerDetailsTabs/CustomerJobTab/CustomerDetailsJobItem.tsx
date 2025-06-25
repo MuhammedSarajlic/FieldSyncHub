@@ -1,3 +1,9 @@
+import {
+  JobPriority,
+  JobStatus,
+  JobType,
+  PaymentStatus,
+} from '../../../../../constants/Enumeration/JobEnum/JobEnum';
 import { TJob } from '../../../../../types/Job';
 import { formatCurrency } from '../../../../../utils/FuntionHelpers/formatCurrency';
 import { formatDate } from '../../../../../utils/FuntionHelpers/formatDate';
@@ -55,7 +61,7 @@ const CustomerDetailsJobItem = ({ job }: ICustomerDetailsJobItem) => {
             {job.title || 'Untitled Job'}
           </h3>
           <span className='text-sm font-medium text-gray-500'>
-            #{job.jobNumber || job.jobId.slice(0, 5).toUpperCase()}
+            #{job.jobNumber || job.id.slice(0, 5).toUpperCase()}
           </span>
         </div>
 
@@ -72,34 +78,34 @@ const CustomerDetailsJobItem = ({ job }: ICustomerDetailsJobItem) => {
           {job.status && (
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset ${getStatusClasses(
-                job.status
+                JobStatus[job.status]
               )}`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  job.status === 'completed'
+                  job.status === JobStatus.Completed
                     ? 'bg-green-500'
-                    : job.status === 'cancelled'
+                    : job.status === JobStatus.Cancelled
                     ? 'bg-red-500'
-                    : job.status === 'in progress'
+                    : job.status === JobStatus.InProgress
                     ? 'bg-amber-500'
                     : 'bg-blue-500'
                 }`}
               ></span>
-              {job.status.slice(0, 1).toUpperCase() +
-                job.status.replace('_', ' ').slice(1)}
+              {JobStatus[job.status].slice(0, 1).toUpperCase() +
+                JobStatus[job.status].replace('_', ' ').slice(1)}
             </span>
           )}
           {job.priority && (
             <span
               className={`text-xs px-2 py-0.5 rounded-full capitalize ${getPriorityColor(
-                job.priority
+                JobPriority[job.priority]
               )}`}
             >
               {job.priority}
             </span>
           )}
-          {job.jobType === 'recurring' && (
+          {job.jobType === JobType.Recurring && (
             <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 ring-purple-500/10 ring-1 ring-inset'>
               Recurring
             </span>
@@ -133,13 +139,13 @@ const CustomerDetailsJobItem = ({ job }: ICustomerDetailsJobItem) => {
         <div className='mt-2'>
           <p
             className={`text-base font-bold ${getPaymentStatusColor(
-              job.paymentStatus
+              PaymentStatus[job.paymentStatus]
             )}`}
           >
             {formatCurrency(job.totalAmount)}
-            {job.paymentStatus !== 'paid' && (
+            {job.paymentStatus !== PaymentStatus.Paid && (
               <span className='block text-xs font-normal text-gray-500'>
-                ({job.paymentStatus.replace('_', ' ')})
+                ({PaymentStatus[job.paymentStatus].replace('_', ' ')})
               </span>
             )}
           </p>
