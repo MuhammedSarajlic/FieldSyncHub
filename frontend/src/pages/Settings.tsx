@@ -17,6 +17,7 @@ import {
   FiHelpCircle,
   FiSettings,
 } from 'react-icons/fi';
+import PageUnderDevelopment from '../components/CustomElements/PageUnderDevelopment';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -38,52 +39,58 @@ const SettingsPage = () => {
     { id: 'advanced', name: 'Advanced', icon: <FiSettings /> },
   ];
 
-  return (
-    <div className='flex h-screen bg-gray-50'>
-      <Sidebar />
-      <div className='flex-1 ml-[260px] flex flex-col'>
-        <Navbar />
-        <div className='p-6'>
-          <h1 className='text-2xl font-bold mb-6'>Settings</h1>
+  const [isConstruction, setIsConstruction] = useState<boolean>(true);
 
-          {/* Tabs */}
-          <div className='border-b border-gray-200 mb-6'>
-            <div className='flex overflow-x-auto'>
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <span className='mr-2'>{tab.icon}</span>
-                  {tab.name}
-                </button>
-              ))}
+  return (
+    <div className='flex h-screen'>
+      <Sidebar />
+      <div className='flex-1 ml-[260px]'>
+        <Navbar />
+        {!isConstruction ? (
+          <div className='p-6'>
+            <h1 className='text-2xl font-bold mb-6'>Settings</h1>
+
+            {/* Tabs */}
+            <div className='border-b border-gray-200 mb-6'>
+              <div className='flex overflow-x-auto'>
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className='mr-2'>{tab.icon}</span>
+                    {tab.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tab content */}
+            <div className='bg-white rounded-lg shadow-sm p-6'>
+              {activeTab === 'general' && <CompanyProfile />}
+              {activeTab === 'users' && <UsersAndPermissions />}
+              {activeTab === 'scheduling' && <SchedulingSettings />}
+              {activeTab === 'pricebook' && <PricebookSettings />}
+              {activeTab === 'payments' && <InvoiceSettings />}
+              {activeTab === 'quotes' && <QuotesSettings />}
+              {activeTab === 'communication' && <CommunicationSettings />}
+              {activeTab === 'integrations' && <IntegrationsSettings />}
+              {activeTab === 'marketing' && <MarketingSettings />}
+              {activeTab === 'reports' && <ReportsSettings />}
+              {activeTab === 'security' && <SecuritySettings />}
+              {activeTab === 'mobile' && <MobileAppSettings />}
+              {activeTab === 'help' && <HelpSupportSettings />}
+              {activeTab === 'advanced' && <AdvancedSettings />}
             </div>
           </div>
-
-          {/* Tab content */}
-          <div className='bg-white rounded-lg shadow-sm p-6'>
-            {activeTab === 'general' && <CompanyProfile />}
-            {activeTab === 'users' && <UsersAndPermissions />}
-            {activeTab === 'scheduling' && <SchedulingSettings />}
-            {activeTab === 'pricebook' && <PricebookSettings />}
-            {activeTab === 'payments' && <InvoiceSettings />}
-            {activeTab === 'quotes' && <QuotesSettings />}
-            {activeTab === 'communication' && <CommunicationSettings />}
-            {activeTab === 'integrations' && <IntegrationsSettings />}
-            {activeTab === 'marketing' && <MarketingSettings />}
-            {activeTab === 'reports' && <ReportsSettings />}
-            {activeTab === 'security' && <SecuritySettings />}
-            {activeTab === 'mobile' && <MobileAppSettings />}
-            {activeTab === 'help' && <HelpSupportSettings />}
-            {activeTab === 'advanced' && <AdvancedSettings />}
-          </div>
-        </div>
+        ) : (
+          <PageUnderDevelopment />
+        )}
       </div>
     </div>
   );

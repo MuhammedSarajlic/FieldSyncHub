@@ -75,6 +75,19 @@ export type TServiceItemFilter = {
   description?: string;
 };
 
+export type TServiceItemStats = {
+  totalItems: number;
+  totalMaterialItems: number;
+  totalServiceItems: number;
+  totalPricebookValue: number;
+  averageItemPrice: number;
+
+  totalItemsChange: string;
+  materialItemsChange: string;
+  serviceItemsChange: string;
+  averageItemPriceChange: string;
+};
+
 export type TSortOption = {
   id: string;
   label: string;

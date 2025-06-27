@@ -97,12 +97,12 @@ const Employees = () => {
   };
 
   return (
-    <div className='flex h-screen overflow-hidden '>
+    <div className='flex h-screen'>
       <Sidebar />
-      <div className='flex-1 flex flex-col overflow-hidden ml-[260px]'>
+      <div className='flex-1 ml-[260px]'>
         <Navbar />
 
-        <div className='flex-1 overflow-y-auto px-4 pb-10'>
+        <div className='flex-1 overflow-y-auto px-6 pt-6'>
           {/* Header */}
           <div className='flex items-center justify-between mb-6'>
             <div>

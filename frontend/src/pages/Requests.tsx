@@ -15,6 +15,7 @@ import {
   FileText,
   Tag,
 } from 'lucide-react';
+import PageUnderDevelopment from '../components/CustomElements/PageUnderDevelopment';
 
 // Mock data for service requests
 const requestsData = [
@@ -237,315 +238,323 @@ const Requests = () => {
     }).format(date);
   };
 
+  const [isConstruction, setIsConstruction] = useState<boolean>(true);
+
   return (
-    <div className='flex h-screen bg-gray-50'>
+    <div className='flex h-screen'>
       <Sidebar />
-      <div className='flex-1 ml-[260px] flex flex-col'>
-        <div>
-          <Navbar />
-        </div>
-        <div className='p-6'>
-          <div className='flex justify-between items-center mb-6'>
-            <h1 className='text-2xl font-bold text-gray-800'>
-              Service Requests
-            </h1>
-            <button className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md flex items-center'>
-              <span>Export</span>
-            </button>
-          </div>
+      <div className='flex-1 ml-[260px]'>
+        <Navbar />
+        {!isConstruction ? (
+          <div className='p-6'>
+            <div className='flex justify-between items-center mb-6'>
+              <h1 className='text-2xl font-bold text-gray-800'>
+                Service Requests
+              </h1>
+              <button className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md flex items-center'>
+                <span>Export</span>
+              </button>
+            </div>
 
-          {/* Filters and Search */}
-          <div className='bg-white p-4 rounded-lg shadow-sm mb-6'>
-            <div className='flex flex-wrap gap-4'>
-              {/* Search bar */}
-              <div className='relative flex-grow max-w-md'>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <Search className='h-5 w-5 text-gray-400' />
+            {/* Filters and Search */}
+            <div className='bg-white p-4 rounded-lg shadow-sm mb-6'>
+              <div className='flex flex-wrap gap-4'>
+                {/* Search bar */}
+                <div className='relative flex-grow max-w-md'>
+                  <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                    <Search className='h-5 w-5 text-gray-400' />
+                  </div>
+                  <input
+                    type='text'
+                    placeholder='Search requests...'
+                    className='pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <input
-                  type='text'
-                  placeholder='Search requests...'
-                  className='pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
 
-              {/* Status filter */}
-              <div className='relative'>
-                <div className='flex items-center border border-gray-300 rounded-md'>
-                  <span className='pl-3 text-gray-500 text-sm'>Status:</span>
-                  <select
-                    className='py-2 pl-2 pr-8 bg-transparent border-none focus:ring-0'
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    <option value='All'>All</option>
-                    <option value='New'>New</option>
-                    <option value='Pending'>Pending</option>
-                    <option value='Approved'>Approved</option>
-                    <option value='Scheduled'>Scheduled</option>
-                    <option value='Completed'>Completed</option>
-                    <option value='Cancelled'>Cancelled</option>
-                  </select>
-                  <ChevronDown className='h-4 w-4 mr-2 text-gray-500' />
+                {/* Status filter */}
+                <div className='relative'>
+                  <div className='flex items-center border border-gray-300 rounded-md'>
+                    <span className='pl-3 text-gray-500 text-sm'>Status:</span>
+                    <select
+                      className='py-2 pl-2 pr-8 bg-transparent border-none focus:ring-0'
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                      <option value='All'>All</option>
+                      <option value='New'>New</option>
+                      <option value='Pending'>Pending</option>
+                      <option value='Approved'>Approved</option>
+                      <option value='Scheduled'>Scheduled</option>
+                      <option value='Completed'>Completed</option>
+                      <option value='Cancelled'>Cancelled</option>
+                    </select>
+                    <ChevronDown className='h-4 w-4 mr-2 text-gray-500' />
+                  </div>
                 </div>
-              </div>
 
-              {/* Priority filter */}
-              <div className='relative'>
-                <div className='flex items-center border border-gray-300 rounded-md'>
-                  <span className='pl-3 text-gray-500 text-sm'>Priority:</span>
-                  <select
-                    className='py-2 pl-2 pr-8 bg-transparent border-none focus:ring-0'
-                    value={priorityFilter}
-                    onChange={(e) => setPriorityFilter(e.target.value)}
-                  >
-                    <option value='All'>All</option>
-                    <option value='Urgent'>Urgent</option>
-                    <option value='High'>High</option>
-                    <option value='Normal'>Normal</option>
-                    <option value='Low'>Low</option>
-                  </select>
-                  <ChevronDown className='h-4 w-4 mr-2 text-gray-500' />
+                {/* Priority filter */}
+                <div className='relative'>
+                  <div className='flex items-center border border-gray-300 rounded-md'>
+                    <span className='pl-3 text-gray-500 text-sm'>
+                      Priority:
+                    </span>
+                    <select
+                      className='py-2 pl-2 pr-8 bg-transparent border-none focus:ring-0'
+                      value={priorityFilter}
+                      onChange={(e) => setPriorityFilter(e.target.value)}
+                    >
+                      <option value='All'>All</option>
+                      <option value='Urgent'>Urgent</option>
+                      <option value='High'>High</option>
+                      <option value='Normal'>Normal</option>
+                      <option value='Low'>Low</option>
+                    </select>
+                    <ChevronDown className='h-4 w-4 mr-2 text-gray-500' />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Requests Table */}
-          <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
-            {filteredRequests.length > 0 ? (
-              <div className='overflow-x-auto'>
-                <table className='min-w-full divide-y divide-gray-200'>
-                  <thead className='bg-gray-50'>
-                    <tr>
-                      <th
-                        className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
-                        onClick={() => handleSort('id')}
-                      >
-                        <div className='flex items-center'>
-                          <span>Request ID</span>
-                          {sortBy === 'id' && (
-                            <ChevronDown
-                              className={`ml-1 h-4 w-4 transform ${
-                                sortOrder === 'asc' ? 'rotate-180' : ''
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
-                        onClick={() => handleSort('clientName')}
-                      >
-                        <div className='flex items-center'>
-                          <span>Client</span>
-                          {sortBy === 'clientName' && (
-                            <ChevronDown
-                              className={`ml-1 h-4 w-4 transform ${
-                                sortOrder === 'asc' ? 'rotate-180' : ''
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
-                        onClick={() => handleSort('serviceType')}
-                      >
-                        <div className='flex items-center'>
-                          <span>Service Type</span>
-                          {sortBy === 'serviceType' && (
-                            <ChevronDown
-                              className={`ml-1 h-4 w-4 transform ${
-                                sortOrder === 'asc' ? 'rotate-180' : ''
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
-                        onClick={() => handleSort('dateSubmitted')}
-                      >
-                        <div className='flex items-center'>
-                          <span>Date Submitted</span>
-                          {sortBy === 'dateSubmitted' && (
-                            <ChevronDown
-                              className={`ml-1 h-4 w-4 transform ${
-                                sortOrder === 'asc' ? 'rotate-180' : ''
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
-                        onClick={() => handleSort('scheduledDate')}
-                      >
-                        <div className='flex items-center'>
-                          <span>Scheduled For</span>
-                          {sortBy === 'scheduledDate' && (
-                            <ChevronDown
-                              className={`ml-1 h-4 w-4 transform ${
-                                sortOrder === 'asc' ? 'rotate-180' : ''
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
-                        onClick={() => handleSort('priority')}
-                      >
-                        <div className='flex items-center'>
-                          <span>Priority</span>
-                          {sortBy === 'priority' && (
-                            <ChevronDown
-                              className={`ml-1 h-4 w-4 transform ${
-                                sortOrder === 'asc' ? 'rotate-180' : ''
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
-                        onClick={() => handleSort('status')}
-                      >
-                        <div className='flex items-center'>
-                          <span>Status</span>
-                          {sortBy === 'status' && (
-                            <ChevronDown
-                              className={`ml-1 h-4 w-4 transform ${
-                                sortOrder === 'asc' ? 'rotate-180' : ''
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className='bg-white divide-y divide-gray-200'>
-                    {filteredRequests.map((request) => (
-                      <tr
-                        key={request.id}
-                        className='hover:bg-gray-50 cursor-pointer transition-colors duration-150'
-                      >
-                        <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600'>
-                          {request.id}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+            {/* Requests Table */}
+            <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
+              {filteredRequests.length > 0 ? (
+                <div className='overflow-x-auto'>
+                  <table className='min-w-full divide-y divide-gray-200'>
+                    <thead className='bg-gray-50'>
+                      <tr>
+                        <th
+                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
+                          onClick={() => handleSort('id')}
+                        >
                           <div className='flex items-center'>
-                            <User className='h-4 w-4 mr-2 text-gray-500' />
-                            {request.clientName}
+                            <span>Request ID</span>
+                            {sortBy === 'id' && (
+                              <ChevronDown
+                                className={`ml-1 h-4 w-4 transform ${
+                                  sortOrder === 'asc' ? 'rotate-180' : ''
+                                }`}
+                              />
+                            )}
                           </div>
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                          {request.serviceType}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                          {formatDate(request.dateSubmitted)}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                          {formatDate(request.scheduledDate)}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap'>
-                          <PriorityBadge priority={request.priority} />
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap'>
-                          <StatusBadge status={request.status} />
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                          <div className='flex space-x-2'>
-                            <button className='text-blue-600 hover:text-blue-800'>
-                              View
-                            </button>
-                            <button className='text-gray-600 hover:text-gray-800'>
-                              Assign
-                            </button>
+                        </th>
+                        <th
+                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
+                          onClick={() => handleSort('clientName')}
+                        >
+                          <div className='flex items-center'>
+                            <span>Client</span>
+                            {sortBy === 'clientName' && (
+                              <ChevronDown
+                                className={`ml-1 h-4 w-4 transform ${
+                                  sortOrder === 'asc' ? 'rotate-180' : ''
+                                }`}
+                              />
+                            )}
                           </div>
-                        </td>
+                        </th>
+                        <th
+                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
+                          onClick={() => handleSort('serviceType')}
+                        >
+                          <div className='flex items-center'>
+                            <span>Service Type</span>
+                            {sortBy === 'serviceType' && (
+                              <ChevronDown
+                                className={`ml-1 h-4 w-4 transform ${
+                                  sortOrder === 'asc' ? 'rotate-180' : ''
+                                }`}
+                              />
+                            )}
+                          </div>
+                        </th>
+                        <th
+                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
+                          onClick={() => handleSort('dateSubmitted')}
+                        >
+                          <div className='flex items-center'>
+                            <span>Date Submitted</span>
+                            {sortBy === 'dateSubmitted' && (
+                              <ChevronDown
+                                className={`ml-1 h-4 w-4 transform ${
+                                  sortOrder === 'asc' ? 'rotate-180' : ''
+                                }`}
+                              />
+                            )}
+                          </div>
+                        </th>
+                        <th
+                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
+                          onClick={() => handleSort('scheduledDate')}
+                        >
+                          <div className='flex items-center'>
+                            <span>Scheduled For</span>
+                            {sortBy === 'scheduledDate' && (
+                              <ChevronDown
+                                className={`ml-1 h-4 w-4 transform ${
+                                  sortOrder === 'asc' ? 'rotate-180' : ''
+                                }`}
+                              />
+                            )}
+                          </div>
+                        </th>
+                        <th
+                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
+                          onClick={() => handleSort('priority')}
+                        >
+                          <div className='flex items-center'>
+                            <span>Priority</span>
+                            {sortBy === 'priority' && (
+                              <ChevronDown
+                                className={`ml-1 h-4 w-4 transform ${
+                                  sortOrder === 'asc' ? 'rotate-180' : ''
+                                }`}
+                              />
+                            )}
+                          </div>
+                        </th>
+                        <th
+                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer'
+                          onClick={() => handleSort('status')}
+                        >
+                          <div className='flex items-center'>
+                            <span>Status</span>
+                            {sortBy === 'status' && (
+                              <ChevronDown
+                                className={`ml-1 h-4 w-4 transform ${
+                                  sortOrder === 'asc' ? 'rotate-180' : ''
+                                }`}
+                              />
+                            )}
+                          </div>
+                        </th>
+                        <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                          Actions
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className='text-center py-10'>
-                <p className='text-gray-500'>
-                  No requests found matching your filters.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Request Details (Expandable) */}
-          <div className='mt-6 bg-white p-6 rounded-lg shadow-sm hidden'>
-            <h2 className='text-xl font-bold mb-4'>
-              Request Details - REQ-001
-            </h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div>
-                <div className='mb-4'>
-                  <h3 className='text-sm font-medium text-gray-500'>
-                    Client Information
-                  </h3>
-                  <p className='mt-1 text-sm text-gray-900'>
-                    Robertson Construction
-                  </p>
-                  <p className='text-sm text-gray-600'>client123@example.com</p>
-                  <p className='text-sm text-gray-600'>(503) 555-1234</p>
+                    </thead>
+                    <tbody className='bg-white divide-y divide-gray-200'>
+                      {filteredRequests.map((request) => (
+                        <tr
+                          key={request.id}
+                          className='hover:bg-gray-50 cursor-pointer transition-colors duration-150'
+                        >
+                          <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600'>
+                            {request.id}
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                            <div className='flex items-center'>
+                              <User className='h-4 w-4 mr-2 text-gray-500' />
+                              {request.clientName}
+                            </div>
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+                            {request.serviceType}
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+                            {formatDate(request.dateSubmitted)}
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+                            {formatDate(request.scheduledDate)}
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap'>
+                            <PriorityBadge priority={request.priority} />
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap'>
+                            <StatusBadge status={request.status} />
+                          </td>
+                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+                            <div className='flex space-x-2'>
+                              <button className='text-blue-600 hover:text-blue-800'>
+                                View
+                              </button>
+                              <button className='text-gray-600 hover:text-gray-800'>
+                                Assign
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div className='mb-4'>
-                  <h3 className='text-sm font-medium text-gray-500'>
-                    Service Location
-                  </h3>
-                  <div className='flex items-start mt-1'>
-                    <MapPin className='h-5 w-5 text-gray-400 mr-2 mt-0.5' />
+              ) : (
+                <div className='text-center py-10'>
+                  <p className='text-gray-500'>
+                    No requests found matching your filters.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Request Details (Expandable) */}
+            <div className='mt-6 bg-white p-6 rounded-lg shadow-sm hidden'>
+              <h2 className='text-xl font-bold mb-4'>
+                Request Details - REQ-001
+              </h2>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div>
+                  <div className='mb-4'>
+                    <h3 className='text-sm font-medium text-gray-500'>
+                      Client Information
+                    </h3>
+                    <p className='mt-1 text-sm text-gray-900'>
+                      Robertson Construction
+                    </p>
+                    <p className='text-sm text-gray-600'>
+                      client123@example.com
+                    </p>
+                    <p className='text-sm text-gray-600'>(503) 555-1234</p>
+                  </div>
+                  <div className='mb-4'>
+                    <h3 className='text-sm font-medium text-gray-500'>
+                      Service Location
+                    </h3>
+                    <div className='flex items-start mt-1'>
+                      <MapPin className='h-5 w-5 text-gray-400 mr-2 mt-0.5' />
+                      <p className='text-sm text-gray-900'>
+                        1442 Main Street, Suite 100
+                        <br />
+                        Portland, OR 97204
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className='mb-4'>
+                    <h3 className='text-sm font-medium text-gray-500'>
+                      Request Details
+                    </h3>
+                    <p className='mt-1 text-sm text-gray-900'>
+                      <span className='font-medium'>Service Type:</span>{' '}
+                      Electrical Repair
+                    </p>
                     <p className='text-sm text-gray-900'>
-                      1442 Main Street, Suite 100
-                      <br />
-                      Portland, OR 97204
+                      <span className='font-medium'>Description:</span> Circuit
+                      breaker malfunction in office building basement.
+                    </p>
+                  </div>
+                  <div className='mb-4'>
+                    <h3 className='text-sm font-medium text-gray-500'>
+                      Schedule
+                    </h3>
+                    <p className='mt-1 text-sm text-gray-900'>
+                      <span className='font-medium'>Requested Date:</span> May
+                      7, 2025
+                    </p>
+                    <p className='text-sm text-gray-900'>
+                      <span className='font-medium'>Requested Time:</span> 9:00
+                      AM - 12:00 PM
                     </p>
                   </div>
                 </div>
               </div>
-              <div>
-                <div className='mb-4'>
-                  <h3 className='text-sm font-medium text-gray-500'>
-                    Request Details
-                  </h3>
-                  <p className='mt-1 text-sm text-gray-900'>
-                    <span className='font-medium'>Service Type:</span>{' '}
-                    Electrical Repair
-                  </p>
-                  <p className='text-sm text-gray-900'>
-                    <span className='font-medium'>Description:</span> Circuit
-                    breaker malfunction in office building basement.
-                  </p>
-                </div>
-                <div className='mb-4'>
-                  <h3 className='text-sm font-medium text-gray-500'>
-                    Schedule
-                  </h3>
-                  <p className='mt-1 text-sm text-gray-900'>
-                    <span className='font-medium'>Requested Date:</span> May 7,
-                    2025
-                  </p>
-                  <p className='text-sm text-gray-900'>
-                    <span className='font-medium'>Requested Time:</span> 9:00 AM
-                    - 12:00 PM
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <PageUnderDevelopment />
+        )}
       </div>
     </div>
   );

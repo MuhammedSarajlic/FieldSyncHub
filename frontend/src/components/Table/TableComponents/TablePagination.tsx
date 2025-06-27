@@ -17,7 +17,7 @@ interface ITablePagination {
 
 const TablePagination = ({
   currentPage,
-  totalPages,
+  totalPages = 1,
   totalItems,
   onPageChange,
   itemsPerPage = 10,

@@ -28,5 +28,5 @@ public class ServiceItem
 public enum ServiceItemType
 {
     Service,
-    Product
+    Material
 }

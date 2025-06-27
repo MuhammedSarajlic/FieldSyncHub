@@ -43,7 +43,7 @@ export const renderCellContent = <T extends Record<string, any>>(
         <div
           className={`text-sm text-heading ${column.bold && 'font-semibold'}`}
         >
-          {value}
+          {value ? value : '-'}
         </div>
       );
 
@@ -147,13 +147,18 @@ export const renderCellContent = <T extends Record<string, any>>(
       );
 
     case 'badge':
+      label =
+        typeof value === 'number' && column.enumMap
+          ? column.enumMap[value]
+          : value;
+
       return (
         <span
-          className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
-            column.badgeColor?.(value) ?? 'bg-gray-100 text-gray-800'
+          className={`inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium ${
+            column.badgeColor?.(value) ?? 'bg-gray-100 text-sm'
           }`}
         >
-          {value}
+          {label}
         </span>
       );
 

@@ -4,6 +4,7 @@ import { TEmployee } from '../../../types/Employee';
 import { useNavigate } from 'react-router';
 import { getStatusBadge } from '../../../utils/FuntionHelpers/getStatusBadge';
 import { formatDate } from '../../../utils/FuntionHelpers/formatDate';
+import { EmployeeStatus } from '../../../constants/Enumeration/EmployeeEnum/EmployeeEnum';
 
 interface IEmployeeTable {
   employees: TEmployee[];
@@ -102,8 +103,8 @@ const EmployeeTable = ({ employees: filteredEmployees }: IEmployeeTable) => {
                         getStatusBadge(employee.status).indicator
                       }`}
                     ></span>
-                    {employee.status.charAt(0).toUpperCase() +
-                      employee.status.slice(1)}
+                    {EmployeeStatus[employee.status].charAt(0).toUpperCase() +
+                      EmployeeStatus[employee.status].slice(1)}
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>

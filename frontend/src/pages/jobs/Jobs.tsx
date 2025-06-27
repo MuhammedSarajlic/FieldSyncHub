@@ -72,7 +72,7 @@ const Jobs = () => {
         </div>
 
         {/* Main content */}
-        <div className='px-4'>
+        <div className='px-6 pt-6'>
           {/* Page header */}
           <div className='pb-4 mb-4 flex items-center justify-between'>
             <p className='text-heading text-4xl font-extrabold'>Jobs</p>

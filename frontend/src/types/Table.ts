@@ -37,8 +37,8 @@ export interface StatusColumn extends BaseColumn {
 
 export interface PriorityColumn extends BaseColumn {
   type: 'priority';
-  priorityConfig?: (value: string | number) => string; // This function will return just the color string
-  enumMap: Record<number, string>; // To map numerical priority to string labels (e.g., 0 to "Low")
+  priorityConfig?: (value: string | number) => string;
+  enumMap: Record<number, string>;
 }
 
 export interface ImageColumn extends BaseColumn {
@@ -56,6 +56,7 @@ export interface UserColumn extends BaseColumn {
 export interface BadgeColumn extends BaseColumn {
   type: 'badge';
   badgeColor?: (value: any) => string;
+  enumMap?: Record<number, string>;
 }
 
 export interface CustomColumn extends BaseColumn {

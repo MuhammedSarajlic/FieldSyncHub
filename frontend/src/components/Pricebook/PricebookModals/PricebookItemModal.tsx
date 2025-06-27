@@ -5,12 +5,10 @@ import { addServiceItemInitialState } from '../../../const/states';
 
 interface IPricebookItemModal {
   onClose: () => void;
-  fetchServiceItems: () => void;
 }
 
 const PricebookItemModal = ({
   onClose,
-  fetchServiceItems,
 }: IPricebookItemModal) => {
   const [serviceItem, setServiceItem] = useState<TAddServiceItem>(
     addServiceItemInitialState
@@ -43,7 +41,6 @@ const PricebookItemModal = ({
     console.log(serviceItem);
     const response = await CreateServiceItem(serviceItem);
     if (response.status === 200) {
-      fetchServiceItems();
       onClose();
     }
     console.log(response);

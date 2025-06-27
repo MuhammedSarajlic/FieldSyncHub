@@ -3,6 +3,7 @@ using backend.Data;
 using backend.Dtos.ServiceItemDto;
 using backend.Models;
 using backend.Response;
+using backend.Wrappers;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,32 +35,65 @@ public class ServiceItemService : IServiceItemService
         return serviceItem ?? throw new KeyNotFoundException("Service item not found");
     }
 
-    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByWorkspace(Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<ServiceItem>>> GetServiceItemsByWorkspace(
+            Guid workspaceId,
+            int pageNumber,
+            int pageSize
+        )
     {
-        var serviceItems = await _context.ServiceItems
-            .Where(s => s.IsActive && s.Category != null && s.Category.ToLower() != "archived")
-            .ToListAsync();
-        return new ApiResponse<List<ServiceItem>> { Success = true, Payload = serviceItems };
+        var query = _context.ServiceItems
+            .Where(s => s.WorkspaceId == workspaceId && s.IsActive && s.Category != null);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query.Skip((pageNumber - 1) * pageSize)
+                               .Take(pageSize)
+                               .ToListAsync();
+
+        var result = new PagedResult<ServiceItem>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return new ApiResponse<PagedResult<ServiceItem>>()
+        {
+            Success = true,
+            Payload = result,
+            ErrorMessage = null
+        };
     }
 
-    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByFilter(ServiceItemFilterDto filterDto, Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<ServiceItem>>> GetServiceItemsByFilter(
+        ServiceItemFilterDto filterDto,
+        Guid workspaceId,
+        int pageNumber,
+        int pageSize
+    )
     {
-        var queryable = _context.ServiceItems.Where(s => s.WorkspaceId == workspaceId)
-                                            .AsQueryable();
+        var queryable = _context.ServiceItems.Where(s => s.WorkspaceId == workspaceId);
 
-        // 🔍 Search by name
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
-            queryable = queryable.Where(s => s.Name.Contains(filterDto.Q));
+            queryable = queryable.Where(s => s.Name.Contains(filterDto.Q) ||
+                                             (s.SKU != null && s.SKU.Contains(filterDto.Q)));
         }
 
-        // 🔍 Category
         if (!string.IsNullOrWhiteSpace(filterDto.Category))
         {
             queryable = queryable.Where(s => s.Category == filterDto.Category);
         }
 
-        // 🔍 Price range
+        if (!string.IsNullOrWhiteSpace(filterDto.Type))
+        {
+            if (Enum.TryParse(filterDto.Type, true, out ServiceItemType parsedType))
+            {
+                queryable = queryable.Where(s => s.Type == parsedType);
+            }
+        }
+
         if (filterDto.PriceMin.HasValue)
         {
             queryable = queryable.Where(s => s.UnitPrice >= filterDto.PriceMin.Value);
@@ -70,27 +104,35 @@ public class ServiceItemService : IServiceItemService
             queryable = queryable.Where(s => s.UnitPrice <= filterDto.PriceMax.Value);
         }
 
-        // 🔍 IsActive
-        if (filterDto.IsActive.HasValue)
+        if (!string.IsNullOrWhiteSpace(filterDto.IsActive))
         {
-            queryable = queryable.Where(s => s.IsActive == filterDto.IsActive.Value);
+            if (filterDto.IsActive == "active")
+            {
+                queryable = queryable.Where(s => s.IsActive == true);
+            }
+            else
+            {
+                queryable = queryable.Where(s => s.IsActive == false);
+            }
         }
 
-        // 🔍 Has Image
-        if (filterDto.HasImage.HasValue)
+        if (!string.IsNullOrWhiteSpace(filterDto.HasImage))
         {
-            queryable = filterDto.HasImage.Value
-                ? queryable.Where(s => !string.IsNullOrEmpty(s.ImageUrl))
-                : queryable.Where(s => string.IsNullOrEmpty(s.ImageUrl));
+            if (filterDto.HasImage == "has")
+            {
+                queryable = queryable.Where(s => !string.IsNullOrEmpty(s.ImageUrl));
+            }
+            else
+            {
+                queryable = queryable.Where(s => string.IsNullOrEmpty(s.ImageUrl));
+            }
         }
 
-        // 🔍 Description search
         if (!string.IsNullOrWhiteSpace(filterDto.Description))
         {
-            queryable = queryable.Where(s => s.Description.Contains(filterDto.Description));
+            queryable = queryable.Where(s => s.Description != null && s.Description.Contains(filterDto.Description));
         }
 
-        // 🔄 Sorting
         queryable = filterDto.SortBy?.ToLower() switch
         {
             "name" => filterDto.Sort == "desc" ? queryable.OrderByDescending(s => s.Name) : queryable.OrderBy(s => s.Name),
@@ -98,12 +140,90 @@ public class ServiceItemService : IServiceItemService
             _ => queryable.OrderBy(s => s.Name)
         };
 
-        var result = await queryable.ToListAsync();
+        var totalCount = await queryable.CountAsync();
 
-        return new ApiResponse<List<ServiceItem>>
+        var pagedServiceItems = await queryable
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var result = new PagedResult<ServiceItem>
+        {
+            Items = pagedServiceItems,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return new ApiResponse<PagedResult<ServiceItem>>
         {
             Success = true,
-            Payload = result
+            Payload = result,
+            ErrorMessage = null
+        };
+    }
+
+    public async Task<ApiResponse<ServiceItemStatsDto>> GetPricebookStatsByWorkspace(Guid workspaceId)
+    {
+        var now = DateTime.UtcNow;
+
+        var startOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var startOfPreviousMonth = startOfCurrentMonth.AddMonths(-1);
+        var endOfPreviousMonth = startOfCurrentMonth.AddSeconds(-1);
+
+        var currentPeriodItems = await _context.ServiceItems
+            .Where(s => s.WorkspaceId == workspaceId
+                     && s.IsActive
+                     && (s.Category == null || s.Category.ToLower() != "archived")
+                     && s.CreatedAt >= startOfCurrentMonth
+                     && s.CreatedAt <= now
+            )
+            .ToListAsync();
+
+        var currentTotalItems = currentPeriodItems.Count;
+        var currentTotalMaterialItems = currentPeriodItems.Count(i => i.Type == ServiceItemType.Material);
+        var currentTotalServiceItems = currentPeriodItems.Count(i => i.Type == ServiceItemType.Service);
+        var currentTotalPricebookValue = currentPeriodItems.Sum(i => i.UnitPrice);
+        var currentAverageItemPrice = currentTotalItems > 0 ? currentTotalPricebookValue / currentTotalItems : 0;
+
+        var previousPeriodItems = await _context.ServiceItems
+            .Where(s => s.WorkspaceId == workspaceId
+                     && s.IsActive
+                     && (s.Category == null || s.Category.ToLower() != "archived")
+                     && s.CreatedAt >= startOfPreviousMonth
+                     && s.CreatedAt <= endOfPreviousMonth
+            )
+            .ToListAsync();
+
+        var previousTotalItems = previousPeriodItems.Count;
+        var previousTotalMaterialItems = previousPeriodItems.Count(i => i.Type == ServiceItemType.Material);
+        var previousTotalServiceItems = previousPeriodItems.Count(i => i.Type == ServiceItemType.Service);
+        var previousTotalPricebookValue = previousPeriodItems.Sum(i => i.UnitPrice);
+        var previousAverageItemPrice = previousTotalItems > 0 ? previousTotalPricebookValue / previousTotalItems : 0;
+
+        string totalItemsChange = CalculatePercentageChange(currentTotalItems, previousTotalItems);
+        string materialItemsChange = CalculatePercentageChange(currentTotalMaterialItems, previousTotalMaterialItems);
+        string serviceItemsChange = CalculatePercentageChange(currentTotalServiceItems, previousTotalServiceItems);
+        string averageItemPriceChange = CalculatePercentageChange(currentAverageItemPrice, previousAverageItemPrice);
+
+        var statsDto = new ServiceItemStatsDto
+        {
+            TotalItems = currentTotalItems,
+            TotalMaterialItems = currentTotalMaterialItems,
+            TotalServiceItems = currentTotalServiceItems,
+            TotalPricebookValue = currentTotalPricebookValue,
+            AverageItemPrice = currentAverageItemPrice,
+            TotalItemsChange = totalItemsChange,
+            MaterialItemsChange = materialItemsChange,
+            ServiceItemsChange = serviceItemsChange,
+            AverageItemPriceChange = averageItemPriceChange
+        };
+
+        return new ApiResponse<ServiceItemStatsDto>
+        {
+            Success = true,
+            Payload = statsDto
         };
     }
 
@@ -200,10 +320,6 @@ public class ServiceItemService : IServiceItemService
 
         var normalizedExisting = existingServiceItems.Select(si => new
         {
-            // Use null-conditional operator ?. and null-coalescing operator ?? ""
-            // to handle potential null SKUs from existing database records.
-            // Also apply .Trim().ToLower() on Name which might contain leading/trailing spaces or be null/empty
-            // although you're checking for it later for DTOs, for existing, assume they might exist without clean data.
             Key = $"{si.Name?.Trim().ToLower() ?? ""}|{si.Type.ToString().Trim().ToLower()}|{si.SKU?.Trim().ToLower() ?? ""}",
             si.Id
         }).ToHashSet();
@@ -213,7 +329,7 @@ public class ServiceItemService : IServiceItemService
 
         foreach (var dto in serviceItems)
         {
-            if (string.IsNullOrWhiteSpace(dto.Name)) // Only check Name if SKU can be optional
+            if (string.IsNullOrWhiteSpace(dto.Name))
             {
                 skippedCount++;
                 continue;
@@ -221,7 +337,6 @@ public class ServiceItemService : IServiceItemService
 
             ServiceItemType itemTypeForComparison = dto.Type;
 
-            // Handle dto.SKU potentially being null/empty when forming the key
             var key = $"{dto.Name.Trim().ToLower()}|{itemTypeForComparison.ToString().Trim().ToLower()}|{dto.SKU?.Trim().ToLower() ?? ""}";
 
             if (normalizedExisting.Any(si => si.Key == key))
@@ -237,7 +352,7 @@ public class ServiceItemService : IServiceItemService
                 Description = dto.Description,
                 Type = itemTypeForComparison,
                 Category = dto.Category,
-                SKU = dto.SKU?.Trim() ?? null, // Store as null if it was null/empty in DTO
+                SKU = dto.SKU?.Trim() ?? null,
                 UnitPrice = dto.UnitPrice,
                 Cost = dto.Cost,
                 TaxRate = dto.TaxRate,
@@ -274,18 +389,18 @@ public class ServiceItemService : IServiceItemService
             .Where(si => si.WorkspaceId == workspaceId)
             .ToListAsync();
 
-        if (serviceItems == null || !serviceItems.Any())
+        if (serviceItems == null || serviceItems.Count == 0)
         {
             return new NotFoundResult();
         }
 
         var sb = new StringBuilder();
 
-        sb.AppendLine("Id,WorkspaceId,Name,Description,Type,Category,SKU,UnitPrice,Cost,TaxRate,IsTaxable,IsActive,ImageUrl");
+        sb.AppendLine("Name,Description,Type,Category,SKU,UnitPrice,Cost,TaxRate,IsTaxable,IsActive,ImageUrl");
 
         foreach (var item in serviceItems)
         {
-            sb.AppendLine($"{item.Id},{item.WorkspaceId},{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{item.UnitPrice},{item.Cost},{item.TaxRate},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
+            sb.AppendLine($"{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{item.UnitPrice},{item.Cost},{item.TaxRate},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -295,7 +410,7 @@ public class ServiceItemService : IServiceItemService
         };
     }
 
-    private string EscapeCsvField(string? field)
+    private static string EscapeCsvField(string? field)
     {
         if (string.IsNullOrEmpty(field))
         {
@@ -306,6 +421,22 @@ public class ServiceItemService : IServiceItemService
             return $"\"{field.Replace("\"", "\"\"")}\"";
         }
         return field;
+    }
+
+    private static string CalculatePercentageChange(decimal currentValue, decimal previousValue)
+    {
+        if (previousValue == 0)
+        {
+            return "0%";
+        }
+
+        var change = ((currentValue - previousValue) / previousValue) * 100;
+        return $"{change:+0.0;-0.0;0.0}%";
+    }
+
+    private static string CalculatePercentageChange(int currentValue, int previousValue)
+    {
+        return CalculatePercentageChange((decimal)currentValue, (decimal)previousValue);
     }
 
 }

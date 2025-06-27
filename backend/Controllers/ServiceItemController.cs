@@ -2,6 +2,7 @@ using backend.Dtos.ServiceItemDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.ServiceItemService;
+using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -32,16 +33,30 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpGet("workspace/{workspaceId}")]
-    public async Task<ApiResponse<List<ServiceItem>>> GetByWorkspace(Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<ServiceItem>>> GetByWorkspace(Guid workspaceId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
-        var serviceItems = await _serviceItemService.GetServiceItemsByWorkspace(workspaceId);
+        var serviceItems = await _serviceItemService.GetServiceItemsByWorkspace(workspaceId, pageNumber, pageSize);
         return serviceItems;
     }
 
     [HttpGet("workspace/{workspaceId}/filter")]
-    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItemsByFilter([FromQuery] ServiceItemFilterDto filterDto, Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<ServiceItem>>> GetServiceItemsByFilter(Guid workspaceId,
+        [FromQuery] int pageNumber,
+        [FromQuery] int pageSize, [FromQuery] ServiceItemFilterDto filterDto)
     {
-        return await _serviceItemService.GetServiceItemsByFilter(filterDto, workspaceId);
+        return await _serviceItemService.GetServiceItemsByFilter(filterDto, workspaceId, pageNumber, pageSize);
+    }
+
+    [HttpGet("stats/{workspaceId}")]
+    public async Task<IActionResult> GetPricebookStats(Guid workspaceId)
+    {
+        var result = await _serviceItemService.GetPricebookStatsByWorkspace(workspaceId);
+
+        if (result.Success)
+        {
+            return Ok(result);
+        }
+        return StatusCode(500, result);
     }
 
     [HttpPost]

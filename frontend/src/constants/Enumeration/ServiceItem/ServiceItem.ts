@@ -1,4 +1,4 @@
 export enum ServiceItemType {
   Service,
-  Product,
+  Material,
 }

@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthProvider';
 import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
 import Table from '../../components/Table/Table';
 import { invoiceColumns } from '../../constants/Columns/InvoiceColumns';
+import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 
 const Invoices = () => {
   const { user } = useAuth();
@@ -85,7 +86,7 @@ const Invoices = () => {
           <Navbar />
         </div>
 
-        <div className='px-4'>
+        <div className='px-6 pt-6'>
           {/* Header */}
           <div className='flex items-center justify-between mb-6'>
             <div>
@@ -182,11 +183,10 @@ const Invoices = () => {
                 </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  $
-                  {(
+                  {formatCurrency(
                     invoices.reduce((sum, inv) => sum + inv.total, 0) /
-                    invoices.length
-                  ).toFixed(0)}
+                      invoices.length
+                  )}
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -209,7 +209,6 @@ const Invoices = () => {
                 <Search
                   inputPlaceholder='Search invoices...'
                   searchQuery={searchQuery}
-                  handleChange={handleSearch}
                 />
               </div>
 
@@ -224,7 +223,6 @@ const Invoices = () => {
                   filterOptions={invoiceFilterOptions}
                   setIsFilterModalOpen={setIsFilterModalOpen}
                   isFilterModalOpen={isFilterModalOpen}
-                  // onApply={handleApplyFilters}
                 />
               </div>
             </div>
@@ -238,111 +236,6 @@ const Invoices = () => {
               paginationData={paginationData}
             />
           </div>
-
-          {/* Invoice Table */}
-          {/* <div className='bg-white rounded-lg shadow-xs border border-gray-200 overflow-hidden'>
-            <div className='overflow-x-auto'>
-              <table className='min-w-full divide-y divide-gray-200'>
-                <thead className='bg-gray-50'>
-                  <tr>
-                    {[
-                      'Invoice #',
-                      'Customer',
-                      'Due Date',
-                      'Status',
-                      'Total',
-                    ].map((header, index) => (
-                      <th
-                        key={index}
-                        scope='col'
-                        className={`px-6 py-3 ${
-                          header === 'Total' ? 'text-right' : 'text-left'
-                        } text-xs font-medium text-gray-500 uppercase tracking-wider`}
-                      >
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className='bg-white divide-y divide-gray-200'>
-                  {invoices.map((invoice) => (
-                    <tr
-                      key={invoice.invoiceId}
-                      onClick={() =>
-                        navigate(`/invoices/${invoice.invoiceNumber}`)
-                      }
-                      className='hover:bg-gray-50 group h-[70px] cursor-pointer'
-                    >
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <div className='flex items-center'>
-                          <div className='flex flex-col'>
-                            <div className='text-sm font-medium text-gray-900 flex items-center'>
-                              {invoice.invoiceNumber}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <div className='text-sm font-medium text-gray-900'>
-                          {invoice.customer.firstName}{' '}
-                          {invoice.customer.lastName}
-                        </div>
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <div className='text-sm text-gray-900'>
-                          {formatDate(invoice.dueDate)}
-                        </div>
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap'>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                            getInvoiceStatus(invoice.status).color
-                          }`}
-                        >
-                          {getInvoiceStatus(invoice.status).icon}
-                          <span className='ml-1 capitalize'>
-                            {invoice.status}
-                          </span>
-                        </span>
-                      </td>
-                      <td className='px-6 py-4 whitespace-nowrap text-right'>
-                        <div className='text-sm font-medium text-gray-900'>
-                          $
-                          {invoice.total.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div> */}
-
-          {/* Pagination */}
-          {/* <div className='flex items-center justify-between mt-6'>
-            <div className='text-sm text-gray-700'>
-              Showing <span className='font-medium'>1</span> to{' '}
-              <span className='font-medium'>{invoices.length}</span> of{' '}
-              <span className='font-medium'>{invoices.length}</span> results
-            </div>
-            <div className='flex items-center space-x-2'>
-              <button className='px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'>
-                Previous
-              </button>
-              <button className='px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700'>
-                1
-              </button>
-              <button className='px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'>
-                2
-              </button>
-              <button className='px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'>
-                Next
-              </button>
-            </div>
-          </div> */}
         </div>
       </div>
       {isInvoiceModalOpen && (

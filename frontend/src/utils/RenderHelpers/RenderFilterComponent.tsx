@@ -21,7 +21,7 @@ export const renderFilterComponent = ({
           <select
             value={filters[option.name]}
             onChange={(e) => handleFilterChange(option.name, e.target.value)}
-            className='mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
+            className='mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-2 focus:outline-none focus:ring-bg-primary focus:border-bg-primary sm:text-sm'
           >
             <option value=''>Select an option</option>
             {option.dropdownOptions &&
@@ -54,8 +54,9 @@ export const renderFilterComponent = ({
                     : e.target.value
                 )
               }
+              min={0}
               placeholder={option.min}
-              className='w-full border border-gray-300 shadow-sm rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500'
+              className='w-full border border-gray-300 shadow-sm rounded-lg px-3 py-2 text-sm outline-none focus:ring-bg-primary focus:border-bg-primary'
             />
             {option.valueType === 'date' && (
               <span className='text-gray-500'>to</span>
@@ -73,7 +74,7 @@ export const renderFilterComponent = ({
                 )
               }
               placeholder={option.max}
-              className='w-full border border-gray-300 shadow-sm rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500'
+              className='w-full border border-gray-300 shadow-sm rounded-lg px-3 py-2 text-sm outline-none focus:ring-bg-primary focus:border-bg-primary'
             />
           </div>
         </div>
@@ -119,7 +120,7 @@ export const renderFilterComponent = ({
             value={filters[option.name]}
             onChange={(e) => handleFilterChange(option.name, e.target.value)}
             placeholder={option.placeholder ?? ''}
-            className='mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
+            className='mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-bg-primary sm:text-sm'
           />
         </div>
       );

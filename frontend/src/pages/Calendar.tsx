@@ -15,6 +15,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
+import PageUnderDevelopment from '../components/CustomElements/PageUnderDevelopment';
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -228,218 +229,316 @@ const Calendar = () => {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
+  const [isConstruction, setIsConstruction] = useState<boolean>(true);
+
   return (
-    <div className='flex'>
+    <div className='flex h-screen'>
       <Sidebar />
       <div className='flex-1 ml-[260px]'>
-        <div>
-          <Navbar />
-        </div>
+        <Navbar />
 
-        <div className='p-6'>
-          {/* Header with controls */}
-          <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-6'>
-            <div>
-              <h1 className='text-2xl font-bold text-gray-800'>
-                Schedule & Calendar
-              </h1>
-              <p className='text-gray-600'>
-                Manage your team's appointments and jobs
-              </p>
-            </div>
-
-            <div className='flex flex-wrap items-center gap-2 mt-4 md:mt-0'>
-              <div className='flex bg-gray-100 rounded-md'>
-                <button
-                  onClick={() => setView('day')}
-                  className={`px-3 py-1 text-sm rounded-l-md ${
-                    view === 'day' ? 'bg-blue-600 text-white' : 'text-gray-700'
-                  }`}
-                >
-                  Day
-                </button>
-                <button
-                  onClick={() => setView('week')}
-                  className={`px-3 py-1 text-sm ${
-                    view === 'week' ? 'bg-blue-600 text-white' : 'text-gray-700'
-                  }`}
-                >
-                  Week
-                </button>
-                <button
-                  onClick={() => setView('month')}
-                  className={`px-3 py-1 text-sm rounded-r-md ${
-                    view === 'month'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700'
-                  }`}
-                >
-                  Month
-                </button>
+        {!isConstruction ? (
+          <div className='p-6'>
+            {/* Header with controls */}
+            <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-6'>
+              <div>
+                <h1 className='text-2xl font-bold text-gray-800'>
+                  Schedule & Calendar
+                </h1>
+                <p className='text-gray-600'>
+                  Manage your team's appointments and jobs
+                </p>
               </div>
 
-              <button
-                onClick={() => setShowJobForm(true)}
-                className='flex items-center bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700'
-              >
-                <Plus size={16} className='mr-1' />
-                Schedule Job
-              </button>
-            </div>
-          </div>
-
-          <div className='flex flex-col lg:flex-row gap-6'>
-            {/* Main calendar area */}
-            <div className='lg:w-3/4'>
-              {/* Calendar navigation */}
-              <div className='bg-white p-4 shadow rounded-lg mb-6'>
-                <div className='flex justify-between items-center'>
+              <div className='flex flex-wrap items-center gap-2 mt-4 md:mt-0'>
+                <div className='flex bg-gray-100 rounded-md'>
                   <button
-                    onClick={() => navigateDate(-1)}
-                    className='p-1 rounded-full hover:bg-gray-100'
+                    onClick={() => setView('day')}
+                    className={`px-3 py-1 text-sm rounded-l-md ${
+                      view === 'day'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700'
+                    }`}
                   >
-                    <ChevronLeft size={20} />
+                    Day
                   </button>
-
-                  <div className='flex items-center'>
-                    <CalendarIcon size={20} className='mr-2 text-blue-600' />
-                    {view === 'day' && (
-                      <h2 className='text-lg font-medium'>
-                        {formatDate(currentDate)}
-                      </h2>
-                    )}
-                    {view === 'week' && (
-                      <h2 className='text-lg font-medium'>
-                        {formatDate(getDatesInWeek(currentDate)[0])} -{' '}
-                        {formatDate(getDatesInWeek(currentDate)[6])}
-                      </h2>
-                    )}
-                    {view === 'month' && (
-                      <h2 className='text-lg font-medium'>
-                        {getMonthName(currentDate)}
-                      </h2>
-                    )}
-                  </div>
-
                   <button
-                    onClick={() => navigateDate(1)}
-                    className='p-1 rounded-full hover:bg-gray-100'
+                    onClick={() => setView('week')}
+                    className={`px-3 py-1 text-sm ${
+                      view === 'week'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700'
+                    }`}
                   >
-                    <ChevronRight size={20} />
+                    Week
+                  </button>
+                  <button
+                    onClick={() => setView('month')}
+                    className={`px-3 py-1 text-sm rounded-r-md ${
+                      view === 'month'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    Month
                   </button>
                 </div>
+
+                <button
+                  onClick={() => setShowJobForm(true)}
+                  className='flex items-center bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700'
+                >
+                  <Plus size={16} className='mr-1' />
+                  Schedule Job
+                </button>
               </div>
+            </div>
 
-              {/* Day View */}
-              {view === 'day' && (
-                <div className='bg-white shadow rounded-lg overflow-hidden'>
-                  <div className='p-4 border-b'>
-                    <h3 className='font-medium text-gray-800'>
-                      {formatDate(currentDate)}
-                    </h3>
+            <div className='flex flex-col lg:flex-row gap-6'>
+              {/* Main calendar area */}
+              <div className='lg:w-3/4'>
+                {/* Calendar navigation */}
+                <div className='bg-white p-4 shadow rounded-lg mb-6'>
+                  <div className='flex justify-between items-center'>
+                    <button
+                      onClick={() => navigateDate(-1)}
+                      className='p-1 rounded-full hover:bg-gray-100'
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+
+                    <div className='flex items-center'>
+                      <CalendarIcon size={20} className='mr-2 text-blue-600' />
+                      {view === 'day' && (
+                        <h2 className='text-lg font-medium'>
+                          {formatDate(currentDate)}
+                        </h2>
+                      )}
+                      {view === 'week' && (
+                        <h2 className='text-lg font-medium'>
+                          {formatDate(getDatesInWeek(currentDate)[0])} -{' '}
+                          {formatDate(getDatesInWeek(currentDate)[6])}
+                        </h2>
+                      )}
+                      {view === 'month' && (
+                        <h2 className='text-lg font-medium'>
+                          {getMonthName(currentDate)}
+                        </h2>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => navigateDate(1)}
+                      className='p-1 rounded-full hover:bg-gray-100'
+                    >
+                      <ChevronRight size={20} />
+                    </button>
                   </div>
+                </div>
 
-                  <div className='divide-y'>
-                    {/* Time slots - simplified for this example */}
-                    {Array.from({ length: 12 }, (_, i) => i + 8).map((hour) => {
-                      const timeSlot = new Date(currentDate);
-                      timeSlot.setHours(hour, 0, 0);
+                {/* Day View */}
+                {view === 'day' && (
+                  <div className='bg-white shadow rounded-lg overflow-hidden'>
+                    <div className='p-4 border-b'>
+                      <h3 className='font-medium text-gray-800'>
+                        {formatDate(currentDate)}
+                      </h3>
+                    </div>
 
-                      const jobsInSlot = filteredJobs.filter(
-                        (job) =>
-                          job.date.getDate() === timeSlot.getDate() &&
-                          job.date.getMonth() === timeSlot.getMonth() &&
-                          job.date.getFullYear() === timeSlot.getFullYear() &&
-                          job.date.getHours() === hour
-                      );
+                    <div className='divide-y'>
+                      {/* Time slots - simplified for this example */}
+                      {Array.from({ length: 12 }, (_, i) => i + 8).map(
+                        (hour) => {
+                          const timeSlot = new Date(currentDate);
+                          timeSlot.setHours(hour, 0, 0);
 
-                      return (
-                        <div key={hour} className='flex p-2 min-h-16'>
-                          <div className='w-16 py-2 flex justify-center border-r text-gray-500'>
-                            {hour > 12 ? `${hour - 12}:00 PM` : `${hour}:00 AM`}
+                          const jobsInSlot = filteredJobs.filter(
+                            (job) =>
+                              job.date.getDate() === timeSlot.getDate() &&
+                              job.date.getMonth() === timeSlot.getMonth() &&
+                              job.date.getFullYear() ===
+                                timeSlot.getFullYear() &&
+                              job.date.getHours() === hour
+                          );
+
+                          return (
+                            <div key={hour} className='flex p-2 min-h-16'>
+                              <div className='w-16 py-2 flex justify-center border-r text-gray-500'>
+                                {hour > 12
+                                  ? `${hour - 12}:00 PM`
+                                  : `${hour}:00 AM`}
+                              </div>
+                              <div className='flex-1 pl-4 py-2'>
+                                {jobsInSlot.length > 0 ? (
+                                  <div className='space-y-2'>
+                                    {jobsInSlot.map((job) => (
+                                      <div
+                                        key={job.id}
+                                        onClick={() => setSelectedJob(job)}
+                                        className={`p-2 rounded cursor-pointer ${
+                                          job.priority === 'high'
+                                            ? 'bg-red-100 border-l-4 border-red-500'
+                                            : job.priority === 'medium'
+                                            ? 'bg-yellow-100 border-l-4 border-yellow-500'
+                                            : 'bg-blue-100 border-l-4 border-blue-500'
+                                        }`}
+                                      >
+                                        <div className='flex justify-between'>
+                                          <p className='font-medium'>
+                                            {job.title}
+                                          </p>
+                                          <p className='text-sm text-gray-600'>
+                                            {formatTime(job.date)} -{' '}
+                                            {formatTime(job.endTime)}
+                                          </p>
+                                        </div>
+                                        <p className='text-sm'>{job.client}</p>
+                                        <div className='flex items-center mt-1 text-xs text-gray-500'>
+                                          <User size={12} className='mr-1' />
+                                          {job.technician}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
+                                    No appointments scheduled
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Week View */}
+                {view === 'week' && (
+                  <div className='bg-white shadow rounded-lg overflow-hidden'>
+                    <div className='grid grid-cols-7 border-b'>
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                        (day, index) => (
+                          <div key={day} className='p-3 text-center'>
+                            <p className='text-sm font-medium text-gray-600'>
+                              {day}
+                            </p>
+                            <p
+                              className={`mt-1 text-lg ${
+                                getDatesInWeek(currentDate)[
+                                  index
+                                ].toDateString() === new Date().toDateString()
+                                  ? 'bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto'
+                                  : ''
+                              }`}
+                            >
+                              {getDatesInWeek(currentDate)[index].getDate()}
+                            </p>
                           </div>
-                          <div className='flex-1 pl-4 py-2'>
-                            {jobsInSlot.length > 0 ? (
+                        )
+                      )}
+                    </div>
+
+                    <div className='grid grid-cols-7 divide-x h-full'>
+                      {getDatesInWeek(currentDate).map((date, index) => {
+                        const dayJobs = getJobsForDate(date);
+
+                        return (
+                          <div key={index} className='min-h-64 p-2'>
+                            {dayJobs.length > 0 ? (
                               <div className='space-y-2'>
-                                {jobsInSlot.map((job) => (
+                                {dayJobs.map((job) => (
                                   <div
                                     key={job.id}
                                     onClick={() => setSelectedJob(job)}
-                                    className={`p-2 rounded cursor-pointer ${
+                                    className={`p-2 rounded cursor-pointer text-sm ${
                                       job.priority === 'high'
-                                        ? 'bg-red-100 border-l-4 border-red-500'
+                                        ? 'bg-red-100 border-l-2 border-red-500'
                                         : job.priority === 'medium'
-                                        ? 'bg-yellow-100 border-l-4 border-yellow-500'
-                                        : 'bg-blue-100 border-l-4 border-blue-500'
+                                        ? 'bg-yellow-100 border-l-2 border-yellow-500'
+                                        : 'bg-blue-100 border-l-2 border-blue-500'
                                     }`}
                                   >
-                                    <div className='flex justify-between'>
-                                      <p className='font-medium'>{job.title}</p>
-                                      <p className='text-sm text-gray-600'>
-                                        {formatTime(job.date)} -{' '}
-                                        {formatTime(job.endTime)}
-                                      </p>
-                                    </div>
-                                    <p className='text-sm'>{job.client}</p>
-                                    <div className='flex items-center mt-1 text-xs text-gray-500'>
-                                      <User size={12} className='mr-1' />
-                                      {job.technician}
-                                    </div>
+                                    <p className='font-medium truncate'>
+                                      {job.title}
+                                    </p>
+                                    <p className='text-xs truncate'>
+                                      {job.client}
+                                    </p>
+                                    <p className='text-xs text-gray-600'>
+                                      {formatTime(job.date)}
+                                    </p>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
-                                No appointments scheduled
+                              <div className='h-full flex items-center justify-center text-gray-400 text-xs'>
+                                No jobs
                               </div>
                             )}
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Week View */}
-              {view === 'week' && (
-                <div className='bg-white shadow rounded-lg overflow-hidden'>
-                  <div className='grid grid-cols-7 border-b'>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                      (day, index) => (
-                        <div key={day} className='p-3 text-center'>
-                          <p className='text-sm font-medium text-gray-600'>
-                            {day}
-                          </p>
-                          <p
-                            className={`mt-1 text-lg ${
-                              getDatesInWeek(currentDate)[
-                                index
-                              ].toDateString() === new Date().toDateString()
-                                ? 'bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto'
-                                : ''
+                {/* Month View */}
+                {view === 'month' && (
+                  <div className='bg-white shadow rounded-lg overflow-hidden'>
+                    <div className='grid grid-cols-7 border-b'>
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                        (day) => (
+                          <div key={day} className='p-2 text-center'>
+                            <p className='text-sm font-medium text-gray-600'>
+                              {day}
+                            </p>
+                          </div>
+                        )
+                      )}
+                    </div>
+
+                    <div className='grid grid-cols-7 divide-x divide-y'>
+                      {getDaysInMonth(currentDate).map((date, index) => {
+                        const isCurrentMonth =
+                          date.getMonth() === currentDate.getMonth();
+                        const isToday =
+                          date.toDateString() === new Date().toDateString();
+                        const dayJobs = getJobsForDate(date);
+
+                        return (
+                          <div
+                            key={index}
+                            className={`min-h-24 p-1 ${
+                              isCurrentMonth ? '' : 'bg-gray-50'
                             }`}
                           >
-                            {getDatesInWeek(currentDate)[index].getDate()}
-                          </p>
-                        </div>
-                      )
-                    )}
-                  </div>
+                            <div className='flex justify-between'>
+                              <p
+                                className={`text-sm p-1 ${
+                                  isToday
+                                    ? 'bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center'
+                                    : !isCurrentMonth
+                                    ? 'text-gray-400'
+                                    : ''
+                                }`}
+                              >
+                                {date.getDate()}
+                              </p>
+                              {dayJobs.length > 0 && (
+                                <span className='text-xs bg-blue-100 text-blue-800 px-1 rounded'>
+                                  {dayJobs.length}
+                                </span>
+                              )}
+                            </div>
 
-                  <div className='grid grid-cols-7 divide-x h-full'>
-                    {getDatesInWeek(currentDate).map((date, index) => {
-                      const dayJobs = getJobsForDate(date);
-
-                      return (
-                        <div key={index} className='min-h-64 p-2'>
-                          {dayJobs.length > 0 ? (
-                            <div className='space-y-2'>
-                              {dayJobs.map((job) => (
+                            <div className='mt-1'>
+                              {dayJobs.slice(0, 2).map((job) => (
                                 <div
                                   key={job.id}
                                   onClick={() => setSelectedJob(job)}
-                                  className={`p-2 rounded cursor-pointer text-sm ${
+                                  className={`p-1 mb-1 rounded cursor-pointer text-xs truncate ${
                                     job.priority === 'high'
                                       ? 'bg-red-100 border-l-2 border-red-500'
                                       : job.priority === 'medium'
@@ -447,297 +546,214 @@ const Calendar = () => {
                                       : 'bg-blue-100 border-l-2 border-blue-500'
                                   }`}
                                 >
-                                  <p className='font-medium truncate'>
-                                    {job.title}
-                                  </p>
-                                  <p className='text-xs truncate'>
-                                    {job.client}
-                                  </p>
-                                  <p className='text-xs text-gray-600'>
-                                    {formatTime(job.date)}
-                                  </p>
+                                  {job.title}
                                 </div>
                               ))}
+                              {dayJobs.length > 2 && (
+                                <p className='text-xs text-gray-500 pl-1'>
+                                  +{dayJobs.length - 2} more
+                                </p>
+                              )}
                             </div>
-                          ) : (
-                            <div className='h-full flex items-center justify-center text-gray-400 text-xs'>
-                              No jobs
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Month View */}
-              {view === 'month' && (
-                <div className='bg-white shadow rounded-lg overflow-hidden'>
-                  <div className='grid grid-cols-7 border-b'>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                      (day) => (
-                        <div key={day} className='p-2 text-center'>
-                          <p className='text-sm font-medium text-gray-600'>
-                            {day}
-                          </p>
-                        </div>
-                      )
-                    )}
+              {/* Sidebar with filters and upcoming jobs */}
+              <div className='lg:w-1/4'>
+                {/* Search and filter */}
+                <div className='bg-white p-4 shadow rounded-lg mb-6'>
+                  <div className='relative mb-4'>
+                    <input
+                      type='text'
+                      placeholder='Search jobs...'
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className='w-full pl-9 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    />
+                    <Search
+                      size={16}
+                      className='absolute left-3 top-3 text-gray-400'
+                    />
                   </div>
 
-                  <div className='grid grid-cols-7 divide-x divide-y'>
-                    {getDaysInMonth(currentDate).map((date, index) => {
-                      const isCurrentMonth =
-                        date.getMonth() === currentDate.getMonth();
-                      const isToday =
-                        date.toDateString() === new Date().toDateString();
-                      const dayJobs = getJobsForDate(date);
+                  <div className='mb-4'>
+                    <div className='flex items-center mb-2'>
+                      <Filter size={16} className='mr-1 text-gray-500' />
+                      <h3 className='text-sm font-medium text-gray-700'>
+                        Filters
+                      </h3>
+                    </div>
 
-                      return (
-                        <div
-                          key={index}
-                          className={`min-h-24 p-1 ${
-                            isCurrentMonth ? '' : 'bg-gray-50'
-                          }`}
-                        >
-                          <div className='flex justify-between'>
-                            <p
-                              className={`text-sm p-1 ${
-                                isToday
-                                  ? 'bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center'
-                                  : !isCurrentMonth
-                                  ? 'text-gray-400'
-                                  : ''
-                              }`}
+                    <div className='mb-3'>
+                      <label className='block text-xs text-gray-600 mb-1'>
+                        Technicians
+                      </label>
+                      <div className='space-y-1'>
+                        {technicians.map((tech) => (
+                          <div key={tech.id} className='flex items-center'>
+                            <input
+                              type='checkbox'
+                              id={`tech-${tech.id}`}
+                              checked={filterOptions.technicians.includes(
+                                tech.name
+                              )}
+                              onChange={() => {
+                                setFilterOptions((prev) => {
+                                  if (prev.technicians.includes(tech.name)) {
+                                    return {
+                                      ...prev,
+                                      technicians: prev.technicians.filter(
+                                        (t) => t !== tech.name
+                                      ),
+                                    };
+                                  } else {
+                                    return {
+                                      ...prev,
+                                      technicians: [
+                                        ...prev.technicians,
+                                        tech.name,
+                                      ],
+                                    };
+                                  }
+                                });
+                              }}
+                              className='mr-2'
+                            />
+                            <label
+                              htmlFor={`tech-${tech.id}`}
+                              className='text-sm'
                             >
-                              {date.getDate()}
-                            </p>
-                            {dayJobs.length > 0 && (
-                              <span className='text-xs bg-blue-100 text-blue-800 px-1 rounded'>
-                                {dayJobs.length}
-                              </span>
-                            )}
+                              {tech.name}
+                            </label>
                           </div>
+                        ))}
+                      </div>
+                    </div>
 
-                          <div className='mt-1'>
-                            {dayJobs.slice(0, 2).map((job) => (
-                              <div
-                                key={job.id}
-                                onClick={() => setSelectedJob(job)}
-                                className={`p-1 mb-1 rounded cursor-pointer text-xs truncate ${
-                                  job.priority === 'high'
-                                    ? 'bg-red-100 border-l-2 border-red-500'
-                                    : job.priority === 'medium'
-                                    ? 'bg-yellow-100 border-l-2 border-yellow-500'
-                                    : 'bg-blue-100 border-l-2 border-blue-500'
-                                }`}
-                              >
-                                {job.title}
-                              </div>
-                            ))}
-                            {dayJobs.length > 2 && (
-                              <p className='text-xs text-gray-500 pl-1'>
-                                +{dayJobs.length - 2} more
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+                    <div className='mb-3'>
+                      <label className='block text-xs text-gray-600 mb-1'>
+                        Status
+                      </label>
+                      <select
+                        value={filterOptions.status}
+                        onChange={(e) =>
+                          setFilterOptions((prev) => ({
+                            ...prev,
+                            status: e.target.value,
+                          }))
+                        }
+                        className='w-full p-2 border rounded-md text-sm'
+                      >
+                        <option value='all'>All Statuses</option>
+                        <option value='scheduled'>Scheduled</option>
+                        <option value='pending'>Pending</option>
+                        <option value='in-progress'>In Progress</option>
+                        <option value='completed'>Completed</option>
+                        <option value='cancelled'>Cancelled</option>
+                      </select>
+                    </div>
 
-            {/* Sidebar with filters and upcoming jobs */}
-            <div className='lg:w-1/4'>
-              {/* Search and filter */}
-              <div className='bg-white p-4 shadow rounded-lg mb-6'>
-                <div className='relative mb-4'>
-                  <input
-                    type='text'
-                    placeholder='Search jobs...'
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className='w-full pl-9 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  />
-                  <Search
-                    size={16}
-                    className='absolute left-3 top-3 text-gray-400'
-                  />
-                </div>
-
-                <div className='mb-4'>
-                  <div className='flex items-center mb-2'>
-                    <Filter size={16} className='mr-1 text-gray-500' />
-                    <h3 className='text-sm font-medium text-gray-700'>
-                      Filters
-                    </h3>
-                  </div>
-
-                  <div className='mb-3'>
-                    <label className='block text-xs text-gray-600 mb-1'>
-                      Technicians
-                    </label>
-                    <div className='space-y-1'>
-                      {technicians.map((tech) => (
-                        <div key={tech.id} className='flex items-center'>
-                          <input
-                            type='checkbox'
-                            id={`tech-${tech.id}`}
-                            checked={filterOptions.technicians.includes(
-                              tech.name
-                            )}
-                            onChange={() => {
-                              setFilterOptions((prev) => {
-                                if (prev.technicians.includes(tech.name)) {
-                                  return {
-                                    ...prev,
-                                    technicians: prev.technicians.filter(
-                                      (t) => t !== tech.name
-                                    ),
-                                  };
-                                } else {
-                                  return {
-                                    ...prev,
-                                    technicians: [
-                                      ...prev.technicians,
-                                      tech.name,
-                                    ],
-                                  };
-                                }
-                              });
-                            }}
-                            className='mr-2'
-                          />
-                          <label
-                            htmlFor={`tech-${tech.id}`}
-                            className='text-sm'
-                          >
-                            {tech.name}
-                          </label>
-                        </div>
-                      ))}
+                    <div>
+                      <label className='block text-xs text-gray-600 mb-1'>
+                        Job Type
+                      </label>
+                      <select
+                        value={filterOptions.jobType}
+                        onChange={(e) =>
+                          setFilterOptions((prev) => ({
+                            ...prev,
+                            jobType: e.target.value,
+                          }))
+                        }
+                        className='w-full p-2 border rounded-md text-sm'
+                      >
+                        <option value='all'>All Types</option>
+                        <option value='repair'>Repair</option>
+                        <option value='installation'>Installation</option>
+                        <option value='maintenance'>Maintenance</option>
+                        <option value='inspection'>Inspection</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div className='mb-3'>
-                    <label className='block text-xs text-gray-600 mb-1'>
-                      Status
-                    </label>
-                    <select
-                      value={filterOptions.status}
-                      onChange={(e) =>
-                        setFilterOptions((prev) => ({
-                          ...prev,
-                          status: e.target.value,
-                        }))
-                      }
-                      className='w-full p-2 border rounded-md text-sm'
-                    >
-                      <option value='all'>All Statuses</option>
-                      <option value='scheduled'>Scheduled</option>
-                      <option value='pending'>Pending</option>
-                      <option value='in-progress'>In Progress</option>
-                      <option value='completed'>Completed</option>
-                      <option value='cancelled'>Cancelled</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className='block text-xs text-gray-600 mb-1'>
-                      Job Type
-                    </label>
-                    <select
-                      value={filterOptions.jobType}
-                      onChange={(e) =>
-                        setFilterOptions((prev) => ({
-                          ...prev,
-                          jobType: e.target.value,
-                        }))
-                      }
-                      className='w-full p-2 border rounded-md text-sm'
-                    >
-                      <option value='all'>All Types</option>
-                      <option value='repair'>Repair</option>
-                      <option value='installation'>Installation</option>
-                      <option value='maintenance'>Maintenance</option>
-                      <option value='inspection'>Inspection</option>
-                    </select>
-                  </div>
+                  <button
+                    onClick={() =>
+                      setFilterOptions({
+                        technicians: [],
+                        status: 'all',
+                        jobType: 'all',
+                      })
+                    }
+                    className='text-blue-600 text-sm hover:underline w-full text-center'
+                  >
+                    Reset Filters
+                  </button>
                 </div>
 
-                <button
-                  onClick={() =>
-                    setFilterOptions({
-                      technicians: [],
-                      status: 'all',
-                      jobType: 'all',
-                    })
-                  }
-                  className='text-blue-600 text-sm hover:underline w-full text-center'
-                >
-                  Reset Filters
-                </button>
-              </div>
+                {/* Upcoming Jobs */}
+                <div className='bg-white p-4 shadow rounded-lg'>
+                  <h3 className='text-md font-medium text-gray-800 mb-3'>
+                    Upcoming Jobs
+                  </h3>
 
-              {/* Upcoming Jobs */}
-              <div className='bg-white p-4 shadow rounded-lg'>
-                <h3 className='text-md font-medium text-gray-800 mb-3'>
-                  Upcoming Jobs
-                </h3>
-
-                <div className='space-y-3'>
-                  {filteredJobs
-                    .filter((job) => new Date(job.date) >= new Date())
-                    .sort((a, b) => new Date(a.date) - new Date(b.date))
-                    .slice(0, 3)
-                    .map((job) => (
-                      <div
-                        key={job.id}
-                        onClick={() => setSelectedJob(job)}
-                        className='p-3 bg-gray-50 rounded-md cursor-pointer'
-                      >
-                        <div className='flex justify-between items-start'>
-                          <div>
-                            <h4 className='font-medium text-gray-800'>
-                              {job.title}
-                            </h4>
-                            <p className='text-sm text-gray-600'>
-                              {job.client}
-                            </p>
+                  <div className='space-y-3'>
+                    {filteredJobs
+                      .filter((job) => new Date(job.date) >= new Date())
+                      .sort((a, b) => new Date(a.date) - new Date(b.date))
+                      .slice(0, 3)
+                      .map((job) => (
+                        <div
+                          key={job.id}
+                          onClick={() => setSelectedJob(job)}
+                          className='p-3 bg-gray-50 rounded-md cursor-pointer'
+                        >
+                          <div className='flex justify-between items-start'>
+                            <div>
+                              <h4 className='font-medium text-gray-800'>
+                                {job.title}
+                              </h4>
+                              <p className='text-sm text-gray-600'>
+                                {job.client}
+                              </p>
+                            </div>
+                            <div
+                              className={`px-2 py-1 text-xs rounded-full ${
+                                job.status === 'scheduled'
+                                  ? 'bg-green-100 text-green-800'
+                                  : job.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {job.status.charAt(0).toUpperCase() +
+                                job.status.slice(1)}
+                            </div>
                           </div>
-                          <div
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              job.status === 'scheduled'
-                                ? 'bg-green-100 text-green-800'
-                                : job.status === 'pending'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {job.status.charAt(0).toUpperCase() +
-                              job.status.slice(1)}
+
+                          <div className='mt-2 text-xs text-gray-500 flex items-center'>
+                            <Clock size={12} className='mr-1' />
+                            {formatDate(job.date)} • {formatTime(job.date)}
+                          </div>
+
+                          <div className='mt-1 text-xs text-gray-500 flex items-center'>
+                            <User size={12} className='mr-1' />
+                            {job.technician}
                           </div>
                         </div>
-
-                        <div className='mt-2 text-xs text-gray-500 flex items-center'>
-                          <Clock size={12} className='mr-1' />
-                          {formatDate(job.date)} • {formatTime(job.date)}
-                        </div>
-
-                        <div className='mt-1 text-xs text-gray-500 flex items-center'>
-                          <User size={12} className='mr-1' />
-                          {job.technician}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <PageUnderDevelopment />
+        )}
 
         {/* Job details modal */}
         {selectedJob && (

@@ -11,7 +11,7 @@ const PricebookTableBody = ({ items }: IPricebookTableBody) => {
       {items.length > 0 ? (
         items.map((item) => (
           <tr
-            key={item.serviceItemId}
+            key={item.id}
             className='hover:bg-gray-50 cursor-pointer transition-colors duration-150'
           >
             <td className='px-4 py-3 whitespace-nowrap'>
@@ -23,12 +23,12 @@ const PricebookTableBody = ({ items }: IPricebookTableBody) => {
                     className='h-8 w-8 mr-3 rounded-md object-cover'
                   />
                 ) : (
-                  <div className='h-8 w-8 mr-3 rounded-md bg-gray-200 flex items-center justify-center'>
+                  <div className='h-11 w-11 mr-3 rounded-md bg-gray-200 flex items-center justify-center'>
                     {item.type === 'service' ? (
                       <p>Tool</p>
                     ) : (
                       // <Tool size={14} className='text-gray-500' />
-                      <Package size={14} className='text-gray-500' />
+                      <Package size={20} className='text-gray-500' />
                     )}
                   </div>
                 )}

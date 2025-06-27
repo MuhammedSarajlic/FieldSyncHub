@@ -67,7 +67,9 @@ function App() {
           <Route path='quotes/:quoteId' element={<QuoteDetails />} />
           <Route path='pricebook' element={<Pricebook />} />
           <Route path='marketing' element={<Marketing />} />
+          <Route path='reports' element={<Marketing />} />
           <Route path='settings' element={<Settings />} />
+          <Route path='support' element={<Settings />} />
         </Route>
       </Route>
 

@@ -151,7 +151,7 @@ const Customers = () => {
           <div>
             <Navbar />
           </div>
-          <div className='px-6 mb-10'>
+          <div className='px-6 pt-6 mb-10'>
             {/* Header */}
             <div className='pb-4 mb-4 flex items-center justify-between'>
               <div>

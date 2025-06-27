@@ -66,7 +66,7 @@ const Quotes = () => {
         </div>
 
         {/* Main content */}
-        <div className='px-6'>
+        <div className='px-6 pt-6'>
           {/* Page header */}
           <div className=' mb-6 flex items-center justify-between'>
             <div>

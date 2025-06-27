@@ -82,7 +82,7 @@ export const sidebar = [
   {
     id: 14,
     name: 'Help & Support',
-    slug: 'help',
+    slug: 'support',
     icon: icons.helpIcon,
   },
 ];

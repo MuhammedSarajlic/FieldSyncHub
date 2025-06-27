@@ -7,129 +7,125 @@ import ButtonIcon from '../components/CustomElements/ButtonIcon';
 import icons from '../constants/icons';
 import CustomIconButton from '../components/CustomElements/CustomIconButton';
 import Search from '../components/CustomElements/Search';
-import PricebookTable from '../components/Pricebook/PricebookTable/PricebookTable';
 import {
-  GetServiceItems,
+  ExportServiceItems,
   GetServiceItemsByFilter,
+  GetServiceItemsByWorkspace,
+  GetServiceItemsStats,
 } from '../services/ServiceItem';
-import { TServiceItem, TServiceItemFilter } from '../types/ServiceItem';
-import { useSearchParams } from 'react-router';
-import ServiceItemFilterModal from '../components/Pricebook/PricebookModals/ServiceItemFilterModal';
+import { TServiceItem, TServiceItemStats } from '../types/ServiceItem';
+import { useNavigate, useSearchParams } from 'react-router';
 import SortModal from '../components/CustomElements/SortComponent/SortModal';
+import { pricebookSortOptions } from '../constants/Options/SortOptions/PricebookSortOptions';
+import FilterModal from '../components/CustomElements/FilterComponent/FilterModal';
+import { pricebookFilterOptions } from '../constants/Options/FilterOptions/PricebookFilterOptions';
+import Table from '../components/Table/Table';
+import { pricebookColumns } from '../constants/Columns/PricebookColumns';
+import { formatCurrency } from '../utils/FuntionHelpers/formatCurrency';
+import { useAuth } from '../context/AuthProvider';
+import { TPaginationData } from './customers/Customers';
+import { downloadCSVFile } from '../utils/FuntionHelpers/downloadCSVFile';
+import CreateServiceItemModal from '../components/Pricebook/PricebookModals/CreateServiceItemModal';
 
 const Pricebook = () => {
-  const [items, setItems] = useState<TServiceItem[]>([]);
-  const [isNewServiceModalOpen, setIsNewServiceModalOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
+  const [isNewServiceItemModalOpen, setIsNewServiceItemModalOpen] =
+    useState(false);
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [currentSort, setCurrentSort] = useState<string | null>(null);
+  const [serviceItemStats, setServiceItemStats] = useState<TServiceItemStats>();
+  const [searchParams] = useSearchParams();
+  const [paginationData, setPaginationData] = useState<TPaginationData>({
+    totalCount: 0,
+    pageSize: 10,
+  });
 
   const searchQuery = searchParams.get('q') ?? '';
-  const sortBy = searchParams.get('sortBy') ?? '';
-  const sort = searchParams.get('sort') ?? '';
 
-  const sortOptions = [
-    { id: 'name-asc', label: 'Name (A-Z)', sortBy: 'name', sort: 'asc' },
-    { id: 'name-desc', label: 'Name (Z-A)', sortBy: 'name', sort: 'desc' },
-    {
-      id: 'price-asc',
-      label: 'Price (Low to High)',
-      sortBy: 'price',
-      sort: 'asc',
-    },
-    {
-      id: 'price-desc',
-      label: 'Price (High to Low)',
-      sortBy: 'price',
-      sort: 'desc',
-    },
-  ];
+  const initialPricebookFilters = {
+    category: '',
+    price: { min: '', max: '' },
+    type: '',
+    isActive: 'all',
+    hasImage: 'all',
+    description: '',
+  };
 
-  const fetchServiceItems = async () => {
-    // Get ALL current search params as an object
+  const fetchAllServiceItemsByWorkspace = async () => {
+    if (!user?.workspace) return;
+
     const paramsObj: Record<string, string> = {};
+    let shouldResetPage = false;
+
     searchParams.forEach((value, key) => {
+      if (key === 'page') return;
       paramsObj[key] = value;
+      shouldResetPage = true;
     });
 
+    const currentPage = searchParams.get('page')
+      ? parseInt(searchParams.get('page')!)
+      : 1;
+
+    const finalPage = shouldResetPage ? 1 : currentPage;
+
+    const params = new URLSearchParams(paramsObj).toString();
     const hasAnyParam = Object.keys(paramsObj).length > 0;
 
-    if (hasAnyParam) {
-      const searchQueryString = new URLSearchParams(paramsObj).toString();
-      console.log(searchQueryString);
+    const response = hasAnyParam
+      ? await GetServiceItemsByFilter(user.workspace.id, finalPage, 10, params)
+      : await GetServiceItemsByWorkspace(user.workspace.id, finalPage, 10);
 
-      const response = await GetServiceItemsByFilter(searchQueryString);
-      console.log(response);
-      setItems(response.data.payload);
-    } else {
-      const response = await GetServiceItems();
-      setItems(response.data.payload);
-    }
-  };
+    if (response.status === 200) {
+      const { items, totalCount, pageSize } = response.data.payload;
 
-  const handleSearch = async (query: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      if (query) {
-        newParams.set('q', query);
-      } else {
-        newParams.delete('q');
+      console.log('fwegwgew');
+      console.log(items, totalCount, pageSize);
+      console.log(params);
+
+      setServiceItems(items);
+      setPaginationData({ totalCount, pageSize });
+
+      if (shouldResetPage && currentPage > 1) {
+        const newParams = new URLSearchParams(paramsObj);
+        navigate(`?${newParams.toString()}`);
       }
-      return newParams;
-    });
-  };
-
-  const handleSort = (optionId: string) => {
-    setCurrentSort(optionId);
-    const selectedOption = sortOptions.find((opt) => opt.id === optionId);
-    if (selectedOption) {
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.set('sortBy', selectedOption.sortBy);
-        newParams.set('sort', selectedOption.sort);
-        return newParams;
-      });
-    } else {
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.delete('sortBy');
-        newParams.delete('sort');
-        return newParams;
-      });
     }
-    setIsSortModalOpen(false);
   };
 
-  const handleApplyFilters = (filters: TServiceItemFilter) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
+  const handleExportPricebook = async () => {
+    if (!user?.workspace) return;
+    try {
+      const response = await ExportServiceItems(user.workspace.id);
+      if (response.status !== 200) {
+        console.log('Error exporting service items');
+        return;
+      }
+      downloadCSVFile(
+        response.data,
+        `service_items_workspace_${user.workspace.id}.csv`
+      );
+    } catch (error) {
+      console.error('Failed to export service items:', error);
+    }
+  };
 
-      const flatFilters: Record<string, string | number> = {
-        category: filters.category,
-        priceMin: filters.price.min,
-        priceMax: filters.price.max,
-        hoursMin: filters.hours.min,
-        hoursMax: filters.hours.max,
-        status: filters.status !== 'all' ? filters.status : '',
-        images: filters.images !== 'any' ? filters.images : '',
-        description: filters.description,
-      };
-
-      Object.entries(flatFilters).forEach(([key, value]) => {
-        if (value) {
-          newParams.set(key, value.toString());
-        } else {
-          newParams.delete(key);
-        }
-      });
-
-      return newParams;
-    });
+  const fetchPricebookStats = async () => {
+    if (!user?.workspace) return;
+    const response = await GetServiceItemsStats(user.workspace.id);
+    if (response.status === 200) {
+      setServiceItemStats(response.data.payload);
+    }
   };
 
   useEffect(() => {
-    fetchServiceItems();
+    fetchPricebookStats();
+  }, []);
+
+  useEffect(() => {
+    fetchAllServiceItemsByWorkspace();
   }, [searchParams]);
 
   return (
@@ -138,81 +134,156 @@ const Pricebook = () => {
       <div className='flex-1 ml-[260px] flex flex-col'>
         <Navbar />
 
-        <div className='px-4 flex flex-col flex-1'>
-          <div className=' flex justify-between items-start'>
+        <div className='px-6 pt-6 flex flex-col flex-1'>
+          <div className='pb-4 mb-4 flex justify-between items-start'>
             <div>
-              <h1 className='text-heading text-4xl font-extrabold'>
-                Price Book
-              </h1>
-              <p className='text-primary'>
+              <p className='text-heading text-4xl font-extrabold'>Pricebook</p>
+              <p className='text-gray-600 mt-1'>
                 Manage your services, materials, and pricing
               </p>
             </div>
             <div className='flex items-center space-x-3'>
               <ButtonIcon name='Import' icon={icons.importIcon} />
 
-              <ButtonIcon name='Export' icon={icons.exportIcon} />
+              <ButtonIcon
+                handleBtnClick={handleExportPricebook}
+                name='Export'
+                icon={icons.exportIcon}
+              />
               <div className='w-[1px] h-[38px] bg-border-primary'></div>
               <CustomIconButton
                 text={'Add Item'}
                 icon={<Plus size={16} className='mr-1.5' />}
-                handleClick={() => setIsNewServiceModalOpen(true)}
+                handleClick={() => setIsNewServiceItemModalOpen(true)}
               />
             </div>
           </div>
 
-          <div className='my-6 flex items-center justify-between'>
-            <Search
-              inputPlaceholder='Search customers...'
-              searchQuery={searchQuery}
-              handleChange={handleSearch}
-            />
-            <div className='flex items-center space-x-3'>
-              <SortModal
-                setIsSortModalOpen={setIsSortModalOpen}
-                isSortModalOpen={isSortModalOpen}
-                sortOptions={sortOptions}
-                currentSort={currentSort}
-                handleSort={handleSort}
-              />
-              {/* <div className='relative'>
-                <ButtonIcon
-                  name='Sort'
-                  icon={icons.sortIcon}
-                  handleBtnClick={() => setIsSortModalOpen(!isSortModalOpen)}
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6'>
+            {/* Total Items Card */}
+            <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-gray-600'>
+                  Total Pricebook Items
+                </h3>
+                <div className='text-3xl font-bold text-gray-900'>
+                  {serviceItemStats?.totalItems}
+                </div>
+                <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-1'>
+                    <div className='w-2 h-2 bg-purple-500 rounded-full'></div>
+                    <span className='text-sm font-medium text-purple-600'>
+                      {serviceItemStats?.totalItemsChange}
+                    </span>
+                  </div>
+                  <span className='text-sm text-gray-500'>vs last month</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Material Items Card */}
+            <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-gray-600'>
+                  Material Items
+                </h3>
+                <div className='text-3xl font-bold text-gray-900'>
+                  {serviceItemStats?.totalMaterialItems}
+                </div>
+                <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-1'>
+                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                    <span className='text-sm font-medium text-green-600'>
+                      {serviceItemStats?.materialItemsChange}
+                    </span>
+                  </div>
+                  <span className='text-sm text-gray-500'>vs last month</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Service Items Card */}
+            <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-gray-600'>
+                  Service Items
+                </h3>
+                <div className='text-3xl font-bold text-gray-900'>
+                  {serviceItemStats?.totalServiceItems}
+                </div>
+                <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-1'>
+                    <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
+                    <span className='text-sm font-medium text-blue-600'>
+                      {serviceItemStats?.serviceItemsChange}
+                    </span>
+                  </div>
+                  <span className='text-sm text-gray-500'>vs last month</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Average Item Price Card */}
+            <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+              <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-gray-600'>
+                  Avg. Item Price
+                </h3>
+                <div className='text-3xl font-bold text-gray-900'>
+                  {formatCurrency(serviceItemStats?.averageItemPrice)}
+                </div>
+                <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-1'>
+                    <div className='w-2 h-2 bg-orange-500 rounded-full'></div>
+                    <span className='text-sm font-medium text-orange-600'>
+                      {serviceItemStats?.averageItemPriceChange}
+                    </span>
+                  </div>
+                  <span className='text-sm text-gray-500'>vs last month</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search and Controls */}
+          <div className='bg-white py-4 mb-4'>
+            <div className='flex items-center justify-between gap-4'>
+              <div className='flex-1 max-w-md'>
+                <Search
+                  inputPlaceholder='Search invoices...'
+                  searchQuery={searchQuery}
                 />
-                <ServiceItemSortModal
-                  isOpen={isSortModalOpen}
-                  onClose={() => setIsSortModalOpen(false)}
-                  sortOptions={sortOptions}
-                  onSort={handleSort}
-                  // currentSort={currentSort}
+              </div>
+
+              <div className='flex items-center gap-2'>
+                <SortModal
+                  setIsSortModalOpen={setIsSortModalOpen}
+                  isSortModalOpen={isSortModalOpen}
+                  sortOptions={pricebookSortOptions}
                 />
-              </div> */}
-              <div className='relative'>
-                <ButtonIcon
-                  name='Filter'
-                  icon={icons.filterIcon}
-                  handleBtnClick={() =>
-                    setIsFilterModalOpen(!isFilterModalOpen)
-                  }
-                />
-                <ServiceItemFilterModal
-                  isOpen={isFilterModalOpen}
-                  onClose={() => setIsFilterModalOpen(false)}
-                  onApplyFilters={handleApplyFilters}
+                <FilterModal
+                  initialFilters={initialPricebookFilters}
+                  filterOptions={pricebookFilterOptions}
+                  setIsFilterModalOpen={setIsFilterModalOpen}
+                  isFilterModalOpen={isFilterModalOpen}
                 />
               </div>
             </div>
           </div>
 
-          <PricebookTable items={items} />
+          <Table<TServiceItem>
+            data={serviceItems}
+            columns={pricebookColumns}
+            paginationData={paginationData}
+          />
         </div>
       </div>
-      {isNewServiceModalOpen && (
-        <PricebookItemModal
-          onClose={() => setIsNewServiceModalOpen(false)}
-          fetchServiceItems={fetchServiceItems}
+      {isNewServiceItemModalOpen && (
+        // <PricebookItemModal onClose={() => setIsNewServiceModalOpen(false)} />
+        <CreateServiceItemModal
+          isOpen={isNewServiceItemModalOpen}
+          onClose={() => setIsNewServiceItemModalOpen(false)}
+          workspaceId={user?.workspace?.id}
         />
       )}
     </div>
