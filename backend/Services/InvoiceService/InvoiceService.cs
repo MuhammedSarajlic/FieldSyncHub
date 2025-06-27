@@ -4,6 +4,7 @@ using backend.Dtos.InvoiceDto;
 using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Response;
+using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
@@ -62,23 +63,45 @@ public class InvoiceService : IInvoiceService
         return invoice ?? throw new KeyNotFoundException($"Invoice with number {invoiceNumber} not found in workspace {workspaceId}");
     }
 
-    public async Task<List<Invoice>> GetInvoicesByWorkspaceId(Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByWorkspaceId(Guid workspaceId, int pageNumber, int pageSize)
     {
-        return await _context.Invoices
-            .AsNoTracking()
+        var query = _context.Invoices
             .Where(i => i.WorkspaceId == workspaceId)
             .Include(i => i.Customer)
             .Include(i => i.Job)
             .Include(i => i.LineItems)
-            .ThenInclude(item => item.ServiceItem)
+                .ThenInclude(item => item.ServiceItem)
+            .AsNoTracking();
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return new ApiResponse<PagedResult<Invoice>>
+        {
+            Success = true,
+            Payload = new PagedResult<Invoice>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }
+        };
     }
 
-    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByFilter(InvoiceFilterDto filterDto, Guid workspaceId)
+
+    public async Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByFilter(
+       InvoiceFilterDto filterDto,
+       Guid workspaceId,
+       int pageNumber,
+       int pageSize)
     {
         if (workspaceId == Guid.Empty)
         {
-            return new ApiResponse<List<Invoice>>
+            return new ApiResponse<PagedResult<Invoice>>
             {
                 Success = false,
                 ErrorMessage = "Workspace ID is required for filtering invoices.",
@@ -86,45 +109,34 @@ public class InvoiceService : IInvoiceService
             };
         }
 
-        var queryable = _context.Invoices
+        var query = _context.Invoices
             .Where(i => i.WorkspaceId == workspaceId)
             .Include(i => i.Customer)
             .Include(i => i.LineItems)
                 .ThenInclude(li => li.ServiceItem)
+            .AsNoTracking()
             .AsQueryable();
 
-        // Workspace filter (mandatory)
-        queryable = queryable.Where(i => i.WorkspaceId == workspaceId);
-
-        // Status filter (InvoiceStatus enum)
         if (Enum.TryParse<InvoiceStatus>(filterDto.Status, true, out var parsedStatus))
-        {
-            queryable = queryable.Where(i => i.Status == parsedStatus);
-        }
+            query = query.Where(i => i.Status == parsedStatus);
 
-        // Due Date range filter
         if (filterDto.DueDateMin.HasValue)
-            queryable = queryable.Where(i => i.DueDate >= filterDto.DueDateMin.Value.Date);
+            query = query.Where(i => i.DueDate >= filterDto.DueDateMin.Value);
 
         if (filterDto.DueDateMax.HasValue)
-            queryable = queryable.Where(i => i.DueDate <= filterDto.DueDateMax.Value.Date.AddDays(1).AddTicks(-1));
+            query = query.Where(i => i.DueDate <= filterDto.DueDateMax.Value);
 
-        // Search query (InvoiceNumber or Customer name)
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
-            var q = filterDto.Q.Trim().ToLower();
-            queryable = queryable.Where(i =>
+            var q = filterDto.Q.ToLower();
+            query = query.Where(i =>
                 i.InvoiceNumber.ToLower().Contains(q) ||
-                (i.Customer != null &&
-                    (i.Customer.FirstName.ToLower().Contains(q) ||
-                     i.Customer.LastName.ToLower().Contains(q))
-                ));
+                (i.Customer.FirstName.ToLower().Contains(q) || i.Customer.LastName.ToLower().Contains(q)));
         }
 
-        // Materialize list to apply total-based filters (in-memory)
-        var resultList = await queryable.ToListAsync();
+        var resultList = await query.ToListAsync();
 
-        // Apply Total filtering in-memory
+        // Filter by calculated total
         resultList = resultList.Where(i =>
         {
             var subtotal = i.LineItems.Sum(li => (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
@@ -135,7 +147,7 @@ public class InvoiceService : IInvoiceService
                 && (!filterDto.TotalMax.HasValue || total <= filterDto.TotalMax.Value);
         }).ToList();
 
-        // Sorting (in-memory because total can't be sorted in SQL)
+        // Sort in-memory
         resultList = filterDto.SortBy?.ToLower() switch
         {
             "invoice-number" => filterDto.Sort == "desc"
@@ -164,15 +176,28 @@ public class InvoiceService : IInvoiceService
                     return subtotal - discount + ((subtotal - discount) * i.TaxRate);
                 }).ToList(),
 
-            _ => resultList.OrderByDescending(i => i.IssueDate).ToList() // default: recent first
+            _ => resultList.OrderByDescending(i => i.IssueDate).ToList()
         };
 
-        return new ApiResponse<List<Invoice>>
+        var totalCount = resultList.Count;
+        var paged = resultList
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return new ApiResponse<PagedResult<Invoice>>
         {
             Success = true,
-            Payload = resultList
+            Payload = new PagedResult<Invoice>
+            {
+                Items = paged,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }
         };
     }
+
 
     public async Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId)
     {
@@ -423,4 +448,62 @@ public class InvoiceService : IInvoiceService
 
         return $"{prefix}{datePart}-{sequence:D4}";
     }
+
+    public async Task<InvoiceStatsDto> GetInvoiceStats(Guid workspaceId)
+    {
+        var now = DateTime.UtcNow;
+        var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
+        var today = now.Date;
+
+        var invoices = await _context.Invoices
+            .Where(i => i.WorkspaceId == workspaceId)
+            .Include(i => i.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .ToListAsync();
+
+        decimal totalOutstanding = 0;
+        decimal totalPaidThisMonth = 0;
+        int overdueCount = 0;
+        decimal totalInvoiceSum = 0;
+
+        foreach (var invoice in invoices)
+        {
+            var subtotal = invoice.LineItems.Sum(li =>
+                (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity
+            );
+
+            var discount = invoice.DiscountType == DiscountType.Percentage
+                ? subtotal * invoice.Discount / 100
+                : invoice.Discount;
+
+            var total = subtotal - discount + ((subtotal - discount) * invoice.TaxRate);
+
+            totalInvoiceSum += total;
+
+            bool isUnpaid = invoice.Status != InvoiceStatus.Paid && invoice.Status != InvoiceStatus.Overdue;
+
+            if (isUnpaid)
+                totalOutstanding += total;
+
+            if (invoice.Status == InvoiceStatus.Paid && invoice.UpdatedAt >= firstDayOfThisMonth)
+                totalPaidThisMonth += total;
+
+            if (isUnpaid && invoice.DueDate < today)
+                overdueCount++;
+        }
+
+        var averageInvoiceValue = invoices.Count > 0
+            ? totalInvoiceSum / invoices.Count
+            : 0;
+
+        return new InvoiceStatsDto
+        {
+            TotalOutstanding = totalOutstanding,
+            TotalPaidThisMonth = totalPaidThisMonth,
+            OverdueCount = overdueCount,
+            AverageInvoiceValue = averageInvoiceValue
+        };
+    }
+
+
 }

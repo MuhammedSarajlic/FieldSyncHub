@@ -2,6 +2,7 @@ using backend.Dtos.JobDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.JobService;
+using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -40,10 +41,23 @@ public class JobController : ControllerBase
         return await _jobService.GetAllJobsByEmployeeId(employeeId);
     }
 
-    [HttpGet("workspace/{workspaceId}/filter")]
-    public async Task<ApiResponse<List<Job>>> GetJobsByFilter([FromQuery] JobFilterDto filterDto, Guid workspaceId)
+    [HttpGet("workspace/{workspaceId:guid}")]
+    public async Task<ApiResponse<PagedResult<Job>>> GetJobsByWorkspace(
+    Guid workspaceId,
+    [FromQuery] int pageNumber,
+    [FromQuery] int pageSize)
     {
-        return await _jobService.GetJobsByFilter(filterDto, workspaceId);
+        return await _jobService.GetJobsByWorkspace(workspaceId, pageNumber, pageSize);
+    }
+
+    [HttpGet("workspace/{workspaceId:guid}/filter")]
+    public async Task<ApiResponse<PagedResult<Job>>> GetJobsByFilter(
+        Guid workspaceId,
+        [FromQuery] int pageNumber,
+        [FromQuery] int pageSize,
+        [FromQuery] JobFilterDto filterDto)
+    {
+        return await _jobService.GetJobsByFilter(filterDto, workspaceId, pageNumber, pageSize);
     }
 
     [HttpGet("job-number/{jobNumber}")]
@@ -84,5 +98,17 @@ public class JobController : ControllerBase
         await _jobService.UpdateJobTags(jobId, tags, replace);
         return Ok();
     }
+
+    [HttpGet("workspace/{workspaceId:guid}/job-stats")]
+    public async Task<ApiResponse<JobStatsDto>> GetJobStats(Guid workspaceId)
+    {
+        var stats = await _jobService.GetJobStats(workspaceId);
+        return new ApiResponse<JobStatsDto>
+        {
+            Success = true,
+            Payload = stats
+        };
+    }
+
 
 }

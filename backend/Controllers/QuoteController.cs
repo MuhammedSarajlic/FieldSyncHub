@@ -2,6 +2,7 @@ using backend.Dtos.QuoteDto;
 using backend.Models.QuoteModels;
 using backend.Response;
 using backend.Services.QuoteService;
+using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -30,11 +31,13 @@ public class QuoteController : ControllerBase
         return result == null ? NotFound() : Ok(result);
     }
 
-    [HttpGet("workspace/{workspaceId}")]
-    public async Task<ActionResult<List<Quote>>> GetQuotesByWorkspaceId(Guid workspaceId)
+    [HttpGet("workspace/{workspaceId:guid}")]
+    public async Task<ApiResponse<PagedResult<Quote>>> GetQuotesByWorkspace(
+        Guid workspaceId,
+        [FromQuery] int pageNumber,
+        [FromQuery] int pageSize)
     {
-        var result = await _quoteService.GetQuotesByWorkspaceId(workspaceId);
-        return result == null ? NotFound() : Ok(result);
+        return await _quoteService.GetQuotesByWorkspace(workspaceId, pageNumber, pageSize);
     }
 
     [HttpGet("customer/{customerId}")]
@@ -44,11 +47,14 @@ public class QuoteController : ControllerBase
         return result == null ? NotFound() : Ok(result);
     }
 
-    [HttpGet("workspace/{workspaceId}/filter")]
-    public async Task<ActionResult<ApiResponse<List<Quote>>>> GetByFilter(Guid workspaceId, [FromQuery] QuoteFilterDto filterDto)
+    [HttpGet("workspace/{workspaceId:guid}/filter")]
+    public async Task<ApiResponse<PagedResult<Quote>>> GetQuotesByFilter(
+        Guid workspaceId,
+        [FromQuery] int pageNumber,
+        [FromQuery] int pageSize,
+        [FromQuery] QuoteFilterDto filterDto)
     {
-        var result = await _quoteService.GetQuotesByFilter(workspaceId, filterDto);
-        return Ok(result);
+        return await _quoteService.GetQuotesByFilter(workspaceId, pageNumber, pageSize, filterDto);
     }
 
     [HttpPost]
@@ -72,4 +78,17 @@ public class QuoteController : ControllerBase
         var success = await _quoteService.DeleteAsync(id);
         return success ? NoContent() : NotFound();
     }
+
+    [HttpGet("workspace/{workspaceId:guid}/quote-stats")]
+    public async Task<ApiResponse<QuoteStatsDto>> GetQuoteStats(Guid workspaceId)
+    {
+        var stats = await _quoteService.GetQuoteStats(workspaceId);
+
+        return new ApiResponse<QuoteStatsDto>
+        {
+            Success = true,
+            Payload = stats
+        };
+    }
+
 }

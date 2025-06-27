@@ -2,6 +2,7 @@ using backend.Dtos.InvoiceDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.InvoiceService;
+using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -38,18 +39,34 @@ public class InvoiceController : ControllerBase
         return Ok(invoice);
     }
 
-    [HttpGet("workspace/{workspaceId}")]
-    public async Task<ActionResult<List<Invoice>>> GetInvoicesByWorkspaceId(Guid workspaceId)
+    [HttpGet("workspace/{workspaceId:guid}")]
+    public async Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByWorkspaceId(
+        Guid workspaceId,
+        [FromQuery] int pageNumber,
+        [FromQuery] int pageSize)
     {
-        var invoices = await _invoiceService.GetInvoicesByWorkspaceId(workspaceId);
-        return Ok(invoices);
+        return await _invoiceService.GetInvoicesByWorkspaceId(workspaceId, pageNumber, pageSize);
     }
 
-    [HttpGet("workspace/{workspaceId}/filter")]
-    public async Task<ActionResult<ApiResponse<List<Invoice>>>> GetInvoicesByFilter([FromQuery] InvoiceFilterDto filterDto, Guid workspaceId)
+    [HttpGet("workspace/{workspaceId:guid}/filter")]
+    public async Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByFilter(
+        Guid workspaceId,
+        [FromQuery] int pageNumber,
+        [FromQuery] int pageSize,
+        [FromQuery] InvoiceFilterDto filterDto)
     {
-        var response = await _invoiceService.GetInvoicesByFilter(filterDto, workspaceId);
-        return Ok(response);
+        return await _invoiceService.GetInvoicesByFilter(filterDto, workspaceId, pageNumber, pageSize);
+    }
+
+    [HttpGet("workspace/{workspaceId:guid}/invoice-stats")]
+    public async Task<ApiResponse<InvoiceStatsDto>> GetInvoiceStats(Guid workspaceId)
+    {
+        var stats = await _invoiceService.GetInvoiceStats(workspaceId);
+        return new ApiResponse<InvoiceStatsDto>
+        {
+            Success = true,
+            Payload = stats
+        };
     }
 
     [HttpGet("customer/{customerId}")]

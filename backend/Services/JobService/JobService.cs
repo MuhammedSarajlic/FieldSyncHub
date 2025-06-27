@@ -2,6 +2,7 @@ using backend.Data;
 using backend.Dtos.JobDto;
 using backend.Models;
 using backend.Response;
+using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -90,85 +91,115 @@ public class JobService : IJobService
 
     }
 
-    public async Task<ApiResponse<List<Job>>> GetJobsByFilter(JobFilterDto filterDto, Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<Job>>> GetJobsByWorkspace(Guid workspaceId, int pageNumber, int pageSize)
     {
-        var query = _context.Jobs.Where(j => j.WorkspaceId == workspaceId)
-                                .Include(j => j.Customer)
-                                .Include(j => j.Property)
-                                .Include(j => j.LineItems)
-                                    .ThenInclude(li => li.ServiceItem)
-                                .AsNoTracking()
-                                .AsQueryable();
+        var query = _context.Jobs
+            .Where(j => j.WorkspaceId == workspaceId)
+            .Include(j => j.Customer)
+            .Include(j => j.Property)
+            .Include(j => j.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .AsNoTracking();
 
-        // 🔍 Date range
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new ApiResponse<PagedResult<Job>>
+        {
+            Success = true,
+            Payload = new PagedResult<Job>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }
+        };
+    }
+    public async Task<ApiResponse<PagedResult<Job>>> GetJobsByFilter(
+    JobFilterDto filterDto,
+    Guid workspaceId,
+    int pageNumber,
+    int pageSize)
+    {
+        var query = _context.Jobs
+            .Where(j => j.WorkspaceId == workspaceId)
+            .Include(j => j.Customer)
+            .Include(j => j.Property)
+            .Include(j => j.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .AsNoTracking()
+            .AsQueryable();
+
         if (filterDto.ScheduleDateMin.HasValue)
             query = query.Where(j => j.StartDate >= filterDto.ScheduleDateMin.Value);
 
         if (filterDto.ScheduleDateMax.HasValue)
             query = query.Where(j => j.StartDate <= filterDto.ScheduleDateMax.Value);
 
-        // 🔍 Total range
         if (filterDto.TotalMin.HasValue)
             query = query.Where(j => j.TotalAmount >= filterDto.TotalMin.Value);
 
         if (filterDto.TotalMax.HasValue)
             query = query.Where(j => j.TotalAmount <= filterDto.TotalMax.Value);
 
-        // 🔍 Priority
         if (!string.IsNullOrWhiteSpace(filterDto.Priority))
             query = query.Where(j => j.Priority.ToString().ToLower() == filterDto.Priority.ToLower());
 
-        // 🔍 Status
         if (!string.IsNullOrWhiteSpace(filterDto.Status))
             query = query.Where(j => j.Status.ToString().ToLower() == filterDto.Status.ToLower());
 
-        // 🔍 Search (job number, customer name, property address)
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
             var q = filterDto.Q.ToLower();
             query = query.Where(j =>
                 j.JobNumber.ToLower().Contains(q) ||
-                (j.Customer != null && (
-                    j.Customer.FirstName.ToLower().Contains(q) ||
-                    j.Customer.LastName.ToLower().Contains(q) ||
-                    j.Customer.FullName.ToLower().Contains(q)
-                )) ||
-                (j.Property != null && (
-                    j.Property.Street.ToLower().Contains(q) ||
-                    j.Property.City.ToLower().Contains(q)
-                ))
-            );
+                j.Customer.FirstName.ToLower().Contains(q) ||
+                j.Customer.LastName.ToLower().Contains(q) ||
+                j.Customer.FullName.ToLower().Contains(q) ||
+                j.Property.Street.ToLower().Contains(q) ||
+                j.Property.City.ToLower().Contains(q));
         }
 
-        // 🔄 Sorting
-        var sortBy = filterDto.SortBy?.ToLower();
-        var sort = filterDto.Sort?.ToLower();
-
-        query = sortBy switch
+        query = filterDto.SortBy?.ToLower() switch
         {
-            "customer" => sort == "desc"
+            "customer" => filterDto.Sort == "desc"
                 ? query.OrderByDescending(j => j.Customer.FullName)
                 : query.OrderBy(j => j.Customer.FullName),
 
-            "total" => sort == "desc"
+            "total" => filterDto.Sort == "desc"
                 ? query.OrderByDescending(j => j.TotalAmount)
                 : query.OrderBy(j => j.TotalAmount),
 
-            "schedule" => sort == "desc"
+            "schedule" => filterDto.Sort == "desc"
                 ? query.OrderByDescending(j => j.StartDate)
                 : query.OrderBy(j => j.StartDate),
 
             _ => query.OrderByDescending(j => j.StartDate)
         };
 
-        var result = await query.ToListAsync();
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
-        return new ApiResponse<List<Job>>
+        return new ApiResponse<PagedResult<Job>>
         {
             Success = true,
-            Payload = result
+            Payload = new PagedResult<Job>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }
         };
     }
+
 
     public async Task<ApiResponse<Job>> CreateJob(CreateJobDto dto)
     {
@@ -458,5 +489,37 @@ public class JobService : IJobService
 
         return $"{prefix}{datePart}-{sequence:D4}";
     }
+
+    public async Task<JobStatsDto> GetJobStats(Guid workspaceId)
+    {
+        var jobs = await _context.Jobs
+            .Where(j => j.WorkspaceId == workspaceId)
+            .Include(j => j.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .ToListAsync();
+
+        int totalJobs = jobs.Count;
+        int completedJobs = jobs.Count(j => j.Status == JobStatus.Completed);
+        int scheduledJobs = jobs.Count(j => j.Status == JobStatus.Scheduled || j.StartDate > DateTime.UtcNow);
+
+        decimal totalValue = 0;
+
+        foreach (var job in jobs)
+        {
+            decimal jobTotal = job.LineItems.Sum(li =>
+                (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity
+            );
+            totalValue += jobTotal;
+        }
+
+        return new JobStatsDto
+        {
+            TotalJobs = totalJobs,
+            CompletedJobs = completedJobs,
+            ScheduledJobs = scheduledJobs,
+            TotalValue = totalValue
+        };
+    }
+
 
 }

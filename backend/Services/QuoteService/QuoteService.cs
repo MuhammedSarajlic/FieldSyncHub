@@ -4,6 +4,7 @@ using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Response;
 using backend.Services.ServiceItemService;
+using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,15 +39,34 @@ public class QuoteService : IQuoteService
         return quote;
     }
 
-    public async Task<List<Quote>> GetQuotesByWorkspaceId(Guid workspaceId)
+    public async Task<ApiResponse<PagedResult<Quote>>> GetQuotesByWorkspace(Guid workspaceId, int pageNumber, int pageSize)
     {
-        var quotes = await _context.Quotes.Include(q => q.LineItems)
-                                        .Include(q => q.Customer)
-                                        .ThenInclude(c => c.Properties)
-                                        .Where(q => q.WorkspaceId == workspaceId)
-                                        .ToListAsync();
-        return quotes;
+        var query = _context.Quotes
+            .Include(q => q.Customer)
+                .ThenInclude(c => c.Properties)
+            .Include(q => q.LineItems)
+            .Where(q => q.WorkspaceId == workspaceId);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new ApiResponse<PagedResult<Quote>>
+        {
+            Success = true,
+            Payload = new PagedResult<Quote>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }
+        };
     }
+
 
     public async Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId)
     {
@@ -58,17 +78,23 @@ public class QuoteService : IQuoteService
         return new ApiResponse<List<Quote>> { Success = true, Payload = quotes };
     }
 
-    public async Task<ApiResponse<List<Quote>>> GetQuotesByFilter(Guid workspaceId, QuoteFilterDto filterDto)
+    public async Task<ApiResponse<PagedResult<Quote>>> GetQuotesByFilter(
+        Guid workspaceId,
+        int pageNumber,
+        int pageSize,
+        QuoteFilterDto filterDto)
     {
         var queryable = _context.Quotes
-        .Include(q => q.Customer)
-        .Include(q => q.LineItems)
-        .AsQueryable();
+            .Include(q => q.Customer)
+            .ThenInclude(c => c.Properties)
+            .Include(q => q.LineItems)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
-            queryable = queryable.Where(quote =>
-            quote.Customer != null && (quote.Customer.FirstName + " " + quote.Customer.LastName).Contains(filterDto.Q));
+            queryable = queryable.Where(q =>
+                q.Customer != null &&
+                (q.Customer.FirstName + " " + q.Customer.LastName).Contains(filterDto.Q));
         }
 
         if (workspaceId != Guid.Empty)
@@ -76,31 +102,25 @@ public class QuoteService : IQuoteService
             queryable = queryable.Where(q => q.WorkspaceId == workspaceId);
         }
 
-        if (!string.IsNullOrWhiteSpace(filterDto.Status) && Enum.TryParse<QuoteStatus>(filterDto.Status, true, out var parsedStatus))
+        if (!string.IsNullOrWhiteSpace(filterDto.Status) &&
+            Enum.TryParse<QuoteStatus>(filterDto.Status, true, out var parsedStatus))
         {
             queryable = queryable.Where(q => q.Status == parsedStatus);
         }
 
         if (filterDto.CreatedMin.HasValue)
-        {
             queryable = queryable.Where(q => q.CreatedAt >= filterDto.CreatedMin.Value);
-        }
 
         if (filterDto.CreatedMax.HasValue)
-        {
             queryable = queryable.Where(q => q.CreatedAt <= filterDto.CreatedMax.Value);
-        }
 
         if (filterDto.TotalMin.HasValue)
-        {
             queryable = queryable.Where(q => q.Total >= filterDto.TotalMin.Value);
-        }
 
         if (filterDto.TotalMax.HasValue)
-        {
             queryable = queryable.Where(q => q.Total <= filterDto.TotalMax.Value);
-        }
 
+        // Sorting
         queryable = filterDto.SortBy?.ToLower() switch
         {
             "customer" => filterDto.Sort == "desc"
@@ -118,14 +138,26 @@ public class QuoteService : IQuoteService
             _ => queryable.OrderByDescending(q => q.CreatedAt)
         };
 
-        var result = await queryable.ToListAsync();
+        var totalCount = await queryable.CountAsync();
 
-        return new ApiResponse<List<Quote>>
+        var pagedQuotes = await queryable
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new ApiResponse<PagedResult<Quote>>
         {
             Success = true,
-            Payload = result
+            Payload = new PagedResult<Quote>
+            {
+                Items = pagedQuotes,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }
         };
     }
+
 
     public async Task<Quote> CreateAsync(CreateQuoteDto createQuoteDto)
     {
@@ -292,4 +324,57 @@ public class QuoteService : IQuoteService
 
         return $"{prefix}{datePart}-{sequence:D4}";
     }
+
+    public async Task<QuoteStatsDto> GetQuoteStats(Guid workspaceId)
+    {
+        var now = DateTime.UtcNow;
+        var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
+        var firstDayOfLastMonth = firstDayOfThisMonth.AddMonths(-1);
+        var lastDayOfLastMonth = firstDayOfThisMonth.AddDays(-1);
+
+        var quotes = await _context.Quotes
+            .Where(q => q.WorkspaceId == workspaceId)
+            .Include(q => q.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .ToListAsync();
+
+        int totalQuotes = quotes.Count;
+
+        decimal totalValue = 0;
+        decimal approvedValue = 0;
+        int approvedQuotes = 0;
+
+        foreach (var quote in quotes)
+        {
+            decimal subtotal = quote.LineItems.Sum(li =>
+                (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
+
+            decimal discount = quote.DiscountType == DiscountType.Percentage
+                ? subtotal * quote.Discount / 100
+                : quote.Discount;
+
+            decimal total = subtotal - discount + ((subtotal - discount) * quote.TaxRate);
+
+            totalValue += total;
+
+            if (quote.Status == QuoteStatus.Approved)
+            {
+                approvedValue += total;
+                approvedQuotes++;
+            }
+        }
+
+        double conversionRate = totalQuotes > 0
+            ? Math.Round((double)approvedQuotes / totalQuotes * 100, 2)
+            : 0;
+
+        return new QuoteStatsDto
+        {
+            TotalQuotes = totalQuotes,
+            TotalValue = totalValue,
+            ApprovedValue = approvedValue,
+            ConversionRate = conversionRate
+        };
+    }
+
 }
