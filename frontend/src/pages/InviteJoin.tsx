@@ -2,7 +2,7 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { Loader2, Lock, Mail, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
-import images from '../constants/images';
+import images from '../constants/AssetsConstants/images';
 import { AcceptInvite, ValidateInviteToken } from '../services/Invite';
 import { TEmployeeInvite } from '../types/EmployeeInvite';
 import { useAuth } from '../context/AuthProvider';

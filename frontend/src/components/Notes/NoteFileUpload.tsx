@@ -1,5 +1,5 @@
 import { useRef, ChangeEvent } from 'react';
-import icons from '../../constants/icons';
+import icons from '../../constants/AssetsConstants/icons';
 import CustomSmallButton from '../CustomElements/CustomSmallButton';
 
 interface NoteFileUploadProps {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import icons from '../../constants/icons';
-import images from '../../constants/images';
+import icons from '../../constants/AssetsConstants/icons';
+import images from '../../constants/AssetsConstants/images';
 import { Login } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';

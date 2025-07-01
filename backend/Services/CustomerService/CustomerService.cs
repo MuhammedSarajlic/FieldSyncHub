@@ -23,7 +23,7 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResponse<List<Customer>>> GetCustomers()
     {
-        var customers = await _context.Customers.Where(c => c.IsArchived != true)
+        var customers = await _context.Customers.Where(c => !c.IsArchived)
                                                 .Include(c => c.Properties)
                                                 .Include(c => c.CustomerPhones)
                                                 .Include(c => c.Notes)
@@ -36,7 +36,7 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task<ApiResponse<Customer>> GetCustomerById(Guid id)
+    public async Task<ApiResponse<object>> GetCustomerById(Guid id)
     {
         var customer = await _context.Customers.Where(c => c.Id == id)
                                             .Include(c => c.Properties)
@@ -45,11 +45,44 @@ public class CustomerService : ICustomerService
                                                 .OrderByDescending(n => n.CreatedAt)
                                             )
                                             .FirstOrDefaultAsync();
+        if (customer == null)
+        {
+            return new ApiResponse<object>
+            {
+                Success = false,
+                Payload = null,
+                ErrorMessage = "Customer not found."
+            };
+        }
 
-        return new ApiResponse<Customer>()
+        var invoices = await _context.Invoices
+                                     .Where(i => i.CustomerId == id)
+                                     .Include(i => i.LineItems)
+                                     .OrderByDescending(i => i.CreatedAt)
+                                     .ToListAsync();
+
+        var totalInvoiceValue = invoices.Sum(i => i.Total);
+
+        var jobsCount = await _context.Jobs.CountAsync(j => j.CustomerId == id);
+        var requestsCount = await _context.Requests.CountAsync(r => r.CustomerId == id);
+        var quotesCount = await _context.Quotes.CountAsync(q => q.CustomerId == id);
+        var invoicesCount = invoices.Count;
+
+        return new ApiResponse<object>()
         {
             Success = true,
-            Payload = customer,
+            Payload = new
+            {
+                Item = customer,
+                TotalInvoiceValue = totalInvoiceValue,
+                Counts = new
+                {
+                    Jobs = jobsCount,
+                    Requests = requestsCount,
+                    Quotes = quotesCount,
+                    Invoices = invoicesCount
+                }
+            },
             ErrorMessage = null
         };
     }
@@ -336,6 +369,7 @@ public class CustomerService : ICustomerService
         }
 
         existingCustomer.UpdatedAt = DateTime.UtcNow;
+        existingCustomer.LastActivity = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -453,6 +487,8 @@ public class CustomerService : ICustomerService
         if (!customer.Tags.Contains(tag))
             customer.Tags.Add(tag);
 
+        customer.LastActivity = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
     }
 
@@ -466,6 +502,7 @@ public class CustomerService : ICustomerService
         if (customer.Tags != null && customer.Tags.Contains(tag))
         {
             customer.Tags.Remove(tag);
+            customer.LastActivity = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
     }
@@ -478,6 +515,7 @@ public class CustomerService : ICustomerService
             throw new Exception("Customer not found");
 
         customer.IsArchived = true;
+        customer.LastActivity = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
     }
@@ -493,6 +531,10 @@ public class CustomerService : ICustomerService
             };
         }
 
+        var customer = await _context.Customers
+                                     .Where(c => c.Emails.Any(e => e.Equals(to, StringComparison.CurrentCultureIgnoreCase)))
+                                     .FirstOrDefaultAsync();
+
         var emailResult = await _emailService.SendEmailAsync(to, subject, message, message);
 
         if (emailResult)
@@ -503,6 +545,8 @@ public class CustomerService : ICustomerService
                 Payload = "Email sent successfully."
             };
         }
+
+        customer.LastActivity = DateTime.UtcNow;
 
         return new ApiResponse<object>
         {

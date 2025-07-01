@@ -290,6 +290,9 @@ public class JobService : IJobService
 
         job.StatusHistory = dto.StatusHistory ?? [];
 
+        var customer = await _context.Customers.FindAsync(dto.CustomerId);
+        customer.LastActivity = DateTime.UtcNow;
+
         await _context.Jobs.AddAsync(job);
         await _context.SaveChangesAsync();
 

@@ -1,5 +1,8 @@
 import { useParams } from 'react-router';
-import { GetInvoiceByInvoiceNumber } from '../../services/Invoice';
+import {
+  GetInvoiceById,
+  GetInvoiceByInvoiceNumber,
+} from '../../services/Invoice';
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
@@ -16,7 +19,7 @@ import {
 import { TInvoice } from '../../types/Invoice';
 import { useAuth } from '../../context/AuthProvider';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
-import images from '../../constants/images';
+import images from '../../constants/AssetsConstants/images';
 import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
 import UpdateInvoiceModal from '../../components/Invoice/Modal/UpdateInvoiceModal';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
@@ -31,9 +34,10 @@ const InvoiceDetails = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const fetchInvoice = async () => {
+    if (!invoiceId) return;
     try {
       setLoading(true);
-      const response = await GetInvoiceByInvoiceNumber(invoiceId);
+      const response = await GetInvoiceById(invoiceId);
       console.log(response);
       setInvoice(response.data);
     } catch (error) {
@@ -285,8 +289,8 @@ const InvoiceDetails = () => {
                   <div className='text-sm text-gray-600 space-y-0.5'>
                     <div>1627 Ocean Drive</div>
                     <div>Capital City, Ohio 83502</div>
-                    <div className='mt-2'>(531) 987-6543</div>
-                    <div>www.example.com</div>
+                    <div className='mt-2'>{user?.workspace?.phoneNumber}</div>
+                    <div>{user?.workspace?.companyUrl}</div>
                     <div>contractor lic #30-2631-28</div>
                   </div>
                   {/* <button className='text-blue-600 mt-3 flex items-center gap-1 ml-auto cursor-pointer'>
@@ -308,10 +312,10 @@ const InvoiceDetails = () => {
                   </div>
                   <div className=''>
                     <p className='text-sm text-gray-600'>
-                      {invoice.customer.properties[0].street},{' '}
-                      {invoice.customer.properties[0].city},{' '}
-                      {invoice.customer.properties[0].state}{' '}
-                      {invoice.customer.properties[0].postalCode}
+                      {invoice.customer.properties?.[0].street},{' '}
+                      {invoice.customer.properties?.[0].city},{' '}
+                      {invoice.customer.properties?.[0].state}{' '}
+                      {invoice.customer.properties?.[0].postalCode}
                     </p>
                   </div>
                 </div>
@@ -320,7 +324,7 @@ const InvoiceDetails = () => {
                   <div className='flex justify-between items-center mb-3'>
                     <div className='text-sm font-semibold text-gray-800'>
                       Property address{' '}
-                      {invoice.customer.properties[0].isBillingAddress && (
+                      {invoice.customer.properties?.[0].isBillingAddress && (
                         <span className='text-gray-500 font-normal'>
                           (same as billing address)
                         </span>
@@ -329,15 +333,15 @@ const InvoiceDetails = () => {
                   </div>
                   <div
                     className={` ${
-                      invoice.customer?.properties[0].isBillingAddress &&
+                      invoice.customer?.properties?.[0].isBillingAddress &&
                       'opacity-50'
                     }`}
                   >
                     <p className='text-sm text-gray-600'>
-                      {invoice.customer.properties[0].street},{' '}
-                      {invoice.customer.properties[0].city},{' '}
-                      {invoice.customer.properties[0].state}{' '}
-                      {invoice.customer.properties[0].postalCode}
+                      {invoice.customer.properties?.[0].street},{' '}
+                      {invoice.customer.properties?.[0].city},{' '}
+                      {invoice.customer.properties?.[0].state}{' '}
+                      {invoice.customer.properties?.[0].postalCode}
                     </p>
                   </div>
                 </div>
@@ -350,18 +354,19 @@ const InvoiceDetails = () => {
                   </div>
                   <div>
                     <div className='text-sm text-gray-600 space-y-2'>
-                      {invoice.customer.email.length > 0 && (
+                      {invoice.customer.emails?.length > 0 && (
                         <div className='flex items-center gap-2'>
                           <Mail className='w-4 h-4' />
-                          <span>{invoice.customer.email[0]}</span>
+                          <span>{invoice.customer.emails?.[0]}</span>
                         </div>
                       )}
-                      {invoice.customer.customerPhones.length > 0 && (
+                      {invoice.customer.customerPhones?.length > 0 && (
                         <div className='flex items-center gap-2'>
                           <Phone className='w-4 h-4' />
                           <span>
                             {invoice.customer?.customerPhones
-                              ? invoice.customer?.customerPhones[0]?.phoneNumber
+                              ? invoice.customer?.customerPhones?.[0]
+                                  ?.phoneNumber
                               : 'N/A'}
                           </span>
                         </div>
@@ -397,9 +402,9 @@ const InvoiceDetails = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {invoice.items.map((item, index) => (
+                    {invoice.lineItems.map((item, index) => (
                       <tr
-                        key={item.lineItemId || index}
+                        key={item.id || index}
                         className='border-b border-gray-100'
                       >
                         <td className='py-4 px-2'>

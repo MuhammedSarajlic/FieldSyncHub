@@ -1,4 +1,4 @@
-import icons from '../../constants/icons';
+import icons from '../../constants/AssetsConstants/icons';
 
 const ActivityItem = () => {
   return (

@@ -70,15 +70,16 @@ public class NotesService : INotesService
 
         await _context.Notes.AddAsync(note);
         customer.Notes.Add(note);
+        customer.LastActivity = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
         return note;
     }
 
-    public async Task<Note> UpdateNote(UpdateNoteDto updateNoteDto)
+    public async Task<Note> UpdateNote(UpdateNoteDto updatedNoteDto)
     {
-        var note = updateNoteDto.Adapt<Note>();
+        var note = updatedNoteDto.Adapt<Note>();
         note.UpdatedAt = DateTime.UtcNow;
         _context.Update(note);
         await _context.SaveChangesAsync();

@@ -6,13 +6,29 @@ export async function GetAllInvoices() {
   return response;
 }
 
-export async function GetAllInvoicesByWorkspaceId(workspaceId: string) {
-  const response = await api.get(`/invoice/workspace/${workspaceId}`);
+export async function GetAllInvoicesByWorkspaceId(
+  workspaceId: string,
+  pageNumber: number,
+  pageSize: number
+) {
+  const response = await api.get(
+    `/invoice/workspace/${workspaceId}?pageNumber=${pageNumber}&pageSize=${pageSize}`
+  );
   return response;
 }
 
-export async function GetInvoiceByInvoiceNumber(invoiceNumber: string) {
-  const response = await api.get(`/invoice/invoice-number/${invoiceNumber}`);
+export async function GetInvoiceById(invoiceId: string) {
+  const response = await api.get(`/invoice/${invoiceId}`);
+  return response;
+}
+
+export async function GetInvoiceByInvoiceNumber(
+  workspaceId: string,
+  invoiceNumber: string
+) {
+  const response = await api.get(
+    `/invoice/invoice-number/${invoiceNumber}?workspaceId=${workspaceId}`
+  );
   return response;
 }
 

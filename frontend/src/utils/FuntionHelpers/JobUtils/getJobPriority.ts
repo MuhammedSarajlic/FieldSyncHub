@@ -1,6 +1,6 @@
 import { JobPriority } from '../../../constants/Enumeration/JobEnum/JobEnum';
 
-export const getJobPriority = (priority: number) => {
+export const getJobPriority = (priority: JobPriority) => {
   switch (priority) {
     case JobPriority.Low:
       return 'bg-gray-100 text-gray-700 border-gray-200';

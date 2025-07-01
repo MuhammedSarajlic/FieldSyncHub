@@ -214,6 +214,9 @@ public class QuoteService : IQuoteService
             quote.LineItems.Add(lineItem);
         }
 
+        var customer = await _context.Customers.FindAsync(createQuoteDto.CustomerId);
+        customer.LastActivity = DateTime.UtcNow;
+
         _context.Quotes.Add(quote);
         await _context.SaveChangesAsync();
 
@@ -350,10 +353,12 @@ public class QuoteService : IQuoteService
                 (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
 
             decimal discount = quote.DiscountType == DiscountType.Percentage
-                ? subtotal * quote.Discount / 100
-                : quote.Discount;
+                ? subtotal * quote.DiscountValue / 100
+                : quote.DiscountValue;
 
-            decimal total = subtotal - discount + ((subtotal - discount) * quote.TaxRate);
+            decimal subtotalAfterDiscount = subtotal - discount;
+            decimal taxAmount = subtotalAfterDiscount * quote.TaxRate;
+            decimal total = subtotalAfterDiscount + taxAmount;
 
             totalValue += total;
 
@@ -376,5 +381,4 @@ public class QuoteService : IQuoteService
             ConversionRate = conversionRate
         };
     }
-
 }

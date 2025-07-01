@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { JobStatus } from '../../../constants/Enumeration/JobEnum/JobEnum';
 
-export const getJobStatus = (status: number) => {
+export const getJobStatus = (status: JobStatus) => {
   switch (status) {
     case JobStatus.Scheduled:
       return {

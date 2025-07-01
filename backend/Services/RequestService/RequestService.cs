@@ -139,6 +139,9 @@ public class RequestService : IRequestService
             }
             request.LineItems = lineItemsToProcess;
 
+            var customer = await _context.Customers.FindAsync(createRequestDto.CustomerId);
+            customer.LastActivity = DateTime.UtcNow;
+
             await _context.Requests.AddAsync(request);
             await _context.SaveChangesAsync();
 

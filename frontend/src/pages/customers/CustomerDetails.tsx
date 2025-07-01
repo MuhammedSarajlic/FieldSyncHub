@@ -2,24 +2,21 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
-import { TCustomer, TCustomerTab } from '../../types/Customer';
+import {
+  TCustomer,
+  TCustomerDetailsStats,
+  TCustomerTab,
+} from '../../types/Customer';
 import { ArchiveCustomer, GetCustomerById } from '../../services/Customer';
 import { formatDate } from '../../utils/FuntionHelpers/formatDate';
 import CustomerNotes from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerNotes';
 import CustomerTags from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerTags';
-import CustomerAddPropertyModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerAddPropertyModal';
+import CustomerAddPropertyModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/Modals/CustomerAddPropertyModal';
 import { TAddProperty } from '../../types/Property';
-import { CreateProperty } from '../../services/Property';
+import { CreateProperty, UpdateProperty } from '../../services/Property';
 import CustomerArchiveModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerArchiveModal';
-import {
-  Briefcase,
-  CalendarClock,
-  ClipboardList,
-  FileText,
-  Receipt,
-} from 'lucide-react';
 import CustomerEmailModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerEmailModal';
-import CustomerEditModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerEditModal';
+import CustomerEditModal from '../../components/Customers/EditCustomerModal/CustomerEditModal';
 import { GetJobsByCustomer } from '../../services/Job';
 import { GetQuotesByCustomer } from '../../services/Quote';
 import { GetInvoicesByCustomer } from '../../services/Invoice';
@@ -28,147 +25,139 @@ import { TJob } from '../../types/Job';
 import { TInvoice } from '../../types/Invoice';
 import { TQuote } from '../../types/Quote';
 
-import CustomerJobs from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerJobTab/CustomerJobs';
-import CustomerRequests from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerRequestTab/CustomerRequests';
-import CustomerQuotes from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerQuoteTab/CustomerQuotes';
-import CustomerInvoices from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerInvoiceTab/CustomerInvoices';
+import JobTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerJobTab/JobTabTableList';
+import RequestTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/RequestTab/RequestTabTableList';
+import QuoteTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerQuoteTab/QuoteTabTableList';
+import InvoiceTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/InvoiceTab/InvoiceTabTableList';
 import CustomerInformation from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerInformation';
-import CustomerProperties from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/CustomerProperties';
+import CustomerPropertyList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/CustomerPropertyList';
+import CustomerEditPropertyModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/Modals/CustomerEditPropertyModal';
+import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
+import { TRequest } from '../../types/Request';
+import CustomerStatCards from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerStatCards/CustomerStatCards';
+import {
+  customerStatsInitialState,
+  customerTabsInitialState,
+} from '../../constants/States/CustomerDetails/customerDetailsStates';
 
 const CustomerDetails = () => {
   const navigate = useNavigate();
+  const { customerId } = useParams();
+
   const [selectedTab, setSelectedTab] = useState('jobs');
   const [customer, setCustomer] = useState<TCustomer>();
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddPropertyModalOpen, setIsAddPropertyModalOpen] = useState(false);
-  const { customerId } = useParams();
+  const [isEditPropertyModalOpen, setIsEditPropertyModalOpen] = useState(false);
 
-  const customerStats = {
-    totalQuotes: 5,
-    totalJobs: 3,
-    totalInvoiced: 2850,
-    invoicesCount: 4,
-    lastActivity: '2024-06-30',
-  };
+  const [customerStats, setCustomerStats] = useState<TCustomerDetailsStats>(
+    customerStatsInitialState
+  );
+  const [tabs, setTabs] = useState<TCustomerTab[]>(customerTabsInitialState);
 
-  const [tabs, setTabs] = useState<TCustomerTab[]>([
-    {
-      id: 'jobs',
-      label: 'Jobs',
-      count: 0,
-      loaded: false,
-      loading: false,
-      items: [] as TJob[],
-      icon: Briefcase,
-    },
-    {
-      id: 'requests',
-      label: 'Requests',
-      count: 0,
-      loaded: false,
-      loading: false,
-      items: [],
-      icon: ClipboardList,
-    },
-    {
-      id: 'quotes',
-      label: 'Quotes',
-      count: 0,
-      loaded: false,
-      loading: false,
-      items: [] as TQuote[],
-      icon: FileText,
-    },
-    {
-      id: 'invoices',
-      label: 'Invoices',
-      count: 0,
-      loaded: false,
-      loading: false,
-      items: [] as TInvoice[],
-      icon: Receipt,
-    },
-  ]);
-
-  const fetchTabData = async () => {
+  const fetchTabData = async (selectedTab: string) => {
+    if (!customerId) return;
     setTabs((prev) =>
-      prev.map((tab) => ({
-        ...tab,
-        loaded: false,
-        loading: true,
-      }))
+      prev.map((tab) =>
+        tab.id === selectedTab
+          ? {
+              ...tab,
+              loaded: false,
+              loading: true,
+            }
+          : tab
+      )
     );
-    const jobs = await GetJobsByCustomer(customerId as string);
-    const quotes = await GetQuotesByCustomer(customerId as string);
-    const invoices = await GetInvoicesByCustomer(customerId as string);
-    const requests = await GetRequestsByCustomer(customerId as string);
-    console.log('invoices', invoices);
 
-    if (jobs.status === 200) {
-      setTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === 'jobs'
-            ? {
-                ...tab,
-                loaded: true,
-                loading: false,
-                items: jobs.data.payload,
-                count: jobs.data.payload.length,
-              }
-            : tab
-        )
-      );
+    let dataToUpdate = {};
+    let jobs;
+    let requests;
+    let quotes;
+    let invoices;
+
+    switch (selectedTab) {
+      case 'jobs':
+        jobs = await GetJobsByCustomer(customerId);
+        if (jobs.status === 200) {
+          dataToUpdate = {
+            items: jobs.data.payload,
+          };
+        }
+        break;
+      case 'requests':
+        requests = await GetRequestsByCustomer(customerId);
+        if (requests.status === 200) {
+          dataToUpdate = {
+            items: requests.data.payload,
+          };
+        }
+        break;
+      case 'quotes':
+        quotes = await GetQuotesByCustomer(customerId);
+        if (quotes.status === 200) {
+          dataToUpdate = {
+            items: quotes.data.payload,
+          };
+        }
+        break;
+      case 'invoices':
+        invoices = await GetInvoicesByCustomer(customerId);
+        if (invoices.status === 200) {
+          dataToUpdate = {
+            items: invoices.data.payload,
+          };
+        }
+        break;
+      default:
+        console.warn(`Unknown tab selected: ${selectedTab}`);
+        return;
     }
-    if (requests.status === 200) {
-      setTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === 'requests'
-            ? {
-                ...tab,
-                loaded: true,
-                items: requests.data.payload,
-                count: requests.data.payload.length,
-              }
-            : tab
-        )
-      );
-    }
-    if (quotes.status === 200) {
-      setTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === 'quotes'
-            ? {
-                ...tab,
-                loaded: true,
-                items: quotes.data.payload,
-                count: quotes.data.payload.length,
-              }
-            : tab
-        )
-      );
-    }
-    if (invoices.status === 200) {
-      setTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === 'invoices'
-            ? {
-                ...tab,
-                loaded: true,
-                items: invoices.data.payload,
-                count: invoices.data.payload.length,
-              }
-            : tab
-        )
-      );
-    }
+
+    setTabs((prev) =>
+      prev.map((tab) =>
+        tab.id === selectedTab
+          ? {
+              ...tab,
+              loaded: true,
+              loading: false,
+              ...dataToUpdate,
+            }
+          : tab
+      )
+    );
   };
 
   const fetchCustomer = async () => {
     const response = await GetCustomerById(customerId as string);
     if (response.data.success) {
-      setCustomer(response.data.payload);
+      const { item, totalInvoiceValue, counts } = response.data.payload;
+      setCustomer(item);
+      setCustomerStats((prev) => ({
+        ...prev,
+        totalJobs: counts.jobs,
+        totalQuotes: counts.quotes,
+        invoicesCount: counts.invoices,
+        totalInvoiced: totalInvoiceValue,
+        lastActivity: item.lastActivity,
+      }));
+      setTabs((prev) =>
+        prev.map((tab) => {
+          switch (tab.id) {
+            case 'jobs':
+              return { ...tab, count: counts.jobs };
+            case 'requests':
+              return { ...tab, count: counts.requests };
+            case 'quotes':
+              return { ...tab, count: counts.quotes };
+            case 'invoices':
+              return { ...tab, count: counts.invoices };
+            default:
+              return tab;
+          }
+        })
+      );
     }
   };
 
@@ -194,44 +183,61 @@ const CustomerDetails = () => {
     }
   };
 
-  useEffect(() => {
-    fetchTabData();
-    fetchCustomer();
-  }, [customerId]);
+  // const handleEditProperty = async (propertyId: string) => {
+  //   if (!customer) return;
+  //   const selectedProperty = customer.properties.find(p => p.id == propertyId)
+  //   const response = await UpdateProperty(propertyData);
+  //   if (response.status === 200) {
+  //     await fetchCustomer();
+  //     setIsAddPropertyModalOpen(false);
+  //   }
+  // };
 
-  const renderContent = () => {
+  const renderCustomerTabContent = () => {
     const activeTab = tabs.find((t) => t.id === selectedTab);
-    const items = (activeTab?.items || []) as any[];
+
+    if (!activeTab) {
+      return null;
+    }
 
     switch (selectedTab) {
       case 'jobs':
         return (
-          <div className='space-y-3'>
-            <CustomerJobs jobs={items} tab={activeTab} />
-          </div>
+          <JobTabTableList jobs={activeTab.items as TJob[]} tab={activeTab} />
         );
       case 'requests':
         return (
-          <div className='space-y-3'>
-            <CustomerRequests requests={items} tab={activeTab} />
-          </div>
+          <RequestTabTableList
+            requests={activeTab.items as TRequest[]}
+            tab={activeTab}
+          />
         );
       case 'quotes':
         return (
-          <div className='space-y-3'>
-            <CustomerQuotes quotes={items} tab={activeTab} />
-          </div>
+          <QuoteTabTableList
+            quotes={activeTab.items as TQuote[]}
+            tab={activeTab}
+          />
         );
       case 'invoices':
         return (
-          <div className='space-y-3'>
-            <CustomerInvoices invoices={items} tab={activeTab} />
-          </div>
+          <InvoiceTabTableList
+            invoices={activeTab.items as TInvoice[]}
+            tab={activeTab}
+          />
         );
       default:
         return null;
     }
   };
+
+  useEffect(() => {
+    fetchTabData(selectedTab);
+  }, [selectedTab]);
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [customerId]);
 
   if (!customer) {
     return (
@@ -239,17 +245,11 @@ const CustomerDetails = () => {
         <Sidebar />
         <div className='flex-1 ml-64'>
           <Navbar customer={customer} />
-          <div className='flex items-center justify-center h-64'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
-          </div>
+          <PageLoader />
         </div>
       </div>
     );
   }
-
-  const displayName = customer.isCompany
-    ? customer.companyName
-    : `${customer.firstName} ${customer.lastName}`;
 
   return (
     <div className='flex bg-white min-h-screen'>
@@ -257,7 +257,7 @@ const CustomerDetails = () => {
       <div className='flex-1 ml-64'>
         <Navbar customer={customer} />
 
-        <div className='px-6 pb-10'>
+        <div className='px-6 pt-6 pb-10'>
           {/* Header Section */}
           <div className='bg-whitep-6 mb-6'>
             <div className='flex items-start justify-between'>
@@ -291,7 +291,7 @@ const CustomerDetails = () => {
                 </div>
                 <div>
                   <h1 className='text-2xl font-bold text-gray-800 mb-1'>
-                    {displayName}
+                    {customer.displayName}
                   </h1>
                   {customer.isCompany && (
                     <p className='text-gray-600 font-medium'>
@@ -358,78 +358,7 @@ const CustomerDetails = () => {
             {/* Left Column - Main Content */}
             <div className='lg:col-span-2 space-y-6'>
               {/* Stats Cards */}
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-                {/* 1. Total Quotes */}
-                <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow'>
-                  <div className='flex items-center space-x-3 mb-4'>
-                    <div className='p-2 bg-blue-100 rounded-lg'>
-                      <FileText className='w-5 h-5 text-blue-600' />
-                    </div>
-                    <h3 className='text-sm font-medium text-gray-600'>
-                      Total Quotes
-                    </h3>
-                  </div>
-                  <p className='text-2xl font-bold text-gray-900 mb-1'>
-                    {customerStats.totalQuotes}
-                  </p>
-                  <p className='text-sm text-gray-500'>Issued quotes</p>
-                </div>
-
-                {/* 2. Total Jobs */}
-                <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow'>
-                  <div className='flex items-center space-x-3 mb-4'>
-                    <div className='p-2 bg-green-100 rounded-lg'>
-                      <Briefcase className='w-5 h-5 text-green-600' />
-                    </div>
-                    <h3 className='text-sm font-medium text-gray-600'>
-                      Total Jobs
-                    </h3>
-                  </div>
-                  <p className='text-2xl font-bold text-gray-900 mb-1'>
-                    {customerStats.totalJobs}
-                  </p>
-                  <p className='text-sm text-gray-500'>
-                    Completed or active jobs
-                  </p>
-                </div>
-
-                {/* 3. Invoices / Total Spent */}
-                <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow'>
-                  <div className='flex items-center space-x-3 mb-4'>
-                    <div className='p-2 bg-purple-100 rounded-lg'>
-                      <Receipt className='w-5 h-5 text-purple-600' />
-                    </div>
-                    <h3 className='text-sm font-medium text-gray-600'>
-                      Total Invoiced
-                    </h3>
-                  </div>
-                  <p className='text-2xl font-bold text-gray-900 mb-1'>
-                    ${customerStats.totalInvoiced.toLocaleString()}
-                  </p>
-                  <p className='text-sm text-gray-500'>
-                    From {customerStats.invoicesCount} invoice
-                    {customerStats.invoicesCount !== 1 ? 's' : ''}
-                  </p>
-                </div>
-
-                {/* 4. Last Activity */}
-                <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow'>
-                  <div className='flex items-center space-x-3 mb-4'>
-                    <div className='p-2 bg-yellow-100 rounded-lg'>
-                      <CalendarClock className='w-5 h-5 text-yellow-600' />
-                    </div>
-                    <h3 className='text-sm font-medium text-gray-600'>
-                      Last Activity
-                    </h3>
-                  </div>
-                  <p className='text-2xl font-bold text-gray-900 mb-1'>
-                    {formatDate(customerStats.lastActivity)}
-                  </p>
-                  <p className='text-sm text-gray-500'>
-                    Most recent interaction
-                  </p>
-                </div>
-              </div>
+              <CustomerStatCards customerStats={customerStats} />
 
               {/* Tabs Section */}
               <div className='bg-white rounded-lg border border-gray-100 shadow-sm'>
@@ -456,7 +385,7 @@ const CustomerDetails = () => {
                   </nav>
                 </div>
 
-                <div className=''>{renderContent()}</div>
+                <div>{renderCustomerTabContent()}</div>
               </div>
             </div>
 
@@ -469,9 +398,10 @@ const CustomerDetails = () => {
               <CustomerTags tags={customer.tags} customerId={customer.id} />
 
               {/* Properties */}
-              <CustomerProperties
+              <CustomerPropertyList
                 properties={customer.properties}
                 setIsAddPropertyModalOpen={setIsAddPropertyModalOpen}
+                setIsEditPropertyModalOpen={setIsEditPropertyModalOpen}
               />
 
               {/* Notes */}
@@ -484,7 +414,7 @@ const CustomerDetails = () => {
         customer={customer}
         onClose={() => setIsEditModalOpen(false)}
         isOpen={isEditModalOpen}
-        fetchCustomer={fetchCustomer}
+        setCustomer={setCustomer}
       />
 
       <CustomerEmailModal
@@ -505,6 +435,11 @@ const CustomerDetails = () => {
         onClose={() => setIsAddPropertyModalOpen(false)}
         onSave={handleAddProperty}
       />
+      {/* <CustomerEditPropertyModal
+        isOpen={isEditPropertyModalOpen}
+        onClose={() => setIsEditPropertyModalOpen(false)}
+        propertyToEdit={}
+      /> */}
     </div>
   );
 };

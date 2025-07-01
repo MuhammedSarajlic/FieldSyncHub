@@ -11,7 +11,7 @@ import { TAddInvoice } from '../../../types/Invoice';
 import { TAddLineItem } from '../../../types/LineItem';
 import { CreateInvoice } from '../../../services/Invoice';
 import { useAuth } from '../../../context/AuthProvider';
-import { initialAddInvoiceState } from '../../../const/states';
+import { initialAddInvoiceState } from '../../../constants/States/states';
 
 interface ICreateInvoiceModal {
   isOpen: boolean;

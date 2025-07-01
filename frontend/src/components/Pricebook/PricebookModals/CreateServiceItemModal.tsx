@@ -1,9 +1,19 @@
-import { useRef, useState } from 'react';
-import { FileImage, FileText, Package, X } from 'lucide-react';
+// components/Modals/CreateServiceItemModal.tsx
+import { useRef, useState, useEffect } from 'react'; // Import useEffect
+import {
+  FileImage,
+  FileText,
+  Package,
+  X,
+  UploadCloud,
+  CheckCircle,
+  Calculator,
+} from 'lucide-react';
 import CustomButton from '../../CustomElements/CustomButton';
 import { TAddServiceItem } from '../../../types/ServiceItem';
 import { ServiceItemType } from '../../../constants/Enumeration/ServiceItem/ServiceItem';
-import { uploadFile } from '../../../firebase/uploadFile';
+import { CreateServiceItem } from '../../../services/ServiceItem';
+import { uploadFileWithProgress } from '../../../firebase/uploadFileWithProgress'; // Import the new function
 
 interface ICreateServiceItemModal {
   isOpen: boolean;
@@ -36,14 +46,36 @@ const CreateServiceItemModal = ({
 
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null); // New state for image preview
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Effect to handle image preview URL
+  useEffect(() => {
+    if (selectedFile) {
+      const objectUrl = URL.createObjectURL(selectedFile);
+      setImagePreviewUrl(objectUrl);
+
+      // Clean up the object URL when the component unmounts or file changes
+      return () => URL.revokeObjectURL(objectUrl);
+    } else {
+      setImagePreviewUrl(null);
+    }
+  }, [selectedFile]);
+
+  // Effect to handle taxRate when isTaxable changes
+  useEffect(() => {
+    if (!formData.isTaxable) {
+      setFormData((prev) => ({ ...prev, taxRate: 0 }));
+    }
+  }, [formData.isTaxable]);
 
   const validate = () => {
     const newErrors: Record<string, boolean> = {};
     if (!formData.name.trim()) newErrors.name = true;
     if (!formData.category.trim()) newErrors.category = true;
-    if (!formData.unitPrice) newErrors.unitPrice = true;
-    if (!formData.cost) newErrors.cost = true;
+    if (formData.unitPrice <= 0) newErrors.unitPrice = true; // Changed from !formData.unitPrice to include 0
+    if (formData.cost <= 0) newErrors.cost = true; // Changed from !formData.cost to include 0
     return newErrors;
   };
 
@@ -54,226 +86,424 @@ const CreateServiceItemModal = ({
       return;
     }
 
-    try {
-      setUploading(true);
-      let imageUrl = '';
+    setUploading(true);
+    let imageUrl = '';
 
+    try {
       if (selectedFile) {
-        imageUrl = await uploadFile(selectedFile);
+        const uploadResult = await uploadFileWithProgress(
+          selectedFile,
+          (progress) => {
+            setUploadProgress(progress);
+          }
+        );
+
+        if (uploadResult.status === 'Completed' && uploadResult.downloadURL) {
+          imageUrl = uploadResult.downloadURL;
+        } else {
+          console.error('File upload failed:', uploadResult.error);
+          // Optionally, show an error message to the user
+          setUploading(false);
+          return;
+        }
       }
 
       const payload: TAddServiceItem = {
         ...formData,
-        taxRate: formData.taxRate / 100,
+        taxRate: formData.isTaxable ? formData.taxRate / 100 : 0, // Ensure taxRate is 0 if not taxable
         imageUrl,
       };
 
-      //   handleSubmit(payload);
-      console.log(payload);
-
-      onClose();
+      const result = await CreateServiceItem(payload);
+      if (result.status === 200) {
+        onClose();
+        // Optionally, call handleSubmit if there's a parent component handler
+        if (handleSubmit) {
+          handleSubmit(payload);
+        }
+      } else {
+        console.error(
+          'Failed to create service item:',
+          result.data?.message ?? 'Unknown error'
+        );
+        // Handle API error
+      }
     } catch (error) {
-      console.error('Failed to upload or submit item:', error);
+      console.error('An unexpected error occurred:', error);
     } finally {
       setUploading(false);
+      setUploadProgress(0); // Reset progress
+      setSelectedFile(null); // Clear selected file after successful upload/attempt
+      setImagePreviewUrl(null); // Clear preview
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40'>
-      <div className='w-full max-w-2xl p-6 bg-white rounded-xl shadow-xl overflow-auto max-h-[90vh]'>
-        <h2 className='text-xl font-semibold text-gray-800 mb-4'>
-          Create Service Item
-        </h2>
-
-        {/* Type Selector */}
-        <div className='space-y-3 mb-4'>
-          <label className='block text-sm font-medium text-gray-700'>
-            Type
-          </label>
-          <div className='grid grid-cols-2 gap-3'>
-            {[ServiceItemType.Service, ServiceItemType.Material].map((type) => (
-              <button
-                key={type}
-                type='button'
-                onClick={() => setFormData({ ...formData, type })}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  formData.type === type
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                }`}
-              >
-                <div className='flex items-center gap-3'>
-                  {type === ServiceItemType.Service ? (
-                    <>
-                      <FileText className='w-5 h-5' />
-                      <span>Service</span>
-                    </>
-                  ) : (
-                    <>
-                      <Package className='w-5 h-5' />
-                      <span>Material</span>
-                    </>
-                  )}
-                </div>
-              </button>
-            ))}
+    <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-inter'>
+      <div className='bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col'>
+        {/* Header */}
+        <div className='bg-white flex justify-between items-center px-8 py-6 border-b border-gray-200 shadow-sm'>
+          <div>
+            <h2 className='text-2xl font-bold text-gray-900'>
+              Create Service Item
+            </h2>
+            <p className='text-gray-600 text-sm mt-1'>
+              Define a new service or material item for your workspace
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            className='w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-600'
+            aria-label='Close modal'
+            disabled={uploading}
+          >
+            <X className='w-6 h-6' />
+          </button>
         </div>
 
-        {/* Inputs */}
-        <div className='grid grid-cols-2 gap-4 mb-4'>
-          <div>
-            <label className='text-sm font-medium'>Name *</label>
-            <input
-              className={`input ${errors.name ? 'border-red-500' : ''}`}
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
+        {/* Main Content Area */}
+        <div className='flex-1 overflow-y-auto px-8 py-6 space-y-8'>
+          {/* Type Selector Section */}
+          <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+            <div className='flex items-center space-x-3 mb-6'>
+              <Package className='w-5 h-5 text-[#356852]' />
+              <h3 className='font-semibold text-lg text-gray-900'>Item Type</h3>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              {[ServiceItemType.Service, ServiceItemType.Material].map(
+                (type) => (
+                  <button
+                    key={type}
+                    type='button'
+                    onClick={() => setFormData({ ...formData, type })}
+                    className={`flex items-center p-4 rounded-xl border-2 transition-all duration-200 ${
+                      formData.type === type
+                        ? 'border-[#356852] bg-[#e6f4ed] text-[#356852] shadow-md'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {type === ServiceItemType.Service ? (
+                      <>
+                        <FileText className='w-5 h-5 mr-3' />
+                        <span className='font-medium'>Service</span>
+                      </>
+                    ) : (
+                      <>
+                        <Package className='w-5 h-5 mr-3' />
+                        <span className='font-medium'>Material</span>
+                      </>
+                    )}
+                  </button>
+                )
+              )}
+            </div>
           </div>
-          <div>
-            <label className='text-sm font-medium'>Category *</label>
-            <input
-              className={`input ${errors.category ? 'border-red-500' : ''}`}
-              value={formData.category}
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className='text-sm font-medium'>Unit Price *</label>
-            <input
-              type='number'
-              className={`input ${errors.unitPrice ? 'border-red-500' : ''}`}
-              value={formData.unitPrice}
-              onChange={(e) =>
-                setFormData({ ...formData, unitPrice: +e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className='text-sm font-medium'>Cost *</label>
-            <input
-              type='number'
-              className={`input ${errors.cost ? 'border-red-500' : ''}`}
-              value={formData.cost}
-              onChange={(e) =>
-                setFormData({ ...formData, cost: +e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className='text-sm font-medium'>SKU</label>
-            <input
-              className='input'
-              value={formData.sku}
-              onChange={(e) =>
-                setFormData({ ...formData, sku: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className='text-sm font-medium'>Tax Rate (%)</label>
-            <input
-              type='number'
-              className='input'
-              value={formData.taxRate}
-              onChange={(e) =>
-                setFormData({ ...formData, taxRate: +e.target.value })
-              }
-            />
-          </div>
-        </div>
 
-        <div className='mb-4'>
-          <label className='text-sm font-medium'>Description</label>
-          <textarea
-            className='input resize-none'
-            rows={3}
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-          />
-        </div>
-
-        {/* Checkboxes */}
-        <div className='flex items-center gap-6 mb-4'>
-          <label className='flex items-center gap-2'>
-            <input
-              type='checkbox'
-              checked={formData.isTaxable}
-              onChange={(e) =>
-                setFormData({ ...formData, isTaxable: e.target.checked })
-              }
-            />
-            <span className='text-sm'>Taxable</span>
-          </label>
-          <label className='flex items-center gap-2'>
-            <input
-              type='checkbox'
-              checked={formData.isActive}
-              onChange={(e) =>
-                setFormData({ ...formData, isActive: e.target.checked })
-              }
-            />
-            <span className='text-sm'>Active</span>
-          </label>
-        </div>
-
-        {/* Image Upload */}
-        <div className='mb-6'>
-          <label className='block text-sm font-medium mb-1'>Upload Image</label>
-          <div className='flex items-center gap-3'>
-            <button
-              type='button'
-              onClick={() => fileInputRef.current?.click()}
-              className='text-sm text-blue-600 hover:underline'
-            >
-              <FileImage className='w-4 h-4 inline mr-1' />
-              Select Image
-            </button>
-            {selectedFile && (
-              <div className='flex items-center gap-2 text-sm'>
-                <span>{selectedFile.name}</span>
-                <button
-                  onClick={() => setSelectedFile(null)}
-                  className='text-red-500 hover:text-red-700'
-                >
-                  <X className='w-4 h-4' />
-                </button>
+          {/* Item Details Section */}
+          <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+            <div className='flex items-center space-x-3 mb-6'>
+              <FileText className='w-5 h-5 text-[#356852]' />
+              <h3 className='font-semibold text-lg text-gray-900'>
+                Item Details
+              </h3>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Name <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='text'
+                  className={`w-full border ${
+                    errors.name ? 'border-red-500' : 'border-gray-300'
+                  } rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm`}
+                  value={formData.name}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    setErrors((prev) => ({ ...prev, name: false }));
+                  }}
+                  placeholder='e.g., HVAC Maintenance'
+                />
+                {errors.name && (
+                  <p className='text-red-500 text-xs mt-1'>Name is required</p>
+                )}
               </div>
-            )}
-            <input
-              type='file'
-              ref={fileInputRef}
-              accept='image/*'
-              className='hidden'
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  setSelectedFile(e.target.files[0]);
-                }
-              }}
-            />
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Category <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='text'
+                  className={`w-full border ${
+                    errors.category ? 'border-red-500' : 'border-gray-300'
+                  } rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm`}
+                  value={formData.category}
+                  onChange={(e) => {
+                    setFormData({ ...formData, category: e.target.value });
+                    setErrors((prev) => ({ ...prev, category: false }));
+                  }}
+                  placeholder='e.g., Plumbing, Electrical'
+                />
+                {errors.category && (
+                  <p className='text-red-500 text-xs mt-1'>
+                    Category is required
+                  </p>
+                )}
+              </div>
+              <div className='md:col-span-2'>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Description
+                </label>
+                <textarea
+                  className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] resize-y text-sm'
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder='Provide a detailed description of the service item...'
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing & Inventory Section */}
+          <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+            <div className='flex items-center space-x-3 mb-6'>
+              <Calculator className='w-5 h-5 text-[#356852]' />
+              <h3 className='font-semibold text-lg text-gray-900'>
+                Pricing & Inventory
+              </h3>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Unit Price <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='number'
+                  className={`w-full border ${
+                    errors.unitPrice ? 'border-red-500' : 'border-gray-300'
+                  } rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm`}
+                  value={formData.unitPrice}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      unitPrice: parseFloat(e.target.value) || 0,
+                    });
+                    setErrors((prev) => ({ ...prev, unitPrice: false }));
+                  }}
+                  min='0'
+                  step='0.01'
+                  placeholder='0.00'
+                />
+                {errors.unitPrice && (
+                  <p className='text-red-500 text-xs mt-1'>
+                    Unit Price is required and must be greater than 0
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Cost <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='number'
+                  className={`w-full border ${
+                    errors.cost ? 'border-red-500' : 'border-gray-300'
+                  } rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm`}
+                  value={formData.cost}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      cost: parseFloat(e.target.value) || 0,
+                    });
+                    setErrors((prev) => ({ ...prev, cost: false }));
+                  }}
+                  min='0'
+                  step='0.01'
+                  placeholder='0.00'
+                />
+                {errors.cost && (
+                  <p className='text-red-500 text-xs mt-1'>
+                    Cost is required and must be greater than 0
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Tax Rate (%)
+                </label>
+                <input
+                  type='number'
+                  className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
+                  value={formData.taxRate}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      taxRate: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  min='0'
+                  step='0.01'
+                  placeholder='0.00'
+                  disabled={!formData.isTaxable} // Disabled if not taxable
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  SKU
+                </label>
+                <input
+                  type='text'
+                  className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
+                  value={formData.sku}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sku: e.target.value })
+                  }
+                  placeholder='Stock Keeping Unit'
+                />
+              </div>
+              <div className='md:col-span-2 flex items-center mt-2'>
+                <input
+                  type='checkbox'
+                  id='isTaxable'
+                  checked={formData.isTaxable}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isTaxable: e.target.checked })
+                  }
+                  className='h-4 w-4 text-[#356852] focus:ring-[#356852] border-gray-300 rounded'
+                />
+                <label
+                  htmlFor='isTaxable'
+                  className='ml-2 block text-sm text-gray-900'
+                >
+                  Taxable
+                </label>
+              </div>
+              <div className='md:col-span-2 flex items-center'>
+                <input
+                  type='checkbox'
+                  id='isActive'
+                  checked={formData.isActive}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isActive: e.target.checked })
+                  }
+                  className='h-4 w-4 text-[#356852] focus:ring-[#356852] border-gray-300 rounded'
+                />
+                <label
+                  htmlFor='isActive'
+                  className='ml-2 block text-sm text-gray-900'
+                >
+                  Active Item (Can be used in jobs)
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Image Upload Section */}
+          <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+            <div className='flex items-center space-x-3 mb-6'>
+              <FileImage className='w-5 h-5 text-[#356852]' />
+              <h3 className='font-semibold text-lg text-gray-900'>
+                Item Image
+              </h3>
+            </div>
+            <div className='flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50'>
+              {imagePreviewUrl ? (
+                <div className='relative w-32 h-32 mb-4'>
+                  <img
+                    src={imagePreviewUrl}
+                    alt='Image Preview'
+                    className='w-full h-full object-cover rounded-lg'
+                  />
+                  <button
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setUploadProgress(0);
+                    }}
+                    className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors'
+                    disabled={uploading}
+                    aria-label='Remove image'
+                  >
+                    <X className='w-4 h-4' />
+                  </button>
+                </div>
+              ) : (
+                <div className='text-center text-gray-500 mb-4'>
+                  <UploadCloud className='w-12 h-12 mx-auto text-gray-400' />
+                  <p className='mt-2'>No image selected</p>
+                </div>
+              )}
+
+              <button
+                type='button'
+                onClick={() => fileInputRef.current?.click()}
+                className='px-4 py-2 text-sm font-medium text-[#356852] bg-[#e6f4ed] rounded-lg hover:bg-[#d6e9dc] transition-colors flex items-center'
+                disabled={uploading}
+              >
+                <UploadCloud className='w-4 h-4 inline mr-2' />
+                {selectedFile ? 'Change Image' : 'Select Image'}
+              </button>
+              {selectedFile && (
+                <div className='mt-4 flex flex-col items-center gap-2 text-sm text-gray-700 w-full max-w-xs'>
+                  <span className='font-medium text-center truncate'>
+                    {selectedFile.name}
+                  </span>
+                  {uploading && uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className='w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2'>
+                      <div
+                        className='bg-[#356852] h-2.5 rounded-full'
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  )}
+                  {uploading &&
+                    uploadProgress > 0 && ( // Show percentage only when uploading
+                      <span className='text-xs text-gray-600 mt-1'>
+                        {Math.round(uploadProgress)}% uploaded
+                      </span>
+                    )}
+                  {!uploading &&
+                    uploadProgress === 100 && ( // Show completion only after upload finishes
+                      <span className='text-xs text-[#356852] mt-1 flex items-center'>
+                        <CheckCircle className='w-3 h-3 mr-1' /> Upload Complete
+                      </span>
+                    )}
+                </div>
+              )}
+              <input
+                type='file'
+                ref={fileInputRef}
+                accept='image/*'
+                className='hidden'
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    setSelectedFile(e.target.files[0]);
+                    setUploadProgress(0); // Reset progress on new file selection
+                  }
+                }}
+              />
+              <p className='text-xs text-gray-500 mt-3'>
+                PNG, JPG, GIF up to 5MB
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className='flex justify-end gap-3'>
+        <div className='flex justify-end gap-3 px-8 py-6 bg-white border-t border-gray-200 shadow-sm'>
           <button
             onClick={onClose}
-            className='px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200'
+            className='px-6 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors'
             disabled={uploading}
           >
             Cancel
           </button>
           <CustomButton
-            title={uploading ? 'Uploading...' : 'Add Item'}
+            title={uploading ? 'Adding Item...' : 'Add Item'} // Removed percentage from button
             handleBtnClick={handleAddItem}
             isDisabled={uploading}
           />

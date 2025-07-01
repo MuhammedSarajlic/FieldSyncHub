@@ -47,6 +47,7 @@ public class Customer
     public ICollection<Property>? Properties { get; set; }
     public ICollection<CustomerPhone>? CustomerPhones { get; set; }
 
+    public DateTime LastActivity { get; set; } = DateTime.UtcNow;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

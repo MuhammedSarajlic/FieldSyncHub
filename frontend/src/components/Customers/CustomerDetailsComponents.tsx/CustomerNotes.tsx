@@ -2,7 +2,7 @@ import NoteFileUpload from '../../Notes/NoteFileUpload';
 import Note from '../../Notes/Note';
 import { TAddNote, TNote } from '../../../types/Note';
 import { useState } from 'react';
-import { addNoteInitialState } from '../../../const/states';
+import { addNoteInitialState } from '../../../constants/States/states';
 import { CreateNote } from '../../../services/Notes';
 import { useAuth } from '../../../context/AuthProvider';
 import CustomButton from '../../CustomElements/CustomButton';
@@ -103,14 +103,14 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
             onChange={(e) =>
               setNewNote({ ...newNote, noteText: e.target.value })
             }
-            className='p-3 min-h-[100px] w-full bg-white text-sm text-gray-700 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all'
+            className='p-3 min-h-[100px] w-full bg-white text-sm text-gray-700 border border-gray-300 rounded-lg focus:ring-1 focus:ring-bg-primary outline-none transition-all'
           />
           <NoteFileUpload
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
           />
 
-          {isUploading && (
+          {isUploading && selectedFile && (
             <div className='w-full h-2 bg-gray-200 rounded-full overflow-hidden'>
               <div
                 className='h-full bg-blue-500 transition-all'

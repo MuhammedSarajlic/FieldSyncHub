@@ -16,7 +16,7 @@ import { TInvoice } from '../../types/Invoice';
 import { useAuth } from '../../context/AuthProvider';
 import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
 import Table from '../../components/Table/Table';
-import { invoiceColumns } from '../../constants/Columns/InvoiceColumns';
+import { invoiceColumns } from '../../constants/TableColumns/InvoiceColumns';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 
 const Invoices = () => {
@@ -53,10 +53,14 @@ const Invoices = () => {
   const [invoices, setInvoices] = useState<TInvoice[]>([]);
 
   const fetchAllInvoicesByWorkspace = async () => {
-    if (!user) return;
-    const response = await GetAllInvoicesByWorkspaceId(user?.workspace.id);
+    if (!user?.workspace) return;
+    const response = await GetAllInvoicesByWorkspaceId(
+      user.workspace.id,
+      1,
+      10
+    );
     if (response.status === 200) {
-      setInvoices(response.data);
+      setInvoices(response.data.payload.items);
     }
     console.log(response);
   };
@@ -75,6 +79,7 @@ const Invoices = () => {
   ).length;
 
   useEffect(() => {
+    if (searchParams.get('create') === 'true') setIsInvoiceModalOpen(true);
     fetchAllInvoicesByWorkspace();
   }, []);
 

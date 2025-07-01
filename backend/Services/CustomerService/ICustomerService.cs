@@ -9,7 +9,7 @@ namespace backend.Services.CustomerService;
 public interface ICustomerService
 {
     Task<ApiResponse<List<Customer>>> GetCustomers();
-    Task<ApiResponse<Customer>> GetCustomerById(Guid id);
+    Task<ApiResponse<object>> GetCustomerById(Guid id);
     Task<ApiResponse<PagedResult<Customer>>> GetCustomersByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
     Task<CustomerStatsDto> GetCustomerStats(Guid workspaceId);
     Task<ApiResponse<PagedResult<Customer>>> GetCustomersByFilter(

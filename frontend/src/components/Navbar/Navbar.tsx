@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import icons from '../../constants/icons';
+import icons from '../../constants/AssetsConstants/icons';
 import ActivityFeed from '../ActivityFeed/ActivityFeed';
 import { TCustomer } from '../../types/Customer';
 import { useAuth } from '../../context/AuthProvider';

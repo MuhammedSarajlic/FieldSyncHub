@@ -16,7 +16,7 @@ import EmptyEmployeeTable from '../../components/Employee/EmployeeTable/EmptyEmp
 import { useSearchParams } from 'react-router';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import ButtonIcon from '../../components/CustomElements/ButtonIcon';
-import icons from '../../constants/icons';
+import icons from '../../constants/AssetsConstants/icons';
 import Search from '../../components/CustomElements/Search';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';

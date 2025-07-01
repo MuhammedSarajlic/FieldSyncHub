@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import icons from '../../constants/icons';
+import icons from '../../constants/AssetsConstants/icons';
 import ButtonIcon from '../CustomElements/ButtonIcon';
 import CustomButton from '../CustomElements/CustomButton';
 import CustomFieldForm from './CustomFieldForm';

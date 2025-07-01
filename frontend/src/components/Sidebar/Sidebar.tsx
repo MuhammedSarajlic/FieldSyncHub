@@ -1,4 +1,4 @@
-import images from '../../constants/images';
+import images from '../../constants/AssetsConstants/images';
 import { sidebar } from '../../constants/sidebar';
 import { useAuth } from '../../context/AuthProvider';
 import SidebarItem from './SidebarItem';

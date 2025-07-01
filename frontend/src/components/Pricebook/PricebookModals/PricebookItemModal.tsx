@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { CreateServiceItem } from '../../../services/ServiceItem';
 import { TAddServiceItem } from '../../../types/ServiceItem';
-import { addServiceItemInitialState } from '../../../const/states';
+import { addServiceItemInitialState } from '../../../constants/States/states';
 
 interface IPricebookItemModal {
   onClose: () => void;
 }
 
-const PricebookItemModal = ({
-  onClose,
-}: IPricebookItemModal) => {
+const PricebookItemModal = ({ onClose }: IPricebookItemModal) => {
   const [serviceItem, setServiceItem] = useState<TAddServiceItem>(
     addServiceItemInitialState
   );

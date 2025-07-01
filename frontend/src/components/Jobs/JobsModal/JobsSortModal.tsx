@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ButtonIcon from '../../CustomElements/ButtonIcon';
-import icons from '../../../constants/icons';
+import icons from '../../../constants/AssetsConstants/icons';
 
 interface SortOption {
   id: string;

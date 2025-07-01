@@ -9,7 +9,7 @@ interface ISidebarItem {
 const SidebarItem = ({ item, isCollapsed }: ISidebarItem) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const isActive = pathname === `/${item.slug}`;
+  const isActive = pathname.includes(`/${item.slug}`);
 
   return (
     <div

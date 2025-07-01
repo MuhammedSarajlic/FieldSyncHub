@@ -1,8 +1,13 @@
-import { TAddServiceItem } from '../types/ServiceItem';
+import { TAddServiceItem, TUpdateServiceItem } from '../types/ServiceItem';
 import api from './api';
 
 export async function GetServiceItems() {
   const response = await api.get('/service-item');
+  return response;
+}
+
+export async function GetServiceItemById(serviceItemId: string) {
+  const response = await api.get(`/service-item/${serviceItemId}`);
   return response;
 }
 
@@ -41,5 +46,15 @@ export async function GetServiceItemsByFilter(
 
 export async function CreateServiceItem(serviceItem: TAddServiceItem) {
   const response = await api.post('/service-item', serviceItem);
+  return response;
+}
+
+export async function UpdateServiceItem(serviceItem: TUpdateServiceItem) {
+  const response = await api.put('/service-item', serviceItem);
+  return response;
+}
+
+export async function DeleteServiceItem(serviceItemId: string) {
+  const response = await api.delete(`/service-item/${serviceItemId}`);
   return response;
 }

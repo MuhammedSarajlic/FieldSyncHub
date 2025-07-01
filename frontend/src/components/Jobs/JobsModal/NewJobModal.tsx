@@ -41,13 +41,15 @@ import { DiscountType } from '../../../constants/Enumeration/CommonEnum/Discount
 import { GetEmployeesByWorkspace } from '../../../services/Employee';
 import { TEmployee } from '../../../types/Employee';
 import { CreateJob } from '../../../services/Job';
+import { getJobStatus } from '../../../utils/FuntionHelpers/JobUtils/getJobStatus';
+import { getJobPriority } from '../../../utils/FuntionHelpers/JobUtils/getJobPriority';
 
 interface INewJobModal {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const NewJobModal = ({ isOpen = true, onClose }: INewJobModal) => {
+const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
   const { user } = useAuth();
   const [customers, setCustomers] = useState<TCustomer[]>([]);
   const [employees, setEmployees] = useState<TEmployee[]>([]);
@@ -423,10 +425,12 @@ const NewJobModal = ({ isOpen = true, onClose }: INewJobModal) => {
     try {
       const response = await GetServiceItemsByFilter(
         user.workspace.id,
+        1,
+        10,
         `q=${encodeURIComponent(term)}`
       );
       if (response.status === 200) {
-        return response.data.payload.slice(0, 5);
+        return response.data.payload.items.slice(0, 5);
       }
       console.error(
         'Failed to search service items:',
@@ -1469,15 +1473,9 @@ const NewJobModal = ({ isOpen = true, onClose }: INewJobModal) => {
                       Priority:
                     </span>
                     <span
-                      className={`text-sm font-semibold px-2 py-1 rounded-full text-xs ${
-                        job.priority === JobPriority.Urgent
-                          ? 'bg-red-100 text-red-800'
-                          : job.priority === JobPriority.High
-                          ? 'bg-orange-100 text-orange-800'
-                          : job.priority === JobPriority.Normal
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
+                      className={`font-semibold px-2 py-1 rounded-full text-xs ${getJobPriority(
+                        job.priority
+                      )}`}
                     >
                       {JobPriority[job.priority]}
                     </span>
@@ -1487,16 +1485,8 @@ const NewJobModal = ({ isOpen = true, onClose }: INewJobModal) => {
                       Status:
                     </span>
                     <span
-                      className={`text-sm font-semibold px-2 py-1 rounded-full text-xs ${
-                        job.status === JobStatus.Completed
-                          ? 'bg-green-100 text-green-800'
-                          : job.status === JobStatus.InProgress
-                          ? 'bg-blue-100 text-blue-800'
-                          : job.status === JobStatus.Dispatched
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : job.status === JobStatus.Cancelled
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-gray-100 text-gray-800'
+                      className={`font-semibold px-2 py-1 rounded-full text-xs ${
+                        getJobStatus(job.status).color
                       }`}
                     >
                       {JobStatus[job.status]}

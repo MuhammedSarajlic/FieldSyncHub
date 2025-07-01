@@ -10,7 +10,7 @@ import { CreateJob, GetJobs } from '../../services/Job';
 import { AxiosResponse } from 'axios';
 import Table from '../../components/Table/Table';
 import { TPaginationData } from '../customers/Customers';
-import { jobColumns } from '../../constants/Columns/JobColumns';
+import { jobColumns } from '../../constants/TableColumns/JobColumns';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import { jobSortOptions } from '../../constants/Options/SortOptions/JobSortOptions';
@@ -37,12 +37,12 @@ const Jobs = () => {
     priority: '',
   };
 
-  const handleAddJob = async (
-    job: TAddJob
-  ): Promise<AxiosResponse<any, any>> => {
-    const response = await CreateJob(job);
-    return response;
-  };
+  // const handleAddJob = async (
+  //   job: TAddJob
+  // ): Promise<AxiosResponse<any, any>> => {
+  //   const response = await CreateJob(job);
+  //   return response;
+  // };
 
   const fetchJobs = async () => {
     const response = await GetJobs();
@@ -60,6 +60,7 @@ const Jobs = () => {
   );
 
   useEffect(() => {
+    if (searchParams.get('create') === 'true') setIsNewJobModalOpen(true);
     fetchJobs();
   }, []);
 
@@ -192,8 +193,6 @@ const Jobs = () => {
       <NewJobModal
         isOpen={isNewJobModalOpen}
         onClose={() => setIsNewJobModalOpen(false)}
-        onCreate={handleAddJob}
-        fetchJobs={fetchJobs}
       />
     </div>
   );

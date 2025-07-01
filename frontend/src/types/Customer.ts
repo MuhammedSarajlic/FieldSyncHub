@@ -33,6 +33,7 @@ export type TCustomer = {
   notes: TNote[];
   properties: TProperty[];
   customerPhones: TCustomerPhone[];
+  lastActivity: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -102,6 +103,14 @@ export type TCustomerStats = {
   individuals: number;
   newCustomers: number;
   missingInfoCustomers: number;
+};
+
+export type TCustomerDetailsStats = {
+  totalQuotes: number;
+  totalJobs: number;
+  totalInvoiced: number;
+  invoicesCount: number;
+  lastActivity: string;
 };
 
 export type TCustomerFilter = {

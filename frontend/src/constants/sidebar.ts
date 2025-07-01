@@ -1,4 +1,4 @@
-import icons from './icons';
+import icons from './AssetsConstants/icons';
 
 export const sidebar = [
   {

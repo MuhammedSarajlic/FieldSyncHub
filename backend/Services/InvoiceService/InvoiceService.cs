@@ -227,6 +227,9 @@ public class InvoiceService : IInvoiceService
         invoice.InvoiceNumber = await GenerateInvoiceNumber(createInvoiceDto.WorkspaceId);
         invoice.DueDate = CalculateDueDate(invoice.IssueDate, invoice.PaymentTerms, createInvoiceDto.DueDate);
 
+        var customer = await _context.Customers.FindAsync(createInvoiceDto.CustomerId);
+        customer.LastActivity = DateTime.UtcNow;
+
         _context.Invoices.Add(invoice);
         await _context.SaveChangesAsync();
 

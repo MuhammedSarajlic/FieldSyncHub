@@ -1,9 +1,9 @@
 import ButtonIcon from '../../CustomElements/ButtonIcon';
 import CustomButton from '../../CustomElements/CustomButton';
-import icons from '../../../constants/icons';
+import icons from '../../../constants/AssetsConstants/icons';
 import CreateCustomerForm from './CreateCustomerForm';
 import { TAddCustomer } from '../../../types/Customer';
-import { addCustomerInitialState } from '../../../const/states';
+import { addCustomerInitialState } from '../../../constants/States/states';
 import { useState } from 'react';
 import { CreateCustomer } from '../../../services/Customer';
 import { useAuth } from '../../../context/AuthProvider';

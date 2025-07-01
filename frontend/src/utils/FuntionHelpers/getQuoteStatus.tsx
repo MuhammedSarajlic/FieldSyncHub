@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum/QuoteEnum';
 
-export const getQuoteStatus = (status: number) => {
+export const getQuoteStatus = (status: QuoteStatus) => {
   switch (status) {
     case QuoteStatus.Draft:
       return {

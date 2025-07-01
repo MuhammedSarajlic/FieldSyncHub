@@ -3,7 +3,7 @@ import ButtonIcon from '../../components/CustomElements/ButtonIcon';
 import Search from '../../components/CustomElements/Search';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
-import icons from '../../constants/icons';
+import icons from '../../constants/AssetsConstants/icons';
 import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/CreateCustomerModal';
 import { TCustomer, TCustomerStats } from '../../types/Customer';
 import ImportCustomersModal from '../../components/Customers/ImportCustomer/ImportCustomersModal';
@@ -20,10 +20,11 @@ import { useNavigate, useSearchParams } from 'react-router';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import Table from '../../components/Table/Table';
-import { customerColumns } from '../../constants/Columns/CustomerColumns';
+import { customerColumns } from '../../constants/TableColumns/CustomerColumns';
 import { customerSortOptions } from '../../constants/Options/SortOptions/CustomerSortOptions';
 import { customerFilterOptions } from '../../constants/Options/FilterOptions/CustomerFilterOptions';
 import { downloadCSVFile } from '../../utils/FuntionHelpers/downloadCSVFile';
+import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
 
 export type TPaginationData = {
   totalCount: number;
@@ -33,6 +34,7 @@ export type TPaginationData = {
 const Customers = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] =
     useState<boolean>(false);
   const [isImportCustomerModalOpen, setIsImportCustomerModalOpen] =
@@ -59,6 +61,7 @@ const Customers = () => {
 
   const fetchAllCustomersByWorkspace = async () => {
     if (!user?.workspace) return;
+    // setIsLoading(true);
 
     const paramsObj: Record<string, string> = {};
     let shouldResetPage = false;
@@ -87,6 +90,7 @@ const Customers = () => {
       : await GetCustomerByWorkspace(user.workspace.id, finalPage, 10);
 
     if (response.status === 200) {
+      // setIsLoading(false);
       const { items, totalCount, pageSize } = response.data.payload;
       setCustomers(items);
       setPaginationData({ totalCount, pageSize });
@@ -96,6 +100,7 @@ const Customers = () => {
         navigate(`?${newParams.toString()}`);
       }
     }
+    // setIsLoading(false);
   };
 
   const fetchCustomerStats = async () => {
@@ -151,131 +156,135 @@ const Customers = () => {
           <div>
             <Navbar />
           </div>
-          <div className='px-6 pt-6 mb-10'>
-            {/* Header */}
-            <div className='pb-4 mb-4 flex items-center justify-between'>
-              <div>
-                <p className='text-heading text-4xl font-extrabold'>
-                  Customers
-                </p>
-                <p className='text-gray-600 mt-1'>
-                  Manage and track all your customers
-                </p>
-              </div>
-              <div className='flex items-center space-x-3'>
-                <ButtonIcon
-                  name='Import'
-                  icon={icons.importIcon}
-                  handleBtnClick={() => setIsImportCustomerModalOpen(true)}
-                />
+          {!isLoading ? (
+            <div className='px-6 pt-6 mb-10'>
+              {/* Header */}
+              <div className='pb-4 mb-4 flex items-center justify-between'>
+                <div>
+                  <p className='text-heading text-4xl font-extrabold'>
+                    Customers
+                  </p>
+                  <p className='text-gray-600 mt-1'>
+                    Manage and track all your customers
+                  </p>
+                </div>
+                <div className='flex items-center space-x-3'>
+                  <ButtonIcon
+                    name='Import'
+                    icon={icons.importIcon}
+                    handleBtnClick={() => setIsImportCustomerModalOpen(true)}
+                  />
 
-                <ButtonIcon
-                  name='Export'
-                  icon={icons.exportIcon}
-                  handleBtnClick={handleExportCustomers}
-                />
-                <div className='w-[1px] h-[38px] bg-border-primary'></div>
-                <CustomIconButton
-                  icon={<Plus className='w-4 h-4 mr-1' />}
-                  text='Add customer'
-                  handleClick={() => setIsAddCustomerModalOpen(true)}
-                />
-              </div>
-            </div>
-
-            {/* Cards */}
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8'>
-              {/* Total Customers */}
-              <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
-                <div className='space-y-3'>
-                  <h3 className='text-sm font-medium text-gray-600'>
-                    Total Customers
-                  </h3>
-                  <div className='text-3xl font-bold text-gray-900'>
-                    {customerStats?.total}
-                  </div>
-                  <div className='text-sm text-gray-500'>All-time</div>
+                  <ButtonIcon
+                    name='Export'
+                    icon={icons.exportIcon}
+                    handleBtnClick={handleExportCustomers}
+                  />
+                  <div className='w-[1px] h-[38px] bg-border-primary'></div>
+                  <CustomIconButton
+                    icon={<Plus className='w-4 h-4 mr-1' />}
+                    text='Add customer'
+                    handleClick={() => setIsAddCustomerModalOpen(true)}
+                  />
                 </div>
               </div>
 
-              {/* New This Month */}
-              <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
-                <div className='space-y-3'>
-                  <h3 className='text-sm font-medium text-gray-600'>
-                    New This Month
-                  </h3>
-                  <div className='text-3xl font-bold text-gray-900'>
-                    {customerStats?.newCustomers}
+              {/* Cards */}
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8'>
+                {/* Total Customers */}
+                <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+                  <div className='space-y-3'>
+                    <h3 className='text-sm font-medium text-gray-600'>
+                      Total Customers
+                    </h3>
+                    <div className='text-3xl font-bold text-gray-900'>
+                      {customerStats?.total}
+                    </div>
+                    <div className='text-sm text-gray-500'>All-time</div>
                   </div>
-                  <div className='text-sm text-gray-500'>
-                    Compared to last month
+                </div>
+
+                {/* New This Month */}
+                <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+                  <div className='space-y-3'>
+                    <h3 className='text-sm font-medium text-gray-600'>
+                      New This Month
+                    </h3>
+                    <div className='text-3xl font-bold text-gray-900'>
+                      {customerStats?.newCustomers}
+                    </div>
+                    <div className='text-sm text-gray-500'>
+                      Compared to last month
+                    </div>
+                  </div>
+                </div>
+
+                {/* Companies vs Individuals */}
+                <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+                  <div className='space-y-3'>
+                    <h3 className='text-sm font-medium text-gray-600'>
+                      Companies vs Individuals
+                    </h3>
+                    <div className='text-3xl font-bold text-gray-900'>
+                      {customerStats?.companies} / {customerStats?.individuals}
+                    </div>
+                    <div className='text-sm text-gray-500'>
+                      Companies / Individuals
+                    </div>
+                  </div>
+                </div>
+
+                {/* Incomplete Profiles */}
+                <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
+                  <div className='space-y-3'>
+                    <h3 className='text-sm font-medium text-gray-600'>
+                      Missing Info
+                    </h3>
+                    <div className='text-3xl font-bold text-gray-900'>
+                      {customerStats?.missingInfoCustomers}
+                    </div>
+                    <div className='text-sm text-gray-500'>
+                      No email or phone number
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Companies vs Individuals */}
-              <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
-                <div className='space-y-3'>
-                  <h3 className='text-sm font-medium text-gray-600'>
-                    Companies vs Individuals
-                  </h3>
-                  <div className='text-3xl font-bold text-gray-900'>
-                    {customerStats?.companies} / {customerStats?.individuals}
-                  </div>
-                  <div className='text-sm text-gray-500'>
-                    Companies / Individuals
-                  </div>
+              {/* Filters */}
+              <div className='flex items-center justify-between gap-4 mb-8'>
+                <div className='flex-1 max-w-md'>
+                  <Search
+                    inputPlaceholder='Search customers...'
+                    searchQuery={searchQuery}
+                  />
+                </div>
+                <div className='flex items-center gap-2'>
+                  <SortModal
+                    setIsSortModalOpen={setIsSortModalOpen}
+                    isSortModalOpen={isSortModalOpen}
+                    sortOptions={customerSortOptions}
+                  />
+                  <FilterModal
+                    initialFilters={initialCustomerFilters}
+                    filterOptions={customerFilterOptions}
+                    setIsFilterModalOpen={setIsFilterModalOpen}
+                    isFilterModalOpen={isFilterModalOpen}
+                  />
                 </div>
               </div>
 
-              {/* Incomplete Profiles */}
-              <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
-                <div className='space-y-3'>
-                  <h3 className='text-sm font-medium text-gray-600'>
-                    Missing Info
-                  </h3>
-                  <div className='text-3xl font-bold text-gray-900'>
-                    {customerStats?.missingInfoCustomers}
-                  </div>
-                  <div className='text-sm text-gray-500'>
-                    No email or phone number
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className='flex items-center justify-between gap-4 mb-8'>
-              <div className='flex-1 max-w-md'>
-                <Search
-                  inputPlaceholder='Search customers...'
-                  searchQuery={searchQuery}
-                />
-              </div>
-              <div className='flex items-center gap-2'>
-                <SortModal
-                  setIsSortModalOpen={setIsSortModalOpen}
-                  isSortModalOpen={isSortModalOpen}
-                  sortOptions={customerSortOptions}
-                />
-                <FilterModal
-                  initialFilters={initialCustomerFilters}
-                  filterOptions={customerFilterOptions}
-                  setIsFilterModalOpen={setIsFilterModalOpen}
-                  isFilterModalOpen={isFilterModalOpen}
+              {/* Table */}
+              <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
+                <Table<TCustomer>
+                  data={customers}
+                  columns={customerColumns}
+                  paginationData={paginationData}
                 />
               </div>
             </div>
-
-            {/* Table */}
-            <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
-              <Table<TCustomer>
-                data={customers}
-                columns={customerColumns}
-                paginationData={paginationData}
-              />
-            </div>
-          </div>
+          ) : (
+            <PageLoader />
+          )}
         </div>
       </div>
       {isAddCustomerModalOpen && (

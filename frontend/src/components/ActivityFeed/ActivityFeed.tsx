@@ -1,4 +1,4 @@
-import icons from '../../constants/icons';
+import icons from '../../constants/AssetsConstants/icons';
 import ActivityItem from './ActivityItem';
 import EmptyFeed from './EmptyFeed';
 

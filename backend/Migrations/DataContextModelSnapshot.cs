@@ -157,6 +157,9 @@ namespace backend.Migrations
                     b.Property<bool>("IsReceiveQuoteNotifications")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<DateTime>("LastActivity")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("longtext");

@@ -83,3 +83,10 @@ export type TUpdateQuoteAttachment = {
   fileName: string;
   url?: string;
 };
+
+export type TQuoteStats = {
+  totalQuotes: number;
+  totalValue: number;
+  approvedValue: number;
+  conversionRate: number;
+};

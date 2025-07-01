@@ -49,6 +49,7 @@ public class PropertyService : IPropertyService
         await _context.Properties.AddAsync(property);
 
         customer?.Properties?.Add(property);
+        customer.LastActivity = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return new ApiResponse<Property>
@@ -80,7 +81,6 @@ public class PropertyService : IPropertyService
         property.PostalCode = updatePropertyDto.PostalCode ?? property.PostalCode;
         if (updatePropertyDto.IsBillingAddress.HasValue) property.IsBillingAddress = updatePropertyDto.IsBillingAddress.Value;
         property.UpdatedAt = DateTime.UtcNow;
-
 
         _context.Update(property);
         await _context.SaveChangesAsync();
