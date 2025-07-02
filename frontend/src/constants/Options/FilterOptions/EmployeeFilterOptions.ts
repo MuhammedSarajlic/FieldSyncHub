@@ -11,7 +11,11 @@ export const employeeFilterOptions: TFilterOption[] = [
     name: 'status',
     label: 'Status',
     type: 'dropdown',
-    dropdownOptions: ['all', 'active', 'on-leave', 'terminated'],
+    dropdownOptions: [
+      { value: 'active', label: 'Active' },
+      { value: 'onLeave', label: 'On leave' },
+      { value: 'terminated', label: 'Terminated' },
+    ],
   },
   {
     name: 'position',

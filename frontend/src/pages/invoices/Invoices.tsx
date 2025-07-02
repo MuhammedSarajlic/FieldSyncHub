@@ -1,48 +1,49 @@
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import { useEffect, useState } from 'react';
-import { Plus, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import Search from '../../components/CustomElements/Search';
 import { useNavigate, useSearchParams } from 'react-router';
-import { formatDate } from '../../utils/FuntionHelpers/formatDate';
 import { invoiceFilterOptions } from '../../constants/Options/FilterOptions/InvoiceFilterOptions';
 import { inoviceSortOptions } from '../../constants/Options/SortOptions/InvoiceSortOptions';
 import CreateInvoiceModal from '../../components/Invoice/Modal/CreateInvoiceModal';
-import { GetAllInvoicesByWorkspaceId } from '../../services/Invoice';
-import { TInvoice } from '../../types/Invoice';
+import {
+  GetAllInvoicesByWorkspaceId,
+  GetInvoicesByFilter,
+  GetInvoiceStats,
+} from '../../services/Invoice';
+import { TInvoice, TInvoiceStats } from '../../types/Invoice';
 import { useAuth } from '../../context/AuthProvider';
-import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
 import Table from '../../components/Table/Table';
 import { invoiceColumns } from '../../constants/TableColumns/InvoiceColumns';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
+import { TPaginationData } from '../customers/Customers';
+import { DateTime } from 'luxon';
 
 const Invoices = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const [invoices, setInvoices] = useState<TInvoice[]>([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [invoiceStats, setInvoiceStats] = useState<TInvoiceStats>({
+    totalOutstanding: 0,
+    totalPaidThisMonth: 0,
+    overdueCount: 0,
+    averageInvoiceValue: 0,
+  });
   const [paginationData, setPaginationData] = useState<TPaginationData>({
     totalCount: 0,
     pageSize: 10,
   });
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
-
-  const handleSearch = async (query: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      if (query) {
-        newParams.set('q', query);
-      } else {
-        newParams.delete('q');
-      }
-      return newParams;
-    });
-  };
 
   const initialInvoiceFilters = {
     dueDate: { min: '', max: '' },
@@ -50,38 +51,91 @@ const Invoices = () => {
     status: '',
   };
 
-  const [invoices, setInvoices] = useState<TInvoice[]>([]);
-
   const fetchAllInvoicesByWorkspace = async () => {
-    if (!user?.workspace) return;
-    const response = await GetAllInvoicesByWorkspaceId(
-      user.workspace.id,
-      1,
-      10
-    );
-    if (response.status === 200) {
-      setInvoices(response.data.payload.items);
+    if (!user?.workspace) {
+      console.warn('User or workspace not found. Cannot fetch invoices.');
+      return;
     }
-    console.log(response);
+    setIsLoading(true);
+
+    const paramsObj = {};
+    let shouldResetPage = false;
+
+    searchParams.forEach((value, key) => {
+      if (key === 'page') return;
+      if (key === 'dueDateMin' || key === 'dueDateMax') {
+        if (value) {
+          const localDate = DateTime.fromISO(value);
+          const utcDate =
+            key === 'dueDateMax'
+              ? localDate.endOf('day').toUTC()
+              : localDate.startOf('day').toUTC();
+          paramsObj[key] = utcDate.toISO();
+        }
+      } else {
+        paramsObj[key] = value;
+      }
+      shouldResetPage = true;
+    });
+
+    const currentPage = searchParams.get('page')
+      ? parseInt(searchParams.get('page')!, 10)
+      : 1;
+
+    const finalPage = shouldResetPage ? 1 : currentPage;
+    const queryString = new URLSearchParams(paramsObj).toString();
+    const hasAnyParam = Object.keys(paramsObj).length > 0;
+
+    let response;
+    if (hasAnyParam) {
+      response = await GetInvoicesByFilter(
+        user.workspace.id,
+        finalPage,
+        paginationData.pageSize,
+        queryString
+      );
+    } else {
+      response = await GetAllInvoicesByWorkspaceId(
+        user.workspace.id,
+        finalPage,
+        paginationData.pageSize
+      );
+    }
+
+    if (response.status === 200) {
+      setIsLoading(false);
+      const { items, totalCount, pageSize } = response.data.payload;
+      setInvoices(items);
+      setPaginationData({ totalCount, pageSize });
+
+      if (shouldResetPage && currentPage > 1) {
+        const newParams = new URLSearchParams(paramsObj);
+        navigate(`?${newParams.toString()}`);
+      }
+    } else {
+      console.error(
+        'Failed to fetch invoices:',
+        response.status,
+        response.data
+      );
+    }
+    setIsLoading(false);
   };
 
-  // Summary calculations
-  const totalOutstanding = invoices
-    .filter((inv) => inv.status !== 'paid')
-    .reduce((sum, inv) => sum + inv.total, 0);
+  const fetchInvoiceStats = async () => {
+    if (!user?.workspace) return;
+    const response = await GetInvoiceStats(user.workspace.id);
+    if (response.status === 200) setInvoiceStats(response.data.payload);
+  };
 
-  const totalPaidThisMonth = invoices
-    .filter((inv) => inv.status === 'paid')
-    .reduce((sum, inv) => sum + inv.total, 0);
-
-  const overdueCount = invoices.filter(
-    (inv) => inv.status === 'overdue'
-  ).length;
+  useEffect(() => {
+    fetchInvoiceStats();
+  }, []);
 
   useEffect(() => {
     if (searchParams.get('create') === 'true') setIsInvoiceModalOpen(true);
     fetchAllInvoicesByWorkspace();
-  }, []);
+  }, [searchParams]);
 
   return (
     <div className='flex'>
@@ -119,7 +173,7 @@ const Invoices = () => {
                 </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  ${totalOutstanding.toLocaleString()}
+                  {formatCurrency(invoiceStats.totalOutstanding)}
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -142,7 +196,7 @@ const Invoices = () => {
                 </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  ${totalPaidThisMonth.toLocaleString()}
+                  {formatCurrency(invoiceStats.totalPaidThisMonth)}
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -165,7 +219,7 @@ const Invoices = () => {
                 </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  {overdueCount}
+                  {invoiceStats.overdueCount}
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -188,10 +242,7 @@ const Invoices = () => {
                 </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  {formatCurrency(
-                    invoices.reduce((sum, inv) => sum + inv.total, 0) /
-                      invoices.length
-                  )}
+                  {formatCurrency(invoiceStats.averageInvoiceValue)}
                 </div>
 
                 <div className='flex items-center gap-2'>

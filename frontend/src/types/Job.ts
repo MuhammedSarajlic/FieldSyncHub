@@ -140,3 +140,10 @@ export type JobFilter = {
   priority?: string;
   status?: string;
 };
+
+export type TJobStats = {
+  totalJobs: number;
+  completedJobs: number;
+  scheduledJobs: number;
+  totalValue: number;
+};

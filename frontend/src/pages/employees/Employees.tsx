@@ -8,12 +8,13 @@ import {
   ExportEmployees,
   GetEmployeesByFilter,
   GetEmployeesByWorkspace,
+  GetEmployeeStats,
 } from '../../services/Employee';
-import { TEmployee } from '../../types/Employee';
+import { TEmployee, TEmployeeStats } from '../../types/Employee';
 import EmployeeCard from '../../components/Employee/EmployeeCard';
 import EmployeeTable from '../../components/Employee/EmployeeTable/EmployeeTable';
 import EmptyEmployeeTable from '../../components/Employee/EmployeeTable/EmptyEmployeeTable';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import ButtonIcon from '../../components/CustomElements/ButtonIcon';
 import icons from '../../constants/AssetsConstants/icons';
@@ -22,17 +23,26 @@ import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import { employeeFilterOptions } from '../../constants/Options/FilterOptions/EmployeeFilterOptions';
 import { downloadCSVFile } from '../../utils/FuntionHelpers/downloadCSVFile';
-import { EmployeeStatus } from '../../constants/Enumeration/EmployeeEnum/EmployeeEnum';
+import { DateTime } from 'luxon';
 
 const Employees = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [employees, setEmployees] = useState<TEmployee[]>([]);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [employeeStats, setEmployeeStats] = useState<TEmployeeStats>({
+    totalEmployees: 0,
+    activeEmployees: 0,
+    availableEmployees: 0,
+    newHiresThisMonth: 0,
+  });
+
+  const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
 
   const sortOptions = [
@@ -48,36 +58,68 @@ const Employees = () => {
   };
 
   const fetchEmployees = async () => {
-    if (!user?.workspace) return;
-    try {
-      const paramsObj: Record<string, string> = {};
-      searchParams.forEach((value, key) => {
-        paramsObj[key] = value;
-      });
+    if (!user?.workspace) {
+      console.warn('User or workspace not found. Cannot fetch employees.');
+      return;
+    }
+    setIsLoading(true);
 
-      const hasAnyParam = Object.keys(paramsObj).length > 0;
-      if (hasAnyParam) {
-        const searchQueryString = new URLSearchParams(paramsObj).toString();
-        console.log(searchQueryString);
+    const paramsObj = {};
+    let shouldResetPage = false;
 
-        const response = await GetEmployeesByFilter(searchQueryString);
-        setEmployees(response.data.payload);
-      } else {
-        const response = await GetEmployeesByWorkspace(user.workspace.id);
-        if (response.status === 200) {
-          setEmployees(response.data.payload);
+    searchParams.forEach((value, key) => {
+      if (key === 'page') return;
+      if (key === 'hireDateMin' || key === 'hireDateMax') {
+        if (value) {
+          const localDate = DateTime.fromISO(value);
+          const utcDate =
+            key === 'hireDateMax'
+              ? localDate.endOf('day').toUTC()
+              : localDate.startOf('day').toUTC();
+          paramsObj[key] = utcDate.toISO();
         }
+      } else {
+        paramsObj[key] = value;
+      }
+      shouldResetPage = true;
+    });
+
+    const currentPage = searchParams.get('page')
+      ? parseInt(searchParams.get('page')!, 10)
+      : 1;
+
+    const queryString = new URLSearchParams(paramsObj).toString();
+    const hasAnyParam = Object.keys(paramsObj).length > 0;
+
+    let response;
+    try {
+      if (hasAnyParam) {
+        response = await GetEmployeesByFilter(user.workspace.id, queryString);
+      } else {
+        response = await GetEmployeesByWorkspace(user.workspace.id);
+      }
+
+      if (response.status === 200) {
+        const { payload } = response.data;
+        setEmployees(payload);
+
+        if (shouldResetPage && currentPage > 1) {
+          const newParams = new URLSearchParams(paramsObj);
+          navigate(`?${newParams.toString()}`);
+        }
+      } else {
+        console.error(
+          'Failed to fetch employees:',
+          response.status,
+          response.data
+        );
       }
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching employees:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchEmployees();
-  }, [searchParams]);
 
   const handleExportEmployees = async () => {
     if (!user?.workspace) return;
@@ -96,13 +138,27 @@ const Employees = () => {
     }
   };
 
+  const fetchEmployeeStats = async () => {
+    if (!user?.workspace) return;
+    const response = await GetEmployeeStats(user.workspace.id);
+    if (response.status === 200) setEmployeeStats(response.data);
+  };
+
+  useEffect(() => {
+    fetchEmployeeStats();
+  }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [searchParams]);
+
   return (
-    <div className='flex h-screen'>
+    <div className='flex'>
       <Sidebar />
       <div className='flex-1 ml-[260px]'>
         <Navbar />
 
-        <div className='flex-1 overflow-y-auto px-6 pt-6'>
+        <div className='px-6 pt-6'>
           {/* Header */}
           <div className='flex items-center justify-between mb-6'>
             <div>
@@ -133,7 +189,7 @@ const Employees = () => {
                 </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  {employees.length}
+                  {employeeStats.totalEmployees}
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -151,13 +207,12 @@ const Employees = () => {
             {/* Active Employees Card */}
             <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
               <div className='space-y-3'>
-                <h3 className='text-sm font-medium text-gray-600'>Active</h3>
+                <h3 className='text-sm font-medium text-gray-600'>
+                  Active Employees
+                </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  {
-                    employees.filter((e) => e.status === EmployeeStatus.Active)
-                      .length
-                  }
+                  {employeeStats.activeEmployees}
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -175,13 +230,12 @@ const Employees = () => {
             {/* On Leave Card */}
             <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
               <div className='space-y-3'>
-                <h3 className='text-sm font-medium text-gray-600'>On Leave</h3>
+                <h3 className='text-sm font-medium text-gray-600'>
+                  Available Now
+                </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  {
-                    employees.filter((e) => e.status === EmployeeStatus.OnLeave)
-                      .length
-                  }
+                  {employeeStats.availableEmployees}
                 </div>
 
                 <div className='flex items-center gap-2'>
@@ -200,11 +254,11 @@ const Employees = () => {
             <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
               <div className='space-y-3'>
                 <h3 className='text-sm font-medium text-gray-600'>
-                  Departments
+                  New Hires This Month
                 </h3>
 
                 <div className='text-3xl font-bold text-gray-900'>
-                  {[...new Set(employees.map((e) => e.department))].length || 0}
+                  {employeeStats.newHiresThisMonth}
                 </div>
 
                 <div className='flex items-center gap-2'>

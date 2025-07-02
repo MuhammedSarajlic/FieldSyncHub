@@ -70,3 +70,10 @@ export type TInvoiceFilter = {
   totalMin?: number;
   totalMax?: number;
 };
+
+export type TInvoiceStats = {
+  totalOutstanding: number;
+  totalPaidThisMonth: number;
+  overdueCount: number;
+  averageInvoiceValue: number;
+};

@@ -37,7 +37,18 @@ const Pricebook = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isImportServiceItemModalOpen, setIsImportServiceItemModalOpen] =
     useState(false);
-  const [serviceItemStats, setServiceItemStats] = useState<TServiceItemStats>();
+  const [serviceItemStats, setServiceItemStats] = useState<TServiceItemStats>({
+    totalItems: 0,
+    totalMaterialItems: 0,
+    totalServiceItems: 0,
+    totalPricebookValue: 0,
+    averageItemPrice: 0,
+
+    totalItemsChange: '0%',
+    materialItemsChange: '0%',
+    serviceItemsChange: '0%',
+    averageItemPriceChange: '0%',
+  });
   const [searchParams] = useSearchParams();
   const [paginationData, setPaginationData] = useState<TPaginationData>({
     totalCount: 0,
@@ -169,7 +180,7 @@ const Pricebook = () => {
                   Total Pricebook Items
                 </h3>
                 <div className='text-3xl font-bold text-gray-900'>
-                  {serviceItemStats?.totalItems}
+                  {serviceItemStats.totalItems}
                 </div>
                 <div className='flex items-center gap-2'>
                   <div className='flex items-center gap-1'>
@@ -190,7 +201,7 @@ const Pricebook = () => {
                   Material Items
                 </h3>
                 <div className='text-3xl font-bold text-gray-900'>
-                  {serviceItemStats?.totalMaterialItems}
+                  {serviceItemStats.totalMaterialItems}
                 </div>
                 <div className='flex items-center gap-2'>
                   <div className='flex items-center gap-1'>
@@ -211,7 +222,7 @@ const Pricebook = () => {
                   Service Items
                 </h3>
                 <div className='text-3xl font-bold text-gray-900'>
-                  {serviceItemStats?.totalServiceItems}
+                  {serviceItemStats.totalServiceItems}
                 </div>
                 <div className='flex items-center gap-2'>
                   <div className='flex items-center gap-1'>
@@ -232,7 +243,7 @@ const Pricebook = () => {
                   Avg. Item Price
                 </h3>
                 <div className='text-3xl font-bold text-gray-900'>
-                  {formatCurrency(serviceItemStats?.averageItemPrice)}
+                  {formatCurrency(serviceItemStats.averageItemPrice)}
                 </div>
                 <div className='flex items-center gap-2'>
                   <div className='flex items-center gap-1'>

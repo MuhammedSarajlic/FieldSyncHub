@@ -52,9 +52,9 @@ public class EmployeeService : IEmployeeService
         };
     }
 
-    public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(EmployeeFilterDto employeeFilterDto)
+    public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(EmployeeFilterDto employeeFilterDto, Guid workspaceId)
     {
-        var queryable = _context.Employees.Include(e => e.User).AsQueryable();
+        var queryable = _context.Employees.Where(e => e.WorkspaceId == workspaceId).Include(e => e.User).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(employeeFilterDto.Q))
         {
@@ -83,12 +83,15 @@ public class EmployeeService : IEmployeeService
 
         if (employeeFilterDto.HireDateMin.HasValue)
         {
-            queryable = queryable.Where(e => e.HireDate >= employeeFilterDto.HireDateMin.Value);
+            var minUtc = DateTime.SpecifyKind(employeeFilterDto.HireDateMin.Value, DateTimeKind.Utc);
+            queryable = queryable.Where(e => e.HireDate >= minUtc);
         }
 
         if (employeeFilterDto.HireDateMax.HasValue)
         {
-            queryable = queryable.Where(e => e.HireDate <= employeeFilterDto.HireDateMax.Value);
+            var endOfDay = employeeFilterDto.HireDateMax.Value.Date.AddDays(1).AddTicks(-1);
+            var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
+            queryable = queryable.Where(e => e.HireDate <= maxUtc);
         }
 
         queryable = employeeFilterDto.SortBy?.ToLower() switch
@@ -105,6 +108,27 @@ public class EmployeeService : IEmployeeService
         {
             Success = true,
             Payload = employees
+        };
+    }
+
+    public async Task<EmployeeStatsDto> GetEmployeeStatsAsync(Guid workspaceId)
+    {
+        var now = DateTime.UtcNow;
+
+        var employees = _context.Employees.Where(e => e.WorkspaceId == workspaceId);
+
+        var total = await employees.CountAsync();
+        var active = await employees.CountAsync(e => e.Status == EmployeeStatus.Active);
+        var available = await employees.CountAsync(e => e.IsAvailable);
+        var newHires = await employees.CountAsync(e =>
+            e.HireDate.Month == now.Month && e.HireDate.Year == now.Year);
+
+        return new EmployeeStatsDto
+        {
+            TotalEmployees = total,
+            ActiveEmployees = active,
+            AvailableEmployees = available,
+            NewHiresThisMonth = newHires
         };
     }
 

@@ -16,6 +16,11 @@ export const invoiceColumns: TTableColumns = [
     bold: true,
   },
   {
+    header: 'Issue date',
+    accessor: 'issueDate',
+    type: 'date',
+  },
+  {
     header: 'Due date',
     accessor: 'dueDate',
     type: 'date',

@@ -119,86 +119,113 @@ public class JobService : IJobService
             }
         };
     }
+
     public async Task<ApiResponse<PagedResult<Job>>> GetJobsByFilter(
     JobFilterDto filterDto,
     Guid workspaceId,
     int pageNumber,
     int pageSize)
+{
+    var dbQuery = _context.Jobs
+        .Where(j => j.WorkspaceId == workspaceId)
+        .Include(j => j.Customer)
+        .Include(j => j.Property)
+        .Include(j => j.LineItems)
+            .ThenInclude(li => li.ServiceItem)
+        .AsNoTracking()
+        .AsQueryable();
+
+    if (filterDto.ScheduleDateMin.HasValue)
     {
-        var query = _context.Jobs
-            .Where(j => j.WorkspaceId == workspaceId)
-            .Include(j => j.Customer)
-            .Include(j => j.Property)
-            .Include(j => j.LineItems)
-                .ThenInclude(li => li.ServiceItem)
-            .AsNoTracking()
-            .AsQueryable();
-
-        if (filterDto.ScheduleDateMin.HasValue)
-            query = query.Where(j => j.StartDate >= filterDto.ScheduleDateMin.Value);
-
-        if (filterDto.ScheduleDateMax.HasValue)
-            query = query.Where(j => j.StartDate <= filterDto.ScheduleDateMax.Value);
-
-        if (filterDto.TotalMin.HasValue)
-            query = query.Where(j => j.TotalAmount >= filterDto.TotalMin.Value);
-
-        if (filterDto.TotalMax.HasValue)
-            query = query.Where(j => j.TotalAmount <= filterDto.TotalMax.Value);
-
-        if (!string.IsNullOrWhiteSpace(filterDto.Priority))
-            query = query.Where(j => j.Priority.ToString().ToLower() == filterDto.Priority.ToLower());
-
-        if (!string.IsNullOrWhiteSpace(filterDto.Status))
-            query = query.Where(j => j.Status.ToString().ToLower() == filterDto.Status.ToLower());
-
-        if (!string.IsNullOrWhiteSpace(filterDto.Q))
-        {
-            var q = filterDto.Q.ToLower();
-            query = query.Where(j =>
-                j.JobNumber.ToLower().Contains(q) ||
-                j.Customer.FirstName.ToLower().Contains(q) ||
-                j.Customer.LastName.ToLower().Contains(q) ||
-                j.Customer.FullName.ToLower().Contains(q) ||
-                j.Property.Street.ToLower().Contains(q) ||
-                j.Property.City.ToLower().Contains(q));
-        }
-
-        query = filterDto.SortBy?.ToLower() switch
-        {
-            "customer" => filterDto.Sort == "desc"
-                ? query.OrderByDescending(j => j.Customer.FullName)
-                : query.OrderBy(j => j.Customer.FullName),
-
-            "total" => filterDto.Sort == "desc"
-                ? query.OrderByDescending(j => j.TotalAmount)
-                : query.OrderBy(j => j.TotalAmount),
-
-            "schedule" => filterDto.Sort == "desc"
-                ? query.OrderByDescending(j => j.StartDate)
-                : query.OrderBy(j => j.StartDate),
-
-            _ => query.OrderByDescending(j => j.StartDate)
-        };
-
-        var totalCount = await query.CountAsync();
-        var items = await query
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        return new ApiResponse<PagedResult<Job>>
-        {
-            Success = true,
-            Payload = new PagedResult<Job>
-            {
-                Items = items,
-                TotalCount = totalCount,
-                PageNumber = pageNumber,
-                PageSize = pageSize
-            }
-        };
+        var minUtc = DateTime.SpecifyKind(filterDto.ScheduleDateMin.Value, DateTimeKind.Utc);
+        dbQuery = dbQuery.Where(j => j.StartDate >= minUtc);
     }
+
+    if (filterDto.ScheduleDateMax.HasValue)
+    {
+        var endOfDay = filterDto.ScheduleDateMax.Value.Date.AddDays(1).AddTicks(-1);
+        var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
+        dbQuery = dbQuery.Where(j => j.StartDate <= maxUtc);
+    }
+
+    if (!string.IsNullOrWhiteSpace(filterDto.Priority) &&
+        Enum.TryParse<JobPriority>(filterDto.Priority, true, out var priorityEnum))
+    {
+        dbQuery = dbQuery.Where(j => j.Priority == priorityEnum);
+    }
+
+    if (!string.IsNullOrWhiteSpace(filterDto.Status) &&
+        Enum.TryParse<JobStatus>(filterDto.Status, true, out var statusEnum))
+    {
+        dbQuery = dbQuery.Where(j => j.Status == statusEnum);
+    }
+
+    if (!string.IsNullOrWhiteSpace(filterDto.Q))
+    {
+        var q = filterDto.Q.ToLower();
+        dbQuery = dbQuery.Where(j =>
+            j.JobNumber.ToLower().Contains(q) ||
+            j.Customer.FirstName.ToLower().Contains(q) ||
+            j.Customer.LastName.ToLower().Contains(q) ||
+            j.Property.Street.ToLower().Contains(q) ||
+            j.Property.City.ToLower().Contains(q));
+    }
+
+    // 🐘 Load into memory
+    var jobsList = await dbQuery.ToListAsync();
+
+    // ✅ Now apply Total filter in memory (just like Quotes)
+    if (filterDto.TotalMin.HasValue)
+    {
+        jobsList = jobsList
+            .Where(j => j.TotalAmount >= filterDto.TotalMin.Value)
+            .ToList();
+    }
+
+    if (filterDto.TotalMax.HasValue)
+    {
+        jobsList = jobsList
+            .Where(j => j.TotalAmount <= filterDto.TotalMax.Value)
+            .ToList();
+    }
+
+    // ✅ Sorting in memory (just like Quotes)
+    jobsList = filterDto.SortBy?.ToLower() switch
+    {
+        "customer" => filterDto.Sort == "desc"
+            ? jobsList.OrderByDescending(j => j.Customer?.FirstName).ToList()
+            : jobsList.OrderBy(j => j.Customer?.FirstName).ToList(),
+
+        "total" => filterDto.Sort == "desc"
+            ? jobsList.OrderByDescending(j => j.TotalAmount).ToList()
+            : jobsList.OrderBy(j => j.TotalAmount).ToList(),
+
+        "schedule" => filterDto.Sort == "desc"
+            ? jobsList.OrderByDescending(j => j.StartDate).ToList()
+            : jobsList.OrderBy(j => j.StartDate).ToList(),
+
+        _ => jobsList.OrderByDescending(j => j.StartDate).ToList()
+    };
+
+    var totalCount = jobsList.Count;
+    var pagedJobs = jobsList
+        .Skip((pageNumber - 1) * pageSize)
+        .Take(pageSize)
+        .ToList();
+
+    return new ApiResponse<PagedResult<Job>>
+    {
+        Success = true,
+        Payload = new PagedResult<Job>
+        {
+            Items = pagedJobs,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        }
+    };
+}
+
 
 
     public async Task<ApiResponse<Job>> CreateJob(CreateJobDto dto)

@@ -82,68 +82,82 @@ public class QuoteService : IQuoteService
         Guid workspaceId,
         int pageNumber,
         int pageSize,
-        QuoteFilterDto filterDto)
+        QuoteFilterDto filterDto
+    )
     {
-        var queryable = _context.Quotes
-            .Include(q => q.Customer)
-            .ThenInclude(c => c.Properties)
-            .Include(q => q.LineItems)
-            .AsQueryable();
+        var dbQuery = _context.Quotes
+            .Where(q => q.WorkspaceId == workspaceId);
 
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
-            queryable = queryable.Where(q =>
+            dbQuery = dbQuery.Where(q =>
                 q.Customer != null &&
-                (q.Customer.FirstName + " " + q.Customer.LastName).Contains(filterDto.Q));
-        }
-
-        if (workspaceId != Guid.Empty)
-        {
-            queryable = queryable.Where(q => q.WorkspaceId == workspaceId);
+                (
+                    q.Customer.FirstName.Contains(filterDto.Q) ||
+                    q.Customer.LastName.Contains(filterDto.Q)
+                )
+            );
         }
 
         if (!string.IsNullOrWhiteSpace(filterDto.Status) &&
             Enum.TryParse<QuoteStatus>(filterDto.Status, true, out var parsedStatus))
         {
-            queryable = queryable.Where(q => q.Status == parsedStatus);
+            dbQuery = dbQuery.Where(q => q.Status == parsedStatus);
         }
 
-        if (filterDto.CreatedMin.HasValue)
-            queryable = queryable.Where(q => q.CreatedAt >= filterDto.CreatedMin.Value);
+        if (filterDto.CreatedDateMin.HasValue)
+        {
+            var minUtc = DateTime.SpecifyKind(filterDto.CreatedDateMin.Value, DateTimeKind.Utc);
+            dbQuery = dbQuery.Where(q => q.CreatedAt >= minUtc);
+        }
 
-        if (filterDto.CreatedMax.HasValue)
-            queryable = queryable.Where(q => q.CreatedAt <= filterDto.CreatedMax.Value);
+        if (filterDto.CreatedDateMax.HasValue)
+        {
+            var maxUtc = DateTime.SpecifyKind(filterDto.CreatedDateMax.Value, DateTimeKind.Utc);
+            dbQuery = dbQuery.Where(q => q.CreatedAt <= maxUtc);
+        }
+
+        var quotesList = await dbQuery
+            .Include(q => q.Customer).ThenInclude(c => c.Properties)
+            .Include(q => q.LineItems)
+            .ToListAsync();
 
         if (filterDto.TotalMin.HasValue)
-            queryable = queryable.Where(q => q.Total >= filterDto.TotalMin.Value);
+        {
+            quotesList = quotesList
+                .Where(q => q.Total >= filterDto.TotalMin.Value)
+                .ToList();
+        }
 
         if (filterDto.TotalMax.HasValue)
-            queryable = queryable.Where(q => q.Total <= filterDto.TotalMax.Value);
+        {
+            quotesList = quotesList
+                .Where(q => q.Total <= filterDto.TotalMax.Value)
+                .ToList();
+        }
 
-        // Sorting
-        queryable = filterDto.SortBy?.ToLower() switch
+        quotesList = filterDto.SortBy?.ToLower() switch
         {
             "customer" => filterDto.Sort == "desc"
-                ? queryable.OrderByDescending(q => q.Customer.FirstName)
-                : queryable.OrderBy(q => q.Customer.FirstName),
+                ? quotesList.OrderByDescending(q => q.Customer?.FirstName).ToList()
+                : quotesList.OrderBy(q => q.Customer?.FirstName).ToList(),
 
             "created" => filterDto.Sort == "desc"
-                ? queryable.OrderByDescending(q => q.CreatedAt)
-                : queryable.OrderBy(q => q.CreatedAt),
+                ? quotesList.OrderByDescending(q => q.CreatedAt).ToList()
+                : quotesList.OrderBy(q => q.CreatedAt).ToList(),
 
             "total" => filterDto.Sort == "desc"
-                ? queryable.OrderByDescending(q => q.Total)
-                : queryable.OrderBy(q => q.Total),
+                ? quotesList.OrderByDescending(q => q.Total).ToList()
+                : quotesList.OrderBy(q => q.Total).ToList(),
 
-            _ => queryable.OrderByDescending(q => q.CreatedAt)
+            _ => quotesList.OrderByDescending(q => q.CreatedAt).ToList()
         };
 
-        var totalCount = await queryable.CountAsync();
-
-        var pagedQuotes = await queryable
+        var totalCount = quotesList.Count;
+        var pagedQuotes = quotesList
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToList();
 
         return new ApiResponse<PagedResult<Quote>>
         {
@@ -157,7 +171,6 @@ public class QuoteService : IQuoteService
             }
         };
     }
-
 
     public async Task<Quote> CreateAsync(CreateQuoteDto createQuoteDto)
     {

@@ -37,6 +37,25 @@ export async function GetInvoicesByCustomer(customerId: string) {
   return response;
 }
 
+export async function GetInvoiceStats(wokrspaceId: string) {
+  const response = await api.get(
+    `/invoice/workspace/${wokrspaceId}/invoice-stats`
+  );
+  return response;
+}
+
+export async function GetInvoicesByFilter(
+  workspaceId: string,
+  pageNumber: number,
+  pageSize: number,
+  params: string
+) {
+  const response = await api.get(
+    `/invoice/workspace/${workspaceId}/filter?${params}&pageNumber=${pageNumber}&pageSize=${pageSize}`
+  );
+  return response;
+}
+
 export async function CreateInvoice(invoice: TAddInvoice) {
   const response = await api.post('/invoice', invoice);
   return response;

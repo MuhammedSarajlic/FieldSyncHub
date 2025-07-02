@@ -25,10 +25,9 @@ export const renderFilterComponent = ({
           >
             <option value=''>Select an option</option>
             {option.dropdownOptions &&
-              option.dropdownOptions.map((opt: string) => (
-                <option key={opt} value={opt}>
-                  {opt.charAt(0).toUpperCase() +
-                    opt.slice(1).replace(/-/g, ' ')}
+              option.dropdownOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
           </select>

@@ -22,6 +22,7 @@ import { quoteColumns } from '../../constants/TableColumns/QuoteColumns';
 import { TPaginationData } from '../customers/Customers';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
+import { DateTime } from 'luxon';
 
 const Quotes = () => {
   const { user } = useAuth();
@@ -60,7 +61,18 @@ const Quotes = () => {
       if (key === 'page') {
         return;
       }
-      paramsObj[key] = value;
+      if (key === 'createdDateMin' || key === 'createdDateMax') {
+        if (value) {
+          const localDate = DateTime.fromISO(value); // value like '2025-06-23'
+          const utcDate =
+            key === 'createdDateMax'
+              ? localDate.endOf('day').toUTC()
+              : localDate.startOf('day').toUTC();
+          paramsObj[key] = utcDate.toISO(); // becomes '2025-06-22T22:00:00.000Z'
+        }
+      } else {
+        paramsObj[key] = value;
+      }
       shouldResetPage = true;
     });
 
@@ -81,6 +93,7 @@ const Quotes = () => {
         paginationData.pageSize,
         queryString
       );
+      console.log(queryString);
     } else {
       response = await GetQuotesByWorkspace(
         user.workspace.id,

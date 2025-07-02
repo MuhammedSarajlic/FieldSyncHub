@@ -172,8 +172,8 @@ const FilterModal = <T extends Record<string, any>>({
       </button>
 
       {isFilterModalOpen && (
-        <div className='absolute right-0 top-full mt-2 w-[400px] max-w-md z-50 pb-10'>
-          <div className='bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-auto shadow-xl'>
+        <div className='absolute right-0 top-full mt-2 w-[400px] max-w-md z-50 mb-10 overflow-hidden rounded-lg shadow-md border border-gray-100'>
+          <div className='bg-white  w-full max-w-md max-h-[90vh]'>
             {/* Header */}
             <div className='sticky top-0 p-4 py-3 border-b border-gray-300 flex justify-between items-center'>
               <h2 className='text-lg font-semibold text-gray-800'>Filters</h2>

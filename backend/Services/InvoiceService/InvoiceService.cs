@@ -92,12 +92,12 @@ public class InvoiceService : IInvoiceService
         };
     }
 
-
     public async Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByFilter(
        InvoiceFilterDto filterDto,
        Guid workspaceId,
        int pageNumber,
-       int pageSize)
+       int pageSize
+    )
     {
         if (workspaceId == Guid.Empty)
         {
@@ -120,11 +120,16 @@ public class InvoiceService : IInvoiceService
         if (Enum.TryParse<InvoiceStatus>(filterDto.Status, true, out var parsedStatus))
             query = query.Where(i => i.Status == parsedStatus);
 
-        if (filterDto.DueDateMin.HasValue)
-            query = query.Where(i => i.DueDate >= filterDto.DueDateMin.Value);
+        if (filterDto.DueDateMin.HasValue){
+            var minUtc = DateTime.SpecifyKind(filterDto.DueDateMin.Value, DateTimeKind.Utc);
+            query = query.Where(i => i.DueDate >= minUtc);
+        }
 
-        if (filterDto.DueDateMax.HasValue)
-            query = query.Where(i => i.DueDate <= filterDto.DueDateMax.Value);
+        if (filterDto.DueDateMax.HasValue){
+            var endOfDay = filterDto.DueDateMax.Value.Date.AddDays(1).AddTicks(-1);
+            var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
+            query = query.Where(i => i.DueDate <= maxUtc);
+        }
 
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
@@ -136,7 +141,6 @@ public class InvoiceService : IInvoiceService
 
         var resultList = await query.ToListAsync();
 
-        // Filter by calculated total
         resultList = resultList.Where(i =>
         {
             var subtotal = i.LineItems.Sum(li => (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
@@ -147,7 +151,6 @@ public class InvoiceService : IInvoiceService
                 && (!filterDto.TotalMax.HasValue || total <= filterDto.TotalMax.Value);
         }).ToList();
 
-        // Sort in-memory
         resultList = filterDto.SortBy?.ToLower() switch
         {
             "invoice-number" => filterDto.Sort == "desc"

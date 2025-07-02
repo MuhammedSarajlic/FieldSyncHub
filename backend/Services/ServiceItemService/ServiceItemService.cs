@@ -166,54 +166,63 @@ public class ServiceItemService : IServiceItemService
     public async Task<ApiResponse<ServiceItemStatsDto>> GetPricebookStatsByWorkspace(Guid workspaceId)
     {
         var now = DateTime.UtcNow;
-
         var startOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
         var startOfPreviousMonth = startOfCurrentMonth.AddMonths(-1);
         var endOfPreviousMonth = startOfCurrentMonth.AddSeconds(-1);
 
-        var currentPeriodItems = await _context.ServiceItems
+        // 1️⃣ Get ALL items in workspace (not limited by month)
+        var allItems = await _context.ServiceItems
             .Where(s => s.WorkspaceId == workspaceId
                      && s.IsActive
-                     && (s.Category == null || s.Category.ToLower() != "archived")
-                     && s.CreatedAt >= startOfCurrentMonth
-                     && s.CreatedAt <= now
-            )
+                     && (s.Category == null || s.Category.ToLower() != "archived"))
             .ToListAsync();
 
-        var currentTotalItems = currentPeriodItems.Count;
-        var currentTotalMaterialItems = currentPeriodItems.Count(i => i.Type == ServiceItemType.Material);
-        var currentTotalServiceItems = currentPeriodItems.Count(i => i.Type == ServiceItemType.Service);
-        var currentTotalPricebookValue = currentPeriodItems.Sum(i => i.UnitPrice);
-        var currentAverageItemPrice = currentTotalItems > 0 ? currentTotalPricebookValue / currentTotalItems : 0;
+        // 🟢 Overall totals (all time)
+        var totalItems = allItems.Count;
+        var totalMaterialItems = allItems.Count(i => i.Type == ServiceItemType.Material);
+        var totalServiceItems = allItems.Count(i => i.Type == ServiceItemType.Service);
+        var totalPricebookValue = allItems.Sum(i => i.UnitPrice);
+        var averageItemPrice = totalItems > 0 ? totalPricebookValue / totalItems : 0;
 
-        var previousPeriodItems = await _context.ServiceItems
-            .Where(s => s.WorkspaceId == workspaceId
-                     && s.IsActive
-                     && (s.Category == null || s.Category.ToLower() != "archived")
-                     && s.CreatedAt >= startOfPreviousMonth
-                     && s.CreatedAt <= endOfPreviousMonth
-            )
-            .ToListAsync();
+        // 🔵 This month
+        var itemsAddedThisMonth = allItems
+            .Where(i => i.CreatedAt >= startOfCurrentMonth && i.CreatedAt <= now)
+            .ToList();
+        var itemsThisMonthCount = itemsAddedThisMonth.Count;
+        var materialThisMonthCount = itemsAddedThisMonth.Count(i => i.Type == ServiceItemType.Material);
+        var serviceThisMonthCount = itemsAddedThisMonth.Count(i => i.Type == ServiceItemType.Service);
+        var avgPriceThisMonth = itemsThisMonthCount > 0
+            ? itemsAddedThisMonth.Sum(i => i.UnitPrice) / itemsThisMonthCount
+            : 0;
 
-        var previousTotalItems = previousPeriodItems.Count;
-        var previousTotalMaterialItems = previousPeriodItems.Count(i => i.Type == ServiceItemType.Material);
-        var previousTotalServiceItems = previousPeriodItems.Count(i => i.Type == ServiceItemType.Service);
-        var previousTotalPricebookValue = previousPeriodItems.Sum(i => i.UnitPrice);
-        var previousAverageItemPrice = previousTotalItems > 0 ? previousTotalPricebookValue / previousTotalItems : 0;
+        // 🟠 Last month
+        var itemsAddedLastMonth = allItems
+            .Where(i => i.CreatedAt >= startOfPreviousMonth && i.CreatedAt <= endOfPreviousMonth)
+            .ToList();
+        var itemsLastMonthCount = itemsAddedLastMonth.Count;
+        var materialLastMonthCount = itemsAddedLastMonth.Count(i => i.Type == ServiceItemType.Material);
+        var serviceLastMonthCount = itemsAddedLastMonth.Count(i => i.Type == ServiceItemType.Service);
+        var avgPriceLastMonth = itemsLastMonthCount > 0
+            ? itemsAddedLastMonth.Sum(i => i.UnitPrice) / itemsLastMonthCount
+            : 0;
 
-        string totalItemsChange = CalculatePercentageChange(currentTotalItems, previousTotalItems);
-        string materialItemsChange = CalculatePercentageChange(currentTotalMaterialItems, previousTotalMaterialItems);
-        string serviceItemsChange = CalculatePercentageChange(currentTotalServiceItems, previousTotalServiceItems);
-        string averageItemPriceChange = CalculatePercentageChange(currentAverageItemPrice, previousAverageItemPrice);
+        // 🔥 % changes month-over-month
+        var totalItemsChange = CalculatePercentageChange(itemsThisMonthCount, itemsLastMonthCount);
+        var materialItemsChange = CalculatePercentageChange(materialThisMonthCount, materialLastMonthCount);
+        var serviceItemsChange = CalculatePercentageChange(serviceThisMonthCount, serviceLastMonthCount);
+        var averageItemPriceChange = CalculatePercentageChange(avgPriceThisMonth, avgPriceLastMonth);
 
+        // 🚀 Fill DTO
         var statsDto = new ServiceItemStatsDto
         {
-            TotalItems = currentTotalItems,
-            TotalMaterialItems = currentTotalMaterialItems,
-            TotalServiceItems = currentTotalServiceItems,
-            TotalPricebookValue = currentTotalPricebookValue,
-            AverageItemPrice = currentAverageItemPrice,
+            // overall totals
+            TotalItems = totalItems,
+            TotalMaterialItems = totalMaterialItems,
+            TotalServiceItems = totalServiceItems,
+            TotalPricebookValue = totalPricebookValue,
+            AverageItemPrice = averageItemPrice,
+
+            // this month vs last month changes
             TotalItemsChange = totalItemsChange,
             MaterialItemsChange = materialItemsChange,
             ServiceItemsChange = serviceItemsChange,
@@ -226,6 +235,8 @@ public class ServiceItemService : IServiceItemService
             Payload = statsDto
         };
     }
+
+
 
     public async Task<ServiceItem> CreateServiceItem(CreateServiceItemDto createServiceItemDto)
     {
@@ -423,20 +434,15 @@ public class ServiceItemService : IServiceItemService
         return field;
     }
 
-    private static string CalculatePercentageChange(decimal currentValue, decimal previousValue)
+    public string CalculatePercentageChange(decimal current, decimal previous)
     {
-        if (previousValue == 0)
+        if (previous == 0)
         {
-            return "0%";
+            return current == 0 ? "0%" : "+100%";
         }
 
-        var change = ((currentValue - previousValue) / previousValue) * 100;
-        return $"{change:+0.0;-0.0;0.0}%";
-    }
-
-    private static string CalculatePercentageChange(int currentValue, int previousValue)
-    {
-        return CalculatePercentageChange((decimal)currentValue, (decimal)previousValue);
+        var change = ((current - previous) / Math.Abs(previous)) * 100;
+        return $"{(change >= 0 ? "+" : "")}{Math.Round(change, 1)}%";
     }
 
 }

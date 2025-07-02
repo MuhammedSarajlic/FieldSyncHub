@@ -69,7 +69,7 @@ export const renderCellContent = <T extends Record<string, any>>(
 
       return (
         <div className='text-sm text-heading'>
-          {localDate ? formatDate(localDate) : '-'}
+          {localDate ? formatDate(localDate.toJSDate()) : '-'}
         </div>
       );
 

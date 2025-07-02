@@ -19,6 +19,7 @@ const InviteEmployeeModal = ({
   const [success, setSuccess] = useState<boolean | null>(null);
 
   const handleInvite = async () => {
+    if (!user?.workspace) return;
     try {
       const validEmails = emails
         .map((e) => e.trim())
@@ -32,7 +33,7 @@ const InviteEmployeeModal = ({
 
       setSending(true);
       setSuccess(null);
-      const response = await SendInviteBulk(validEmails, user?.workspace.id);
+      const response = await SendInviteBulk(validEmails, user.workspace.id);
       setSending(false);
 
       if (response?.status === 200) {
@@ -117,10 +118,10 @@ const InviteEmployeeModal = ({
                       placeholder={
                         index === 0 && email === '' ? 'hi@yourcompany.com' : ''
                       }
-                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent text-sm ${
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-1 focus:border-transparent text-sm ${
                         email.trim() !== '' && !isValidEmail(email)
                           ? 'border-red-300 focus:ring-red-200'
-                          : 'border-gray-200 focus:ring-blue-500'
+                          : 'border-gray-200 focus:ring-bg-primary'
                       }`}
                     />
                     {emails.length > 1 && (

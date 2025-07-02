@@ -8,8 +8,8 @@ public class QuoteFilterDto
 
     public string? Status { get; set; }
 
-    public DateTime? CreatedMin { get; set; }
-    public DateTime? CreatedMax { get; set; }
+    public DateTime? CreatedDateMin { get; set; }
+    public DateTime? CreatedDateMax { get; set; }
 
     public decimal? TotalMin { get; set; }
     public decimal? TotalMax { get; set; }

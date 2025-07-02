@@ -5,28 +5,44 @@ import Search from '../../components/CustomElements/Search';
 import NewJobModal from '../../components/Jobs/JobsModal/NewJobModal';
 import { Plus } from 'lucide-react';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
-import { TAddJob, TJob } from '../../types/Job';
-import { CreateJob, GetJobs } from '../../services/Job';
-import { AxiosResponse } from 'axios';
+import { TJob, TJobStats } from '../../types/Job';
+import {
+  GetJobsByFilter,
+  GetJobsByWorkspaceId,
+  GetJobStats,
+} from '../../services/Job';
 import Table from '../../components/Table/Table';
 import { TPaginationData } from '../customers/Customers';
 import { jobColumns } from '../../constants/TableColumns/JobColumns';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import { jobSortOptions } from '../../constants/Options/SortOptions/JobSortOptions';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { jobFilterOptions } from '../../constants/Options/FilterOptions/JobFilterOptions';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
+import { useAuth } from '../../context/AuthProvider';
+import { DateTime } from 'luxon';
 
 const Jobs = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [jobs, setJobs] = useState<TJob[]>([]);
   const [isNewJobModalOpen, setIsNewJobModalOpen] = useState(false);
   const [isSortModalOpen, setIsSortModalOpen] = useState<boolean>(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [jobStats, setJobStats] = useState<TJobStats>({
+    totalJobs: 0,
+    completedJobs: 0,
+    scheduledJobs: 0,
+    totalValue: 0,
+  });
   const [paginationData, setPaginationData] = useState<TPaginationData>({
     totalCount: 0,
     pageSize: 10,
   });
+
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
 
@@ -37,32 +53,88 @@ const Jobs = () => {
     priority: '',
   };
 
-  // const handleAddJob = async (
-  //   job: TAddJob
-  // ): Promise<AxiosResponse<any, any>> => {
-  //   const response = await CreateJob(job);
-  //   return response;
-  // };
-
-  const fetchJobs = async () => {
-    const response = await GetJobs();
-    if (response.status === 200) {
-      setJobs(response.data.payload);
+  const fetchAllJobsByWorkspace = async () => {
+    if (!user?.workspace) {
+      console.warn('User or workspace not found. Cannot fetch jobs.');
+      return;
     }
+    setIsLoading(true);
+
+    const paramsObj = {};
+    let shouldResetPage = false;
+
+    searchParams.forEach((value, key) => {
+      if (key === 'page') return;
+      if (key === 'scheduleDateMin' || key === 'scheduleDateMax') {
+        if (value) {
+          const localDate = DateTime.fromISO(value); // from luxon or similar
+          const utcDate =
+            key === 'scheduleDateMax'
+              ? localDate.endOf('day').toUTC()
+              : localDate.startOf('day').toUTC();
+          paramsObj[key] = utcDate.toISO(); // e.g. '2025-06-22T22:00:00.000Z'
+        }
+      } else {
+        paramsObj[key] = value;
+      }
+      shouldResetPage = true;
+    });
+
+    const currentPage = searchParams.get('page')
+      ? parseInt(searchParams.get('page')!, 10)
+      : 1;
+
+    const finalPage = shouldResetPage ? 1 : currentPage;
+    const queryString = new URLSearchParams(paramsObj).toString();
+    const hasAnyParam = Object.keys(paramsObj).length > 0;
+
+    let response;
+
+    if (hasAnyParam) {
+      response = await GetJobsByFilter(
+        user.workspace.id,
+        finalPage,
+        paginationData.pageSize,
+        queryString
+      );
+    } else {
+      response = await GetJobsByWorkspaceId(
+        user.workspace.id,
+        finalPage,
+        paginationData.pageSize
+      );
+    }
+
+    if (response.status === 200) {
+      setIsLoading(false);
+      const { items, totalCount, pageSize } = response.data.payload;
+      setJobs(items);
+      setPaginationData({ totalCount, pageSize });
+
+      if (shouldResetPage && currentPage > 1) {
+        const newParams = new URLSearchParams(paramsObj);
+        navigate(`?${newParams.toString()}`);
+      }
+    } else {
+      console.error('Failed to fetch jobs:', response.status, response.data);
+    }
+    setIsLoading(false);
   };
 
-  const totalJobs = jobs.length;
-  const completedJobs = jobs.filter((j) => j.status !== 3).length;
-  const scheduledJobs = jobs.filter((j) => j.status !== 1).length;
-  const totalValue = jobs.reduce(
-    (accumulator, job) => accumulator + job.totalAmount,
-    0
-  );
+  const fetchJobStats = async () => {
+    if (!user?.workspace) return;
+    const response = await GetJobStats(user.workspace.id);
+    if (response.status === 200) setJobStats(response.data.payload);
+  };
 
   useEffect(() => {
     if (searchParams.get('create') === 'true') setIsNewJobModalOpen(true);
-    fetchJobs();
+    fetchJobStats();
   }, []);
+
+  useEffect(() => {
+    fetchAllJobsByWorkspace();
+  }, [searchParams]);
 
   return (
     <div className='flex'>
@@ -95,7 +167,7 @@ const Jobs = () => {
                   Total Jobs
                 </h3>
                 <div className='text-3xl font-bold text-gray-900'>
-                  {totalJobs}
+                  {jobStats.totalJobs}
                 </div>
                 <div className='text-sm text-gray-500'>All-time</div>
               </div>
@@ -106,7 +178,7 @@ const Jobs = () => {
               <div className='space-y-3'>
                 <h3 className='text-sm font-medium text-gray-600'>Completed</h3>
                 <div className='text-3xl font-bold text-gray-900'>
-                  {completedJobs}
+                  {jobStats.completedJobs}
                 </div>
                 <div className='text-sm text-gray-500'>Finished jobs</div>
               </div>
@@ -117,7 +189,7 @@ const Jobs = () => {
               <div className='space-y-3'>
                 <h3 className='text-sm font-medium text-gray-600'>Scheduled</h3>
                 <div className='text-3xl font-bold text-gray-900'>
-                  {scheduledJobs}
+                  {jobStats.scheduledJobs}
                 </div>
                 <div className='text-sm text-gray-500'>Upcoming jobs</div>
               </div>
@@ -130,32 +202,12 @@ const Jobs = () => {
                   Total Value
                 </h3>
                 <div className='text-3xl font-bold text-gray-900'>
-                  {formatCurrency(totalValue)}
+                  {formatCurrency(jobStats.totalValue)}
                 </div>
                 <div className='text-sm text-gray-500'>Combined job value</div>
               </div>
             </div>
           </div>
-
-          {/* Filters and search */}
-          {/* <div className='flex items-center justify-between mb-4'>
-            <Search inputPlaceholder='Search jobs...' />
-            <div className='relative flex items-center space-x-3'>
-              {<JobsSortModal />}
-              <ButtonIcon
-                name='Filter'
-                icon={icons.filterIcon}
-                handleBtnClick={() => setIsFilterModalOpen(true)}
-              />
-              {isFilterModalOpen && (
-                <JobFilterModal
-                  filters={filters}
-                  setFilters={setFilters}
-                  onClose={() => setIsFilterModalOpen(false)}
-                />
-              )}
-            </div>
-          </div> */}
 
           {/* Filters */}
           <div className='flex items-center justify-between gap-4 mb-8'>

@@ -62,3 +62,10 @@ export type TUpdateEmployeeError = {
   department?: string;
   hireDate?: string;
 };
+
+export type TEmployeeStats = {
+  totalEmployees: number;
+  activeEmployees: number;
+  availableEmployees: number;
+  newHiresThisMonth: number;
+};

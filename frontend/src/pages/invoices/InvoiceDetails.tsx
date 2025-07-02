@@ -24,6 +24,8 @@ import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
 import UpdateInvoiceModal from '../../components/Invoice/Modal/UpdateInvoiceModal';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import { formatDate } from '../../utils/FuntionHelpers/formatDate';
+import { InvoiceStatus } from '../../constants/Enumeration/InvoiceEnum/InvoiceEnum';
+import { DateTime } from 'luxon';
 
 const InvoiceDetails = () => {
   const { invoiceId } = useParams();
@@ -115,6 +117,10 @@ const InvoiceDetails = () => {
     net15 = 'Net 15 days',
     uponReceipt = 'Upon receipt',
   }
+
+  const localIssueDate = DateTime.fromISO(invoice.issueDate, {
+    zone: 'utc',
+  }).toLocal();
 
   return (
     <div className='flex'>
@@ -224,7 +230,7 @@ const InvoiceDetails = () => {
                           >
                             {getInvoiceStatus(invoice.status).icon}
                             <span className='ml-1 capitalize'>
-                              {invoice.status}
+                              {InvoiceStatus[invoice.status]}
                             </span>
                           </span>
                         </div>
@@ -253,7 +259,7 @@ const InvoiceDetails = () => {
                           <div className='flex items-center space-x-1.5'>
                             <Calendar className='w-4 h-4 text-blue-600' />
                             <p className='font-medium text-blue-600'>
-                              {formatDate(invoice.issueDate)}
+                              {formatDate(localIssueDate.toJSDate())}
                             </p>
                           </div>
                         </div>

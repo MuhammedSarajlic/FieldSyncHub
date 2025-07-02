@@ -35,12 +35,18 @@ public class EmployeeController : ControllerBase
         return await _employeeService.GetEmployeesByWorkspaceId(workspaceId);
     }
 
-    [HttpGet("filter")]
-    public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter([FromQuery] EmployeeFilterDto employeeFilterDto)
+    [HttpGet("workspace/{workspaceId}/filter")]
+    public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter([FromQuery] EmployeeFilterDto employeeFilterDto, Guid workspaceId)
     {
-        return await _employeeService.GetEmployeesByFilter(employeeFilterDto);
+        return await _employeeService.GetEmployeesByFilter(employeeFilterDto, workspaceId);
     }
 
+    [HttpGet("{workspaceId}/stats")]
+    public async Task<ActionResult<EmployeeStatsDto>> GetEmployeeStats(Guid workspaceId)
+    {
+        var stats = await _employeeService.GetEmployeeStatsAsync(workspaceId);
+        return Ok(stats);
+    }
 
     [HttpPost]
     public async Task<ActionResult<Employee>> CreateEmployee([FromBody] CreateEmployeeDto createEmployeeDto)
