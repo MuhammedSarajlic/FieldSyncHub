@@ -125,6 +125,7 @@ const Quotes = () => {
       setQuoteStats(response.data.payload);
     }
   };
+
   useEffect(() => {
     if (searchParams.get('create') === 'true') setIsNewQuoteModalOpen(true);
     fetchQuoteStats();

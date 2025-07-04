@@ -19,7 +19,10 @@ import {
 import { QuoteStatus } from '../../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
 import { TAddQuote } from '../../../types/Quote';
-import { GetAllCustomers } from '../../../services/Customer';
+import {
+  GetAllCustomers,
+  GetCustomerByWorkspace,
+} from '../../../services/Customer';
 import { TCustomer } from '../../../types/Customer';
 import {
   GetServiceItems,
@@ -41,28 +44,25 @@ enum DiscountType {
 
 // Main NewQuoteModal functional component
 const NewQuoteModal = ({ isOpen = true, onClose }) => {
-  const { user } = useAuth(); // Auth context for user data
-  const [customers, setCustomers] = useState<TCustomer[]>([]); // State for storing all customers
-  const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]); // State for all service items (potentially for initial load)
+  const { user } = useAuth();
+  const [customers, setCustomers] = useState<TCustomer[]>([]);
+  const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
   const [filteredServiceItems, setFilteredServiceItems] = useState<
     TServiceItem[]
-  >([]); // State for search results of service items
-  const [searchTerm, setSearchTerm] = useState(''); // Current search term for service items
+  >([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(
     null
-  ); // Index of the line item whose search input is active
+  );
 
-  // Ref for the service item search input to manage focus
   const searchInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // State for the new quote form data
   const [quote, setQuote] = useState<TAddQuote>({
     workspaceId: '',
     customerId: '',
     createdByUserId: '',
-    status: QuoteStatus.Draft, // Default status
+    status: QuoteStatus.Draft,
     lineItems: [
-      // Initial line item
       {
         quantity: 1,
         name: '',
@@ -70,7 +70,7 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
         description: '',
       },
     ],
-    discountType: DiscountType.Percentage, // Default discount type
+    discountType: DiscountType.Percentage,
     discountValue: 0,
     taxRate: 0,
     customerNotes: '',
@@ -78,10 +78,9 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     attachmentUrls: [],
   });
 
-  const [selectedCustomer, setSelectedCustomer] = useState(''); // State for the selected customer ID
-  const debouncedSearchTerm = useDebounce(searchTerm, 300); // Debounced search term for performance
+  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Find the selected customer's data from the customers array
   const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
 
   const handleChange = (
@@ -90,14 +89,12 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     >
   ) => {
     const { name, value } = e.target;
-    // Fields that should be parsed as numbers
     const numericFields = [
       'status',
       'discountType',
       'taxRate',
       'discountValue',
     ];
-    // Convert value to number if it's a numeric field, otherwise keep as string
     const parsedValue = numericFields.includes(name) ? Number(value) : value;
 
     setQuote((prev) => ({
@@ -122,7 +119,6 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     return { subtotal, discountAmount, taxAmount, total };
   };
 
-  // Destructure calculated totals for easier access
   const { subtotal, discountAmount, taxAmount, total } =
     calculateQuoteTotals(quote);
 
@@ -147,8 +143,8 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
       };
       return { ...prev, lineItems: newLineItems };
     });
-    setSearchTerm(''); // Clear search term after selection
-    setActiveSearchIndex(null); // Deactivate search dropdown
+    setSearchTerm('');
+    setActiveSearchIndex(null);
   };
 
   const handleLineItemChange = (
@@ -162,7 +158,6 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
       const newLineItems = [...prev.lineItems];
       const updatedItem = { ...newLineItems[index] };
 
-      // If name or unitPrice changes, clear serviceItemId as it's no longer linked to a specific service item
       if (
         (field === 'name' &&
           updatedItem.serviceItemId &&
@@ -220,7 +215,7 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user || !user.workspace) {
+    if (!user?.workspace) {
       console.error('User or workspace not available.');
       return;
     }
@@ -233,29 +228,28 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     try {
       const response = await CreateQuote(updatedQuote);
       if (response.status === 200) {
-        onClose(); // Close modal on successful quote creation
+        onClose();
       } else {
         console.error(
           'Failed to create quote:',
           response.data?.message ?? 'Unknown error'
         );
-        // Optionally, display an error message to the user
       }
     } catch (error) {
       console.error('Error creating quote:', error);
-      // Optionally, display an error message to the user
     }
   };
 
   const fetchCustomers = async () => {
+    if (!user?.workspace) return;
     try {
-      const response = await GetAllCustomers();
+      const response = await GetCustomerByWorkspace(user.workspace.id, 1, 10);
       if (response.status === 200) {
-        setCustomers(response.data.payload);
+        setCustomers(response.data.payload.items);
       } else {
         console.error(
           'Failed to fetch customers:',
-          response.data?.message || 'Unknown error'
+          response.data?.message ?? 'Unknown error'
         );
       }
     } catch (error) {
@@ -267,11 +261,11 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     try {
       const response = await GetServiceItems();
       if (response.status === 200) {
-        setServiceItems(response.data.payload); // Store all service items, although filtered is used for search
+        setServiceItems(response.data.payload);
       } else {
         console.error(
           'Failed to fetch service items:',
-          response.data?.message || 'Unknown error'
+          response.data?.message ?? 'Unknown error'
         );
       }
     } catch (error) {
@@ -284,14 +278,16 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     try {
       const response = await GetServiceItemsByFilter(
         user.workspace.id,
+        1,
+        10,
         `q=${encodeURIComponent(term)}`
       );
       if (response.status === 200) {
-        return response.data.payload.slice(0, 5); // Return only top 5 results
+        return response.data.payload.slice(0, 5);
       }
       console.error(
         'Failed to search service items:',
-        response.data?.message || 'Unknown error'
+        response.data?.message ?? 'Unknown error'
       );
       return [];
     } catch (error) {
@@ -300,26 +296,21 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     }
   };
 
-  // Effect to fetch initial data (customers and all service items) on component mount
   useEffect(() => {
     fetchCustomers();
     fetchAllServiceItems();
   }, []);
 
-  // Effect to trigger service item search when debouncedSearchTerm or activeSearchIndex changes
   useEffect(() => {
-    // Only search if there's a search term and an active search input
     if (debouncedSearchTerm && activeSearchIndex !== null) {
       searchServiceItems(debouncedSearchTerm).then((items) => {
         setFilteredServiceItems(items);
       });
     } else {
-      // Clear filtered items if no search term or no active input
       setFilteredServiceItems([]);
     }
-  }, [debouncedSearchTerm, activeSearchIndex, user?.workspace?.id]); // Added user.workspace.id to dependencies
+  }, [debouncedSearchTerm, activeSearchIndex, user?.workspace?.id]);
 
-  // If the modal is not open, render nothing
   if (!isOpen) return null;
 
   return (
