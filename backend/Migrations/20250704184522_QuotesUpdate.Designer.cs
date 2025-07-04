@@ -12,8 +12,8 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250618130506_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20250704184522_QuotesUpdate")]
+    partial class QuotesUpdate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -159,6 +159,9 @@ namespace backend.Migrations
 
                     b.Property<bool>("IsReceiveQuoteNotifications")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastActivity")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -409,11 +412,11 @@ namespace backend.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
 
-                    b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("decimal(65,30)");
-
                     b.Property<int>("DiscountType")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<int?>("Duration")
                         .HasColumnType("int");
@@ -475,7 +478,7 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<decimal>("TaxAmount")
+                    b.Property<decimal>("TaxRate")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("TimeZone")
@@ -520,6 +523,9 @@ namespace backend.Migrations
 
                     b.Property<Guid?>("InvoiceId")
                         .HasColumnType("char(36)");
+
+                    b.Property<bool>("IsOptional")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsTaxable")
                         .HasColumnType("tinyint(1)");
@@ -593,12 +599,22 @@ namespace backend.Migrations
                     b.Property<string>("PathFile")
                         .HasColumnType("longtext");
 
+                    b.Property<Guid?>("QuoteId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("QuoteId1")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("QuoteId");
+
+                    b.HasIndex("QuoteId1");
 
                     b.ToTable("Notes");
                 });
@@ -658,7 +674,8 @@ namespace backend.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("CustomerNotes")
+                    b.PrimitiveCollection<string>("CustomerMessages")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("DiscountType")
@@ -670,8 +687,8 @@ namespace backend.Migrations
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("InternalNotes")
-                        .HasColumnType("longtext");
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("QuoteNumber")
                         .IsRequired()
@@ -680,11 +697,19 @@ namespace backend.Migrations
                     b.Property<DateTime?>("SentAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<decimal>("TaxRate")
                         .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -703,6 +728,8 @@ namespace backend.Migrations
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("PropertyId");
 
                     b.HasIndex("WorkspaceId");
 
@@ -868,6 +895,9 @@ namespace backend.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("longtext");
 
+                    b.Property<Guid?>("QuoteId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("ToStatus")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -875,6 +905,8 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("JobId");
+
+                    b.HasIndex("QuoteId");
 
                     b.ToTable("StatusChanges");
                 });
@@ -1125,6 +1157,14 @@ namespace backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("backend.Models.QuoteModels.Quote", null)
+                        .WithMany("CustomerNotes")
+                        .HasForeignKey("QuoteId");
+
+                    b.HasOne("backend.Models.QuoteModels.Quote", null)
+                        .WithMany("InternalNotes")
+                        .HasForeignKey("QuoteId1");
+
                     b.Navigation("Customer");
                 });
 
@@ -1153,9 +1193,17 @@ namespace backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("backend.Models.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Customer");
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("backend.Models.QuoteModels.QuoteAttachment", b =>
@@ -1203,6 +1251,10 @@ namespace backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("backend.Models.QuoteModels.Quote", null)
+                        .WithMany("ActivityHistory")
+                        .HasForeignKey("QuoteId");
+
                     b.Navigation("Job");
                 });
 
@@ -1249,7 +1301,13 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.QuoteModels.Quote", b =>
                 {
+                    b.Navigation("ActivityHistory");
+
                     b.Navigation("Attachments");
+
+                    b.Navigation("CustomerNotes");
+
+                    b.Navigation("InternalNotes");
 
                     b.Navigation("LineItems");
                 });

@@ -19,6 +19,7 @@ public class LineItem
     [Range(0, double.MaxValue)]
     public decimal Cost { get; set; }
     public decimal TaxRate { get; set; }
+    public bool IsOptional { get; set; }
     public bool IsTaxable { get; set; }
     [Range(1, int.MaxValue)]
     public int Quantity { get; set; } = 1;

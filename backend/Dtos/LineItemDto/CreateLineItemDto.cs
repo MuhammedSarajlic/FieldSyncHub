@@ -12,7 +12,7 @@ public class CreateLineItemDto
     public decimal? TaxRate { get; set; }
     public bool? IsTaxable { get; set; }
     public int Quantity { get; set; } = 1;
-
+    public bool IsOptional { get; set; }
     public Guid? JobId { get; set; }
     public Guid? InvoiceId { get; set; }
     public Guid? QuoteId { get; set; }

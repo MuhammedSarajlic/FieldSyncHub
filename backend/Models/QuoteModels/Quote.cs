@@ -15,9 +15,15 @@ public class Quote
     public Guid CreatedByUserId { get; set; }
     public User? CreatedByUser { get; set; }
 
+    public string Title { get; set; } = string.Empty;
+
+    public Guid PropertyId { get; set; }
+    public Property? Property { get; set; }
+
     public string QuoteNumber { get; set; } = string.Empty;
     public QuoteStatus Status { get; set; } = QuoteStatus.Draft;
-    //sentAt is the date when the quote was sent to the customer with email or text message
+
+    // sentAt is the date when the quote was sent to the customer with email or text message
     public DateTime? SentAt { get; set; }
     public bool Viewed { get; set; } = false;
     public DateTime? ViewedAt { get; set; }
@@ -31,16 +37,24 @@ public class Quote
 
     [NotMapped]
     public decimal Subtotal => LineItems.Sum(li => li.TotalPrice);
+
     [NotMapped]
     public decimal Discount =>
         DiscountType == DiscountType.Percentage ? Subtotal * DiscountValue / 100 : DiscountValue;
+
     [NotMapped]
     public decimal TaxAmount => (Subtotal - Discount) * TaxRate;
+
     [NotMapped]
     public decimal Total => Subtotal - Discount + TaxAmount;
 
-    public string? CustomerNotes { get; set; }
-    public string? InternalNotes { get; set; }
+    public List<Note> CustomerNotes { get; set; } = [];
+    public List<Note> InternalNotes { get; set; } = [];
+
+    public List<string> CustomerMessages { get; set; } = [];
+    public List<StatusChange> ActivityHistory { get; set; } = [];
+
+    public string Source { get; set; } = string.Empty;
 
     public ICollection<QuoteAttachment> Attachments { get; set; } = [];
 
