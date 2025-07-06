@@ -19,7 +19,7 @@ const IconButton = ({
     flex items-center justify-center
     py-1 px-3 rounded-lg cursor-pointer
     text-sm font-medium text-gray-700
-    border border-gray-200 shadow-sm
+    border border-gray-200
   `;
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {

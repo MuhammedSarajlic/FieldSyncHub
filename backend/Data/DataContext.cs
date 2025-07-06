@@ -28,6 +28,7 @@ public class DataContext : DbContext
     public DbSet<Quote> Quotes => Set<Quote>();
     public DbSet<Request> Requests => Set<Request>();
     public DbSet<QuoteAttachment> QuoteAttachments => Set<QuoteAttachment>();
+    public DbSet<ActivityHistory> ActivityHistorys => Set<ActivityHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

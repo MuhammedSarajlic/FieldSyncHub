@@ -60,7 +60,7 @@ public class QuoteController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Quote>> CreateQuote(CreateQuoteDto createQuoteDto)
     {
-        var result = await _quoteService.CreateAsync(createQuoteDto);
+        var result = await _quoteService.CreateQuote(createQuoteDto);
         return Ok(result);
     }
 
@@ -68,14 +68,14 @@ public class QuoteController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<Quote>> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
     {
-        var result = await _quoteService.UpdateAsync(updatedQuoteDto);
+        var result = await _quoteService.UpdateQuote(updatedQuoteDto);
         return Ok(result);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteQuote(Guid id)
     {
-        var success = await _quoteService.DeleteAsync(id);
+        var success = await _quoteService.DeleteQuote(id);
         return success ? NoContent() : NotFound();
     }
 

@@ -14,11 +14,12 @@ import {
   Percent,
   DollarSign,
   Info,
-  ChevronDown, // Ensure ChevronDown is imported for the select input
+  ChevronDown,
+  MapPin, // Ensure ChevronDown is imported for the select input
 } from 'lucide-react';
 import { QuoteStatus } from '../../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
-import { TAddQuote } from '../../../types/Quote';
+import { TAddQuote, TQuote } from '../../../types/Quote';
 import {
   GetAllCustomers,
   GetCustomerByWorkspace,
@@ -34,16 +35,16 @@ import { useAuth } from '../../../context/AuthProvider';
 import { useDebounce } from '../../../hooks/useDebounce';
 import ButtonIcon from '../../CustomElements/ButtonIcon';
 import { TAddLineItem } from '../../../types/LineItem';
-import CustomButton from '../../CustomElements/CustomButton';
+import { DiscountType } from '../../../constants/Enumeration/CommonEnum/DiscountEnum';
 
-// Define DiscountType enum for clarity
-enum DiscountType {
-  Percentage = 0,
-  FixedAmount = 1,
+interface INewQuoteModal {
+  isOpen?: boolean;
+  onClose: () => void;
+  setQuotes: React.Dispatch<React.SetStateAction<TQuote[]>>;
 }
 
 // Main NewQuoteModal functional component
-const NewQuoteModal = ({ isOpen = true, onClose }) => {
+const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
   const { user } = useAuth();
   const [customers, setCustomers] = useState<TCustomer[]>([]);
   const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
@@ -62,6 +63,8 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     customerId: '',
     createdByUserId: '',
     status: QuoteStatus.Draft,
+    title: '',
+    propertyId: '',
     lineItems: [
       {
         quantity: 1,
@@ -73,9 +76,25 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     discountType: DiscountType.Percentage,
     discountValue: 0,
     taxRate: 0,
-    customerNotes: '',
-    internalNotes: '',
-    attachmentUrls: [],
+    customerNotes: [
+      {
+        createdBy: '',
+        createdByName: '',
+        noteText: '',
+        customerId: '',
+      },
+    ],
+    internalNotes: [
+      {
+        createdBy: '',
+        createdByName: '',
+        noteText: '',
+        customerId: '',
+      },
+    ],
+    activityHistory: [],
+    source: '',
+    attachments: [],
   });
 
   const [selectedCustomer, setSelectedCustomer] = useState('');
@@ -213,21 +232,38 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     }));
   };
 
+  const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedPropertyId = e.target.value;
+    setQuote((prev) => ({ ...prev, propertyId: selectedPropertyId }));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user?.workspace) {
       console.error('User or workspace not available.');
       return;
     }
+    const activityHistory = [
+      {
+        changedBy: user.id,
+        changedByName: user.fullName,
+        type: 'quote_created',
+        action: 'created quote',
+      },
+    ];
     const updatedQuote = {
       ...quote,
       workspaceId: user.workspace.id,
       createdByUserId: user.id,
       taxRate: quote.taxRate / 100,
+      activityHistory: activityHistory,
     };
     try {
       const response = await CreateQuote(updatedQuote);
       if (response.status === 200) {
+        console.log(response);
+
+        setQuotes((prev) => [...prev, response.data]);
         onClose();
       } else {
         console.error(
@@ -296,6 +332,21 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
     }
   };
 
+  const handleAddNote = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!user) return;
+    const { name, value } = e.target;
+    const updatedNote = {
+      createdBy: user.id || '',
+      createdByName: user?.fullName ?? '',
+      noteText: value,
+      customerId: selectedCustomerData?.id ?? '',
+    };
+    setQuote((prev) => ({
+      ...prev,
+      [name]: [updatedNote],
+    }));
+  };
+
   useEffect(() => {
     fetchCustomers();
     fetchAllServiceItems();
@@ -351,31 +402,62 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
                 </div>
 
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                  <div>
-                    <label
-                      htmlFor='customer-select'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Choose customer <span className='text-red-500'>*</span>
-                    </label>
-                    <div className='relative'>
-                      <select
-                        id='customer-select'
-                        value={selectedCustomer}
-                        onChange={handleCustomerChange}
-                        required
-                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                  <div className='space-y-4'>
+                    <div>
+                      <label
+                        htmlFor='customer-select'
+                        className='block text-sm font-medium text-gray-700 mb-2'
                       >
-                        <option value=''>Select a customer...</option>
-                        {customers.map((customer) => (
-                          <option key={customer.id} value={customer.id}>
-                            {customer.fullName}
-                          </option>
-                        ))}
-                      </select>
-                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                        <ChevronDown className='w-5 h-5' />{' '}
-                        {/* Using ChevronDown for dropdown arrow */}
+                        Choose customer <span className='text-red-500'>*</span>
+                      </label>
+                      <div className='relative'>
+                        <select
+                          id='customer-select'
+                          value={selectedCustomer}
+                          onChange={handleCustomerChange}
+                          required
+                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                        >
+                          <option value=''>Select a customer...</option>
+                          {customers.map((customer) => (
+                            <option key={customer.id} value={customer.id}>
+                              {customer.fullName}
+                            </option>
+                          ))}
+                        </select>
+                        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
+                          <ChevronDown className='w-5 h-5' />{' '}
+                          {/* Using ChevronDown for dropdown arrow */}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor='customer-select'
+                        className='block text-sm font-medium text-gray-700 mb-2'
+                      >
+                        Choose customer property{' '}
+                        <span className='text-red-500'>*</span>
+                      </label>
+                      <div className='relative'>
+                        <select
+                          id='customer-select'
+                          value={quote.propertyId}
+                          onChange={handlePropertyChange}
+                          required
+                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                        >
+                          <option value=''>Select a customer...</option>
+                          {selectedCustomerData?.properties?.map((property) => (
+                            <option key={property.id} value={property.id}>
+                              {property.address}
+                            </option>
+                          ))}
+                        </select>
+                        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
+                          <ChevronDown className='w-5 h-5' />{' '}
+                          {/* Using ChevronDown for dropdown arrow */}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -417,6 +499,18 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
                                 </a>
                               </div>
                             )}
+                            {quote.propertyId != '' && (
+                              <div className='flex items-center'>
+                                <MapPin className='w-4 h-4 mr-2 text-gray-500' />
+                                <p>
+                                  {
+                                    selectedCustomerData.properties.find(
+                                      (p) => p.id === quote.propertyId
+                                    )?.address
+                                  }
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -428,6 +522,17 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
                     </div>
                   )}
                 </div>
+              </div>
+              <div>
+                <p>Title</p>
+                <input
+                  type='text'
+                  placeholder='title'
+                  onChange={(e) =>
+                    setQuote({ ...quote, title: e.target.value })
+                  }
+                  className='border border-gray-300 rounded-lg w-full p-2.5 text-sm'
+                />
               </div>
 
               {/* Line Items Section */}
@@ -721,8 +826,8 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
                     <textarea
                       id='customer-notes'
                       name='customerNotes'
-                      value={quote.customerNotes}
-                      onChange={handleChange}
+                      value={quote.customerNotes?.[0]?.noteText || ''}
+                      onChange={handleAddNote}
                       rows={4}
                       className='w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm resize-y'
                       placeholder='Notes visible to customer on the quote...'
@@ -739,8 +844,8 @@ const NewQuoteModal = ({ isOpen = true, onClose }) => {
                     <textarea
                       id='internal-notes'
                       name='internalNotes'
-                      value={quote.internalNotes}
-                      onChange={handleChange}
+                      value={quote.internalNotes?.[0]?.noteText || ''}
+                      onChange={handleAddNote}
                       rows={4}
                       className='w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm resize-y'
                       placeholder='Internal notes (not visible to customer)...'

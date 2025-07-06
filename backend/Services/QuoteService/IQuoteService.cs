@@ -12,8 +12,8 @@ public interface IQuoteService
     Task<ApiResponse<PagedResult<Quote>>> GetQuotesByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
     Task<ApiResponse<PagedResult<Quote>>> GetQuotesByFilter(Guid workspaceId, int pageNumber, int pageSize, QuoteFilterDto filterDto);
     Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId);
-    Task<Quote> CreateAsync(CreateQuoteDto createQuoteDto);
-    Task<Quote> UpdateAsync(UpdateQuoteDto updatedQuoteDto);
-    Task<bool> DeleteAsync(Guid id);
+    Task<Quote> CreateQuote(CreateQuoteDto createQuoteDto);
+    Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto);
+    Task<bool> DeleteQuote(Guid id);
     Task<QuoteStatsDto> GetQuoteStats(Guid workspaceId);
 }

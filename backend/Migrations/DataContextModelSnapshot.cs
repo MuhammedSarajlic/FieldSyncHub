@@ -37,6 +37,39 @@ namespace backend.Migrations
                     b.ToTable("JobAssignedEmployees");
                 });
 
+            modelBuilder.Entity("backend.Models.ActivityHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("ChangedBy")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ChangedByName")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("QuoteId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuoteId");
+
+                    b.ToTable("ActivityHistorys");
+                });
+
             modelBuilder.Entity("backend.Models.CustomField", b =>
                 {
                     b.Property<Guid>("Id")
@@ -684,7 +717,7 @@ namespace backend.Migrations
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid>("PropertyId")
+                    b.Property<Guid?>("PropertyId")
                         .HasColumnType("char(36)");
 
                     b.Property<string>("QuoteNumber")
@@ -892,9 +925,6 @@ namespace backend.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("longtext");
 
-                    b.Property<Guid?>("QuoteId")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("ToStatus")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -902,8 +932,6 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("JobId");
-
-                    b.HasIndex("QuoteId");
 
                     b.ToTable("StatusChanges");
                 });
@@ -1013,6 +1041,13 @@ namespace backend.Migrations
                         .HasForeignKey("JobId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("backend.Models.ActivityHistory", b =>
+                {
+                    b.HasOne("backend.Models.QuoteModels.Quote", null)
+                        .WithMany("ActivityHistory")
+                        .HasForeignKey("QuoteId");
                 });
 
             modelBuilder.Entity("backend.Models.CustomFieldValue", b =>
@@ -1192,9 +1227,7 @@ namespace backend.Migrations
 
                     b.HasOne("backend.Models.Property", "Property")
                         .WithMany()
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PropertyId");
 
                     b.Navigation("CreatedByUser");
 
@@ -1247,10 +1280,6 @@ namespace backend.Migrations
                         .HasForeignKey("JobId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("backend.Models.QuoteModels.Quote", null)
-                        .WithMany("ActivityHistory")
-                        .HasForeignKey("QuoteId");
 
                     b.Navigation("Job");
                 });

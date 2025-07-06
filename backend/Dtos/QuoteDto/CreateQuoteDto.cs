@@ -1,4 +1,6 @@
+using backend.Dtos.ActivityHistoryDto;
 using backend.Dtos.LineItemDto;
+using backend.Dtos.NotesDto;
 using backend.Models;
 using backend.Models.QuoteModels;
 
@@ -18,9 +20,9 @@ public class CreateQuoteDto
     public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
     public decimal DiscountValue { get; set; }
     public decimal TaxRate { get; set; }
-    public List<Note> CustomerNotes { get; set; } = [];
-    public List<Note> InternalNotes { get; set; } = [];
-    public List<StatusChange> ActivityHistory { get; set; } = [];
-    public string Source { get; set; } = string.Empty;
+    public List<CreateNoteDto> CustomerNotes { get; set; } = [];
+    public List<CreateNoteDto> InternalNotes { get; set; } = [];
+    public List<CreateActivityHistoryDto> ActivityHistory { get; set; } = [];
+    public string? Source { get; set; }
     public ICollection<QuoteAttachment> Attachments { get; set; } = [];
 }

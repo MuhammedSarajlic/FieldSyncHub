@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using backend.Dtos.ActivityHistoryDto;
 
 namespace backend.Models.QuoteModels;
 
@@ -17,7 +18,7 @@ public class Quote
 
     public string Title { get; set; } = string.Empty;
 
-    public Guid PropertyId { get; set; }
+    public Guid? PropertyId { get; set; }
     public Property? Property { get; set; }
 
     public string QuoteNumber { get; set; } = string.Empty;
@@ -52,7 +53,7 @@ public class Quote
     public List<Note> InternalNotes { get; set; } = [];
 
     public List<string> CustomerMessages { get; set; } = [];
-    public List<StatusChange> ActivityHistory { get; set; } = [];
+    public List<ActivityHistory> ActivityHistory { get; set; } = [];
 
     public string Source { get; set; } = string.Empty;
 

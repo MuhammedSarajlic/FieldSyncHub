@@ -30,11 +30,13 @@ public class QuoteService : IQuoteService
     public async Task<Quote> GetByIdAsync(Guid id)
     {
         var quote = await _context.Quotes.Include(q => q.LineItems)
+                                        .Include(q => q.Property)
                                         .Include(q => q.CreatedByUser)
                                         .Include(q => q.Customer)
                                         .ThenInclude(c => c.CustomerPhones)
                                         .Include(q => q.Customer)
-                                        .ThenInclude(c => c.Properties)
+                                        .Include(q => q.CustomerNotes)
+                                        .Include(q => q.InternalNotes)
                                         .FirstOrDefaultAsync(q => q.Id == id);
         return quote;
     }
@@ -172,7 +174,7 @@ public class QuoteService : IQuoteService
         };
     }
 
-    public async Task<Quote> CreateAsync(CreateQuoteDto createQuoteDto)
+    public async Task<Quote> CreateQuote(CreateQuoteDto createQuoteDto)
     {
         var quote = createQuoteDto.Adapt<Quote>();
         quote.Id = Guid.NewGuid();
@@ -227,16 +229,45 @@ public class QuoteService : IQuoteService
             quote.LineItems.Add(lineItem);
         }
 
+        quote.CustomerNotes = createQuoteDto.CustomerNotes?.Select(n => new Note
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = n.CreatedBy,
+            CreatedByName = n.CreatedByName,
+            NoteText = n.NoteText,
+            CustomerId = n.CustomerId,
+        }).ToList() ?? new List<Note>();
+
+        quote.InternalNotes = createQuoteDto.InternalNotes?.Select(n => new Note
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = n.CreatedBy,
+            CreatedByName = n.CreatedByName,
+            NoteText = n.NoteText,
+            CustomerId = n.CustomerId,
+        }).ToList() ?? new List<Note>();
+
+        foreach (var activity in quote.ActivityHistory)
+        {
+            activity.Action = $"created quote {quote.QuoteNumber}";
+            quote.ActivityHistory.Add(activity);
+        }
+
+
         var customer = await _context.Customers.FindAsync(createQuoteDto.CustomerId);
         customer.LastActivity = DateTime.UtcNow;
 
         _context.Quotes.Add(quote);
         await _context.SaveChangesAsync();
 
+        quote = await _context.Quotes
+            .Include(q => q.Property)
+            .FirstOrDefaultAsync(q => q.Id == quote.Id);
+
         return quote;
     }
 
-    public async Task<Quote> UpdateAsync(UpdateQuoteDto updatedQuoteDto)
+    public async Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
     {
         var quote = await _context.Quotes
             .Include(q => q.LineItems)
@@ -246,8 +277,6 @@ public class QuoteService : IQuoteService
         if (updatedQuoteDto.DiscountType.HasValue) quote.DiscountType = updatedQuoteDto.DiscountType.Value;
         if (updatedQuoteDto.DiscountValue.HasValue) quote.DiscountValue = updatedQuoteDto.DiscountValue.Value;
         if (updatedQuoteDto.TaxRate.HasValue) quote.TaxRate = updatedQuoteDto.TaxRate.Value;
-        if (updatedQuoteDto.CustomerNotes != null) quote.CustomerNotes = updatedQuoteDto.CustomerNotes;
-        if (updatedQuoteDto.InternalNotes != null) quote.InternalNotes = updatedQuoteDto.InternalNotes;
 
         if (updatedQuoteDto.LineItems != null)
         {
@@ -307,7 +336,7 @@ public class QuoteService : IQuoteService
         return quote;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteQuote(Guid id)
     {
         var quote = await _context.Quotes.FindAsync(id);
         if (quote == null) return false;

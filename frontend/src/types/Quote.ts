@@ -1,7 +1,10 @@
 import { DiscountType } from '../constants/Enumeration/CommonEnum/DiscountEnum';
 import { QuoteStatus } from '../constants/Enumeration/QuoteEnum/QuoteEnum';
+import { TActivityHistory, TAddActivityHistory } from './ActivityHistory';
 import { TCustomer } from './Customer';
 import { TLineItem, TAddLineItem, TUpdateLineItem } from './LineItem';
+import { TAddNote, TNote } from './Note';
+import { TProperty } from './Property';
 import { TUser } from './User';
 
 export type TQuote = {
@@ -11,6 +14,9 @@ export type TQuote = {
   customer?: TCustomer;
   createdByUserId: string;
   createdByUser?: TUser;
+  title: string;
+  propertyId: string;
+  property?: TProperty;
   quoteNumber: string;
   status: QuoteStatus;
   sentAt?: string;
@@ -25,8 +31,11 @@ export type TQuote = {
   discount: number;
   taxAmount: number;
   total: number;
-  customerNotes?: string;
-  internalNotes?: string;
+  customerNotes?: TNote[];
+  internalNotes?: TNote[];
+  customerMessages?: string[];
+  activityHsitory: TActivityHistory[];
+  source?: string;
   attachments: TQuoteAttachment[];
   createdAt: string;
   updatedAt: string;
@@ -38,25 +47,28 @@ export type TAddQuote = {
   createdByUserId: string;
   status: QuoteStatus;
   expiresAt?: string;
+  title: string;
+  propertyId?: string;
   lineItems: TAddLineItem[];
   discountType: DiscountType;
   discountValue: number;
   taxRate: number;
-  customerNotes?: string;
-  internalNotes?: string;
-  attachmentUrls: TQuoteAttachment[];
+  customerNotes?: TAddNote[];
+  internalNotes?: TAddNote[];
+  activityHistory: TAddActivityHistory[];
+  source?: string;
+  attachments: TQuoteAttachment[];
 };
 
 export type TUpdateQuote = {
   id: string;
   expiresAt?: string;
   lineItems?: TUpdateLineItem[];
+  title?: string;
   discountType?: DiscountType;
   discountValue?: number;
   taxRate?: number;
-  customerNotes?: string;
-  internalNotes?: string;
-  attachmentUrls?: TUpdateQuoteAttachment[];
+  source?: string;
 };
 
 export type TQuoteFilter = {

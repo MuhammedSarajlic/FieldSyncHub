@@ -298,6 +298,7 @@ const Quotes = () => {
       <NewQuoteModal
         isOpen={isNewQuoteModalOpen}
         onClose={() => setIsNewQuoteModalOpen(false)}
+        setQuotes={setQuotes}
       />
     </div>
   );

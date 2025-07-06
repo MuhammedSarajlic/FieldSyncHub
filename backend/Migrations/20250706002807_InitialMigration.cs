@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace backend.Migrations
 {
     /// <inheritdoc />
-    public partial class QuotesUpdate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -311,6 +311,53 @@ namespace backend.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "StatusChanges",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    FromStatus = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ToStatus = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ChangedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    ChangedBy = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Notes = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    JobId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StatusChanges", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StatusChanges_Jobs_JobId",
+                        column: x => x.JobId,
+                        principalTable: "Jobs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ActivityHistorys",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Type = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Action = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ChangedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    ChangedBy = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    ChangedByName = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    QuoteId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ActivityHistorys", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "EmployeeInvites",
                 columns: table => new
                 {
@@ -491,7 +538,7 @@ namespace backend.Migrations
                     CreatedByUserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Title = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PropertyId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    PropertyId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
                     QuoteNumber = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Status = table.Column<int>(type: "int", nullable: false),
@@ -522,40 +569,6 @@ namespace backend.Migrations
                         name: "FK_Quotes_Properties_PropertyId",
                         column: x => x.PropertyId,
                         principalTable: "Properties",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "StatusChanges",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    FromStatus = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    ToStatus = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    ChangedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    ChangedBy = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Notes = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    JobId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    QuoteId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StatusChanges", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_StatusChanges_Jobs_JobId",
-                        column: x => x.JobId,
-                        principalTable: "Jobs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_StatusChanges_Quotes_QuoteId",
-                        column: x => x.QuoteId,
-                        principalTable: "Quotes",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
@@ -659,6 +672,11 @@ namespace backend.Migrations
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ActivityHistorys_QuoteId",
+                table: "ActivityHistorys",
+                column: "QuoteId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CustomerPhones_CustomerId",
@@ -826,11 +844,6 @@ namespace backend.Migrations
                 column: "JobId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StatusChanges_QuoteId",
-                table: "StatusChanges",
-                column: "QuoteId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Users_WorkspaceId",
                 table: "Users",
                 column: "WorkspaceId");
@@ -839,6 +852,13 @@ namespace backend.Migrations
                 name: "IX_Workspaces_CreatedByUserId",
                 table: "Workspaces",
                 column: "CreatedByUserId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_ActivityHistorys_Quotes_QuoteId",
+                table: "ActivityHistorys",
+                column: "QuoteId",
+                principalTable: "Quotes",
+                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_EmployeeInvites_Workspaces_WorkspaceId",
@@ -932,6 +952,9 @@ namespace backend.Migrations
             migrationBuilder.DropForeignKey(
                 name: "FK_Users_Workspaces_WorkspaceId",
                 table: "Users");
+
+            migrationBuilder.DropTable(
+                name: "ActivityHistorys");
 
             migrationBuilder.DropTable(
                 name: "CustomerPhones");

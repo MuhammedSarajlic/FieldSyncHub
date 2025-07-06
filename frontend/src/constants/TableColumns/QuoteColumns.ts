@@ -16,8 +16,7 @@ export const quoteColumns: TTableColumns = [
   },
   {
     header: 'Property',
-    accessor: (quote) =>
-      quote.customer.properties?.[0]?.address ?? 'No property',
+    accessor: (quote) => quote.property.address ?? 'No property',
     type: 'text',
   },
   {
