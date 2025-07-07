@@ -1,4 +1,6 @@
+using backend.Dtos.NotesDto;
 using backend.Dtos.QuoteDto;
+using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Response;
 using backend.Wrappers;
@@ -13,6 +15,9 @@ public interface IQuoteService
     Task<ApiResponse<PagedResult<Quote>>> GetQuotesByFilter(Guid workspaceId, int pageNumber, int pageSize, QuoteFilterDto filterDto);
     Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId);
     Task<Quote> CreateQuote(CreateQuoteDto createQuoteDto);
+    Task<Note> AddCustomerNoteToQuote(Guid quoteId, CreateNoteDto noteDto);
+    Task<Note> AddInternalNoteToQuote(Guid quoteId, CreateNoteDto noteDto);
+    Task<QuoteAttachment> AddAttachmentToQuote(Guid quoteId, QuoteAttachmentDto attachmentDto, string userId, string userName);
     Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto);
     Task<bool> DeleteQuote(Guid id);
     Task<QuoteStatsDto> GetQuoteStats(Guid workspaceId);

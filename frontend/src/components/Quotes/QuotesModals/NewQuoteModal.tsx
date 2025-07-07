@@ -257,6 +257,14 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
       createdByUserId: user.id,
       taxRate: quote.taxRate / 100,
       activityHistory: activityHistory,
+      customerNotes: quote.customerNotes.filter(
+        (n) =>
+          n.noteText?.trim() && n.createdBy && n.createdByName && n.customerId
+      ),
+      internalNotes: quote.internalNotes.filter(
+        (n) =>
+          n.noteText?.trim() && n.createdBy && n.createdByName && n.customerId
+      ),
     };
     try {
       const response = await CreateQuote(updatedQuote);

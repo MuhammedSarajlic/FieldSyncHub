@@ -62,12 +62,10 @@ public class DataContext : DbContext
             .HasForeignKey(p => p.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Customer → Notes (cascade)
         modelBuilder.Entity<Customer>()
             .HasMany(c => c.Notes)
-            .WithOne(n => n.Customer)
-            .HasForeignKey(n => n.CustomerId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .WithMany()
+            .UsingEntity(j => j.ToTable("CustomerNotes"));
 
         // Customer → CustomerPhones (cascade)
         modelBuilder.Entity<Customer>()
@@ -151,6 +149,18 @@ public class DataContext : DbContext
             l => l.HasOne(typeof(Employee)).WithMany().HasForeignKey("EmployeeId").OnDelete(DeleteBehavior.Cascade),
             r => r.HasOne(typeof(Job)).WithMany().HasForeignKey("JobId").OnDelete(DeleteBehavior.Cascade)
         );
+
+        // For Customer Notes associated with a Quote
+        modelBuilder.Entity<Quote>()
+            .HasMany(q => q.CustomerNotes)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("QuoteCustomerNotes"));
+
+        // For Internal Notes associated with a Quote
+        modelBuilder.Entity<Quote>()
+            .HasMany(q => q.InternalNotes)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("QuoteInternalNotes"));
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);

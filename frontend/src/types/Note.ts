@@ -4,7 +4,6 @@ export type TNote = {
   createdByName: string;
   noteText?: string;
   pathFile?: string;
-  customerId: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -14,7 +13,6 @@ export type TAddNote = {
   createdByName: string;
   noteText?: string;
   pathFile?: string;
-  customerId: string;
 };
 
 export type TUpdateNote = {

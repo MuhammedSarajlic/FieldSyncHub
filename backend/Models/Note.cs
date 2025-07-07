@@ -11,9 +11,6 @@ public class Note
     public string CreatedByName { get; set; } = string.Empty;
     public string? NoteText { get; set; }
     public string? PathFile { get; set; }
-    public Guid CustomerId { get; set; }
-    [JsonIgnore]
-    public Customer? Customer { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

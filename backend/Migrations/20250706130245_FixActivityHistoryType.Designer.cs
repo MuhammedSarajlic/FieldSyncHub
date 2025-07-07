@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250706130245_FixActivityHistoryType")]
+    partial class FixActivityHistoryType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +24,6 @@ namespace backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("CustomerNote", b =>
-                {
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("NotesId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("CustomerId", "NotesId");
-
-                    b.HasIndex("NotesId");
-
-                    b.ToTable("CustomerNotes", (string)null);
-                });
 
             modelBuilder.Entity("JobAssignedEmployees", b =>
                 {
@@ -50,36 +38,6 @@ namespace backend.Migrations
                     b.HasIndex("JobId");
 
                     b.ToTable("JobAssignedEmployees");
-                });
-
-            modelBuilder.Entity("NoteQuote", b =>
-                {
-                    b.Property<Guid>("CustomerNotesId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("QuoteId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("CustomerNotesId", "QuoteId");
-
-                    b.HasIndex("QuoteId");
-
-                    b.ToTable("QuoteCustomerNotes", (string)null);
-                });
-
-            modelBuilder.Entity("NoteQuote1", b =>
-                {
-                    b.Property<Guid>("InternalNotesId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("Quote1Id")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("InternalNotesId", "Quote1Id");
-
-                    b.HasIndex("Quote1Id");
-
-                    b.ToTable("QuoteInternalNotes", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.ActivityHistory", b =>
@@ -672,16 +630,31 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("NoteText")
                         .HasColumnType("longtext");
 
                     b.Property<string>("PathFile")
                         .HasColumnType("longtext");
 
+                    b.Property<Guid?>("QuoteId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("QuoteId1")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("QuoteId");
+
+                    b.HasIndex("QuoteId1");
 
                     b.ToTable("Notes");
                 });
@@ -732,9 +705,6 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("AssignedToUserId")
-                        .HasColumnType("char(36)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -756,9 +726,6 @@ namespace backend.Migrations
 
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<Guid?>("JobId")
-                        .HasColumnType("char(36)");
 
                     b.Property<Guid?>("PropertyId")
                         .HasColumnType("char(36)");
@@ -797,8 +764,6 @@ namespace backend.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AssignedToUserId");
 
                     b.HasIndex("CreatedByUserId");
 
@@ -1073,21 +1038,6 @@ namespace backend.Migrations
                     b.ToTable("Workspaces");
                 });
 
-            modelBuilder.Entity("CustomerNote", b =>
-                {
-                    b.HasOne("backend.Models.Customer", null)
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Note", null)
-                        .WithMany()
-                        .HasForeignKey("NotesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("JobAssignedEmployees", b =>
                 {
                     b.HasOne("backend.Models.Employee", null)
@@ -1099,36 +1049,6 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.Job", null)
                         .WithMany()
                         .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("NoteQuote", b =>
-                {
-                    b.HasOne("backend.Models.Note", null)
-                        .WithMany()
-                        .HasForeignKey("CustomerNotesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.QuoteModels.Quote", null)
-                        .WithMany()
-                        .HasForeignKey("QuoteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("NoteQuote1", b =>
-                {
-                    b.HasOne("backend.Models.Note", null)
-                        .WithMany()
-                        .HasForeignKey("InternalNotesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.QuoteModels.Quote", null)
-                        .WithMany()
-                        .HasForeignKey("Quote1Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1271,6 +1191,25 @@ namespace backend.Migrations
                     b.Navigation("ServiceItem");
                 });
 
+            modelBuilder.Entity("backend.Models.Note", b =>
+                {
+                    b.HasOne("backend.Models.Customer", "Customer")
+                        .WithMany("Notes")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.QuoteModels.Quote", null)
+                        .WithMany("CustomerNotes")
+                        .HasForeignKey("QuoteId");
+
+                    b.HasOne("backend.Models.QuoteModels.Quote", null)
+                        .WithMany("InternalNotes")
+                        .HasForeignKey("QuoteId1");
+
+                    b.Navigation("Customer");
+                });
+
             modelBuilder.Entity("backend.Models.Property", b =>
                 {
                     b.HasOne("backend.Models.Customer", "Customer")
@@ -1284,10 +1223,6 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.QuoteModels.Quote", b =>
                 {
-                    b.HasOne("backend.Models.User", "AssignedToUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedToUserId");
-
                     b.HasOne("backend.Models.User", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedByUserId")
@@ -1303,8 +1238,6 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.Property", "Property")
                         .WithMany()
                         .HasForeignKey("PropertyId");
-
-                    b.Navigation("AssignedToUser");
 
                     b.Navigation("CreatedByUser");
 
@@ -1385,6 +1318,8 @@ namespace backend.Migrations
 
                     b.Navigation("CustomerPhones");
 
+                    b.Navigation("Notes");
+
                     b.Navigation("Properties");
                 });
 
@@ -1405,6 +1340,10 @@ namespace backend.Migrations
                     b.Navigation("ActivityHistory");
 
                     b.Navigation("Attachments");
+
+                    b.Navigation("CustomerNotes");
+
+                    b.Navigation("InternalNotes");
 
                     b.Navigation("LineItems");
                 });

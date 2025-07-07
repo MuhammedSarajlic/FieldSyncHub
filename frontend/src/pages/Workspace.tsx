@@ -166,12 +166,15 @@ const Workspace = () => {
   };
 
   const handleCreateWorkspace = async () => {
+    console.log('wtf');
+
     setIsLoading(true);
     try {
       if (!user) return;
+      console.log(user);
 
       const uploadedUrl = await handleUpload();
-      if (!uploadedUrl) return;
+      if (!uploadedUrl && logoFile !== null) return;
 
       const finalWorkspace = {
         ...workspace,

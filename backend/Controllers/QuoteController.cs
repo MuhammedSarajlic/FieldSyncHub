@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using backend.Dtos.NotesDto;
 using backend.Dtos.QuoteDto;
 using backend.Models.QuoteModels;
 using backend.Response;
@@ -62,6 +64,30 @@ public class QuoteController : ControllerBase
     {
         var result = await _quoteService.CreateQuote(createQuoteDto);
         return Ok(result);
+    }
+
+    [HttpPost("{quoteId}/customer-note")]
+    public async Task<IActionResult> AddCustomerNote(Guid quoteId, [FromBody] CreateNoteDto noteDto)
+    {
+        var note = await _quoteService.AddCustomerNoteToQuote(quoteId, noteDto);
+        return Ok(note);
+    }
+
+    [HttpPost("{quoteId}/internal-note")]
+    public async Task<IActionResult> AddInternalNote(Guid quoteId, [FromBody] CreateNoteDto noteDto)
+    {
+        var note = await _quoteService.AddInternalNoteToQuote(quoteId, noteDto);
+        return Ok(note);
+    }
+
+    [HttpPost("{quoteId}/attachment")]
+    public async Task<IActionResult> AddAttachment(Guid quoteId, [FromBody] QuoteAttachmentDto attachmentDto)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+        var userName = User.Identity?.Name ?? "System";
+
+        var attachment = await _quoteService.AddAttachmentToQuote(quoteId, attachmentDto, userId, userName);
+        return Ok(attachment);
     }
 
 

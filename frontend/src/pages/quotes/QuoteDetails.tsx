@@ -10,7 +10,6 @@ import {
   Send,
   Download,
   Plus,
-  FileDown,
   MessageSquare,
   Archive,
   Printer,
@@ -34,15 +33,24 @@ import { useClickOutside } from '../../hooks/useClickOutside';
 import IconButton from '../../components/CustomElements/Buttons/IconButton';
 import { getQuoteStatus } from '../../utils/FuntionHelpers/getQuoteStatus';
 import QuoteNote from '../../components/Quotes/QuoteNotes/QuoteNote';
-import { TQuote } from '../../types/Quote';
+import {
+  TAddQuoteAttachment,
+  TQuote,
+  TQuoteAttachment,
+} from '../../types/Quote';
 import { useParams } from 'react-router';
-import { GetQuoteById } from '../../services/Quote';
+import {
+  AddQuoteCustomerNote,
+  AddQuoteInternalNote,
+  GetQuoteById,
+} from '../../services/Quote';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import CustomButton from '../../components/CustomElements/Buttons/CustomButton';
 import { TAddNote } from '../../types/Note';
-import { CreateNote } from '../../services/Notes';
 import { useAuth } from '../../context/AuthProvider';
+import { DateTime } from 'luxon';
+import QuoteAttachments from '../../components/Quotes/QuoteAttachments/QuoteAttachments';
 
 const QuoteDetails = () => {
   const { quoteId } = useParams();
@@ -54,6 +62,13 @@ const QuoteDetails = () => {
   const [internalNote, setInternalNote] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [quote, setQuote] = useState<TQuote | null>(null);
+
+  const handleNewAttachmentAdded = (newAttachment: TQuoteAttachment) => {
+    setQuote((prev) => ({
+      ...prev!,
+      attachments: [...(prev?.attachments || []), newAttachment],
+    }));
+  };
 
   const fetchQuote = async () => {
     if (!quoteId) return;
@@ -68,7 +83,6 @@ const QuoteDetails = () => {
     let updatedNote: TAddNote = {
       createdBy: user.id,
       createdByName: user.fullName,
-      customerId: quote.customer?.id,
       noteText: '',
     };
     if (noteType === 'internal') {
@@ -76,11 +90,11 @@ const QuoteDetails = () => {
         ...updatedNote,
         noteText: internalNote,
       };
-      const response = await CreateNote(updatedNote);
+      const response = await AddQuoteInternalNote(quote.id, updatedNote);
       if (response.status === 200) {
         setQuote((prev) => ({
           ...prev,
-          internalNotes: [...prev.internalNotes, response.data],
+          internalNotes: [...(prev?.internalNotes || []), response.data],
         }));
         setIsAddInternalNoteOpen(false);
         setInternalNote('');
@@ -90,11 +104,11 @@ const QuoteDetails = () => {
         ...updatedNote,
         noteText: customerNote,
       };
-      const response = await CreateNote(updatedNote);
+      const response = await AddQuoteCustomerNote(quote.id, updatedNote);
       if (response.status === 200) {
         setQuote((prev) => ({
           ...prev,
-          customerNotes: [...prev.customerNotes, response.data],
+          customerNotes: [...(prev?.customerNotes || []), response.data],
         }));
         setIsAddCustomerNoteOpen(false);
         setCustomerNote('');
@@ -102,20 +116,29 @@ const QuoteDetails = () => {
     }
   };
 
-  // Sample quote data
+  // Sample quote data (Keep this for mock purposes if live data is not available)
   const mockQuote = {
     customer: {
       name: 'John Smith',
     },
     paymentTerms: 'Net 30',
-    assignedTo: 'Mike Johnson',
+    assignedTo: 'Mike Johnson', // Example assignedTo
     customerMessage:
       'Thank you for the detailed quote. I will review it with my partner and get back to you soon.',
     attachments: ['floor_plan.pdf', 'product_specs.pdf'],
   };
 
-  const getActivityStyle = (activityType) => {
-    const styles = {
+  const getActivityStyle = (activityType: string) => {
+    // Added type for activityType
+    const styles: {
+      [key: string]: {
+        icon: any;
+        bgColor: string;
+        textColor: string;
+        lightBg: string;
+      };
+    } = {
+      // Added type definition for styles
       quote_created: {
         icon: FileText,
         bgColor: 'bg-blue-500',
@@ -307,7 +330,7 @@ const QuoteDetails = () => {
     },
   ];
 
-  let activityFeed = [];
+  let activityFeed: any[] = []; // Explicitly type activityFeed
 
   const displayActivities =
     activityFeed.length > 0 ? activityFeed : sampleActivities;
@@ -580,36 +603,47 @@ const QuoteDetails = () => {
                           isTotal: true,
                           customColor: '#356852',
                         },
-                      ].map((item, index) => (
-                        <div
-                          key={index}
-                          className={`flex justify-between ${
-                            item.isTotal ? 'pt-2 border-t border-gray-200' : ''
-                          }`}
-                        >
-                          <span
-                            className={`${
-                              item.isTotal
-                                ? 'font-semibold text-primary'
-                                : 'text-gray-600'
-                            }`}
-                          >
-                            {item.label}
-                          </span>
-                          <span
-                            className={`${
-                              item.isTotal ? 'font-semibold' : 'font-medium'
-                            } ${item.color}`}
-                            style={
-                              item.customColor
-                                ? { color: item.customColor }
-                                : {}
-                            }
-                          >
-                            {item.value}
-                          </span>
-                        </div>
-                      ))}
+                      ]
+                        .filter(Boolean)
+                        .map(
+                          (
+                            item,
+                            index // Filter Boolean to remove false for conditional items
+                          ) => (
+                            <div
+                              key={index}
+                              className={`flex justify-between ${
+                                item?.isTotal
+                                  ? 'pt-2 border-t border-gray-200'
+                                  : ''
+                              }`}
+                            >
+                              <span
+                                className={`${
+                                  item?.isTotal
+                                    ? 'font-semibold text-primary'
+                                    : 'text-gray-600'
+                                }`}
+                              >
+                                {item?.label}
+                              </span>
+                              <span
+                                className={`${
+                                  item?.isTotal
+                                    ? 'font-semibold'
+                                    : 'font-medium'
+                                } ${item?.color}`}
+                                style={
+                                  item?.customColor
+                                    ? { color: item.customColor }
+                                    : {}
+                                }
+                              >
+                                {item?.value}
+                              </span>
+                            </div>
+                          )
+                        )}
                     </div>
                   </div>
                 </div>
@@ -624,14 +658,20 @@ const QuoteDetails = () => {
                 </div>
 
                 <div className='space-y-6'>
-                  {displayActivities.length === 0 ? (
+                  {quote.activityHistory?.length === 0 ? (
                     <p className='text-gray-500 text-center py-8'>
                       No recent activity.
                     </p>
                   ) : (
-                    displayActivities.map((activity, index) => {
+                    quote.activityHistory?.map((activity, index) => {
                       const style = getActivityStyle(activity.type);
                       const IconComponent = style.icon;
+                      const localDate = DateTime.fromISO(activity.changedAt, {
+                        zone: 'utc',
+                      }).toLocal();
+                      const formattedActivityDate = localDate.toFormat(
+                        'MMM dd, yyyy • h:mm a'
+                      );
 
                       return (
                         <div
@@ -639,7 +679,8 @@ const QuoteDetails = () => {
                           className='flex items-start space-x-4 relative'
                         >
                           {/* Timeline line */}
-                          {index !== displayActivities.length - 1 && (
+                          {index !==
+                            (quote.activityHistory?.length || 0) - 1 && ( // Added null check
                             <div className='absolute left-5 top-10 w-0.5 h-8 bg-gray-200'></div>
                           )}
 
@@ -656,25 +697,9 @@ const QuoteDetails = () => {
                           <div className='flex-1 min-w-0'>
                             <div className='flex items-center justify-between'>
                               <div className='flex items-center space-x-2'>
-                                <time className='text-sm text-gray-600'>
-                                  {new Date(
-                                    activity.changedAt
-                                  ).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                  })}
-                                </time>
-                                <div>-</div>
-                                <time className='text-sm text-gray-600'>
-                                  {new Date(
-                                    activity.changedAt
-                                  ).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false,
-                                  })}
-                                </time>
+                                <p className='text-sm text-gray-500'>
+                                  {formattedActivityDate}
+                                </p>
                               </div>
                             </div>
 
@@ -694,7 +719,7 @@ const QuoteDetails = () => {
                 </div>
 
                 {/* Show more button */}
-                {displayActivities.length > 5 && (
+                {(quote.activityHistory?.length || 0) > 5 && ( // Added null check
                   <div className='mt-6 text-center'>
                     <button className='cursor-pointer text-sm text-blue-600 hover:text-blue-800'>
                       Show all activities
@@ -728,7 +753,7 @@ const QuoteDetails = () => {
                   <div className='space-y-2'>
                     <div className='flex items-center text-sm text-gray-600'>
                       <Phone className='w-4 h-4 mr-3 text-gray-400' />
-                      {quote?.customer?.customerPhones?.[0].phoneNumber}
+                      {quote?.customer?.customerPhones?.[0]?.phoneNumber}
                     </div>
                     <div className='flex items-center text-sm text-gray-600'>
                       <Mail className='w-4 h-4 mr-3 text-gray-400' />
@@ -746,6 +771,81 @@ const QuoteDetails = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* NEW: Quote Details Section */}
+              <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+                <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                  Quote Details
+                </h3>
+                <div className='space-y-3 text-sm text-gray-700'>
+                  {/* Expires At */}
+                  {quote.expiresAt && (
+                    <div className='flex items-center'>
+                      <Calendar className='w-4 h-4 mr-3 text-gray-400' />
+                      <p>
+                        Expires:{' '}
+                        <span className='font-medium'>
+                          {DateTime.fromISO(quote.expiresAt, { zone: 'utc' })
+                            .toLocal()
+                            .toFormat('MMM dd, yyyy')}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Assigned To */}
+                  {mockQuote.assignedTo && ( // Assuming quote.assignedTo exists as a string
+                    <div className='flex items-center'>
+                      <User className='w-4 h-4 mr-3 text-gray-400' />
+                      <p>
+                        Assigned To:{' '}
+                        <span className='font-medium'>
+                          {mockQuote.assignedTo}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Source */}
+                  {quote.source && ( // Assuming quote.source exists as a string
+                    <div className='flex items-center'>
+                      <FileText className='w-4 h-4 mr-3 text-gray-400' />
+                      <p>
+                        Source:{' '}
+                        <span className='font-medium'>{quote.source}</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Link to Job (if converted) */}
+                  {/* IMPORTANT: This assumes 'quote.jobId' exists when the quote is converted to a job.
+                              You'll need to replace `/jobs/${quote.jobId}` with your actual job details route. */}
+                  {quote.jobId && (
+                    <div className='flex items-center'>
+                      <Briefcase className='w-4 h-4 mr-3 text-gray-400' />
+                      <p>
+                        Converted to Job:{' '}
+                        <a
+                          href={`/jobs/${quote.jobId}`}
+                          className='text-blue-600 hover:underline font-medium'
+                        >
+                          View Job #{quote.jobId}
+                        </a>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Message if no details are available */}
+                  {!quote.expiresAt &&
+                    !quote.assignedTo &&
+                    !quote.source &&
+                    !quote.jobId && (
+                      <p className='text-gray-500 text-center py-4'>
+                        No additional quote details available.
+                      </p>
+                    )}
                 </div>
               </div>
 
@@ -791,9 +891,17 @@ const QuoteDetails = () => {
                   </div>
                 )}
                 <div className='space-y-6'>
-                  {quote.internalNotes.map((note) => (
-                    <QuoteNote note={note} />
-                  ))}
+                  {quote.internalNotes.length === 0 ? (
+                    <div className='text-center py-8 px-4 bg-gray-50 rounded-lg border border-gray-200'>
+                      <p className='text-gray-500 text-sm'>
+                        No internal notes added yet.
+                      </p>
+                    </div>
+                  ) : (
+                    quote.internalNotes.map((note) => (
+                      <QuoteNote key={note.id} note={note} /> // Assuming notes have a unique 'id'
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -803,13 +911,15 @@ const QuoteDetails = () => {
                   <h3 className='text-lg font-semibold text-gray-900'>
                     Customer Notes
                   </h3>
-                  <IconButton
-                    icon={<Plus className='w-4 h-4 mr-1' />}
-                    onClick={() => setIsAddCustomerNoteOpen(true)}
-                    customStyle='bg-bg-primary text-white hover:border-gray-300 border-none'
-                  >
-                    Add
-                  </IconButton>
+                  {!isAddCustomerNoteOpen && (
+                    <IconButton
+                      icon={<Plus className='w-4 h-4 mr-1' />}
+                      onClick={() => setIsAddCustomerNoteOpen(true)}
+                      customStyle='bg-bg-primary text-white hover:border-gray-300 border-none'
+                    >
+                      Add
+                    </IconButton>
+                  )}
                 </div>
                 {isAddCustomerNoteOpen && (
                   <div className='mb-6 flex flex-col items-end space-y-2'>
@@ -837,9 +947,17 @@ const QuoteDetails = () => {
                   </div>
                 )}
                 <div className='space-y-4'>
-                  {quote.customerNotes.map((note) => (
-                    <QuoteNote note={note} />
-                  ))}
+                  {quote.customerNotes.length === 0 ? (
+                    <div className='text-center py-8 px-4 bg-gray-50 rounded-lg border border-gray-200'>
+                      <p className='text-gray-500 text-sm'>
+                        No customer notes added yet.
+                      </p>
+                    </div>
+                  ) : (
+                    quote.customerNotes.map((note) => (
+                      <QuoteNote key={note.id} note={note} /> // Assuming notes have a unique 'id'
+                    ))
+                  )}
                 </div>
 
                 {mockQuote.customerMessage && (
@@ -867,47 +985,11 @@ const QuoteDetails = () => {
               </div>
 
               {/* Attachments */}
-              <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-lg font-semibold text-gray-900'>
-                    Attachments
-                  </h3>
-                  <IconButton
-                    icon={<Plus className='w-4 h-4 mr-1' />}
-                    onClick={() => {}}
-                    customStyle='bg-bg-primary text-white hover:border-gray-300 border-none'
-                  >
-                    Add
-                  </IconButton>
-                </div>
-
-                {quote.attachments.length > 0 ? (
-                  <div className='space-y-2'>
-                    {quote.attachments.map((attachment, index) => (
-                      <div
-                        key={index}
-                        className='flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100'
-                      >
-                        <div className='flex items-center space-x-3'>
-                          <FileDown className='w-5 h-5 text-gray-400' />
-                          <span className='text-sm font-medium text-gray-900'>
-                            {attachment}
-                          </span>
-                        </div>
-                        <button className='hover:opacity-80 cursor-pointer'>
-                          <Download className='w-4 h-4 text-primary' />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className='flex items-center justify-center h-24 bg-gray-50 rounded-lg border border-dashed border-gray-300'>
-                    <span className='text-sm text-gray-500'>
-                      No attachments added yet
-                    </span>
-                  </div>
-                )}
-              </div>
+              <QuoteAttachments
+                quoteId={quote.id}
+                currentAttachments={quote.attachments || []}
+                onAttachmentsUpdated={handleNewAttachmentAdded}
+              />
             </div>
           </motion.div>
         </div>

@@ -9,12 +9,16 @@ public class Quote
     [Key]
     public Guid Id { get; set; }
     public Guid WorkspaceId { get; set; }
+    public Guid? JobId { get; set; }
 
     public Guid CustomerId { get; set; }
     public Customer? Customer { get; set; }
 
     public Guid CreatedByUserId { get; set; }
     public User? CreatedByUser { get; set; }
+
+    public Guid? AssignedToUserId { get; set; }
+    public User? AssignedToUser { get; set; }
 
     public string Title { get; set; } = string.Empty;
 
@@ -24,7 +28,6 @@ public class Quote
     public string QuoteNumber { get; set; } = string.Empty;
     public QuoteStatus Status { get; set; } = QuoteStatus.Draft;
 
-    // sentAt is the date when the quote was sent to the customer with email or text message
     public DateTime? SentAt { get; set; }
     public bool Viewed { get; set; } = false;
     public DateTime? ViewedAt { get; set; }

@@ -1,4 +1,5 @@
-import { TAddQuote } from '../types/Quote';
+import { TAddNote } from '../types/Note';
+import { TAddQuote, TAddQuoteAttachment } from '../types/Quote';
 import api from './api';
 
 export async function GetQuotesByWorkspace(
@@ -41,5 +42,23 @@ export async function GetQuoteStats(workspaceId: string) {
 
 export async function CreateQuote(quote: TAddQuote) {
   const response = await api.post('/quote', quote);
+  return response;
+}
+
+export async function AddQuoteInternalNote(quoteId: string, note: TAddNote) {
+  const response = await api.post(`/quote/${quoteId}/internal-note`, note);
+  return response;
+}
+
+export async function AddQuoteCustomerNote(quoteId: string, note: TAddNote) {
+  const response = await api.post(`/quote/${quoteId}/customer-note`, note);
+  return response;
+}
+
+export async function AddQuoteAttachment(
+  quoteId: string,
+  attachment: TAddQuoteAttachment
+) {
+  const response = await api.post(`/quote/${quoteId}/attachment`, attachment);
   return response;
 }

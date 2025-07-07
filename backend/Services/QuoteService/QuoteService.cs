@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using backend.Data;
+using backend.Dtos.NotesDto;
 using backend.Dtos.QuoteDto;
 using backend.Models;
 using backend.Models.QuoteModels;
@@ -35,8 +37,10 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.Customer)
                                         .ThenInclude(c => c.CustomerPhones)
                                         .Include(q => q.Customer)
-                                        .Include(q => q.CustomerNotes)
-                                        .Include(q => q.InternalNotes)
+                                        .Include(q => q.CustomerNotes.OrderByDescending(n => n.CreatedAt))
+                                        .Include(q => q.InternalNotes.OrderByDescending(n => n.CreatedAt))
+                                        .Include(q => q.Attachments)
+                                        .Include(q => q.ActivityHistory.OrderByDescending(a => a.ChangedAt))
                                         .FirstOrDefaultAsync(q => q.Id == id);
         return quote;
     }
@@ -68,7 +72,6 @@ public class QuoteService : IQuoteService
             }
         };
     }
-
 
     public async Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId)
     {
@@ -174,11 +177,66 @@ public class QuoteService : IQuoteService
         };
     }
 
+    public async Task<QuoteStatsDto> GetQuoteStats(Guid workspaceId)
+    {
+        var now = DateTime.UtcNow;
+        var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
+        var firstDayOfLastMonth = firstDayOfThisMonth.AddMonths(-1);
+        var lastDayOfLastMonth = firstDayOfThisMonth.AddDays(-1);
+
+        var quotes = await _context.Quotes
+            .Where(q => q.WorkspaceId == workspaceId)
+            .Include(q => q.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .ToListAsync();
+
+        int totalQuotes = quotes.Count;
+
+        decimal totalValue = 0;
+        decimal approvedValue = 0;
+        int approvedQuotes = 0;
+
+        foreach (var quote in quotes)
+        {
+            decimal subtotal = quote.LineItems.Sum(li =>
+                (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
+
+            decimal discount = quote.DiscountType == DiscountType.Percentage
+                ? subtotal * quote.DiscountValue / 100
+                : quote.DiscountValue;
+
+            decimal subtotalAfterDiscount = subtotal - discount;
+            decimal taxAmount = subtotalAfterDiscount * quote.TaxRate;
+            decimal total = subtotalAfterDiscount + taxAmount;
+
+            totalValue += total;
+
+            if (quote.Status == QuoteStatus.Approved)
+            {
+                approvedValue += total;
+                approvedQuotes++;
+            }
+        }
+
+        double conversionRate = totalQuotes > 0
+            ? Math.Round((double)approvedQuotes / totalQuotes * 100, 2)
+            : 0;
+
+        return new QuoteStatsDto
+        {
+            TotalQuotes = totalQuotes,
+            TotalValue = totalValue,
+            ApprovedValue = approvedValue,
+            ConversionRate = conversionRate
+        };
+    }
+
     public async Task<Quote> CreateQuote(CreateQuoteDto createQuoteDto)
     {
         var quote = createQuoteDto.Adapt<Quote>();
         quote.Id = Guid.NewGuid();
         quote.QuoteNumber = await GenerateQuoteNumber(createQuoteDto.WorkspaceId);
+        quote.ExpiresAt = DateTime.UtcNow.AddDays(30);
 
         if (quote.LineItems == null)
         {
@@ -235,7 +293,6 @@ public class QuoteService : IQuoteService
             CreatedBy = n.CreatedBy,
             CreatedByName = n.CreatedByName,
             NoteText = n.NoteText,
-            CustomerId = n.CustomerId,
         }).ToList() ?? new List<Note>();
 
         quote.InternalNotes = createQuoteDto.InternalNotes?.Select(n => new Note
@@ -244,15 +301,12 @@ public class QuoteService : IQuoteService
             CreatedBy = n.CreatedBy,
             CreatedByName = n.CreatedByName,
             NoteText = n.NoteText,
-            CustomerId = n.CustomerId,
         }).ToList() ?? new List<Note>();
 
         foreach (var activity in quote.ActivityHistory)
         {
-            activity.Action = $"created quote {quote.QuoteNumber}";
-            quote.ActivityHistory.Add(activity);
+            activity.Action = $"created quote #{quote.QuoteNumber}";
         }
-
 
         var customer = await _context.Customers.FindAsync(createQuoteDto.CustomerId);
         customer.LastActivity = DateTime.UtcNow;
@@ -267,6 +321,87 @@ public class QuoteService : IQuoteService
         return quote;
     }
 
+    public async Task<Note> AddCustomerNoteToQuote(Guid quoteId, CreateNoteDto noteDto)
+    {
+        var quote = await _context.Quotes
+            .Include(q => q.CustomerNotes)
+            .FirstOrDefaultAsync(q => q.Id == quoteId)
+            ?? throw new Exception("Quote not found");
+
+        var note = new Note
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = noteDto.CreatedBy,
+            CreatedByName = noteDto.CreatedByName,
+            NoteText = noteDto.NoteText,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        quote.CustomerNotes.Add(note);
+
+        AddActivity(quote, "customer_note_added", $"added customer note to quote.", noteDto.CreatedBy, noteDto.CreatedByName);
+
+        await _context.Notes.AddAsync(note);
+        await _context.SaveChangesAsync();
+
+        return note;
+    }
+
+    public async Task<Note> AddInternalNoteToQuote(Guid quoteId, CreateNoteDto noteDto)
+    {
+        var quote = await _context.Quotes
+            .Include(q => q.InternalNotes)
+            .FirstOrDefaultAsync(q => q.Id == quoteId)
+            ?? throw new Exception("Quote not found");
+
+        var note = new Note
+        {
+            Id = Guid.NewGuid(),
+            CreatedBy = noteDto.CreatedBy,
+            CreatedByName = noteDto.CreatedByName,
+            NoteText = noteDto.NoteText,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        quote.InternalNotes.Add(note);
+
+        AddActivity(quote, "internal_note_added", $"added internal note to quote.", noteDto.CreatedBy, noteDto.CreatedByName);
+
+        await _context.Notes.AddAsync(note);
+        await _context.SaveChangesAsync();
+
+        return note;
+    }
+
+    public async Task<QuoteAttachment> AddAttachmentToQuote(Guid quoteId, QuoteAttachmentDto attachmentDto, string userId, string userName)
+    {
+        var quote = await _context.Quotes
+            .Include(q => q.Attachments)
+            .FirstOrDefaultAsync(q => q.Id == quoteId)
+            ?? throw new Exception("Quote not found");
+
+        var attachment = new QuoteAttachment
+        {
+            Id = Guid.NewGuid(),
+            FileName = attachmentDto.FileName,
+            Url = attachmentDto.Url,
+            QuoteId = quoteId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        quote.Attachments.Add(attachment);
+
+        AddActivity(quote, "attachment_added", $"added attachment {attachmentDto.FileName} to quote.", userId, userName);
+
+        await _context.QuoteAttachments.AddAsync(attachment);
+        await _context.SaveChangesAsync();
+
+        return attachment;
+    }
+
+
     public async Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
     {
         var quote = await _context.Quotes
@@ -277,6 +412,7 @@ public class QuoteService : IQuoteService
         if (updatedQuoteDto.DiscountType.HasValue) quote.DiscountType = updatedQuoteDto.DiscountType.Value;
         if (updatedQuoteDto.DiscountValue.HasValue) quote.DiscountValue = updatedQuoteDto.DiscountValue.Value;
         if (updatedQuoteDto.TaxRate.HasValue) quote.TaxRate = updatedQuoteDto.TaxRate.Value;
+        quote.Source = updatedQuoteDto.Source ?? quote.Source;
 
         if (updatedQuoteDto.LineItems != null)
         {
@@ -370,57 +506,19 @@ public class QuoteService : IQuoteService
         return $"{prefix}{datePart}-{sequence:D4}";
     }
 
-    public async Task<QuoteStatsDto> GetQuoteStats(Guid workspaceId)
+    private void AddActivity(Quote quote, string type, string action, string userId, string userName)
     {
-        var now = DateTime.UtcNow;
-        var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
-        var firstDayOfLastMonth = firstDayOfThisMonth.AddMonths(-1);
-        var lastDayOfLastMonth = firstDayOfThisMonth.AddDays(-1);
-
-        var quotes = await _context.Quotes
-            .Where(q => q.WorkspaceId == workspaceId)
-            .Include(q => q.LineItems)
-                .ThenInclude(li => li.ServiceItem)
-            .ToListAsync();
-
-        int totalQuotes = quotes.Count;
-
-        decimal totalValue = 0;
-        decimal approvedValue = 0;
-        int approvedQuotes = 0;
-
-        foreach (var quote in quotes)
+        var activity = new ActivityHistory
         {
-            decimal subtotal = quote.LineItems.Sum(li =>
-                (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
-
-            decimal discount = quote.DiscountType == DiscountType.Percentage
-                ? subtotal * quote.DiscountValue / 100
-                : quote.DiscountValue;
-
-            decimal subtotalAfterDiscount = subtotal - discount;
-            decimal taxAmount = subtotalAfterDiscount * quote.TaxRate;
-            decimal total = subtotalAfterDiscount + taxAmount;
-
-            totalValue += total;
-
-            if (quote.Status == QuoteStatus.Approved)
-            {
-                approvedValue += total;
-                approvedQuotes++;
-            }
-        }
-
-        double conversionRate = totalQuotes > 0
-            ? Math.Round((double)approvedQuotes / totalQuotes * 100, 2)
-            : 0;
-
-        return new QuoteStatsDto
-        {
-            TotalQuotes = totalQuotes,
-            TotalValue = totalValue,
-            ApprovedValue = approvedValue,
-            ConversionRate = conversionRate
+            Id = Guid.NewGuid(),
+            ChangedBy = Guid.Parse(userId),
+            ChangedByName = userName,
+            Type = type,
+            Action = action,
+            CreatedAt = DateTime.UtcNow
         };
+
+        quote.ActivityHistory.Add(activity);
+        _context.ActivityHistorys.Add(activity);
     }
 }

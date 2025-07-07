@@ -34,7 +34,7 @@ export type TQuote = {
   customerNotes?: TNote[];
   internalNotes?: TNote[];
   customerMessages?: string[];
-  activityHsitory: TActivityHistory[];
+  activityHistory: TActivityHistory[];
   source?: string;
   attachments: TQuoteAttachment[];
   createdAt: string;
@@ -57,7 +57,7 @@ export type TAddQuote = {
   internalNotes?: TAddNote[];
   activityHistory: TAddActivityHistory[];
   source?: string;
-  attachments: TQuoteAttachment[];
+  attachments: TAddQuoteAttachment[];
 };
 
 export type TUpdateQuote = {
@@ -91,9 +91,9 @@ export type TQuoteAttachment = {
   createdAt: string;
 };
 
-export type TUpdateQuoteAttachment = {
+export type TAddQuoteAttachment = {
   fileName: string;
-  url?: string;
+  url: string;
 };
 
 export type TQuoteStats = {

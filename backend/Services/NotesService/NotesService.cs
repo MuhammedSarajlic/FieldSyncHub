@@ -39,39 +39,25 @@ public class NotesService : INotesService
 
     public async Task<ApiResponse<List<Note>>> GetNoteByCustomerId(Guid customerId)
     {
-        var notes = await _context.Notes.Where(n => n.CustomerId == customerId)
-                                        .OrderByDescending(n => n.CreatedAt)
-                                        .ToListAsync();
+        return null;
+        // var notes = await _context.Notes.Where(n => n.CustomerId == customerId)
+        //                                 .OrderByDescending(n => n.CreatedAt)
+        //                                 .ToListAsync();
 
-        return new ApiResponse<List<Note>>()
-        {
-            Success = true,
-            Payload = notes,
-            ErrorMessage = null
-        };
+        // return new ApiResponse<List<Note>>()
+        // {
+        //     Success = true,
+        //     Payload = notes,
+        //     ErrorMessage = null
+        // };
     }
 
     public async Task<Note> CreateNote(CreateNoteDto createNoteDto)
     {
         var note = createNoteDto.Adapt<Note>();
         note.Id = Guid.NewGuid();
-        //Check this I think this should be there
-        note.CustomerId = createNoteDto.CustomerId;
-
-        var customer = await _context.Customers
-            .Where(c => c.Id == createNoteDto.CustomerId)
-            .Include(c => c.Notes)
-            .FirstOrDefaultAsync();
-
-        if (customer == null)
-        {
-            throw new Exception("Customer not found");
-        }
 
         await _context.Notes.AddAsync(note);
-        customer.Notes.Add(note);
-        customer.LastActivity = DateTime.UtcNow;
-
         await _context.SaveChangesAsync();
 
         return note;
