@@ -10,7 +10,7 @@ public class ActivityHistory
     public string Action { get; set; } = string.Empty;
     public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
     public Guid ChangedBy { get; set; }
-    public string ChangedByName { get; set; }
+    public string ChangedByName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

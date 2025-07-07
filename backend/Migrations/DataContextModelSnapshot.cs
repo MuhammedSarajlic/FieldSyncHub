@@ -757,6 +757,9 @@ namespace backend.Migrations
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<Guid?>("JobId")
                         .HasColumnType("char(36)");
 

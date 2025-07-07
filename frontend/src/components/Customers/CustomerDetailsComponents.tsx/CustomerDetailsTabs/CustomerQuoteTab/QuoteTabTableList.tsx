@@ -15,7 +15,7 @@ const QuoteTabTableList = ({ quotes, tab }: ICustomerQuotes) => {
   if (tab.loading) return <TabTableLoader label={tab.label} />;
 
   return (
-    <div className='w-full'>
+    <div className='divide-y divide-gray-100'>
       {quotes.length > 0 ? (
         quotes.map((quote) => <QuoteTabItem key={quote.id} quote={quote} />)
       ) : (

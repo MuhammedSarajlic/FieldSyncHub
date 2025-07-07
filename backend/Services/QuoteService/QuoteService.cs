@@ -51,6 +51,7 @@ public class QuoteService : IQuoteService
             .Include(q => q.Customer)
                 .ThenInclude(c => c.Properties)
             .Include(q => q.LineItems)
+            .OrderByDescending(q => q.CreatedAt)
             .Where(q => q.WorkspaceId == workspaceId);
 
         var totalCount = await query.CountAsync();
@@ -75,10 +76,11 @@ public class QuoteService : IQuoteService
 
     public async Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId)
     {
-        var quotes = await _context.Quotes.Include(q => q.LineItems)
+        var quotes = await _context.Quotes.Where(q => q.CustomerId == customerId)
+                                        .Include(q => q.LineItems)
                                         .Include(q => q.Customer)
                                         .ThenInclude(c => c.Properties)
-                                        .Where(q => q.CustomerId == customerId)
+                                        .OrderByDescending(q => q.CreatedAt)
                                         .ToListAsync();
         return new ApiResponse<List<Quote>> { Success = true, Payload = quotes };
     }
@@ -303,10 +305,9 @@ public class QuoteService : IQuoteService
             NoteText = n.NoteText,
         }).ToList() ?? new List<Note>();
 
-        foreach (var activity in quote.ActivityHistory)
-        {
-            activity.Action = $"created quote #{quote.QuoteNumber}";
-        }
+        var user = await _context.Users.FindAsync(createQuoteDto.CreatedByUserId);
+
+        AddActivity(quote, QuoteActivityType.QuoteCreated, $"created quote #{quote.QuoteNumber}", user.Id.ToString(), user.FullName);
 
         var customer = await _context.Customers.FindAsync(createQuoteDto.CustomerId);
         customer.LastActivity = DateTime.UtcNow;
@@ -340,7 +341,7 @@ public class QuoteService : IQuoteService
 
         quote.CustomerNotes.Add(note);
 
-        AddActivity(quote, "customer_note_added", $"added customer note to quote.", noteDto.CreatedBy, noteDto.CreatedByName);
+        AddActivity(quote, QuoteActivityType.CustomerNoteAdded, $"added customer note to quote.", noteDto.CreatedBy, noteDto.CreatedByName);
 
         await _context.Notes.AddAsync(note);
         await _context.SaveChangesAsync();
@@ -367,7 +368,7 @@ public class QuoteService : IQuoteService
 
         quote.InternalNotes.Add(note);
 
-        AddActivity(quote, "internal_note_added", $"added internal note to quote.", noteDto.CreatedBy, noteDto.CreatedByName);
+        AddActivity(quote, QuoteActivityType.InternalNoteAdded, $"added internal note to quote.", noteDto.CreatedBy, noteDto.CreatedByName);
 
         await _context.Notes.AddAsync(note);
         await _context.SaveChangesAsync();
@@ -393,7 +394,7 @@ public class QuoteService : IQuoteService
 
         quote.Attachments.Add(attachment);
 
-        AddActivity(quote, "attachment_added", $"added attachment {attachmentDto.FileName} to quote.", userId, userName);
+        AddActivity(quote, QuoteActivityType.AttachmentAdded, $"added attachment {attachmentDto.FileName} to quote.", userId, userName);
 
         await _context.QuoteAttachments.AddAsync(attachment);
         await _context.SaveChangesAsync();
@@ -408,7 +409,6 @@ public class QuoteService : IQuoteService
             .Include(q => q.LineItems)
             .FirstOrDefaultAsync(q => q.Id == updatedQuoteDto.Id) ?? throw new KeyNotFoundException($"Quote with ID {updatedQuoteDto.Id} not found.");
 
-        if (updatedQuoteDto.ExpiresAt.HasValue) quote.ExpiresAt = updatedQuoteDto.ExpiresAt.Value;
         if (updatedQuoteDto.DiscountType.HasValue) quote.DiscountType = updatedQuoteDto.DiscountType.Value;
         if (updatedQuoteDto.DiscountValue.HasValue) quote.DiscountValue = updatedQuoteDto.DiscountValue.Value;
         if (updatedQuoteDto.TaxRate.HasValue) quote.TaxRate = updatedQuoteDto.TaxRate.Value;
@@ -474,11 +474,82 @@ public class QuoteService : IQuoteService
 
     public async Task<bool> DeleteQuote(Guid id)
     {
-        var quote = await _context.Quotes.FindAsync(id);
+        var quote = await _context.Quotes
+            .Include(q => q.ActivityHistory)
+            .Include(q => q.InternalNotes)
+            .Include(q => q.CustomerNotes)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
         if (quote == null) return false;
+
+        var notesToDelete = new List<Note>();
+        notesToDelete.AddRange(quote.InternalNotes);
+        notesToDelete.AddRange(quote.CustomerNotes);
+
+        _context.ActivityHistorys.RemoveRange(quote.ActivityHistory);
+        _context.Notes.RemoveRange(notesToDelete);
         _context.Quotes.Remove(quote);
+
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task ArchiveQuote(Guid id)
+    {
+        var quote = await _context.Quotes.FirstOrDefaultAsync(q => q.Id == id) ?? throw new KeyNotFoundException($"Quote with ID {id} not found.");
+
+        quote.IsArchived = true;
+        quote.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<Quote> ChangeQuoteStatus(Guid id, QuoteStatus status, string userId, string userName)
+    {
+        var quote = await _context.Quotes.Where(q => q.Id == id)
+                                        .Include(q => q.ActivityHistory)
+                                        .FirstOrDefaultAsync()
+            ?? throw new KeyNotFoundException($"Quote with ID {id} not found.");
+
+        if (quote.Status == status) return null;
+
+        quote.Status = status;
+        quote.UpdatedAt = DateTime.UtcNow;
+
+        if (status == QuoteStatus.Sent)
+        {
+            quote.SentAt = DateTime.UtcNow;
+            quote.Viewed = false;
+            quote.ViewedAt = null;
+            AddActivity(quote, QuoteActivityType.QuoteSent, $"marked quote as sent.", userId, userName);
+        }
+        else if (status == QuoteStatus.Approved)
+        {
+            quote.SentAt = DateTime.UtcNow;
+            quote.Viewed = true;
+            quote.ViewedAt = DateTime.UtcNow;
+            AddActivity(quote, QuoteActivityType.MarkedAccepted, $"marked quote as approved.", userId, userName);
+        }
+        else if (status == QuoteStatus.Declined)
+        {
+            quote.SentAt = DateTime.UtcNow;
+            quote.Viewed = true;
+            quote.ViewedAt = DateTime.UtcNow;
+            AddActivity(quote, QuoteActivityType.MarkedRejected, $"marked quote as rejected.", userId, userName);
+        }
+
+        await _context.SaveChangesAsync();
+
+        quote = await _context.Quotes
+            .Where(q => q.Id == id)
+            .Include(q => q.ActivityHistory)
+            .FirstOrDefaultAsync();
+
+        quote.ActivityHistory = quote.ActivityHistory
+            .OrderByDescending(a => a.CreatedAt)
+            .ToList();
+
+        return quote;
     }
 
     private async Task<string> GenerateQuoteNumber(Guid workspaceId)
@@ -506,14 +577,16 @@ public class QuoteService : IQuoteService
         return $"{prefix}{datePart}-{sequence:D4}";
     }
 
-    private void AddActivity(Quote quote, string type, string action, string userId, string userName)
+    private void AddActivity(Quote quote, QuoteActivityType type, string action, string userId, string userName)
     {
+        var activityType = type.ToString("G");
+
         var activity = new ActivityHistory
         {
             Id = Guid.NewGuid(),
             ChangedBy = Guid.Parse(userId),
             ChangedByName = userName,
-            Type = type,
+            Type = activityType,
             Action = action,
             CreatedAt = DateTime.UtcNow
         };

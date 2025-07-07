@@ -6,6 +6,7 @@ interface IIconButton {
   iconPosition?: string;
   customStyle?: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
 }
 
 const IconButton = ({
@@ -14,6 +15,7 @@ const IconButton = ({
   iconPosition = 'left',
   customStyle = '',
   onClick,
+  disabled,
 }: IIconButton) => {
   const baseClasses = `
     flex items-center justify-center
@@ -29,7 +31,11 @@ const IconButton = ({
   };
 
   return (
-    <button className={`${baseClasses} ${customStyle}`} onClick={handleClick}>
+    <button
+      disabled={disabled}
+      className={`${baseClasses} ${customStyle}`}
+      onClick={handleClick}
+    >
       {iconPosition === 'left' && icon && <span>{icon}</span>}
       {children}
       {iconPosition === 'right' && icon && <span>{icon}</span>}

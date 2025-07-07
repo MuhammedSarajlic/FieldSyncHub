@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using backend.Dtos.ActivityHistoryDto;
 
 namespace backend.Models.QuoteModels;
 
@@ -62,6 +61,7 @@ public class Quote
 
     public ICollection<QuoteAttachment> Attachments { get; set; } = [];
 
+    public bool IsArchived { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -82,4 +82,20 @@ public enum DiscountType
 {
     Percentage,
     FixedAmount
+}
+
+public enum QuoteActivityType
+{
+    QuoteCreated,
+    QuoteEdited,
+    QuoteSent,
+    InternalNoteAdded,
+    CustomerNoteAdded,
+    CustomerMessageAdded,
+    AttachmentAdded,
+    MarkedSent,
+    MarkedAccepted,
+    MarkedRejected,
+    ConvertedToJob,
+    StatusChanged
 }

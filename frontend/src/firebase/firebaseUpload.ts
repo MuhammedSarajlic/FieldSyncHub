@@ -20,7 +20,12 @@ export const uploadFileToFirebase = (
   return new Promise((resolve) => {
     const storage = getStorage();
     const storageRef = ref(storage, `${folderName}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    const metadata = {
+      contentDisposition: `attachment; filename="${file.name}"`,
+    };
+
+    const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
     uploadTask.on(
       'state_changed',

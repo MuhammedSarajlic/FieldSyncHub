@@ -10,7 +10,6 @@ import {
   Send,
   Download,
   Plus,
-  MessageSquare,
   Archive,
   Printer,
   Check,
@@ -19,13 +18,9 @@ import {
   Eye,
   HardHat,
   MoreVertical,
-  Paperclip,
-  Settings,
-  CheckCircle,
-  XCircle,
   Briefcase,
-  Clock,
   Calendar,
+  Trash2,
 } from 'lucide-react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
@@ -33,32 +28,61 @@ import { useClickOutside } from '../../hooks/useClickOutside';
 import IconButton from '../../components/CustomElements/Buttons/IconButton';
 import { getQuoteStatus } from '../../utils/FuntionHelpers/getQuoteStatus';
 import QuoteNote from '../../components/Quotes/QuoteNotes/QuoteNote';
-import {
-  TAddQuoteAttachment,
-  TQuote,
-  TQuoteAttachment,
-} from '../../types/Quote';
-import { useParams } from 'react-router';
+import { TQuote, TQuoteAttachment } from '../../types/Quote';
+import { useNavigate, useParams } from 'react-router';
 import {
   AddQuoteCustomerNote,
   AddQuoteInternalNote,
+  ArchiveQuote,
+  ChangeQuoteStatus,
+  DeleteQuote,
   GetQuoteById,
 } from '../../services/Quote';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
-import { QuoteStatus } from '../../constants/Enumeration/QuoteEnum/QuoteEnum';
+import {
+  QuoteActivityType,
+  QuoteStatus,
+} from '../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import CustomButton from '../../components/CustomElements/Buttons/CustomButton';
-import { TAddNote } from '../../types/Note';
+import { TAddNote, TNote } from '../../types/Note';
 import { useAuth } from '../../context/AuthProvider';
 import { DateTime } from 'luxon';
 import QuoteAttachments from '../../components/Quotes/QuoteAttachments/QuoteAttachments';
+import { getQuoteActivityStyle } from '../../utils/FuntionHelpers/QuoteUtils/getQuoteActivityStyle';
+import SendQuoteModal from '../../components/Quotes/QuotesModals/SendQuoteModal';
+import ActionConfirmationModal from '../../components/Quotes/QuotesModals/ActionConfirmationModal';
+
+const mockSendQuoteApi = async (data: {
+  recipientEmail: string;
+  subject: string;
+  message: string;
+  attachPdf: boolean;
+  quoteId: string;
+}) => {
+  return new Promise<void>((resolve, reject) => {
+    setTimeout(() => {
+      if (Math.random() > 0.1) {
+        // Simulate 90% success rate
+        console.log('Sending quote:', data);
+        resolve();
+      } else {
+        reject(new Error('Network error or server issue'));
+      }
+    }, 1500); // Simulate API call delay
+  });
+};
 
 const QuoteDetails = () => {
-  const { quoteId } = useParams();
   const { user } = useAuth();
+  const { quoteId } = useParams();
+  const navigate = useNavigate();
 
   const [isShowMoreDropdownOpen, setIsShowMoreDropdownOpen] = useState(false);
   const [isAddInternalNoteOpen, setIsAddInternalNoteOpen] = useState(false);
   const [isAddCustomerNoteOpen, setIsAddCustomerNoteOpen] = useState(false);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [isArchiveQuote, setIsArchiveQuote] = useState(false);
+  const [isDeleteQuote, setIsDeleteQuote] = useState(false);
   const [internalNote, setInternalNote] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [quote, setQuote] = useState<TQuote | null>(null);
@@ -92,10 +116,16 @@ const QuoteDetails = () => {
       };
       const response = await AddQuoteInternalNote(quote.id, updatedNote);
       if (response.status === 200) {
-        setQuote((prev) => ({
-          ...prev,
-          internalNotes: [...(prev?.internalNotes || []), response.data],
-        }));
+        setQuote((prev) => {
+          if (!prev) return null;
+
+          const newInternalNote: TNote = response.data;
+
+          return {
+            ...prev,
+            internalNotes: [...(prev.internalNotes || []), newInternalNote],
+          };
+        });
         setIsAddInternalNoteOpen(false);
         setInternalNote('');
       }
@@ -106,234 +136,72 @@ const QuoteDetails = () => {
       };
       const response = await AddQuoteCustomerNote(quote.id, updatedNote);
       if (response.status === 200) {
-        setQuote((prev) => ({
-          ...prev,
-          customerNotes: [...(prev?.customerNotes || []), response.data],
-        }));
+        setQuote((prev) => {
+          if (!prev) return null;
+
+          const newCustomerNote: TNote = response.data;
+
+          return {
+            ...prev,
+            customerNotes: [...(prev.customerNotes || []), newCustomerNote],
+          };
+        });
         setIsAddCustomerNoteOpen(false);
         setCustomerNote('');
       }
     }
   };
 
-  // Sample quote data (Keep this for mock purposes if live data is not available)
+  const handleDeleteQuote = async () => {
+    const response = await DeleteQuote(quoteId as string);
+    if (response.status === 204) {
+      navigate('/quotes');
+    }
+  };
+
+  const handleArchiveQuote = async () => {
+    await ArchiveQuote(quoteId as string);
+  };
+
+  const handleChangeQuoteStatus = async (status: QuoteStatus) => {
+    const response = await ChangeQuoteStatus(quoteId as string, status);
+    if (response.status === 200) {
+      console.log('1');
+      console.log(response);
+
+      const { status, activityHistory } = response.data;
+      console.log('2');
+      console.log(activityHistory);
+      setQuote((prev) => {
+        if (!prev) return null;
+        return { ...prev, status, activityHistory };
+      });
+    }
+  };
+
+  const handleSendQuote = async (data: {
+    recipientEmail: string;
+    subject: string;
+    message: string;
+    attachPdf: boolean;
+    quoteId: string;
+  }) => {
+    // In a real application, you would call your actual API here
+    // e.g., const response = await yourApi.sendQuote(data);
+    // Handle success/failure based on response
+    console.log('Attempting to send quote with data:', data);
+    await mockSendQuoteApi(data); // Using mock API for demonstration
+  };
+
   const mockQuote = {
     customer: {
       name: 'John Smith',
     },
     paymentTerms: 'Net 30',
-    assignedTo: 'Mike Johnson', // Example assignedTo
     customerMessage:
       'Thank you for the detailed quote. I will review it with my partner and get back to you soon.',
-    attachments: ['floor_plan.pdf', 'product_specs.pdf'],
   };
 
-  const getActivityStyle = (activityType: string) => {
-    // Added type for activityType
-    const styles: {
-      [key: string]: {
-        icon: any;
-        bgColor: string;
-        textColor: string;
-        lightBg: string;
-      };
-    } = {
-      // Added type definition for styles
-      quote_created: {
-        icon: FileText,
-        bgColor: 'bg-blue-500',
-        textColor: 'text-blue-500',
-        lightBg: 'bg-blue-100',
-      },
-      quote_edited: {
-        icon: Edit3,
-        bgColor: 'bg-orange-500',
-        textColor: 'text-orange-500',
-        lightBg: 'bg-orange-100',
-      },
-      quote_sent: {
-        icon: Send,
-        bgColor: 'bg-green-500',
-        textColor: 'text-green-500',
-        lightBg: 'bg-green-100',
-      },
-      internal_note_added: {
-        icon: MessageSquare,
-        bgColor: 'bg-purple-500',
-        textColor: 'text-purple-500',
-        lightBg: 'bg-purple-100',
-      },
-      customer_note_added: {
-        icon: MessageSquare,
-        bgColor: 'bg-indigo-500',
-        textColor: 'text-indigo-500',
-        lightBg: 'bg-indigo-100',
-      },
-      customer_message: {
-        icon: MessageSquare,
-        bgColor: 'bg-cyan-500',
-        textColor: 'text-cyan-500',
-        lightBg: 'bg-cyan-100',
-      },
-      attachment_added: {
-        icon: Paperclip,
-        bgColor: 'bg-gray-500',
-        textColor: 'text-gray-500',
-        lightBg: 'bg-gray-100',
-      },
-      status_changed: {
-        icon: Settings,
-        bgColor: 'bg-yellow-500',
-        textColor: 'text-yellow-500',
-        lightBg: 'bg-yellow-100',
-      },
-      marked_sent: {
-        icon: Send,
-        bgColor: 'bg-green-500',
-        textColor: 'text-green-500',
-        lightBg: 'bg-green-100',
-      },
-      marked_accepted: {
-        icon: CheckCircle,
-        bgColor: 'bg-emerald-500',
-        textColor: 'text-emerald-500',
-        lightBg: 'bg-emerald-100',
-      },
-      marked_rejected: {
-        icon: XCircle,
-        bgColor: 'bg-red-500',
-        textColor: 'text-red-500',
-        lightBg: 'bg-red-100',
-      },
-      converted_to_job: {
-        icon: Briefcase,
-        bgColor: 'bg-blue-600',
-        textColor: 'text-blue-600',
-        lightBg: 'bg-blue-100',
-      },
-      default: {
-        icon: Clock,
-        bgColor: 'bg-gray-400',
-        textColor: 'text-gray-400',
-        lightBg: 'bg-gray-100',
-      },
-    };
-
-    return styles[activityType] || styles.default;
-  };
-
-  // Activity feed mock data
-  const sampleActivities = [
-    {
-      id: 1,
-      type: 'quote_created',
-      action: 'created quote #Q-2024-001',
-      changedByName: 'John Smith',
-      changedAt: new Date().toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 2,
-      type: 'quote_edited',
-      action: 'edited quote details',
-      changedByName: 'Sarah Johnson',
-      changedAt: new Date(Date.now() - 3600000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 3,
-      type: 'internal_note_added',
-      action: 'added internal note',
-      changedByName: 'Mike Wilson',
-      changedAt: new Date(Date.now() - 7200000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 4,
-      type: 'quote_sent',
-      action: 'sent quote to customer',
-      changedByName: 'Emily Davis',
-      changedAt: new Date(Date.now() - 10800000).toISOString(),
-      isScheduled: true,
-    },
-    {
-      id: 5,
-      type: 'customer_message',
-      action: 'sent a message',
-      changedByName: 'Customer Portal',
-      changedAt: new Date(Date.now() - 14400000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 6,
-      type: 'attachment_added',
-      action: 'added attachment: blueprint.pdf',
-      changedByName: 'Tom Brown',
-      changedAt: new Date(Date.now() - 18000000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 7,
-      type: 'marked_accepted',
-      action: 'marked quote as accepted',
-      changedByName: 'Lisa Anderson',
-      changedAt: new Date(Date.now() - 21600000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 8,
-      type: 'customer_note_added',
-      action: 'added customer note',
-      changedByName: 'Lisa Anderson',
-      changedAt: new Date(Date.now() - 21600000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 9,
-      type: 'marked_sent',
-      action: 'marked quote as sent',
-      changedByName: 'Lisa Anderson',
-      changedAt: new Date(Date.now() - 21600000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 10,
-      type: 'marked_rejected',
-      action: 'marked quote as rejected',
-      changedByName: 'Lisa Anderson',
-      changedAt: new Date(Date.now() - 21600000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 11,
-      type: 'converted_to_job',
-      action: 'converted quote to job',
-      changedByName: 'Lisa Anderson',
-      changedAt: new Date(Date.now() - 21600000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 12,
-      type: 'status_changed',
-      action: 'status changed to ...',
-      changedByName: 'Lisa Anderson',
-      changedAt: new Date(Date.now() - 21600000).toISOString(),
-      isScheduled: false,
-    },
-    {
-      id: 13,
-      type: 'status_changed123',
-      action: 'status changed to ...',
-      changedByName: 'Lisa Anderson',
-      changedAt: new Date(Date.now() - 21600000).toISOString(),
-      isScheduled: false,
-    },
-  ];
-
-  let activityFeed: any[] = []; // Explicitly type activityFeed
-
-  const displayActivities =
-    activityFeed.length > 0 ? activityFeed : sampleActivities;
   const showMoreRef = useClickOutside<HTMLDivElement>(() =>
     setIsShowMoreDropdownOpen(false)
   );
@@ -387,7 +255,7 @@ const QuoteDetails = () => {
                 <IconButton
                   icon={<Send className='w-4 h-4 mr-2' />}
                   customStyle='py-2 px-4 bg-bg-primary border-none text-white hover:border-gray-300 hover:bg-bg-primary-hover'
-                  onClick={() => {}}
+                  onClick={() => setIsSendModalOpen(true)}
                 >
                   Send
                 </IconButton>
@@ -433,6 +301,60 @@ const QuoteDetails = () => {
                           href='#'
                           className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
+                          <CopyIcon className='w-4 h-4 mr-2' />
+                          Duplicate
+                        </a>
+                        <a
+                          href='#'
+                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
+                          <HardHat className='w-4 h-4 mr-2' />
+                          Convert to Job
+                        </a>
+
+                        {/* Status group */}
+                        <div className='border-t border-gray-100 my-1'></div>
+                        <div className='px-3 py-1 text-xs font-medium text-gray-500'>
+                          Status
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleChangeQuoteStatus(QuoteStatus.Sent)
+                          }
+                          className='flex items-center cursor-pointer w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
+                          <Send className='w-4 h-4 mr-2' />
+                          Mark as Sent
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleChangeQuoteStatus(QuoteStatus.Approved)
+                          }
+                          className='flex items-center cursor-pointer w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
+                          <Check className='w-4 h-4 mr-2' />
+                          Mark as Accepted
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleChangeQuoteStatus(QuoteStatus.Declined)
+                          }
+                          className='flex items-center cursor-pointer w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
+                          <X className='w-4 h-4 mr-2' />
+                          Mark as Rejected
+                        </button>
+
+                        {/* Actions group */}
+                        <div className='border-t border-gray-100 my-1'></div>
+                        <div className='px-3 py-1 text-xs font-medium text-gray-500'>
+                          Actions
+                        </div>
+
+                        <a
+                          href='#'
+                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
                           <Printer className='w-4 h-4 mr-2' />
                           Print
                         </a>
@@ -443,61 +365,20 @@ const QuoteDetails = () => {
                           <Download className='w-4 h-4 mr-2' />
                           Download
                         </a>
-
-                        {/* Status group */}
-                        <div className='border-t border-gray-100 my-1'></div>
-                        <div className='px-3 py-1 text-xs font-medium text-gray-500'>
-                          Status
-                        </div>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        <button
+                          onClick={() => setIsArchiveQuote(true)}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
-                          <Send className='w-4 h-4 mr-2' />
-                          Mark as Sent
-                        </a>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                        >
-                          <Check className='w-4 h-4 mr-2' />
-                          Mark as Accepted
-                        </a>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                        >
-                          <X className='w-4 h-4 mr-2' />
-                          Mark as Rejected
-                        </a>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                        >
-                          <HardHat className='w-4 h-4 mr-2' />
-                          Convert to Job
-                        </a>
-
-                        {/* Actions group */}
-                        <div className='border-t border-gray-100 my-1'></div>
-                        <div className='px-3 py-1 text-xs font-medium text-gray-500'>
-                          Actions
-                        </div>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                        >
-                          <CopyIcon className='w-4 h-4 mr-2' />
-                          Duplicate
-                        </a>
-
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100'
-                        >
-                          <Archive className='w-4 h-4 mr-2 text-red-600' />
+                          <Archive className='w-4 h-4 mr-2' />
                           Archive
-                        </a>
+                        </button>
+                        <button
+                          onClick={() => setIsDeleteQuote(true)}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100'
+                        >
+                          <Trash2 className='w-4 h-4 mr-2 text-red-600' />
+                          Delete
+                        </button>
                       </div>
                     </motion.div>
                   )}
@@ -664,7 +545,9 @@ const QuoteDetails = () => {
                     </p>
                   ) : (
                     quote.activityHistory?.map((activity, index) => {
-                      const style = getActivityStyle(activity.type);
+                      const style = getQuoteActivityStyle(
+                        QuoteActivityType[activity.type]
+                      );
                       const IconComponent = style.icon;
                       const localDate = DateTime.fromISO(activity.changedAt, {
                         zone: 'utc',
@@ -780,6 +663,21 @@ const QuoteDetails = () => {
                   Quote Details
                 </h3>
                 <div className='space-y-3 text-sm text-gray-700'>
+                  {/* Created At */}
+                  {quote.createdAt && (
+                    <div className='flex items-center'>
+                      <Calendar className='w-4 h-4 mr-3 text-gray-400' />
+                      <p>
+                        Created:{' '}
+                        <span className='font-medium'>
+                          {DateTime.fromISO(quote.createdAt, { zone: 'utc' })
+                            .toLocal()
+                            .toFormat('MMM dd, yyyy')}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+
                   {/* Expires At */}
                   {quote.expiresAt && (
                     <div className='flex items-center'>
@@ -796,13 +694,13 @@ const QuoteDetails = () => {
                   )}
 
                   {/* Assigned To */}
-                  {mockQuote.assignedTo && ( // Assuming quote.assignedTo exists as a string
+                  {quote.assignedToUser && (
                     <div className='flex items-center'>
                       <User className='w-4 h-4 mr-3 text-gray-400' />
                       <p>
                         Assigned To:{' '}
                         <span className='font-medium'>
-                          {mockQuote.assignedTo}
+                          {quote.assignedToUser.fullName}
                         </span>
                       </p>
                     </div>
@@ -836,16 +734,6 @@ const QuoteDetails = () => {
                       </p>
                     </div>
                   )}
-
-                  {/* Message if no details are available */}
-                  {!quote.expiresAt &&
-                    !quote.assignedTo &&
-                    !quote.source &&
-                    !quote.jobId && (
-                      <p className='text-gray-500 text-center py-4'>
-                        No additional quote details available.
-                      </p>
-                    )}
                 </div>
               </div>
 
@@ -877,7 +765,7 @@ const QuoteDetails = () => {
                     <div className='flex space-x-2'>
                       <CustomButton
                         onClick={() => setIsAddInternalNoteOpen(false)}
-                        customStyle='py-1.5 px-3.5'
+                        customStyle='py-1.5 px-3.5 hover:bg-gray-50'
                       >
                         Cancel
                       </CustomButton>
@@ -899,7 +787,7 @@ const QuoteDetails = () => {
                     </div>
                   ) : (
                     quote.internalNotes.map((note) => (
-                      <QuoteNote key={note.id} note={note} /> // Assuming notes have a unique 'id'
+                      <QuoteNote key={note.id} note={note} />
                     ))
                   )}
                 </div>
@@ -933,7 +821,7 @@ const QuoteDetails = () => {
                     <div className='flex space-x-2'>
                       <CustomButton
                         onClick={() => setIsAddCustomerNoteOpen(false)}
-                        customStyle='py-1.5 px-3.5'
+                        customStyle='py-1.5 px-3.5 hover:bg-gray-50'
                       >
                         Cancel
                       </CustomButton>
@@ -994,6 +882,32 @@ const QuoteDetails = () => {
           </motion.div>
         </div>
       </div>
+      <ActionConfirmationModal
+        isOpen={isArchiveQuote}
+        onClose={() => setIsArchiveQuote(false)}
+        onConfirm={handleArchiveQuote}
+        itemName={quote.title || 'Quote'}
+        actionType='archive'
+        itemType='quote'
+      />
+      <ActionConfirmationModal
+        isOpen={isDeleteQuote}
+        onClose={() => setIsDeleteQuote(false)}
+        onConfirm={handleDeleteQuote}
+        itemName={quote.title || 'Quote'}
+        actionType='delete'
+        itemType='quote'
+      />
+      {isSendModalOpen && (
+        <SendQuoteModal
+          isOpen={isSendModalOpen}
+          onClose={() => setIsSendModalOpen(false)}
+          onSend={handleSendQuote}
+          customer={quote.customer}
+          quote={quote}
+          user={user}
+        />
+      )}
     </div>
   );
 };

@@ -22,22 +22,22 @@ const QuoteTabItem = ({ quote }: ICustomerDetailsQuoteItem) => {
       {/* Left Section: Quote Number and Status */}
       <div className='flex-1 min-w-0 space-y-2'>
         <div className='flex items-center gap-3'>
-          <h3 className='text-base font-semibold text-gray-900 truncate'>
-            Quote #{quote.quoteNumber ?? 'N/A'}
+          <h3 className='text-lg font-semibold text-gray-900 truncate'>
+            {quote.title ?? 'N/A'}
           </h3>
           <div
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
               getQuoteStatus(quote.status).color
             }`}
           >
+            {getQuoteStatus(quote.status).icon}
             {QuoteStatus[quote.status]}
           </div>
         </div>
 
         {/* Display single most relevant date */}
         <div className='flex items-center gap-1.5 text-gray-600 text-sm'>
-          <Calendar className='h-4 w-4 flex-shrink-0 text-gray-400' />
-          <span>Created: {formatDate(quote.createdAt)}</span>
+          <span>Quote #{quote.quoteNumber ?? 'N/A'}</span>
         </div>
       </div>
 
@@ -46,9 +46,14 @@ const QuoteTabItem = ({ quote }: ICustomerDetailsQuoteItem) => {
         <div className='font-semibold text-lg text-gray-900'>
           {formatCurrency(quote.total)}
         </div>
-        {quote.expiresAt && expireDate < currentDate && quote.status == 6 && (
+        {quote.expiresAt && expireDate < currentDate && quote.status == 6 ? (
           <div className='flex items-center gap-1.5 text-red-600 text-sm'>
             <span>Expired at: {formatDate(quote.expiresAt)}</span>
+          </div>
+        ) : (
+          <div className='flex items-center gap-1.5 text-gray-600 text-sm'>
+            <Calendar className='h-4 w-4 flex-shrink-0 text-gray-400' />
+            <span>Created: {formatDate(quote.createdAt)}</span>
           </div>
         )}
       </div>

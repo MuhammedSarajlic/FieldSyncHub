@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   X,
   Plus,
-  Trash2,
   User,
   FileText,
   Calculator,
@@ -10,7 +9,6 @@ import {
   Building2,
   Mail,
   Phone,
-  Search,
   Percent,
   DollarSign,
   Info,
@@ -20,10 +18,7 @@ import {
 import { QuoteStatus } from '../../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
 import { TAddQuote, TQuote } from '../../../types/Quote';
-import {
-  GetAllCustomers,
-  GetCustomerByWorkspace,
-} from '../../../services/Customer';
+import { GetCustomerByWorkspace } from '../../../services/Customer';
 import { TCustomer } from '../../../types/Customer';
 import {
   GetServiceItems,
@@ -62,6 +57,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     workspaceId: '',
     customerId: '',
     createdByUserId: '',
+    assignedToUserId: '',
     status: QuoteStatus.Draft,
     title: '',
     propertyId: '',
@@ -81,7 +77,6 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
         createdBy: '',
         createdByName: '',
         noteText: '',
-        customerId: '',
       },
     ],
     internalNotes: [
@@ -89,7 +84,6 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
         createdBy: '',
         createdByName: '',
         noteText: '',
-        customerId: '',
       },
     ],
     activityHistory: [],
@@ -243,27 +237,17 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
       console.error('User or workspace not available.');
       return;
     }
-    const activityHistory = [
-      {
-        changedBy: user.id,
-        changedByName: user.fullName,
-        type: 'quote_created',
-        action: 'created quote',
-      },
-    ];
     const updatedQuote = {
       ...quote,
       workspaceId: user.workspace.id,
       createdByUserId: user.id,
       taxRate: quote.taxRate / 100,
-      activityHistory: activityHistory,
+      assignedToUserId: user.id,
       customerNotes: quote.customerNotes.filter(
-        (n) =>
-          n.noteText?.trim() && n.createdBy && n.createdByName && n.customerId
+        (n) => n.noteText?.trim() && n.createdBy && n.createdByName
       ),
       internalNotes: quote.internalNotes.filter(
-        (n) =>
-          n.noteText?.trim() && n.createdBy && n.createdByName && n.customerId
+        (n) => n.noteText?.trim() && n.createdBy && n.createdByName
       ),
     };
     try {
@@ -271,7 +255,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
       if (response.status === 200) {
         console.log(response);
 
-        setQuotes((prev) => [...prev, response.data]);
+        setQuotes((prev) => [response.data, ...prev]);
         onClose();
       } else {
         console.error(

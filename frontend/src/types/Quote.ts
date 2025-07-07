@@ -10,10 +10,13 @@ import { TUser } from './User';
 export type TQuote = {
   id: string;
   workspaceId: string;
+  jobId?: string;
   customerId: string;
   customer?: TCustomer;
   createdByUserId: string;
   createdByUser?: TUser;
+  assignedToUserId: string;
+  assignedToUser: TUser;
   title: string;
   propertyId: string;
   property?: TProperty;
@@ -22,7 +25,7 @@ export type TQuote = {
   sentAt?: string;
   viewed: boolean;
   viewedAt?: string;
-  expiresAt?: string;
+  expiresAt: string;
   lineItems: TLineItem[];
   discountType: DiscountType;
   discountValue: number;
@@ -31,8 +34,8 @@ export type TQuote = {
   discount: number;
   taxAmount: number;
   total: number;
-  customerNotes?: TNote[];
-  internalNotes?: TNote[];
+  customerNotes: TNote[];
+  internalNotes: TNote[];
   customerMessages?: string[];
   activityHistory: TActivityHistory[];
   source?: string;
@@ -45,8 +48,8 @@ export type TAddQuote = {
   workspaceId: string;
   customerId: string;
   createdByUserId: string;
+  assignedToUserId: string;
   status: QuoteStatus;
-  expiresAt?: string;
   title: string;
   propertyId?: string;
   lineItems: TAddLineItem[];
@@ -62,9 +65,10 @@ export type TAddQuote = {
 
 export type TUpdateQuote = {
   id: string;
-  expiresAt?: string;
+  assignedToUserId: string;
   lineItems?: TUpdateLineItem[];
   title?: string;
+  propertyId?: string;
   discountType?: DiscountType;
   discountValue?: number;
   taxRate?: number;
@@ -85,7 +89,7 @@ export type TQuoteFilter = {
 export type TQuoteAttachment = {
   id: string;
   fileName: string;
-  url?: string;
+  url: string;
   quoteId: string;
   quote?: TQuote;
   createdAt: string;

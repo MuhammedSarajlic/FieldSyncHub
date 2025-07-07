@@ -14,11 +14,13 @@ public interface IQuoteService
     Task<ApiResponse<PagedResult<Quote>>> GetQuotesByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
     Task<ApiResponse<PagedResult<Quote>>> GetQuotesByFilter(Guid workspaceId, int pageNumber, int pageSize, QuoteFilterDto filterDto);
     Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId);
+    Task<QuoteStatsDto> GetQuoteStats(Guid workspaceId);
     Task<Quote> CreateQuote(CreateQuoteDto createQuoteDto);
     Task<Note> AddCustomerNoteToQuote(Guid quoteId, CreateNoteDto noteDto);
     Task<Note> AddInternalNoteToQuote(Guid quoteId, CreateNoteDto noteDto);
     Task<QuoteAttachment> AddAttachmentToQuote(Guid quoteId, QuoteAttachmentDto attachmentDto, string userId, string userName);
     Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto);
     Task<bool> DeleteQuote(Guid id);
-    Task<QuoteStatsDto> GetQuoteStats(Guid workspaceId);
+    Task ArchiveQuote(Guid id);
+    Task<Quote> ChangeQuoteStatus(Guid id, QuoteStatus status, string userId, string userName);
 }

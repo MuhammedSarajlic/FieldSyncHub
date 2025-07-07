@@ -8,3 +8,18 @@ export enum QuoteStatus {
   Expired,
   ConvertedToJob,
 }
+
+export enum QuoteActivityType {
+  QuoteCreated,
+  QuoteEdited,
+  QuoteSent,
+  InternalNoteAdded,
+  CustomerNoteAdded,
+  CustomerMessageAdded,
+  AttachmentAdded,
+  MarkedSent,
+  MarkedAccepted,
+  MarkedRejected,
+  ConvertedToJob,
+  StatusChanged,
+}

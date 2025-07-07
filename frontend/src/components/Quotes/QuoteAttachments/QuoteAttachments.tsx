@@ -25,9 +25,9 @@ interface FileWithUploadStatus {
   uploadStatus: UploadStatus;
 }
 
-interface QuoteAttachmentsProps {
+interface IQuoteAttachments {
   quoteId: string;
-  currentAttachments: TAddQuoteAttachment[];
+  currentAttachments: TQuoteAttachment[];
   onAttachmentsUpdated: (newAttachment: TQuoteAttachment) => void;
 }
 
@@ -42,11 +42,11 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const QuoteAttachments: React.FC<QuoteAttachmentsProps> = ({
+const QuoteAttachments = ({
   quoteId,
   currentAttachments,
   onAttachmentsUpdated,
-}) => {
+}: IQuoteAttachments) => {
   const [isUploadAreaOpen, setIsUploadAreaOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileWithUploadStatus[]>(
     []
@@ -213,11 +213,8 @@ const QuoteAttachments: React.FC<QuoteAttachmentsProps> = ({
     }
   };
 
-  const handleDownload = (url: string, fileName: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    link.click();
+  const handleDownload = (url: string) => {
+    window.open(url, '_blank');
   };
 
   return (
@@ -315,7 +312,7 @@ const QuoteAttachments: React.FC<QuoteAttachmentsProps> = ({
           <div className='mt-6 flex justify-end space-x-3'>
             <CustomButton
               onClick={handleCancelUpload}
-              customStyle='py-1.5 px-4 bg-gray-200 text-gray-700 hover:bg-gray-300 border-none'
+              customStyle='py-1.5 px-4 hover:bg-gray-50'
             >
               Cancel
             </CustomButton>
@@ -348,9 +345,7 @@ const QuoteAttachments: React.FC<QuoteAttachmentsProps> = ({
               </div>
               {attachment.url && (
                 <button
-                  onClick={() =>
-                    handleDownload(attachment.url, attachment.fileName)
-                  }
+                  onClick={() => handleDownload(attachment.url)}
                   className='hover:opacity-80 cursor-pointer'
                 >
                   <Download className='w-4 h-4 text-primary' />

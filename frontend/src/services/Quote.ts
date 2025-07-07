@@ -1,3 +1,4 @@
+import { QuoteStatus } from '../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { TAddNote } from '../types/Note';
 import { TAddQuote, TAddQuoteAttachment } from '../types/Quote';
 import api from './api';
@@ -60,5 +61,28 @@ export async function AddQuoteAttachment(
   attachment: TAddQuoteAttachment
 ) {
   const response = await api.post(`/quote/${quoteId}/attachment`, attachment);
+  return response;
+}
+
+export async function DeleteQuote(quoteId: string) {
+  const response = await api.delete(`/quote/${quoteId}`);
+  return response;
+}
+
+export async function ArchiveQuote(quoteId: string) {
+  const response = await api.patch(`/quote/${quoteId}/archive`);
+  return response;
+}
+
+export async function ChangeQuoteStatus(quoteId: string, status: QuoteStatus) {
+  const response = await api.patch(
+    `/quote/${quoteId}`,
+    JSON.stringify(status),
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
   return response;
 }

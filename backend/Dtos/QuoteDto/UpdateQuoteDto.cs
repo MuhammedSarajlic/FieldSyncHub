@@ -6,10 +6,11 @@ namespace backend.Dtos.QuoteDto;
 public class UpdateQuoteDto
 {
     public Guid Id { get; set; }
+    public Guid? AssignedToUserId { get; set; }
 
-    public DateTime? ExpiresAt { get; set; }
     public List<UpdateLineItemDto>? LineItems { get; set; }
     public string Title { get; set; } = string.Empty;
+    public Guid PropertyId { get; set; }
     public DiscountType? DiscountType { get; set; }
     public decimal? DiscountValue { get; set; }
     public decimal? TaxRate { get; set; }

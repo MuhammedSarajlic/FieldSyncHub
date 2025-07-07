@@ -59,6 +59,18 @@ public class QuoteController : ControllerBase
         return await _quoteService.GetQuotesByFilter(workspaceId, pageNumber, pageSize, filterDto);
     }
 
+    [HttpGet("workspace/{workspaceId:guid}/quote-stats")]
+    public async Task<ApiResponse<QuoteStatsDto>> GetQuoteStats(Guid workspaceId)
+    {
+        var stats = await _quoteService.GetQuoteStats(workspaceId);
+
+        return new ApiResponse<QuoteStatsDto>
+        {
+            Success = true,
+            Payload = stats
+        };
+    }
+
     [HttpPost]
     public async Task<ActionResult<Quote>> CreateQuote(CreateQuoteDto createQuoteDto)
     {
@@ -105,16 +117,21 @@ public class QuoteController : ControllerBase
         return success ? NoContent() : NotFound();
     }
 
-    [HttpGet("workspace/{workspaceId:guid}/quote-stats")]
-    public async Task<ApiResponse<QuoteStatsDto>> GetQuoteStats(Guid workspaceId)
+    [HttpPatch("{id}/archive")]
+    public async Task<IActionResult> ArchiveQuote(Guid id)
     {
-        var stats = await _quoteService.GetQuoteStats(workspaceId);
+        await _quoteService.ArchiveQuote(id);
+        return Ok();
+    }
 
-        return new ApiResponse<QuoteStatsDto>
-        {
-            Success = true,
-            Payload = stats
-        };
+    [HttpPatch("{id}")]
+    public async Task<ActionResult<Quote>> ChangeQuoteStatus(Guid id, [FromBody] QuoteStatus status)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+        var userName = User.Identity?.Name ?? "System";
+
+        var quote = await _quoteService.ChangeQuoteStatus(id, status, userId, userName);
+        return Ok(quote);
     }
 
 }
