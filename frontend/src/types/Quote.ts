@@ -60,19 +60,18 @@ export type TAddQuote = {
   internalNotes?: TAddNote[];
   activityHistory: TAddActivityHistory[];
   source?: string;
-  attachments: TAddQuoteAttachment[];
 };
 
 export type TUpdateQuote = {
   id: string;
   assignedToUserId: string;
-  lineItems?: TUpdateLineItem[];
-  title?: string;
-  propertyId?: string;
-  discountType?: DiscountType;
-  discountValue?: number;
-  taxRate?: number;
-  source?: string;
+  lineItems: TUpdateLineItem[];
+  title: string;
+  propertyId: string;
+  discountType: DiscountType;
+  discountValue: number;
+  taxRate: number;
+  source: string;
 };
 
 export type TQuoteFilter = {

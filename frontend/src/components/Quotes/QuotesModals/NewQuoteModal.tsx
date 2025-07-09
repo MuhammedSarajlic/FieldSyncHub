@@ -13,7 +13,13 @@ import {
   DollarSign,
   Info,
   ChevronDown,
-  MapPin, // Ensure ChevronDown is imported for the select input
+  MapPin,
+  CheckCheck,
+  CheckCircle,
+  CheckCircle2,
+  CheckSquare,
+  User2,
+  Trash2, // Ensure ChevronDown is imported for the select input
 } from 'lucide-react';
 import { QuoteStatus } from '../../../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
@@ -23,6 +29,7 @@ import { TCustomer } from '../../../types/Customer';
 import {
   GetServiceItems,
   GetServiceItemsByFilter,
+  GetServiceItemsByWorkspace,
 } from '../../../services/ServiceItem';
 import { TServiceItem } from '../../../types/ServiceItem';
 import { CreateQuote } from '../../../services/Quote';
@@ -31,6 +38,14 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import ButtonIcon from '../../CustomElements/ButtonIcon';
 import { TAddLineItem } from '../../../types/LineItem';
 import { DiscountType } from '../../../constants/Enumeration/CommonEnum/DiscountEnum';
+import CustomButton from '../../CustomElements/Buttons/CustomButton';
+import IconButton from '../../CustomElements/Buttons/IconButton';
+import {
+  GetEmployeeById,
+  GetEmployeesByWorkspace,
+} from '../../../services/Employee';
+import { TEmployee } from '../../../types/Employee';
+import { useClickOutside } from '../../../hooks/useClickOutside';
 
 interface INewQuoteModal {
   isOpen?: boolean;
@@ -42,7 +57,7 @@ interface INewQuoteModal {
 const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
   const { user } = useAuth();
   const [customers, setCustomers] = useState<TCustomer[]>([]);
-  const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
+  // const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
   const [filteredServiceItems, setFilteredServiceItems] = useState<
     TServiceItem[]
   >([]);
@@ -50,6 +65,20 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
   const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(
     null
   );
+  const [isAssignUserOpen, setIsAssignUserOpen] = useState<boolean>(false);
+  const [assignedUserName, setAssignedUserName] = useState(user?.fullName);
+
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const debouncedUserSearchTerm = useDebounce(userSearchTerm, 300);
+  const [employees, setEmployees] = useState<TEmployee[]>([]);
+  const [filteredEmployees, setFilteredEmployees] = useState<TEmployee[]>([]);
+  const [isAssignedUserLoading, setIsAssignedUserLoading] =
+    useState<boolean>(false);
+  const assignUserRef = useClickOutside<HTMLDivElement>(() =>
+    setIsAssignUserOpen(false)
+  );
+  const [isAddDiscount, setIsAddDiscount] = useState<boolean>(false);
+  const [isAddTax, setIsAddTax] = useState<boolean>(false);
 
   const searchInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -57,7 +86,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     workspaceId: '',
     customerId: '',
     createdByUserId: '',
-    assignedToUserId: '',
+    assignedToUserId: user?.id || '',
     status: QuoteStatus.Draft,
     title: '',
     propertyId: '',
@@ -88,7 +117,6 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     ],
     activityHistory: [],
     source: '',
-    attachments: [],
   });
 
   const [selectedCustomer, setSelectedCustomer] = useState('');
@@ -231,8 +259,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     setQuote((prev) => ({ ...prev, propertyId: selectedPropertyId }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleCreateQuote = async () => {
     if (!user?.workspace) {
       console.error('User or workspace not available.');
       return;
@@ -285,21 +312,38 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     }
   };
 
-  const fetchAllServiceItems = async () => {
-    try {
-      const response = await GetServiceItems();
-      if (response.status === 200) {
-        setServiceItems(response.data.payload);
-      } else {
-        console.error(
-          'Failed to fetch service items:',
-          response.data?.message ?? 'Unknown error'
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching service items:', error);
+  const fetchEmployees = async () => {
+    if (!user?.workspace) return;
+    setIsAssignedUserLoading(true);
+    const response = await GetEmployeesByWorkspace(user.workspace.id);
+
+    if (response.status === 200) {
+      setEmployees(response.data.payload);
+      setFilteredEmployees(response.data.payload);
     }
+    setIsAssignedUserLoading(false);
   };
+
+  // const fetchAllServiceItems = async () => {
+  //   if (!user?.workspace) return;
+  //   try {
+  //     const response = await GetServiceItemsByWorkspace(
+  //       user.workspace.id,
+  //       1,
+  //       10
+  //     );
+  //     if (response.status === 200) {
+  //       setServiceItems(response.data.payload.items);
+  //     } else {
+  //       console.error(
+  //         'Failed to fetch service items:',
+  //         response.data?.message ?? 'Unknown error'
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching service items:', error);
+  //   }
+  // };
 
   const searchServiceItems = async (term: string): Promise<TServiceItem[]> => {
     if (!term || !user?.workspace) return [];
@@ -311,7 +355,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
         `q=${encodeURIComponent(term)}`
       );
       if (response.status === 200) {
-        return response.data.payload.slice(0, 5);
+        return response.data.payload.items.slice(0, 5);
       }
       console.error(
         'Failed to search service items:',
@@ -341,8 +385,23 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
 
   useEffect(() => {
     fetchCustomers();
-    fetchAllServiceItems();
+    // fetchAllServiceItems();
   }, []);
+
+  useEffect(() => {
+    if (debouncedUserSearchTerm.trim() === '') {
+      setFilteredEmployees(employees);
+    } else {
+      const filtered = employees.filter(
+        (e) =>
+          e.user.fullName
+            .toLowerCase()
+            .includes(debouncedUserSearchTerm.toLowerCase()) ||
+          e.user.email.includes(debouncedUserSearchTerm.toLowerCase())
+      );
+      setFilteredEmployees(filtered);
+    }
+  }, [debouncedUserSearchTerm, employees]);
 
   useEffect(() => {
     if (debouncedSearchTerm && activeSearchIndex !== null) {
@@ -358,20 +417,17 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
 
   return (
     <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-inter'>
-      <div className='bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header - Sticky */}
         <div className='sticky top-0 bg-white z-10 flex justify-between items-center px-8 py-5 border-b border-gray-100 shadow-sm'>
           <div>
-            <h2 className='text-2xl font-bold text-gray-900'>
-              Create New Quote
+            <h2 className='text-2xl font-bold text-text-primary'>
+              Create Quote
             </h2>
-            <p className='text-gray-500 text-sm mt-1'>
-              Fill in all required fields to create a new quote.
-            </p>
           </div>
           <button
             onClick={onClose}
-            className='w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-600'
+            className='w-10 h-10 cursor-pointer rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-600'
             aria-label='Close modal'
           >
             <X className='w-6 h-6' />
@@ -383,12 +439,11 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
           {/* Left Column: Quote Details (Customer, Line Items) - Scrollable */}
           <div className='flex-1 overflow-y-auto px-8 py-6 lg:w-3/5 border-r border-gray-100'>
             {/* The form tag needs an ID to be referenced by the submit button in the footer */}
-            <form id='quote-form' onSubmit={handleSubmit} className='space-y-8'>
+            <div className='space-y-8'>
               {/* Customer Section */}
               <div className='bg-gray-50 p-6 rounded-lg border border-gray-100 shadow-sm'>
-                <div className='flex items-center space-x-3 mb-5'>
-                  <User className='w-5 h-5 text-[#356852]' />
-                  <h3 className='font-semibold text-lg text-gray-900'>
+                <div className='mb-5'>
+                  <h3 className='font-semibold text-xl text-text-primary'>
                     Customer Information
                   </h3>
                 </div>
@@ -402,13 +457,13 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                       >
                         Choose customer <span className='text-red-500'>*</span>
                       </label>
-                      <div className='relative'>
+                      <div className='relative bg-white'>
                         <select
                           id='customer-select'
                           value={selectedCustomer}
                           onChange={handleCustomerChange}
                           required
-                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-bg-primary focus:border-transparent text-sm appearance-none'
                         >
                           <option value=''>Select a customer...</option>
                           {customers.map((customer) => (
@@ -418,8 +473,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                           ))}
                         </select>
                         <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                          <ChevronDown className='w-5 h-5' />{' '}
-                          {/* Using ChevronDown for dropdown arrow */}
+                          <ChevronDown className='w-5 h-5' />
                         </div>
                       </div>
                     </div>
@@ -428,18 +482,17 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                         htmlFor='customer-select'
                         className='block text-sm font-medium text-gray-700 mb-2'
                       >
-                        Choose customer property{' '}
-                        <span className='text-red-500'>*</span>
+                        Choose property <span className='text-red-500'>*</span>
                       </label>
-                      <div className='relative'>
+                      <div className='relative bg-white'>
                         <select
                           id='customer-select'
                           value={quote.propertyId}
                           onChange={handlePropertyChange}
                           required
-                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-bg-primary focus:border-transparent text-sm appearance-none'
                         >
-                          <option value=''>Select a customer...</option>
+                          <option value=''>Select a property...</option>
                           {selectedCustomerData?.properties?.map((property) => (
                             <option key={property.id} value={property.id}>
                               {property.address}
@@ -447,8 +500,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                           ))}
                         </select>
                         <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                          <ChevronDown className='w-5 h-5' />{' '}
-                          {/* Using ChevronDown for dropdown arrow */}
+                          <ChevronDown className='w-5 h-5' />
                         </div>
                       </div>
                     </div>
@@ -515,40 +567,166 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                   )}
                 </div>
               </div>
-              <div>
-                <p>Title</p>
-                <input
-                  type='text'
-                  placeholder='title'
-                  onChange={(e) =>
-                    setQuote({ ...quote, title: e.target.value })
-                  }
-                  className='border border-gray-300 rounded-lg w-full p-2.5 text-sm'
-                />
+              <div className='space-y-6'>
+                <h3 className='font-semibold text-xl text-text-primary'>
+                  Quote Details
+                </h3>
+                <div className='space-y-4'>
+                  <div className='flex items-center space-x-6'>
+                    <div className='flex-1'>
+                      <label
+                        htmlFor='title'
+                        className='block text-sm font-medium text-gray-700 mb-2'
+                      >
+                        Quote Title <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        id='title'
+                        type='text'
+                        name='title'
+                        placeholder='Title'
+                        value={quote.title}
+                        onChange={handleChange}
+                        className='border border-gray-300 rounded-lg w-full p-2.5 text-sm focus:ring-2 focus:ring-bg-primary focus:border-transparent focus:outline-none'
+                      />
+                    </div>
+                    <div className='flex-1'>
+                      <label
+                        htmlFor='source'
+                        className='block text-sm font-medium text-gray-700 mb-2'
+                      >
+                        Source
+                      </label>
+                      <input
+                        id='source'
+                        type='text'
+                        name='source'
+                        placeholder='Source'
+                        value={quote.source}
+                        onChange={handleChange}
+                        className='border border-gray-300 rounded-lg w-full p-2.5 text-sm focus:ring-2 focus:ring-bg-primary focus:border-transparent focus:outline-none'
+                      />
+                    </div>
+                  </div>
+                  <div className='w-full flex'>
+                    <div>
+                      <p className='block text-sm font-medium text-gray-700 mb-2'>
+                        Assigned To
+                      </p>
+                      {quote.assignedToUserId ? (
+                        <div className='w-full p-1 flex items-center space-x-2 rounded-full bg-gray-200'>
+                          <div className='w-8 h-8 rounded-full bg-white flex items-center justify-center'>
+                            <User className='w-5 h-5' />
+                          </div>
+                          <p className='text-sm text-text-primary'>
+                            {assignedUserName}
+                          </p>
+                          <button
+                            onClick={() => {
+                              setQuote((prev) => ({
+                                ...prev,
+                                assignedToUserId: '',
+                              }));
+                              setAssignedUserName('');
+                            }}
+                            className='cursor-pointer pr-1.5 hover:text-red-500'
+                          >
+                            <X className='w-4 h-4' />
+                          </button>
+                        </div>
+                      ) : (
+                        <div ref={assignUserRef} className='relative'>
+                          <IconButton
+                            onClick={() => {
+                              fetchEmployees();
+                              setIsAssignUserOpen(!isAssignUserOpen);
+                            }}
+                            icon={
+                              <Plus className='w-4 h-4 text-bg-primary mr-1' />
+                            }
+                            customStyle='!rounded-full py-1.5 px-4 !text-bg-primary hover:border-gray-300'
+                          >
+                            Assign user
+                          </IconButton>
+                          {isAssignUserOpen && (
+                            <div className='absolute min-w-[350px] left-0 mt-2 z-50 py-2 flex flex-col justify-center shadow-xl bg-white border border-gray-200 rounded-lg space-y-2'>
+                              <div className='px-2'>
+                                <input
+                                  type='text'
+                                  placeholder='Search...'
+                                  value={userSearchTerm}
+                                  onChange={(e) =>
+                                    setUserSearchTerm(e.target.value)
+                                  }
+                                  className='outline-none border-b border-gray-200 w-full px-2 pb-2 text-sm'
+                                />
+                              </div>
+                              <div>
+                                {isAssignedUserLoading ? (
+                                  <div className='flex justify-center p-6'>
+                                    <div className='w-5 h-5 border-2 border-gray-300 border-t-bg-primary rounded-full animate-spin'></div>
+                                  </div>
+                                ) : filteredEmployees.length > 0 ? (
+                                  filteredEmployees.map((employee) => (
+                                    <div
+                                      key={employee.id}
+                                      onClick={() => {
+                                        setQuote((prev) => ({
+                                          ...prev,
+                                          assignedToUserId: employee.user.id,
+                                        }));
+                                        setAssignedUserName(
+                                          employee.user.fullName
+                                        );
+                                        setIsAssignUserOpen(false);
+                                      }}
+                                      className='px-3 py-2 flex items-center space-x-3 hover:bg-gray-100 cursor-pointer'
+                                    >
+                                      <div className='rounded-full overflow-hidden bg-gray-400 w-9 h-9 flex items-center justify-center'>
+                                        <User2 className='w-4 h-4' />
+                                      </div>
+                                      <div>
+                                        <p className='text-text-primary font-semibold text-sm'>
+                                          {employee.user.fullName}
+                                        </p>
+                                        <p className='text-gray-500 text-sm'>
+                                          {employee.user.email}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className='flex flex-col items-center justify-center p-6 text-gray-500'>
+                                    <User2 className='w-8 h-8 mb-2' />
+                                    <p className='text-sm font-medium'>
+                                      No users found
+                                    </p>
+                                    <p className='text-xs text-gray-400'>
+                                      Try adjusting your search term.
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Line Items Section */}
               <div className='space-y-6'>
-                <div className='flex justify-between items-center pb-2 border-b border-gray-100'>
-                  <div className='flex items-center space-x-3'>
-                    <FileText className='w-5 h-5 text-[#356852]' />
-                    <h3 className='font-semibold text-lg text-gray-900'>
-                      Line Items
-                    </h3>
-                  </div>
-                  <button
-                    type='button'
-                    onClick={() => addNewLineItem(quote, setQuote)}
-                    className='flex items-center px-4 py-2 bg-[#356852] text-white rounded-lg hover:bg-[#2d5a44] transition-colors font-medium text-sm shadow-md'
-                  >
-                    <Plus className='w-4 h-4 mr-2' />
-                    Add Item
-                  </button>
+                <div className='flex justify-between items-center'>
+                  <h3 className='font-semibold text-xl text-text-primary'>
+                    Line Items
+                  </h3>
                 </div>
 
                 {/* Header Row for Line Items */}
                 <div className='grid grid-cols-12 gap-4 text-xs font-semibold text-gray-600 uppercase pb-2 border-b border-gray-200'>
-                  <div className='col-span-6'>Service</div>
+                  <div className='col-span-6'>Item name</div>
                   <div className='col-span-2'>Qty</div>
                   <div className='col-span-2 '>Unit Price</div>
                   <div className='col-span-2 text-right'>Total</div>
@@ -557,8 +735,8 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                 <div className='space-y-6'>
                   {quote.lineItems.map((item, index) => (
                     <div
-                      key={item.serviceItemId ?? `new-item-${index}`} // Unique key for new items
-                      className='border border-gray-200 rounded-lg p-4 bg-white shadow-sm'
+                      key={item.serviceItemId ?? `new-item-${index}`}
+                      className=''
                     >
                       {/* Line 1: Service Name, Qty, Unit Price, Total */}
                       <div className='grid grid-cols-12 gap-4 items-center'>
@@ -578,7 +756,6 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                               );
                             }}
                             onFocus={() => setActiveSearchIndex(index)}
-                            // Use onBlur with a timeout to allow click on search results
                             onBlur={() =>
                               setTimeout(() => setActiveSearchIndex(null), 200)
                             }
@@ -590,11 +767,11 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                           {/* Search Results Dropdown */}
                           {activeSearchIndex === index &&
                             filteredServiceItems.length > 0 && (
-                              <div className='absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto'>
+                              <div className='absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto divide-y divide-gray-200'>
                                 {filteredServiceItems.map((service) => (
                                   <div
                                     key={service.id}
-                                    className='px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 cursor-pointer flex justify-between items-center'
+                                    className='px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 cursor-pointer flex justify-between items-start space-x-5'
                                     // Use onMouseDown to prevent input blur before onClick fires
                                     onMouseDown={(e) => e.preventDefault()}
                                     onClick={() =>
@@ -608,8 +785,15 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                                       )
                                     }
                                   >
-                                    <span>{service.name}</span>
-                                    <span className='font-medium text-[#356852]'>
+                                    <div className='flex flex-col space-y-1'>
+                                      <span className='text-text-primary font-semibold'>
+                                        {service.name}
+                                      </span>
+                                      <span className='text-gray-500'>
+                                        {service.description}
+                                      </span>
+                                    </div>
+                                    <span className='font-semibold text-bg-primary'>
                                       {formatCurrency(service.unitPrice)}
                                     </span>
                                   </div>
@@ -664,7 +848,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                       <div className='mt-3 grid grid-cols-12 gap-3 items-start'>
                         <div className='col-span-6'>
                           <textarea
-                            rows={2}
+                            rows={3}
                             value={item.description ?? ''}
                             onChange={(e) =>
                               handleLineItemChange(
@@ -695,137 +879,165 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                     </div>
                   ))}
                 </div>
+                <div className='flex items-center space-x-3'>
+                  <IconButton
+                    icon={<Plus className='w-4 h-4 mr-2' />}
+                    onClick={() => addNewLineItem(quote, setQuote)}
+                    customStyle='py-2 px-4 text-white bg-bg-primary'
+                  >
+                    Add Line Item
+                  </IconButton>
+                  <IconButton
+                    icon={<CheckSquare className='w-4 h-4 mr-2' />}
+                    onClick={() => addNewLineItem(quote, setQuote)}
+                    customStyle='py-2 px-4 text-text-primary'
+                  >
+                    Add Optional Line Item
+                  </IconButton>
+                </div>
               </div>
 
               {/* Pricing Summary */}
-              <div className='mt-10 space-y-6 bg-white p-6 rounded-lg border border-gray-100 shadow-sm'>
-                <div className='flex items-center space-x-3'>
-                  <Calculator className='w-5 h-5 text-[#356852]' />
-                  <h3 className='font-semibold text-lg text-gray-900'>
-                    Pricing Summary
-                  </h3>
-                </div>
-
-                <div className='space-y-4'>
-                  {/* Discount */}
-                  <div className='space-y-2'>
-                    <label className='block text-sm font-medium text-gray-700'>
-                      Discount
-                    </label>
-                    <div className='flex items-center space-x-3'>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setQuote((prev) => ({
-                            ...prev,
-                            discountType:
-                              prev.discountType === DiscountType.Percentage
-                                ? DiscountType.FixedAmount
-                                : DiscountType.Percentage,
-                          }))
-                        }
-                        className='w-11 h-11 flex items-center justify-center border border-gray-300 rounded-lg bg-white shadow-sm hover:bg-gray-100 transition-colors text-gray-600'
-                      >
-                        {quote.discountType === DiscountType.Percentage ? (
-                          <Percent className='w-5 h-5' />
-                        ) : (
-                          <DollarSign className='w-5 h-5' />
-                        )}
-                      </button>
-                      <input
-                        type='number'
-                        name='discountValue'
-                        value={quote.discountValue}
-                        onChange={handleChange}
-                        min='0'
-                        step={
-                          quote.discountType === DiscountType.Percentage
-                            ? '0.01'
-                            : '1'
-                        }
-                        className='flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-base'
-                        placeholder='0.00'
-                      />
-                    </div>
-                    {discountAmount > 0 && (
-                      <div className='flex justify-between text-sm text-[#2d5a44] font-medium'>
-                        <span>Discount Applied</span>
-                        <span>-{formatCurrency(discountAmount)}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Tax */}
-                  <div className='space-y-2'>
-                    <label className='block text-sm font-medium text-gray-700'>
-                      Tax Rate (%)
-                    </label>
-                    <input
-                      type='number'
-                      name='taxRate'
-                      value={quote.taxRate}
-                      onChange={handleChange}
-                      min='0'
-                      step='0.01'
-                      className='w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-base'
-                      placeholder='0.00'
-                    />
-                    <div className='flex justify-between text-sm text-gray-600'>
-                      <span>Tax Amount</span>
-                      <span>{formatCurrency(taxAmount)}</span>
-                    </div>
-                  </div>
-
-                  {/* Receipt-style Summary */}
-                  <div className='pt-5 border-t border-gray-200 mt-6 space-y-2 text-base'>
-                    <div className='flex justify-between'>
-                      <span>Subtotal</span>
-                      <span>{formatCurrency(subtotal)}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span>Discount</span>
-                      <span>-{formatCurrency(discountAmount)}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span>Tax</span>
-                      <span>{formatCurrency(taxAmount)}</span>
-                    </div>
-                    <div className='flex justify-between text-xl font-bold pt-3 border-t border-gray-200'>
-                      <span>Total</span>
-                      <span className='text-[#356852]'>
-                        {formatCurrency(total)}
+              <div className='mt-10 space-y-6 w-full flex flex-col items-end justify-end'>
+                <div className='w-1/2 space-y-4'>
+                  <div className='pt-5 mt-6 space-y-3 text-base'>
+                    <div className='flex justify-between pr-6'>
+                      <span className='text-gray-600'>Subtotal</span>
+                      <span className='text-gray-900 font-medium'>
+                        {formatCurrency(subtotal)}
                       </span>
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span className='text-gray-600'>Discount</span>
+                      {isAddDiscount && (
+                        <div className='max-w-[220px] flex items-center border border-gray-200 rounded-lg overflow-hidden'>
+                          <button
+                            type='button'
+                            onClick={() =>
+                              setQuote((prev) => ({
+                                ...prev,
+                                discountType:
+                                  prev.discountType === DiscountType.Percentage
+                                    ? DiscountType.FixedAmount
+                                    : DiscountType.Percentage,
+                              }))
+                            }
+                            className='w-9 h-9 flex items-center cursor-pointer bg-gray-50 border-r border-gray-200 justify-center hover:bg-gray-100 transition-colors text-gray-600'
+                          >
+                            {quote.discountType === DiscountType.Percentage ? (
+                              <Percent className='w-4 h-4' />
+                            ) : (
+                              <DollarSign className='w-4 h-4' />
+                            )}
+                          </button>
+                          <input
+                            type='number'
+                            name='discountValue'
+                            value={quote.discountValue}
+                            onChange={handleChange}
+                            min='0'
+                            step={
+                              quote.discountType === DiscountType.Percentage
+                                ? '0.01'
+                                : '1'
+                            }
+                            className='px-2 py-1.5 w-full text-gray-900 outline-none text-base'
+                            placeholder='0.00'
+                          />
+                        </div>
+                      )}
+                      {discountAmount == 0 && !isAddDiscount ? (
+                        <div className='pr-6'>
+                          <button
+                            onClick={() => setIsAddDiscount(true)}
+                            className='text-bg-primary font-medium cursor-pointer hover:text-bg-primary-hover'
+                          >
+                            Add discount
+                          </button>
+                        </div>
+                      ) : (
+                        <div className='flex items-center space-x-1.5'>
+                          <span className='text-gray-900 font-medium'>
+                            -{formatCurrency(discountAmount)}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setIsAddDiscount(false);
+                              setQuote((prev) => ({
+                                ...prev,
+                                discountValue: 0,
+                              }));
+                            }}
+                            className='cursor-pointer'
+                          >
+                            <Trash2 className='w-4.5 h-4.5 text-red-600' />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span className='text-gray-600'>Tax</span>
+                      {isAddTax && (
+                        <div className='max-w-[220px] flex items-center border border-gray-200 rounded-lg overflow-hidden'>
+                          <button className='w-9 h-9 flex items-center border-r border-gray-200 justify-center text-gray-600'>
+                            <Percent className='w-4 h-4' />
+                          </button>
+                          <input
+                            type='number'
+                            name='taxRate'
+                            value={quote.taxRate}
+                            onChange={handleChange}
+                            min='0'
+                            step='0.01'
+                            className='px-2 py-1.5 w-full text-gray-900 outline-none text-base'
+                            placeholder='0.00'
+                          />
+                        </div>
+                      )}
+                      {taxAmount == 0 && !isAddTax ? (
+                        <div className='pr-6'>
+                          <button
+                            onClick={() => setIsAddTax(true)}
+                            className='text-bg-primary font-medium cursor-pointer hover:text-bg-primary-hover'
+                          >
+                            Add tax
+                          </button>
+                        </div>
+                      ) : (
+                        <div className='flex items-center space-x-1.5'>
+                          <span className='text-gray-900 font-medium'>
+                            {formatCurrency(taxAmount)}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setIsAddTax(false);
+                              setQuote((prev) => ({
+                                ...prev,
+                                taxRate: 0,
+                              }));
+                            }}
+                            className='cursor-pointer'
+                          >
+                            <Trash2 className='w-4.5 h-4.5 text-red-600' />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className='pr-6 flex justify-between text-xl font-bold pt-3 text-text-primary border-t border-gray-200'>
+                      <span>Total</span>
+                      <span>{formatCurrency(total)}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Notes Section */}
-              <div className='mt-10 space-y-6 bg-white p-6 rounded-lg border border-gray-100 shadow-sm'>
-                <div className='flex items-center space-x-3'>
-                  <Settings className='w-5 h-5 text-[#356852]' />
-                  <h3 className='font-semibold text-lg text-gray-900'>Notes</h3>
-                </div>
+              <div className='mt-10 space-y-6'>
+                <h3 className='font-semibold text-xl text-text-primary'>
+                  Notes
+                </h3>
 
                 <div className='space-y-4'>
-                  <div>
-                    <label
-                      htmlFor='customer-notes'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Customer Notes
-                    </label>
-                    <textarea
-                      id='customer-notes'
-                      name='customerNotes'
-                      value={quote.customerNotes?.[0]?.noteText || ''}
-                      onChange={handleAddNote}
-                      rows={4}
-                      className='w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm resize-y'
-                      placeholder='Notes visible to customer on the quote...'
-                    />
-                  </div>
-
                   <div>
                     <label
                       htmlFor='internal-notes'
@@ -836,36 +1048,51 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                     <textarea
                       id='internal-notes'
                       name='internalNotes'
-                      value={quote.internalNotes?.[0]?.noteText || ''}
+                      value={quote.internalNotes?.[0]?.noteText}
                       onChange={handleAddNote}
                       rows={4}
                       className='w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm resize-y'
                       placeholder='Internal notes (not visible to customer)...'
                     />
                   </div>
+                  <div>
+                    <label
+                      htmlFor='customer-notes'
+                      className='block text-sm font-medium text-gray-700 mb-2'
+                    >
+                      Customer Notes
+                    </label>
+                    <textarea
+                      id='customer-notes'
+                      name='customerNotes'
+                      value={quote.customerNotes?.[0]?.noteText}
+                      onChange={handleAddNote}
+                      rows={4}
+                      className='w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm resize-y'
+                      placeholder='Notes visible to customer on the quote...'
+                    />
+                  </div>
                 </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
 
-        {/* Footer - Sticky */}
-        <div className='sticky bottom-0 bg-white z-10 px-8 py-4 border-t border-gray-100 shadow-inner'>
+        {/* Footer */}
+        <div className='sticky bottom-0 bg-white z-10 px-8 py-4 border-t border-gray-100'>
           <div className='flex items-center justify-end space-x-3'>
-            <button
-              type='button'
+            <CustomButton
               onClick={onClose}
-              className='px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium text-base shadow-sm'
+              customStyle='px-5 py-2.5 shadow-sm border-gray-300 hover:bg-gray-50'
             >
               Cancel
-            </button>
-            <button
-              type='submit'
-              form='quote-form' // Associate with the form by ID
-              className='px-6 py-2.5 bg-[#356852] text-white rounded-lg hover:bg-[#2d5a44] transition-colors font-medium text-base shadow-md'
+            </CustomButton>
+            <CustomButton
+              onClick={handleCreateQuote}
+              customStyle='px-5 py-2.5 bg-bg-primary text-white hover:bg-bg-primary-hover'
             >
               Create Quote
-            </button>
+            </CustomButton>
           </div>
         </div>
       </div>

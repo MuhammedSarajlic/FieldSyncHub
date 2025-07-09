@@ -24,5 +24,4 @@ public class CreateQuoteDto
     public List<CreateNoteDto> InternalNotes { get; set; } = [];
     public List<CreateActivityHistoryDto> ActivityHistory { get; set; } = [];
     public string? Source { get; set; }
-    public ICollection<QuoteAttachment> Attachments { get; set; } = [];
 }

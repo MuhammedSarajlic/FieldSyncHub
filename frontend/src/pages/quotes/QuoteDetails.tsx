@@ -51,6 +51,7 @@ import QuoteAttachments from '../../components/Quotes/QuoteAttachments/QuoteAtta
 import { getQuoteActivityStyle } from '../../utils/FuntionHelpers/QuoteUtils/getQuoteActivityStyle';
 import SendQuoteModal from '../../components/Quotes/QuotesModals/SendQuoteModal';
 import ActionConfirmationModal from '../../components/Quotes/QuotesModals/ActionConfirmationModal';
+import EditQuoteModal from '../../components/Quotes/QuotesModals/EditQuoteModal';
 
 const mockSendQuoteApi = async (data: {
   recipientEmail: string;
@@ -80,6 +81,7 @@ const QuoteDetails = () => {
   const [isShowMoreDropdownOpen, setIsShowMoreDropdownOpen] = useState(false);
   const [isAddInternalNoteOpen, setIsAddInternalNoteOpen] = useState(false);
   const [isAddCustomerNoteOpen, setIsAddCustomerNoteOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isArchiveQuote, setIsArchiveQuote] = useState(false);
   const [isDeleteQuote, setIsDeleteQuote] = useState(false);
@@ -166,12 +168,7 @@ const QuoteDetails = () => {
   const handleChangeQuoteStatus = async (status: QuoteStatus) => {
     const response = await ChangeQuoteStatus(quoteId as string, status);
     if (response.status === 200) {
-      console.log('1');
-      console.log(response);
-
       const { status, activityHistory } = response.data;
-      console.log('2');
-      console.log(activityHistory);
       setQuote((prev) => {
         if (!prev) return null;
         return { ...prev, status, activityHistory };
@@ -262,7 +259,7 @@ const QuoteDetails = () => {
                 <IconButton
                   icon={<Edit3 className='w-4 h-4 mr-2' />}
                   customStyle='py-2 px-4 hover:border-gray-300'
-                  onClick={() => {}}
+                  onClick={() => setIsEditModalOpen(true)}
                 >
                   Edit
                 </IconButton>
@@ -458,7 +455,7 @@ const QuoteDetails = () => {
                 {/* Enhanced Pricing Summary */}
                 <div className='bg-gray-50 p-6 border-t border-gray-200'>
                   <div className='flex justify-end'>
-                    <div className='w-64 space-y-2'>
+                    <div className='w-2/5 space-y-2'>
                       {[
                         {
                           label: 'Subtotal:',
@@ -908,6 +905,12 @@ const QuoteDetails = () => {
           user={user}
         />
       )}
+      <EditQuoteModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        quote={quote}
+        setQuote={setQuote}
+      />
     </div>
   );
 };
