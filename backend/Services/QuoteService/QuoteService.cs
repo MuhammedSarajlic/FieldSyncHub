@@ -41,6 +41,7 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.InternalNotes.OrderByDescending(n => n.CreatedAt))
                                         .Include(q => q.Attachments)
                                         .Include(q => q.ActivityHistory.OrderByDescending(a => a.ChangedAt))
+                                        .Include(q => q.AssignedToUser)
                                         .FirstOrDefaultAsync(q => q.Id == id);
         return quote;
     }
@@ -403,73 +404,91 @@ public class QuoteService : IQuoteService
     }
 
 
-    public async Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
+    public async Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto, string userId, string userName)
     {
-        var quote = await _context.Quotes
-            .Include(q => q.LineItems)
-            .FirstOrDefaultAsync(q => q.Id == updatedQuoteDto.Id) ?? throw new KeyNotFoundException($"Quote with ID {updatedQuoteDto.Id} not found.");
-
-        if (updatedQuoteDto.DiscountType.HasValue) quote.DiscountType = updatedQuoteDto.DiscountType.Value;
-        if (updatedQuoteDto.DiscountValue.HasValue) quote.DiscountValue = updatedQuoteDto.DiscountValue.Value;
-        if (updatedQuoteDto.TaxRate.HasValue) quote.TaxRate = updatedQuoteDto.TaxRate.Value;
-        quote.Source = updatedQuoteDto.Source ?? quote.Source;
-
-        if (updatedQuoteDto.LineItems != null)
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            if (updatedQuoteDto.LineItems.Count == 0)
+            var quote = await _context.Quotes
+                .Include(q => q.LineItems)
+                .FirstOrDefaultAsync(q => q.Id == updatedQuoteDto.Id)
+                ?? throw new KeyNotFoundException($"Quote with ID {updatedQuoteDto.Id} not found.");
+
+            if (updatedQuoteDto.DiscountType.HasValue) quote.DiscountType = updatedQuoteDto.DiscountType.Value;
+            if (updatedQuoteDto.DiscountValue.HasValue) quote.DiscountValue = updatedQuoteDto.DiscountValue.Value;
+            if (updatedQuoteDto.TaxRate.HasValue) quote.TaxRate = updatedQuoteDto.TaxRate.Value;
+            if (updatedQuoteDto.AssignedToUserId.HasValue) quote.AssignedToUserId = updatedQuoteDto.AssignedToUserId.Value;
+            quote.Title = updatedQuoteDto.Title ?? quote.Title;
+            quote.Source = updatedQuoteDto.Source ?? quote.Source;
+            quote.PropertyId = updatedQuoteDto.PropertyId;
+
+            if (updatedQuoteDto.LineItems != null)
             {
-                _context.LineItems.RemoveRange(quote.LineItems);
-                quote.LineItems.Clear();
-            }
-            else
-            {
-                var itemsToRemove = quote.LineItems
-                    .Where(existingItem => !updatedQuoteDto.LineItems.Any(dtoItem => dtoItem.Id == existingItem.Id && dtoItem.Id.HasValue))
+                if (quote.LineItems == null)
+                {
+                    quote.LineItems = [];
+                }
+
+                var existingLineItems = quote.LineItems.ToList();
+                var incomingLineItemIds = updatedQuoteDto.LineItems
+                    .Where(x => x.Id != Guid.Empty)
+                    .Select(x => x.Id)
                     .ToList();
-                _context.LineItems.RemoveRange(itemsToRemove);
+
+                var itemsToRemove = existingLineItems
+                    .Where(existing => !incomingLineItemIds.Contains(existing.Id))
+                    .ToList();
+
+                foreach (var itemToRemove in itemsToRemove)
+                {
+                    quote.LineItems.Remove(itemToRemove);
+                }
 
                 foreach (var itemDto in updatedQuoteDto.LineItems)
                 {
-                    if (itemDto.Id.HasValue && itemDto.Id.Value != Guid.Empty)
+                    if (itemDto.Id == Guid.Empty)
                     {
-                        var existingLineItem = quote.LineItems.FirstOrDefault(li => li.Id == itemDto.Id.Value);
+                        var newLineItem = itemDto.Adapt<LineItem>();
+                        newLineItem.Id = Guid.NewGuid();
+                        newLineItem.QuoteId = quote.Id;
 
-                        if (existingLineItem != null)
-                        {
-                            existingLineItem.ServiceItemId = itemDto.ServiceItemId ?? existingLineItem.ServiceItemId;
-                            existingLineItem.Name = itemDto.Name ?? existingLineItem.Name;
-                            existingLineItem.Description = itemDto.Description ?? existingLineItem.Description;
-                            if (itemDto.UnitPrice.HasValue) existingLineItem.UnitPrice = itemDto.UnitPrice.Value;
-                            if (itemDto.Quantity.HasValue) existingLineItem.Quantity = itemDto.Quantity.Value;
-
-                            existingLineItem.UpdatedAt = DateTime.UtcNow;
-                        }
+                        quote.LineItems.Add(newLineItem);
                     }
                     else
                     {
-                        var newLineItem = new LineItem
+                        var existingItem = existingLineItems.FirstOrDefault(x => x.Id == itemDto.Id);
+                        if (existingItem != null)
                         {
-                            Id = Guid.NewGuid(),
-                            QuoteId = quote.Id,
-                            ServiceItemId = itemDto.ServiceItemId,
-                            Name = itemDto.Name ?? "",
-                            Description = itemDto.Description,
-                            UnitPrice = itemDto.UnitPrice ?? 0,
-                            Quantity = itemDto.Quantity ?? 1,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        };
-                        quote.LineItems.Add(newLineItem);
+                            itemDto.Adapt(existingItem);
+                            existingItem.QuoteId = quote.Id;
+                        }
+                        else
+                        {
+                            var newLineItem = itemDto.Adapt<LineItem>();
+                            newLineItem.QuoteId = quote.Id;
+                            quote.LineItems.Add(newLineItem);
+                        }
                     }
                 }
             }
+
+            quote.UpdatedAt = DateTime.UtcNow;
+
+            AddActivity(quote, QuoteActivityType.QuoteEdited, "edited quote", userId, userName);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            quote = await _context.Quotes.Where(q => q.Id == updatedQuoteDto.Id)
+                                        .Include(q => q.AssignedToUser)
+                                        .Include(q => q.Property)
+                                        .FirstOrDefaultAsync();
+            return quote;
         }
-
-        quote.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-
-        return quote;
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<bool> DeleteQuote(Guid id)

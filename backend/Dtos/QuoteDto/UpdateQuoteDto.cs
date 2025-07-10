@@ -9,11 +9,10 @@ public class UpdateQuoteDto
     public Guid? AssignedToUserId { get; set; }
 
     public List<UpdateLineItemDto>? LineItems { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public Guid PropertyId { get; set; }
+    public string? Title { get; set; }
+    public Guid? PropertyId { get; set; }
     public DiscountType? DiscountType { get; set; }
     public decimal? DiscountValue { get; set; }
     public decimal? TaxRate { get; set; }
-    public string Source { get; set; } = string.Empty;
-
+    public string? Source { get; set; }
 }

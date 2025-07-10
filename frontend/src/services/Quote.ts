@@ -1,6 +1,6 @@
 import { QuoteStatus } from '../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { TAddNote } from '../types/Note';
-import { TAddQuote, TAddQuoteAttachment } from '../types/Quote';
+import { TAddQuote, TAddQuoteAttachment, TUpdateQuote } from '../types/Quote';
 import api from './api';
 
 export async function GetQuotesByWorkspace(
@@ -61,6 +61,11 @@ export async function AddQuoteAttachment(
   attachment: TAddQuoteAttachment
 ) {
   const response = await api.post(`/quote/${quoteId}/attachment`, attachment);
+  return response;
+}
+
+export async function UpdateQuote(quote: TUpdateQuote) {
+  const response = await api.put(`/quote`, quote);
   return response;
 }
 

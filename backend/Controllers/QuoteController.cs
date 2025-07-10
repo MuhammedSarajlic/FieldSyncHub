@@ -106,7 +106,10 @@ public class QuoteController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<Quote>> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
     {
-        var result = await _quoteService.UpdateQuote(updatedQuoteDto);
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+        var userName = User.Identity?.Name ?? "System";
+
+        var result = await _quoteService.UpdateQuote(updatedQuoteDto, userId, userName);
         return Ok(result);
     }
 

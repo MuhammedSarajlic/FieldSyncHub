@@ -477,9 +477,9 @@ const QuoteDetails = () => {
                         {
                           label: 'Total:',
                           value: `${formatCurrency(quote?.total)}`,
-                          color: 'text-bg-primary',
+                          color: 'text-text-primary',
                           isTotal: true,
-                          customColor: '#356852',
+                          customColor: 'text-text-primary',
                         },
                       ]
                         .filter(Boolean)
@@ -499,7 +499,7 @@ const QuoteDetails = () => {
                               <span
                                 className={`${
                                   item?.isTotal
-                                    ? 'font-semibold text-primary'
+                                    ? 'font-semibold text-text-primary'
                                     : 'text-gray-600'
                                 }`}
                               >
@@ -908,8 +908,8 @@ const QuoteDetails = () => {
       <EditQuoteModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        quote={quote}
-        setQuote={setQuote}
+        quoteToEdit={quote}
+        setQuotes={setQuote}
       />
     </div>
   );
