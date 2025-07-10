@@ -17,7 +17,6 @@ public class ServiceItem
     public decimal UnitPrice { get; set; }
     [Range(0, double.MaxValue)]
     public decimal Cost { get; set; }
-    public decimal TaxRate { get; set; }
     public bool IsTaxable { get; set; }
     public bool IsActive { get; set; }
     public string? ImageUrl { get; set; }

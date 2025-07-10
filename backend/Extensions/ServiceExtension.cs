@@ -16,6 +16,7 @@ using backend.Services.ServiceItemService;
 using backend.Services.TokenService;
 using backend.Services.UserService;
 using backend.Services.WorkspaceService;
+using backend.Services.PdfService;
 
 namespace backend.Extensions;
 
@@ -42,5 +43,6 @@ public static class ServiceExtension
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IQuoteService, QuoteService>();
         services.AddScoped<IRequestService, RequestService>();
+        services.AddScoped<QuotePdfService>();
     }
 }

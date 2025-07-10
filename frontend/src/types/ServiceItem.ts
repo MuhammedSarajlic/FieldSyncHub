@@ -10,7 +10,6 @@ export type TServiceItem = {
   sku: string;
   unitPrice: number;
   cost: number;
-  taxRate: number;
   isTaxable: boolean;
   isActive: boolean;
   imageUrl?: string;
@@ -27,7 +26,6 @@ export type TAddServiceItem = {
   sku?: string;
   unitPrice: number;
   cost: number;
-  taxRate: number;
   isTaxable: boolean;
   isActive: boolean;
   imageUrl?: string;
@@ -42,7 +40,6 @@ export type TUpdateServiceItem = {
   sku?: string;
   unitPrice?: number;
   cost?: number;
-  taxRate?: number;
   isTaxable?: boolean;
   isActive?: boolean;
   imageUrl?: string;
@@ -57,7 +54,6 @@ export type TImportServiceItem = {
   sku?: string;
   unitPrice?: number;
   cost?: number;
-  taxRate?: number;
   isTaxable?: boolean;
   isActive?: boolean;
   imageUrl?: string;

@@ -9,9 +9,8 @@ public class CreateLineItemDto
 
     public decimal UnitPrice { get; set; } = 0;
     public decimal? Cost { get; set; }
-    public decimal? TaxRate { get; set; }
-    public bool? IsTaxable { get; set; }
     public int Quantity { get; set; } = 1;
+    public bool? IsTaxable { get; set; }
     public bool IsOptional { get; set; }
     public Guid? JobId { get; set; }
     public Guid? InvoiceId { get; set; }

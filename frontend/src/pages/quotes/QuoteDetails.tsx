@@ -433,7 +433,7 @@ const QuoteDetails = () => {
                             {formatCurrency(item.unitPrice)}
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
-                            {formatCurrency(item.totalPrice)}
+                            {formatCurrency(item.quantity * item.unitPrice)}
                           </td>
                           {/* <td className='px-6 py-4 whitespace-nowrap'>
                             <span

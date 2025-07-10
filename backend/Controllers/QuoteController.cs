@@ -3,6 +3,7 @@ using backend.Dtos.NotesDto;
 using backend.Dtos.QuoteDto;
 using backend.Models.QuoteModels;
 using backend.Response;
+using backend.Services.PdfService;
 using backend.Services.QuoteService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,12 @@ namespace backend.Controllers;
 public class QuoteController : ControllerBase
 {
     private readonly IQuoteService _quoteService;
+    private readonly QuotePdfService _quotePdfService;
 
-    public QuoteController(IQuoteService quoteService)
+    public QuoteController(IQuoteService quoteService, QuotePdfService quotePdfService)
     {
         _quoteService = quoteService;
+        _quotePdfService = quotePdfService;
     }
 
     [HttpGet]
@@ -136,5 +139,83 @@ public class QuoteController : ControllerBase
         var quote = await _quoteService.ChangeQuoteStatus(id, status, userId, userName);
         return Ok(quote);
     }
+
+    [HttpGet("quote/{id}/pdf")]
+    public async Task<IActionResult> GetQuotePdf(Guid id)
+    {
+        var quoteData = new QuoteData
+        {
+            QuoteNumber = "0001001",
+            QuoteDate = DateTime.Now,
+            DueDate = DateTime.Now.AddDays(14),
+            Currency = "EUR",
+            Company = new CompanyInfo
+            {
+                Name = "Your Company Inc.",
+                Address = "Zmaja od Bosne 14,\nZenica 72000, BiH",
+                Phone = "+387 62409924",
+                Email = "office@inatdigital.com",
+                Website = "www.yourcompany.com"
+            },
+            Customer = new CustomerInfo
+            {
+                Name = "Customer Name",
+                Address = "Hamida 25,\nZenica 72000, BiH",
+                Phone = "+387 123 456 789",
+                Email = "customer@email.com"
+            },
+            LineItems = new List<QuoteLineItem>
+            {
+                new QuoteLineItem
+                {
+                    Quantity = 1.00m,
+                    Description = "This is the best description for line item",
+                    UnitPrice = 325.00m,
+                    HasTax1 = true,
+                    HasTax2 = false
+                },
+                new QuoteLineItem
+                {
+                    Quantity = 2.00m,
+                    Description = "Second best line item",
+                    UnitPrice = 150.00m,
+                    HasTax1 = false,
+                    HasTax2 = true
+                },
+                new QuoteLineItem
+                {
+                    Quantity = 1.00m,
+                    Description = "And third best line items is",
+                    UnitPrice = 100.00m,
+                    HasTax1 = false,
+                    HasTax2 = false
+                }
+            },
+            Subtotal = 725.00m,
+            DiscountPercentage = 5.00m,
+            DiscountAmount = 36.25m,
+            Tax1Amount = 15.44m,
+            Tax2Amount = 23.51m,
+            Total = 727.70m,
+            Notes = "Best project we must finish before yesterday",
+            ShowCompanySignature = true,
+            ShowCustomerSignature = true
+        };
+
+        try
+        {
+            var pdfBytes = _quotePdfService.GenerateQuotePdf(quoteData);
+
+            return File(pdfBytes, "application/pdf", $"Quote_{quoteData.QuoteNumber}.pdf");
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Error generating PDF: {ex.Message}");
+        }
+        // var quote = await _quoteService.GetByIdAsync(id);
+        // var pdfBytes = _quoteService.GenerateQuotePdf(quote);
+        // return File(pdfBytes, "application/pdf", $"Quote_{quote.Id}.pdf");
+    }
+
 
 }

@@ -44,7 +44,7 @@ public class NoteController : ControllerBase
 
 
     [HttpPut]
-    public async Task<ActionResult<Note>> UpdateNote([FromQuery] UpdateNoteDto updatedNoteDto)
+    public async Task<ActionResult<Note>> UpdateNote([FromBody] UpdateNoteDto updatedNoteDto)
     {
         var udpatedNote = await _notesService.UpdateNote(updatedNoteDto);
         return Ok(udpatedNote);

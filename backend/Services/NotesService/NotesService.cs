@@ -65,8 +65,12 @@ public class NotesService : INotesService
 
     public async Task<Note> UpdateNote(UpdateNoteDto updatedNoteDto)
     {
-        var note = updatedNoteDto.Adapt<Note>();
+        var note = await _context.Notes.FirstOrDefaultAsync(n => n.Id == updatedNoteDto.Id);
+
+        note.NoteText = updatedNoteDto.NoteText ?? note.NoteText;
+        note.PathFile = updatedNoteDto.PathFile ?? note.PathFile;
         note.UpdatedAt = DateTime.UtcNow;
+        
         _context.Update(note);
         await _context.SaveChangesAsync();
 

@@ -18,17 +18,12 @@ public class LineItem
     public decimal UnitPrice { get; set; }
     [Range(0, double.MaxValue)]
     public decimal Cost { get; set; }
-    public decimal TaxRate { get; set; }
     public bool IsOptional { get; set; }
     public bool IsTaxable { get; set; }
     [Range(1, int.MaxValue)]
     public int Quantity { get; set; } = 1;
     [NotMapped]
-    public decimal Subtotal => UnitPrice * Quantity;
-    [NotMapped]
-    public decimal TaxAmount => IsTaxable ? Math.Round(Subtotal * TaxRate, 2) : 0m;
-    [NotMapped]
-    public decimal TotalPrice => Subtotal + TaxAmount;
+    public decimal Total => UnitPrice * Quantity;
 
     public Guid? JobId { get; set; }
     [JsonIgnore]

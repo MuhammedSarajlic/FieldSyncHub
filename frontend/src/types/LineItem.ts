@@ -8,12 +8,10 @@ export type TLineItem = {
   description?: string;
   unitPrice: number;
   cost: number;
-  taxRate: number;
+  isOptional: boolean;
   isTaxable: boolean;
   quantity: number;
-  subtotal: number;
-  taxAmount: number;
-  totalPrice: number;
+  total: number;
   jobId?: string;
   invoiceId?: string;
   quoteId?: string;
@@ -28,9 +26,8 @@ export type TGetLineItem = {
   description?: string;
   unitPrice: number;
   quantity: number;
-  subtotal: number;
-  taxAmount: number;
-  totalPrice: number;
+  isOptional: boolean;
+  total: number;
 };
 
 export type TModalLineItem = {
@@ -45,7 +42,7 @@ export type TAddLineItem = {
   description?: string;
   unitPrice: number;
   cost?: number;
-  taxRate?: number;
+  isOptional: boolean;
   isTaxable?: boolean;
   quantity: number;
   jobId?: string;
@@ -60,5 +57,6 @@ export type TUpdateLineItem = {
   name: string;
   description?: string;
   unitPrice: number;
+  isTaxable?: boolean;
   quantity: number;
 };

@@ -9,5 +9,6 @@ public class UpdateLineItemDto
     public string? Description { get; set; }
     public bool? IsOptional { get; set; }
     public decimal? UnitPrice { get; set; }
+    public bool? IsTaxable { get; set; }
     public int? Quantity { get; set; }
 }

@@ -125,106 +125,106 @@ public class JobService : IJobService
     Guid workspaceId,
     int pageNumber,
     int pageSize)
-{
-    var dbQuery = _context.Jobs
-        .Where(j => j.WorkspaceId == workspaceId)
-        .Include(j => j.Customer)
-        .Include(j => j.Property)
-        .Include(j => j.LineItems)
-            .ThenInclude(li => li.ServiceItem)
-        .AsNoTracking()
-        .AsQueryable();
-
-    if (filterDto.ScheduleDateMin.HasValue)
     {
-        var minUtc = DateTime.SpecifyKind(filterDto.ScheduleDateMin.Value, DateTimeKind.Utc);
-        dbQuery = dbQuery.Where(j => j.StartDate >= minUtc);
-    }
+        var dbQuery = _context.Jobs
+            .Where(j => j.WorkspaceId == workspaceId)
+            .Include(j => j.Customer)
+            .Include(j => j.Property)
+            .Include(j => j.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .AsNoTracking()
+            .AsQueryable();
 
-    if (filterDto.ScheduleDateMax.HasValue)
-    {
-        var endOfDay = filterDto.ScheduleDateMax.Value.Date.AddDays(1).AddTicks(-1);
-        var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
-        dbQuery = dbQuery.Where(j => j.StartDate <= maxUtc);
-    }
-
-    if (!string.IsNullOrWhiteSpace(filterDto.Priority) &&
-        Enum.TryParse<JobPriority>(filterDto.Priority, true, out var priorityEnum))
-    {
-        dbQuery = dbQuery.Where(j => j.Priority == priorityEnum);
-    }
-
-    if (!string.IsNullOrWhiteSpace(filterDto.Status) &&
-        Enum.TryParse<JobStatus>(filterDto.Status, true, out var statusEnum))
-    {
-        dbQuery = dbQuery.Where(j => j.Status == statusEnum);
-    }
-
-    if (!string.IsNullOrWhiteSpace(filterDto.Q))
-    {
-        var q = filterDto.Q.ToLower();
-        dbQuery = dbQuery.Where(j =>
-            j.JobNumber.ToLower().Contains(q) ||
-            j.Customer.FirstName.ToLower().Contains(q) ||
-            j.Customer.LastName.ToLower().Contains(q) ||
-            j.Property.Street.ToLower().Contains(q) ||
-            j.Property.City.ToLower().Contains(q));
-    }
-
-    // 🐘 Load into memory
-    var jobsList = await dbQuery.ToListAsync();
-
-    // ✅ Now apply Total filter in memory (just like Quotes)
-    if (filterDto.TotalMin.HasValue)
-    {
-        jobsList = jobsList
-            .Where(j => j.TotalAmount >= filterDto.TotalMin.Value)
-            .ToList();
-    }
-
-    if (filterDto.TotalMax.HasValue)
-    {
-        jobsList = jobsList
-            .Where(j => j.TotalAmount <= filterDto.TotalMax.Value)
-            .ToList();
-    }
-
-    // ✅ Sorting in memory (just like Quotes)
-    jobsList = filterDto.SortBy?.ToLower() switch
-    {
-        "customer" => filterDto.Sort == "desc"
-            ? jobsList.OrderByDescending(j => j.Customer?.FirstName).ToList()
-            : jobsList.OrderBy(j => j.Customer?.FirstName).ToList(),
-
-        "total" => filterDto.Sort == "desc"
-            ? jobsList.OrderByDescending(j => j.TotalAmount).ToList()
-            : jobsList.OrderBy(j => j.TotalAmount).ToList(),
-
-        "schedule" => filterDto.Sort == "desc"
-            ? jobsList.OrderByDescending(j => j.StartDate).ToList()
-            : jobsList.OrderBy(j => j.StartDate).ToList(),
-
-        _ => jobsList.OrderByDescending(j => j.StartDate).ToList()
-    };
-
-    var totalCount = jobsList.Count;
-    var pagedJobs = jobsList
-        .Skip((pageNumber - 1) * pageSize)
-        .Take(pageSize)
-        .ToList();
-
-    return new ApiResponse<PagedResult<Job>>
-    {
-        Success = true,
-        Payload = new PagedResult<Job>
+        if (filterDto.ScheduleDateMin.HasValue)
         {
-            Items = pagedJobs,
-            TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
+            var minUtc = DateTime.SpecifyKind(filterDto.ScheduleDateMin.Value, DateTimeKind.Utc);
+            dbQuery = dbQuery.Where(j => j.StartDate >= minUtc);
         }
-    };
-}
+
+        if (filterDto.ScheduleDateMax.HasValue)
+        {
+            var endOfDay = filterDto.ScheduleDateMax.Value.Date.AddDays(1).AddTicks(-1);
+            var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
+            dbQuery = dbQuery.Where(j => j.StartDate <= maxUtc);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterDto.Priority) &&
+            Enum.TryParse<JobPriority>(filterDto.Priority, true, out var priorityEnum))
+        {
+            dbQuery = dbQuery.Where(j => j.Priority == priorityEnum);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterDto.Status) &&
+            Enum.TryParse<JobStatus>(filterDto.Status, true, out var statusEnum))
+        {
+            dbQuery = dbQuery.Where(j => j.Status == statusEnum);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterDto.Q))
+        {
+            var q = filterDto.Q.ToLower();
+            dbQuery = dbQuery.Where(j =>
+                j.JobNumber.ToLower().Contains(q) ||
+                j.Customer.FirstName.ToLower().Contains(q) ||
+                j.Customer.LastName.ToLower().Contains(q) ||
+                j.Property.Street.ToLower().Contains(q) ||
+                j.Property.City.ToLower().Contains(q));
+        }
+
+        // 🐘 Load into memory
+        var jobsList = await dbQuery.ToListAsync();
+
+        // ✅ Now apply Total filter in memory (just like Quotes)
+        if (filterDto.TotalMin.HasValue)
+        {
+            jobsList = jobsList
+                .Where(j => j.TotalAmount >= filterDto.TotalMin.Value)
+                .ToList();
+        }
+
+        if (filterDto.TotalMax.HasValue)
+        {
+            jobsList = jobsList
+                .Where(j => j.TotalAmount <= filterDto.TotalMax.Value)
+                .ToList();
+        }
+
+        // ✅ Sorting in memory (just like Quotes)
+        jobsList = filterDto.SortBy?.ToLower() switch
+        {
+            "customer" => filterDto.Sort == "desc"
+                ? jobsList.OrderByDescending(j => j.Customer?.FirstName).ToList()
+                : jobsList.OrderBy(j => j.Customer?.FirstName).ToList(),
+
+            "total" => filterDto.Sort == "desc"
+                ? jobsList.OrderByDescending(j => j.TotalAmount).ToList()
+                : jobsList.OrderBy(j => j.TotalAmount).ToList(),
+
+            "schedule" => filterDto.Sort == "desc"
+                ? jobsList.OrderByDescending(j => j.StartDate).ToList()
+                : jobsList.OrderBy(j => j.StartDate).ToList(),
+
+            _ => jobsList.OrderByDescending(j => j.StartDate).ToList()
+        };
+
+        var totalCount = jobsList.Count;
+        var pagedJobs = jobsList
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return new ApiResponse<PagedResult<Job>>
+        {
+            Success = true,
+            Payload = new PagedResult<Job>
+            {
+                Items = pagedJobs,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }
+        };
+    }
 
 
 
@@ -296,7 +296,6 @@ public class JobService : IJobService
                     lineItem.Description = serviceItem.Description;
                     lineItem.UnitPrice = serviceItem.UnitPrice;
                     lineItem.Cost = serviceItem.Cost;
-                    lineItem.TaxRate = serviceItem.TaxRate;
                     lineItem.IsTaxable = serviceItem.IsTaxable;
                 }
                 else
@@ -305,7 +304,6 @@ public class JobService : IJobService
                     lineItem.Description = lineItemDto.Description;
                     lineItem.UnitPrice = lineItemDto.UnitPrice;
                     lineItem.Cost = 0m;
-                    lineItem.TaxRate = 0m;
                     lineItem.IsTaxable = false;
                 }
 
@@ -438,7 +436,6 @@ public class JobService : IJobService
                     lineItem.Description = serviceItem.Description;
                     lineItem.UnitPrice = serviceItem.UnitPrice;
                     lineItem.Cost = serviceItem.Cost;
-                    lineItem.TaxRate = serviceItem.TaxRate;
                     lineItem.IsTaxable = serviceItem.IsTaxable;
                 }
                 else
@@ -448,7 +445,6 @@ public class JobService : IJobService
                     lineItem.Description = dto.Description ?? lineItem.Description;
                     lineItem.UnitPrice = dto.UnitPrice ?? lineItem.UnitPrice;
                     lineItem.Cost = 0m;
-                    lineItem.TaxRate = 0m;
                     lineItem.IsTaxable = false;
                 }
 

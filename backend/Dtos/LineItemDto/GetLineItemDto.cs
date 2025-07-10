@@ -8,8 +8,5 @@ public class GetLineItemDto
     public string? Description { get; set; }
     public decimal UnitPrice { get; set; }
     public int Quantity { get; set; }
-
-    public decimal Subtotal { get; set; }
-    public decimal TaxAmount { get; set; }
-    public decimal TotalPrice { get; set; }
+    public decimal Total { get; set; }
 }

@@ -14,7 +14,6 @@ public class UpdateServiceItemDto
 
     public decimal? UnitPrice { get; set; }
     public decimal? Cost { get; set; }
-    public decimal? TaxRate { get; set; }
     public bool? IsTaxable { get; set; }
     public bool? IsActive { get; set; }
 

@@ -11,9 +11,11 @@ using backend.Models.QuoteModels;
 using Mapster;
 using backend.Dtos.LineItemDto;
 using backend.Models;
-
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseMySql(

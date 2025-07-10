@@ -120,12 +120,14 @@ public class InvoiceService : IInvoiceService
         if (Enum.TryParse<InvoiceStatus>(filterDto.Status, true, out var parsedStatus))
             query = query.Where(i => i.Status == parsedStatus);
 
-        if (filterDto.DueDateMin.HasValue){
+        if (filterDto.DueDateMin.HasValue)
+        {
             var minUtc = DateTime.SpecifyKind(filterDto.DueDateMin.Value, DateTimeKind.Utc);
             query = query.Where(i => i.DueDate >= minUtc);
         }
 
-        if (filterDto.DueDateMax.HasValue){
+        if (filterDto.DueDateMax.HasValue)
+        {
             var endOfDay = filterDto.DueDateMax.Value.Date.AddDays(1).AddTicks(-1);
             var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
             query = query.Where(i => i.DueDate <= maxUtc);
@@ -392,7 +394,7 @@ public class InvoiceService : IInvoiceService
                             table.Cell().Text(item.Name);
                             table.Cell().Text($"{item.Quantity}");
                             table.Cell().Text($"${item.UnitPrice:0.00}");
-                            table.Cell().Text($"${item.TotalPrice:0.00}");
+                            table.Cell().Text($"${item.Total:0.00}");
                         }
                     });
 

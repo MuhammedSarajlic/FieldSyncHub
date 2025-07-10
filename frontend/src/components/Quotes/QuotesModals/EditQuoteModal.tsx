@@ -17,8 +17,6 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
 import { TQuote, TUpdateQuote } from '../../../types/Quote';
-import { GetCustomerByWorkspace } from '../../../services/Customer';
-import { TCustomer } from '../../../types/Customer';
 import { GetServiceItemsByFilter } from '../../../services/ServiceItem';
 import { TServiceItem } from '../../../types/ServiceItem';
 import { UpdateQuote } from '../../../services/Quote';
@@ -47,7 +45,6 @@ const EditQuoteModal = ({
   quoteToEdit,
 }: IEditQuoteModal) => {
   const { user } = useAuth();
-  const [customers, setCustomers] = useState<TCustomer[]>([]);
   const [filteredServiceItems, setFilteredServiceItems] = useState<
     TServiceItem[]
   >([]);
@@ -76,11 +73,6 @@ const EditQuoteModal = ({
   );
   const searchInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const [selectedCustomer, setSelectedCustomer] = useState(
-    quoteToEdit.customerId
-  );
-  const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
-
   const [quote, setQuote] = useState<TUpdateQuote>({
     id: quoteToEdit.id,
     assignedToUserId: quoteToEdit.assignedToUserId || '',
@@ -101,23 +93,6 @@ const EditQuoteModal = ({
     taxRate: quoteToEdit.taxRate * 100,
     source: quoteToEdit.source || '',
   });
-
-  const fetchCustomers = async () => {
-    if (!user?.workspace) return;
-    try {
-      const response = await GetCustomerByWorkspace(user.workspace.id, 1, 10);
-      if (response.status === 200) {
-        setCustomers(response.data.payload.items);
-      } else {
-        console.error(
-          'Failed to fetch customers:',
-          response.data?.message ?? 'Unknown error'
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-    }
-  };
 
   const fetchEmployees = async () => {
     if (!user?.workspace) return;
@@ -151,15 +126,6 @@ const EditQuoteModal = ({
     }));
   };
 
-  const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCustomer(e.target.value);
-    setQuote((prev) => ({
-      ...prev,
-      customerId: e.target.value,
-      propertyId: '', // Reset property when customer changes
-    }));
-  };
-
   const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedPropertyId = e.target.value;
     setQuote((prev) => ({ ...prev, propertyId: selectedPropertyId }));
@@ -168,7 +134,7 @@ const EditQuoteModal = ({
   const handleLineItemChange = (
     currentQuote: TUpdateQuote,
     index: number,
-    field: keyof TAddLineItem, // Use TAddLineItem for input handling
+    field: keyof TAddLineItem,
     value: any,
     setQuote: React.Dispatch<React.SetStateAction<TUpdateQuote>>
   ) => {
@@ -184,10 +150,10 @@ const EditQuoteModal = ({
           updatedItem.serviceItemId &&
           value !== updatedItem.unitPrice)
       ) {
-        updatedItem.serviceItemId = undefined; // Clear serviceItemId if name or price changes from a selected service item
+        updatedItem.serviceItemId = undefined;
       }
 
-      (updatedItem as any)[field] = value; // Type assertion for flexibility
+      (updatedItem as any)[field] = value;
       newLineItems[index] = updatedItem;
 
       return { ...prev, lineItems: newLineItems };
@@ -335,7 +301,7 @@ const EditQuoteModal = ({
           taxRate: taxRate * 100,
           source,
           subtotal,
-          discountAmount,
+          discount: discountAmount,
           taxAmount,
           total,
         }));
@@ -379,10 +345,6 @@ const EditQuoteModal = ({
       setIsAddTax(true);
     }
   }, [quoteToEdit.discountValue, quoteToEdit.taxRate]);
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
 
   useEffect(() => {
     if (debouncedUserSearchTerm.trim() === '') {
@@ -432,7 +394,6 @@ const EditQuoteModal = ({
         <div className='flex-1 overflow-hidden flex flex-col lg:flex-row'>
           {/* Left Column: Quote Details (Customer, Line Items) - Scrollable */}
           <div className='flex-1 overflow-y-auto px-8 py-6 lg:w-3/5 border-r border-gray-100'>
-            {/* The form tag needs an ID to be referenced by the submit button in the footer */}
             <div className='space-y-8'>
               {/* Customer Section */}
               <div className='bg-gray-50 p-6 rounded-lg border border-gray-100 shadow-sm'>
@@ -446,31 +407,20 @@ const EditQuoteModal = ({
                   <div className='space-y-4'>
                     <div>
                       <label
-                        htmlFor='customer-select'
+                        htmlFor='customer-display'
                         className='block text-sm font-medium text-gray-700 mb-2'
                       >
-                        Choose customer <span className='text-red-500'>*</span>
+                        Customer <span className='text-red-500'>*</span>
                       </label>
-                      <div className='relative bg-white'>
-                        <select
-                          id='customer-select'
-                          value={selectedCustomer}
-                          onChange={handleCustomerChange}
-                          required
-                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-bg-primary focus:border-transparent text-sm appearance-none'
-                        >
-                          <option value=''>Select a customer...</option>
-                          {customers.map((customer) => (
-                            <option key={customer.id} value={customer.id}>
-                              {customer.fullName}
-                            </option>
-                          ))}
-                        </select>
-                        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                          <ChevronDown className='w-5 h-5' />
-                        </div>
-                      </div>
+                      <input
+                        id='customer-display'
+                        type='text'
+                        value={quoteToEdit.customer?.fullName || ''}
+                        disabled
+                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 bg-gray-100 text-sm'
+                      />
                     </div>
+
                     <div>
                       <label
                         htmlFor='property-select'
@@ -487,7 +437,7 @@ const EditQuoteModal = ({
                           className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-bg-primary focus:border-transparent text-sm appearance-none'
                         >
                           <option value=''>Select a property...</option>
-                          {selectedCustomerData?.properties?.map((property) => (
+                          {quoteToEdit.customer?.properties?.map((property) => (
                             <option key={property.id} value={property.id}>
                               {property.address}
                             </option>
@@ -500,7 +450,7 @@ const EditQuoteModal = ({
                     </div>
                   </div>
 
-                  {selectedCustomerData ? (
+                  {quoteToEdit.customer ? (
                     <div className='bg-white rounded-lg p-4 border border-gray-200 shadow-sm'>
                       <div className='flex items-start space-x-3'>
                         <div className='w-9 h-9 bg-[#e6f4ed] rounded-full flex items-center justify-center flex-shrink-0'>
@@ -508,41 +458,41 @@ const EditQuoteModal = ({
                         </div>
                         <div className='flex-1'>
                           <h4 className='font-semibold text-gray-900 text-base'>
-                            {selectedCustomerData.fullName}
+                            {quoteToEdit.customer.fullName}
                           </h4>
                           <div className='mt-2 space-y-1 text-sm text-gray-600'>
-                            {selectedCustomerData.emails?.[0] && (
+                            {quoteToEdit.customer.emails?.[0] && (
                               <div className='flex items-center'>
                                 <Mail className='w-4 h-4 mr-2 text-gray-500' />
                                 <a
-                                  href={`mailto:${selectedCustomerData.emails[0]}`}
+                                  href={`mailto:${quoteToEdit.customer.emails[0]}`}
                                   className='hover:underline'
                                 >
-                                  {selectedCustomerData.emails[0]}
+                                  {quoteToEdit.customer.emails[0]}
                                 </a>
                               </div>
                             )}
-                            {selectedCustomerData.customerPhones?.[0]
+                            {quoteToEdit.customer.customerPhones?.[0]
                               ?.phoneNumber && (
                               <div className='flex items-center'>
                                 <Phone className='w-4 h-4 mr-2 text-gray-500' />
                                 <a
-                                  href={`tel:${selectedCustomerData.customerPhones[0].phoneNumber}`}
+                                  href={`tel:${quoteToEdit.customer.customerPhones[0].phoneNumber}`}
                                   className='hover:underline'
                                 >
                                   {
-                                    selectedCustomerData.customerPhones[0]
+                                    quoteToEdit.customer.customerPhones[0]
                                       .phoneNumber
                                   }
                                 </a>
                               </div>
                             )}
-                            {quote.propertyId != '' && (
+                            {quote.propertyId !== '' && (
                               <div className='flex items-center'>
                                 <MapPin className='w-4 h-4 mr-2 text-gray-500' />
                                 <p>
                                   {
-                                    selectedCustomerData.properties.find(
+                                    quoteToEdit.customer.properties.find(
                                       (p) => p.id === quote.propertyId
                                     )?.address
                                   }
@@ -561,6 +511,7 @@ const EditQuoteModal = ({
                   )}
                 </div>
               </div>
+
               <div className='space-y-6'>
                 <h3 className='font-semibold text-xl text-text-primary'>
                   Quote Details
