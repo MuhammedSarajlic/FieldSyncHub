@@ -34,7 +34,7 @@ public class Job
     public DiscountType DiscountType { get; set; }
     public decimal DiscountValue { get; set; }
     [NotMapped]
-    public decimal Subtotal => LineItems.Sum(li => li.TotalPrice);
+    public decimal Subtotal => LineItems.Sum(li => li.Total);
     [NotMapped]
     public decimal Discount =>
         DiscountType == DiscountType.Percentage

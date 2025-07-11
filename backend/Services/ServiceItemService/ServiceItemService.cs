@@ -279,10 +279,6 @@ public class ServiceItemService : IServiceItemService
         {
             existingServiceItem.Cost = updateServiceItemDto.Cost.Value;
         }
-        if (updateServiceItemDto.TaxRate.HasValue)
-        {
-            existingServiceItem.TaxRate = updateServiceItemDto.TaxRate.Value;
-        }
         if (updateServiceItemDto.IsTaxable.HasValue)
         {
             existingServiceItem.IsTaxable = updateServiceItemDto.IsTaxable.Value;
@@ -366,7 +362,6 @@ public class ServiceItemService : IServiceItemService
                 SKU = dto.SKU?.Trim() ?? null,
                 UnitPrice = dto.UnitPrice,
                 Cost = dto.Cost,
-                TaxRate = dto.TaxRate,
                 IsTaxable = dto.IsTaxable,
                 IsActive = dto.IsActive,
                 ImageUrl = dto.ImageUrl,
@@ -407,11 +402,11 @@ public class ServiceItemService : IServiceItemService
 
         var sb = new StringBuilder();
 
-        sb.AppendLine("Name,Description,Type,Category,SKU,UnitPrice,Cost,TaxRate,IsTaxable,IsActive,ImageUrl");
+        sb.AppendLine("Name,Description,Type,Category,SKU,UnitPrice,Cost,IsTaxable,IsActive,ImageUrl");
 
         foreach (var item in serviceItems)
         {
-            sb.AppendLine($"{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{item.UnitPrice},{item.Cost},{item.TaxRate},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
+            sb.AppendLine($"{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{item.UnitPrice},{item.Cost},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());

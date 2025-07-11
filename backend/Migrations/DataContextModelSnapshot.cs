@@ -631,9 +631,6 @@ namespace backend.Migrations
                     b.Property<Guid?>("ServiceItemId")
                         .HasColumnType("char(36)");
 
-                    b.Property<decimal>("TaxRate")
-                        .HasColumnType("decimal(65,30)");
-
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(65,30)");
 
@@ -928,9 +925,6 @@ namespace backend.Migrations
 
                     b.Property<string>("SKU")
                         .HasColumnType("longtext");
-
-                    b.Property<decimal>("TaxRate")
-                        .HasColumnType("decimal(65,30)");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");

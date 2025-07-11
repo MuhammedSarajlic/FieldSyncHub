@@ -39,7 +39,7 @@ public class Quote
     public decimal TaxRate { get; set; }
 
     [NotMapped]
-    public decimal Subtotal => LineItems.Sum(li => li.TotalPrice);
+    public decimal Subtotal => LineItems.Sum(li => li.Total);
 
     [NotMapped]
     public decimal Discount =>

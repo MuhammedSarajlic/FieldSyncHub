@@ -37,6 +37,7 @@ import {
   ChangeQuoteStatus,
   DeleteQuote,
   GetQuoteById,
+  GetQuotePdf,
 } from '../../services/Quote';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import {
@@ -52,6 +53,13 @@ import { getQuoteActivityStyle } from '../../utils/FuntionHelpers/QuoteUtils/get
 import SendQuoteModal from '../../components/Quotes/QuotesModals/SendQuoteModal';
 import ActionConfirmationModal from '../../components/Quotes/QuotesModals/ActionConfirmationModal';
 import EditQuoteModal from '../../components/Quotes/QuotesModals/EditQuoteModal';
+import {
+  downloadPdfFile,
+  openPdfAndPrint,
+  openPdfForPrinting,
+  printPdfFile,
+} from '../../utils/FuntionHelpers/downloadPdfFile';
+import ConvertQuoteToJobModal from '../../components/Quotes/QuotesModals/ConvertQuoteToJobModal';
 
 const mockSendQuoteApi = async (data: {
   recipientEmail: string;
@@ -85,6 +93,8 @@ const QuoteDetails = () => {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isArchiveQuote, setIsArchiveQuote] = useState(false);
   const [isDeleteQuote, setIsDeleteQuote] = useState(false);
+  const [isConvertQuoteModalOpen, setIsConvertQuoteModalOpen] = useState(false);
+
   const [internalNote, setInternalNote] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [quote, setQuote] = useState<TQuote | null>(null);
@@ -188,6 +198,36 @@ const QuoteDetails = () => {
     // Handle success/failure based on response
     console.log('Attempting to send quote with data:', data);
     await mockSendQuoteApi(data); // Using mock API for demonstration
+  };
+
+  const handleDownloadQuotePdf = async () => {
+    if (!quoteId) return;
+    const response = await GetQuotePdf(quoteId);
+    console.log(response);
+
+    if (response.status === 200) {
+      downloadPdfFile(response.data, `Quote-${quote?.quoteNumber}`);
+    }
+  };
+
+  const handlePrintQuotePdf = async () => {
+    if (!quoteId) {
+      console.warn('No quote ID provided');
+      return;
+    }
+
+    try {
+      const response = await GetQuotePdf(quoteId);
+
+      if (!response?.data || !(response.data instanceof Blob)) {
+        throw new Error('Invalid PDF response received');
+      }
+
+      openPdfAndPrint(response.data);
+    } catch (error) {
+      console.error('Error preparing PDF for printing:', error);
+      alert('Failed to open PDF for printing. Please try again.');
+    }
   };
 
   const mockQuote = {
@@ -301,13 +341,13 @@ const QuoteDetails = () => {
                           <CopyIcon className='w-4 h-4 mr-2' />
                           Duplicate
                         </a>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        <button
+                          onClick={() => setIsConvertQuoteModalOpen(true)}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <HardHat className='w-4 h-4 mr-2' />
                           Convert to Job
-                        </a>
+                        </button>
 
                         {/* Status group */}
                         <div className='border-t border-gray-100 my-1'></div>
@@ -348,20 +388,20 @@ const QuoteDetails = () => {
                           Actions
                         </div>
 
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        <button
+                          onClick={handlePrintQuotePdf}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <Printer className='w-4 h-4 mr-2' />
                           Print
-                        </a>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        </button>
+                        <button
+                          onClick={handleDownloadQuotePdf}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <Download className='w-4 h-4 mr-2' />
                           Download
-                        </a>
+                        </button>
                         <button
                           onClick={() => setIsArchiveQuote(true)}
                           className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
@@ -910,6 +950,11 @@ const QuoteDetails = () => {
         onClose={() => setIsEditModalOpen(false)}
         quoteToEdit={quote}
         setQuotes={setQuote}
+      />
+      <ConvertQuoteToJobModal
+        isOpen={isConvertQuoteModalOpen}
+        onClose={() => setIsConvertQuoteModalOpen(false)}
+        quote={quote}
       />
     </div>
   );

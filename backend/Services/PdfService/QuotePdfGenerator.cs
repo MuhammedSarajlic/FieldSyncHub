@@ -1,83 +1,20 @@
 
+using backend.Data;
+using backend.Models.QuoteModels;
+using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace backend.Services.PdfService;
 
-public class QuoteData
-{
-    public string QuoteNumber { get; set; } = "";
-    public DateTime QuoteDate { get; set; } = DateTime.Now;
-    public DateTime DueDate { get; set; } = DateTime.Now.AddDays(14);
-    public string Currency { get; set; } = "EUR";
-
-    // Company details
-    public CompanyInfo Company { get; set; } = new();
-    public CustomerInfo Customer { get; set; } = new();
-
-    // Line items
-    public List<QuoteLineItem> LineItems { get; set; } = new();
-
-    // Totals
-    public decimal Subtotal { get; set; }
-    public decimal DiscountPercentage { get; set; }
-    public decimal DiscountAmount { get; set; }
-    public decimal Tax1Amount { get; set; }
-    public decimal Tax2Amount { get; set; }
-    public decimal Total { get; set; }
-
-    // Tax info
-    public string Tax1Name { get; set; } = "GST";
-    public decimal Tax1Rate { get; set; } = 5.0m;
-    public string Tax2Name { get; set; } = "Sales";
-    public decimal Tax2Rate { get; set; } = 8.25m;
-
-    // Notes
-    public string Notes { get; set; } = "";
-
-    // Signatures
-    public bool ShowCompanySignature { get; set; }
-    public bool ShowCustomerSignature { get; set; }
-    public string CompanySignatureText { get; set; } = "Company signature";
-    public string CustomerSignatureText { get; set; } = "Customer signature";
-}
-
-public class CompanyInfo
-{
-    public string Name { get; set; } = "";
-    public string Address { get; set; } = "";
-    public string Phone { get; set; } = "";
-    public string Email { get; set; } = "";
-    public string Website { get; set; } = "";
-    public byte[]? Logo { get; set; }
-}
-
-public class CustomerInfo
-{
-    public string Name { get; set; } = "";
-    public string Address { get; set; } = "";
-    public string Phone { get; set; } = "";
-    public string Email { get; set; } = "";
-}
-
-public class QuoteLineItem
-{
-    public decimal Quantity { get; set; }
-    public string Description { get; set; } = "";
-    public decimal UnitPrice { get; set; }
-    public decimal Amount => Quantity * UnitPrice;
-    public bool HasTax1 { get; set; }
-    public bool HasTax2 { get; set; }
-    public bool IsBillable { get; set; } = true;
-}
-
 public class QuotePdfGenerator
 {
-    private readonly QuoteData _quote;
+    private readonly Quote _quote;
     private readonly string _primaryColor = "#343a40";
+    private byte[]? Logo { get; set; }
 
-    public QuotePdfGenerator(QuoteData quote)
+    public QuotePdfGenerator(Quote quote)
     {
         _quote = quote;
     }
@@ -108,23 +45,28 @@ public class QuotePdfGenerator
             // Company info section
             row.RelativeItem(2).Column(column =>
             {
-                // Company logo and name
-                if (_quote.Company.Logo != null)
+                // Company logo (assuming LogoData is a byte[] in Workspace model)
+                if (_quote.CreatedByUser.Workspace?.LogoUrl != null && _quote.CreatedByUser.Workspace?.LogoUrl.Length > 0)
                 {
-                    column.Item().AlignRight().Width(120).Height(60).Image(_quote.Company.Logo);
+                    column.Item().AlignRight().Width(120).Height(60).Image(_quote.CreatedByUser.Workspace?.LogoUrl);
                 }
 
-                column.Item().AlignLeft().PaddingTop(10).Text(text =>
+                // Company Name
+                if (!string.IsNullOrEmpty(_quote.CreatedByUser.Workspace?.Name))
                 {
-                    text.DefaultTextStyle(x => x.FontSize(12).SemiBold());
-                    text.Line(_quote.Company.Name);
-                });
-
-                if (!string.IsNullOrEmpty(_quote.Company.Address))
-                {
-                    column.Item().AlignLeft().PaddingTop(5).Text(_quote.Company.Address)
-                        .FontSize(9).LineHeight(1.2f);
+                    column.Item().AlignLeft().PaddingTop(10).Text(text =>
+                    {
+                        text.DefaultTextStyle(x => x.FontSize(12).SemiBold());
+                        text.Line(_quote.CreatedByUser.Workspace?.Name);
+                    });
                 }
+
+                // Company Address (assuming Address property exists in Workspace)
+                // if (!string.IsNullOrEmpty(_quote.Workspace?.Address))
+                // {
+                //     column.Item().AlignLeft().PaddingTop(5).Text(_quote.Workspace.Address)
+                //         .FontSize(9).LineHeight(1.2f);
+                // }
             });
 
             // Quote info section
@@ -133,24 +75,25 @@ public class QuotePdfGenerator
                 column.Item().AlignRight().Text("QUOTE")
                     .FontSize(24).Bold().FontColor(_primaryColor);
 
-                column.Item().AlignRight().PaddingTop(20).Column(info =>
+                column.Item().PaddingTop(20).Column(info =>
                 {
                     info.Item().Row(r =>
                     {
                         r.RelativeItem().AlignRight().Text("Quote #").Bold();
-                        r.ConstantItem(80).AlignRight().Text(_quote.QuoteNumber);
+                        r.ConstantItem(80).AlignRight().Text(_quote.QuoteNumber ?? "N/A");
                     });
 
                     info.Item().PaddingTop(5).Row(r =>
                     {
                         r.RelativeItem().AlignRight().Text("Quote Date").Bold();
-                        r.ConstantItem(80).AlignRight().Text(_quote.QuoteDate.ToString("dd-MM-yyyy"));
+                        r.ConstantItem(80).AlignRight().Text(_quote.CreatedAt.ToString("dd-MM-yyyy"));
                     });
 
+                    // Due date (assuming DueDate property exists in Quote)
                     info.Item().PaddingTop(5).Row(r =>
                     {
                         r.RelativeItem().AlignRight().Text("Due Date").Bold();
-                        r.ConstantItem(80).AlignRight().Text(_quote.DueDate.ToString("dd-MM-yyyy"));
+                        r.ConstantItem(80).AlignRight().Text(_quote.CreatedAt.ToString("dd-MM-yyyy"));
                     });
                 });
             });
@@ -170,18 +113,24 @@ public class QuotePdfGenerator
                     billTo.Item().PaddingTop(5).BorderLeft(3).BorderColor(_primaryColor)
                         .PaddingLeft(10).Column(customerInfo =>
                         {
-                            customerInfo.Item().Text(_quote.Customer.Name).Bold();
-                            if (!string.IsNullOrEmpty(_quote.Customer.Address))
+                            customerInfo.Item().Text(_quote.Customer?.FullName ?? "N/A").Bold();
+
+                            var firstPropertyAddress = _quote.Customer?.Properties?.FirstOrDefault()?.Address;
+                            if (!string.IsNullOrEmpty(firstPropertyAddress))
                             {
-                                customerInfo.Item().Text(_quote.Customer.Address).LineHeight(1.2f);
+                                customerInfo.Item().Text(firstPropertyAddress).LineHeight(1.2f);
                             }
-                            if (!string.IsNullOrEmpty(_quote.Customer.Phone))
+
+                            var firstCustomerPhone = _quote.Customer?.CustomerPhones?.FirstOrDefault()?.PhoneNumber;
+                            if (!string.IsNullOrEmpty(firstCustomerPhone))
                             {
-                                customerInfo.Item().Text($"Phone: {_quote.Customer.Phone}");
+                                customerInfo.Item().Text($"Phone: {firstCustomerPhone}");
                             }
-                            if (!string.IsNullOrEmpty(_quote.Customer.Email))
+
+                            var firstCustomerEmail = _quote.Customer?.Emails?.FirstOrDefault();
+                            if (!string.IsNullOrEmpty(firstCustomerEmail))
                             {
-                                customerInfo.Item().Text($"Email: {_quote.Customer.Email}");
+                                customerInfo.Item().Text($"Email: {firstCustomerEmail}");
                             }
                         });
                 });
@@ -194,8 +143,8 @@ public class QuotePdfGenerator
             {
                 table.ColumnsDefinition(columns =>
                 {
+                    columns.RelativeColumn(3);   // Item Name/Description
                     columns.ConstantColumn(60);  // QTY
-                    columns.RelativeColumn(3);   // Description
                     columns.ConstantColumn(80);  // Unit Price
                     columns.ConstantColumn(80);  // Amount
                 });
@@ -203,23 +152,33 @@ public class QuotePdfGenerator
                 // Header
                 table.Header(header =>
                 {
+                    header.Cell().Element(CellStyle).Text("Name").Bold();
                     header.Cell().Element(CellStyle).AlignCenter().Text("QTY").Bold();
-                    header.Cell().Element(CellStyle).Text("Description").Bold();
                     header.Cell().Element(CellStyle).AlignRight().Text("Unit Price").Bold();
                     header.Cell().Element(CellStyle).AlignRight().Text("Amount").Bold();
                 });
 
                 // Line items
-                foreach (var item in _quote.LineItems)
+                foreach (var item in _quote.LineItems ?? []) // Ensure LineItems is not null
                 {
+                    // Item Name and Description cell
+                    table.Cell().Element(CellStyle).Column(column =>
+                    {
+                        // Item Name - bold and darker color
+                        column.Item().Text(item.Name ?? "").Bold().FontColor(Colors.Black);
+
+                        // Description - lighter color and normal weight
+                        if (!string.IsNullOrEmpty(item.Description))
+                        {
+                            column.Item().PaddingTop(2).Text(item.Description).FontColor(Colors.Grey.Darken2);
+                        }
+                    });
+
                     table.Cell().Element(CellStyle).AlignCenter().Text(item.Quantity.ToString("N2"));
-                    table.Cell().Element(CellStyle).Text(item.Description);
                     table.Cell().Element(CellStyle).AlignRight().Text(FormatCurrency(item.UnitPrice));
                     table.Cell().Element(CellStyle).AlignRight().Text(text =>
                     {
-                        text.Span(FormatCurrency(item.Amount));
-                        if (item.HasTax1) text.Span("*").Superscript();
-                        if (item.HasTax2) text.Span("†").Superscript();
+                        text.Span(FormatCurrency(item.Total));
                     });
                 }
             });
@@ -228,7 +187,7 @@ public class QuotePdfGenerator
             column.Item().PaddingTop(20).AlignRight().Width(300).Column(totals =>
             {
                 // Subtotal
-                totals.Item().BorderTop(1).BorderColor(Colors.Grey.Lighten2).PaddingTop(5)
+                totals.Item()
                     .Row(r =>
                     {
                         r.RelativeItem().Text("Subtotal");
@@ -236,40 +195,30 @@ public class QuotePdfGenerator
                     });
 
                 // Discount
-                if (_quote.DiscountAmount > 0)
+                if (_quote.Discount > 0)
                 {
                     totals.Item().PaddingTop(5).Row(r =>
                     {
-                        r.RelativeItem().Text($"Discount ({_quote.DiscountPercentage:N2}%)");
-                        r.ConstantItem(80).AlignRight().Text($"-{FormatCurrency(_quote.DiscountAmount)}");
+                        // Assuming DiscountType enum and DiscountValue property in your Quote model
+                        string discountText = _quote.DiscountType == DiscountType.Percentage
+                            ? $"Discount ({_quote.DiscountValue:N2}%)"
+                            : "Discount";
+                        r.RelativeItem().Text(discountText);
+                        r.ConstantItem(80).AlignRight().Text($"-{FormatCurrency(_quote.Discount)}");
                     });
                 }
 
-                // Tax 1
-                if (_quote.Tax1Amount > 0)
+                // Tax
+                if (_quote.TaxAmount > 0)
                 {
                     totals.Item().PaddingTop(5).Row(r =>
                     {
                         r.RelativeItem().Text(text =>
                         {
-                            text.Span("*").Superscript();
-                            text.Span($"{_quote.Tax1Name} ({_quote.Tax1Rate:N2}%)");
+                            // Assuming TaxName and TaxRate properties in your Quote model
+                            text.Span($"Tax name ({_quote.TaxRate * 100:N2}%)");
                         });
-                        r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.Tax1Amount));
-                    });
-                }
-
-                // Tax 2
-                if (_quote.Tax2Amount > 0)
-                {
-                    totals.Item().PaddingTop(5).Row(r =>
-                    {
-                        r.RelativeItem().Text(text =>
-                        {
-                            text.Span("†").Superscript();
-                            text.Span($"{_quote.Tax2Name} ({_quote.Tax2Rate:N2}%)");
-                        });
-                        r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.Tax2Amount));
+                        r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.TaxAmount));
                     });
                 }
 
@@ -277,51 +226,11 @@ public class QuotePdfGenerator
                 totals.Item().PaddingTop(10).BorderTop(2).BorderColor(_primaryColor)
                     .PaddingTop(5).Row(r =>
                     {
-                        r.RelativeItem().Text($"Total ({_quote.Currency})").Bold().FontSize(12);
+                        r.RelativeItem().Text($"Total").Bold().FontSize(12);
                         r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.Total))
                             .Bold().FontSize(12);
                     });
             });
-
-            // Notes section
-            if (!string.IsNullOrEmpty(_quote.Notes))
-            {
-                column.Item().PaddingTop(30).Column(notes =>
-                {
-                    notes.Item().Text("Terms and Conditions").Bold().FontSize(12);
-                    notes.Item().PaddingTop(10).BorderLeft(3).BorderColor(_primaryColor)
-                        .PaddingLeft(10).Text(_quote.Notes).LineHeight(1.3f);
-                });
-            }
-
-            // Signatures
-            if (_quote.ShowCompanySignature || _quote.ShowCustomerSignature)
-            {
-                column.Item().PaddingTop(40).Row(signatures =>
-                {
-                    if (_quote.ShowCompanySignature)
-                    {
-                        signatures.RelativeItem().Column(companySign =>
-                        {
-                            companySign.Item().Height(40); // Space for signature
-                            companySign.Item().BorderTop(1).BorderColor(Colors.Grey.Medium);
-                            companySign.Item().PaddingTop(5).Text(_quote.CompanySignatureText)
-                                .FontSize(9).FontColor(Colors.Grey.Darken2);
-                        });
-                    }
-
-                    if (_quote.ShowCustomerSignature)
-                    {
-                        signatures.RelativeItem().Column(customerSign =>
-                        {
-                            customerSign.Item().Height(40); // Space for signature
-                            customerSign.Item().BorderTop(1).BorderColor(Colors.Grey.Medium);
-                            customerSign.Item().PaddingTop(5).Text(_quote.CustomerSignatureText)
-                                .FontSize(9).FontColor(Colors.Grey.Darken2);
-                        });
-                    }
-                });
-            }
         });
     }
 
@@ -331,14 +240,15 @@ public class QuotePdfGenerator
         {
             var footerItems = new List<string>();
 
-            if (!string.IsNullOrEmpty(_quote.Company.Phone))
-                footerItems.Add($"📞 {_quote.Company.Phone}");
+            // Access Workspace and CreatedByUser properties safely
+            if (!string.IsNullOrEmpty(_quote.CreatedByUser?.Workspace.PhoneNumber))
+                footerItems.Add($"📞 {_quote.CreatedByUser?.Workspace.PhoneNumber}");
 
-            if (!string.IsNullOrEmpty(_quote.Company.Email))
-                footerItems.Add($"✉ {_quote.Company.Email}");
+            if (!string.IsNullOrEmpty(_quote.CreatedByUser?.Email))
+                footerItems.Add($"✉ {_quote.CreatedByUser.Email}");
 
-            if (!string.IsNullOrEmpty(_quote.Company.Website))
-                footerItems.Add($"🌐 {_quote.Company.Website}");
+            if (!string.IsNullOrEmpty(_quote.CreatedByUser?.Workspace.CompanyUrl))
+                footerItems.Add($"🌐 {_quote.CreatedByUser?.Workspace.CompanyUrl}");
 
             if (footerItems.Any())
             {
@@ -355,87 +265,28 @@ public class QuotePdfGenerator
 
     private string FormatCurrency(decimal amount)
     {
-        return _quote.Currency switch
-        {
-            "EUR" => $"€ {amount:N2}",
-            "USD" => $"$ {amount:N2}",
-            "GBP" => $"£ {amount:N2}",
-            _ => $"{amount:N2} {_quote.Currency}"
-        };
+        return $"$ {amount:N2}";
+
     }
 }
 
-public class QuotePdfService
+public class QuotePdfService(DataContext context)
 {
-    public byte[] GenerateQuotePdf(QuoteData quoteData)
+    private readonly DataContext _context = context;
+
+    public async Task<byte[]> GenerateQuotePdf(Guid id)
     {
+        var quote = await _context.Quotes.Where(q => q.Id == id)
+                                        .Include(q => q.CreatedByUser)
+                                            .ThenInclude(u => u.Workspace)
+                                        .Include(q => q.Customer)
+                                        .Include(q => q.LineItems)
+                                        .FirstOrDefaultAsync();
+
         // Ensure QuestPDF license is set
         QuestPDF.Settings.License = LicenseType.Community;
 
-        var generator = new QuotePdfGenerator(quoteData);
+        var generator = new QuotePdfGenerator(quote);
         return generator.GeneratePdf();
-    }
-
-    // Helper method to create sample data for testing
-    public QuoteData CreateSampleQuote()
-    {
-        return new QuoteData
-        {
-            QuoteNumber = "0001001",
-            QuoteDate = DateTime.Now,
-            DueDate = DateTime.Now.AddDays(14),
-            Currency = "EUR",
-            Company = new CompanyInfo
-            {
-                Name = "Your Company Inc.",
-                Address = "Zmaja od Bosne 14,\nZenica 72000, BiH",
-                Phone = "+387 62409924",
-                Email = "office@inatdigital.com",
-                Website = "www.yourcompany.com"
-            },
-            Customer = new CustomerInfo
-            {
-                Name = "Customer Name",
-                Address = "Hamida 25,\nZenica 72000, BiH",
-                Phone = "+387 123 456 789",
-                Email = "customer@email.com"
-            },
-            LineItems = new List<QuoteLineItem>
-            {
-                new QuoteLineItem
-                {
-                    Quantity = 1.00m,
-                    Description = "This is the best description for line item",
-                    UnitPrice = 325.00m,
-                    HasTax1 = true,
-                    HasTax2 = false
-                },
-                new QuoteLineItem
-                {
-                    Quantity = 2.00m,
-                    Description = "Second best line item",
-                    UnitPrice = 150.00m,
-                    HasTax1 = false,
-                    HasTax2 = true
-                },
-                new QuoteLineItem
-                {
-                    Quantity = 1.00m,
-                    Description = "And third best line items is",
-                    UnitPrice = 100.00m,
-                    HasTax1 = false,
-                    HasTax2 = false
-                }
-            },
-            Subtotal = 725.00m,
-            DiscountPercentage = 5.00m,
-            DiscountAmount = 36.25m,
-            Tax1Amount = 15.44m,
-            Tax2Amount = 23.51m,
-            Total = 727.70m,
-            Notes = "Best project we must finish before yesterday",
-            ShowCompanySignature = true,
-            ShowCustomerSignature = true
-        };
     }
 }

@@ -108,7 +108,6 @@ public class RequestService : IRequestService
                         newLineItem.Description = serviceItem.Description;
                         newLineItem.UnitPrice = serviceItem.UnitPrice;
                         newLineItem.Cost = serviceItem.Cost;
-                        newLineItem.TaxRate = serviceItem.TaxRate;
                         newLineItem.IsTaxable = serviceItem.IsTaxable;
                         newLineItem.Quantity = itemDto.Quantity;
                     }
@@ -119,7 +118,6 @@ public class RequestService : IRequestService
                         newLineItem.Description = itemDto.Description;
                         newLineItem.UnitPrice = itemDto.UnitPrice;
                         newLineItem.Cost = itemDto.Cost ?? 0;
-                        newLineItem.TaxRate = itemDto.TaxRate ?? 0;
                         newLineItem.IsTaxable = itemDto.IsTaxable ?? false;
                         newLineItem.Quantity = itemDto.Quantity;
                     }
@@ -130,7 +128,6 @@ public class RequestService : IRequestService
                     newLineItem.Description = itemDto.Description;
                     newLineItem.UnitPrice = itemDto.UnitPrice;
                     newLineItem.Cost = itemDto.Cost ?? 0;
-                    newLineItem.TaxRate = itemDto.TaxRate ?? 0;
                     newLineItem.IsTaxable = itemDto.IsTaxable ?? false;
                     newLineItem.Quantity = itemDto.Quantity;
                 }

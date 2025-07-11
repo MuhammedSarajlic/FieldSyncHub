@@ -41,6 +41,13 @@ export async function GetQuoteStats(workspaceId: string) {
   return response;
 }
 
+export async function GetQuotePdf(quoteId: string) {
+  const response = await api.get<Blob>(`/quote/${quoteId}/pdf`, {
+    responseType: 'blob',
+  });
+  return response;
+}
+
 export async function CreateQuote(quote: TAddQuote) {
   const response = await api.post('/quote', quote);
   return response;
