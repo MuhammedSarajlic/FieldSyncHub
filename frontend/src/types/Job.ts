@@ -28,8 +28,7 @@ export type TJob = {
   priority: JobPriority;
   startDate: string;
   startTime: string;
-  arrivalWindowStart?: string;
-  arrivalWindowEnd?: string;
+  arrivalWindow?: number;
   duration?: number;
   timeZone: string;
   estimatedDurationMinutes: number;
@@ -73,8 +72,7 @@ export type TAddJob = {
   priority: JobPriority;
   startDate: string;
   startTime: string;
-  arrivalWindowStart?: string;
-  arrivalWindowEnd?: string;
+  arrivalWindow?: number;
   duration?: number;
   timeZone: string;
   estimatedDurationMinutes: number;
@@ -108,8 +106,7 @@ export type TUpdateJob = {
   priority?: JobPriority;
   startDate?: string;
   startTime?: string;
-  arrivalWindowStart?: string;
-  arrivalWindowEnd?: string;
+  arrivalWindow?: number;
   duration?: number;
   estimatedDurationMinutes?: number;
   assignedTeamMembers?: TEmployee[];

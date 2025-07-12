@@ -2,10 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   X,
   Plus,
-  Trash2,
-  User,
-  FileText,
-  Calculator,
   Settings,
   Building2,
   Mail,
@@ -13,10 +9,7 @@ import {
   Percent,
   DollarSign,
   ChevronDown,
-  Calendar,
   UserPlus,
-  Users,
-  Bell,
   Home,
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
@@ -43,6 +36,8 @@ import { TEmployee } from '../../../types/Employee';
 import { CreateJob } from '../../../services/Job';
 import { getJobStatus } from '../../../utils/FuntionHelpers/JobUtils/getJobStatus';
 import { getJobPriority } from '../../../utils/FuntionHelpers/JobUtils/getJobPriority';
+import IconButton from '../../CustomElements/Buttons/IconButton';
+import CustomButton from '../../CustomElements/Buttons/CustomButton';
 
 interface INewJobModal {
   isOpen: boolean;
@@ -79,7 +74,8 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
         quantity: 1,
         name: '',
         unitPrice: 0,
-        description: '', // Added description for line item
+        description: '',
+        isOptional: false,
       },
     ],
     status: JobStatus.Scheduled,
@@ -87,8 +83,7 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
     priority: JobPriority.Normal,
     startDate: '',
     startTime: '',
-    arrivalWindowStart: '',
-    arrivalWindowEnd: '',
+    arrivalWindow: 0,
     duration: 1,
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     estimatedDurationMinutes: 60,
@@ -233,7 +228,6 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
         description: serviceItem.description,
         unitPrice: serviceItem.unitPrice,
         isTaxable: serviceItem.isTaxable,
-        taxRate: serviceItem.taxRate,
       };
       return { ...prev, lineItems: newLineItems };
     });
@@ -282,7 +276,8 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
           quantity: 1,
           name: '',
           unitPrice: 0,
-          description: '', // Added description for new line item
+          description: '',
+          isOptional: false,
         },
       ],
     }));
@@ -321,8 +316,7 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!user?.workspace) {
       console.error('User or workspace not available.');
       return;
@@ -349,14 +343,6 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
     };
 
     job.startTime = combineDateTimeToISO(job.startDate, job.startTime);
-    job.arrivalWindowStart = combineDateTimeToISO(
-      job.startDate,
-      job.arrivalWindowStart
-    );
-    job.arrivalWindowEnd = combineDateTimeToISO(
-      job.startDate,
-      job.arrivalWindowEnd
-    );
     const updatedJob = {
       ...job,
       workspaceId: user.workspace.id,
@@ -463,7 +449,7 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
 
   return (
     <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-inter'>
-      <div className='bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl shadow-2xl w-full max-w-[75%] max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header - White background */}
         <div className='bg-white flex justify-between items-center px-8 py-6 border-b border-gray-200 shadow-sm'>
           <div>
@@ -483,13 +469,13 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
 
         {/* Main Content Area - Scrollable */}
         <div className='flex-1 overflow-hidden flex flex-col lg:flex-row'>
-          <div className='flex-1 overflow-y-auto px-8 py-6 lg:w-3/5 border-r border-gray-200'>
-            <form id='job-form' className='space-y-8' onSubmit={handleSubmit}>
+          <div className='flex-1 overflow-y-auto px-8 py-6 border-r border-gray-200'>
+            <div className='space-y-10'>
               {/* Job Basic Information */}
-              <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+              <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  <FileText className='w-5 h-5 text-[#356852]' />
-                  <h3 className='font-semibold text-lg text-gray-900'>
+                  {/* <FileText className='w-5 h-5 text-[#356852]' /> */}
+                  <h3 className='font-semibold text-xl text-text-primary'>
                     Job Information
                   </h3>
                 </div>
@@ -553,11 +539,11 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
               </div>
 
               {/* Customer Section */}
-              <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+              <div className=''>
                 <div className='flex items-center justify-between mb-6'>
                   <div className='flex items-center space-x-3'>
-                    <User className='w-5 h-5 text-[#356852]' />
-                    <h3 className='font-semibold text-lg text-gray-900'>
+                    {/* <User className='w-5 h-5 text-[#356852]' /> */}
+                    <h3 className='font-semibold text-xl text-text-primary'>
                       Customer & Property
                     </h3>
                   </div>
@@ -686,10 +672,10 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
               </div>
 
               {/* Job Details Section */}
-              <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+              <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  <Calendar className='w-5 h-5 text-[#356852]' />
-                  <h3 className='font-semibold text-lg text-gray-900'>
+                  {/* <Calendar className='w-5 h-5 text-[#356852]' /> */}
+                  <h3 className='font-semibold text-xl text-text-primary'>
                     Job Details
                   </h3>
                 </div>
@@ -749,7 +735,7 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
                 </div>
 
                 {/* Scheduling Details */}
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+                <div className='grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-6'>
                   <div>
                     <label
                       htmlFor='start-date'
@@ -808,21 +794,34 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
                   {/* Arrival Window */}
                   <div>
                     <label
-                      htmlFor='arrival-window-start'
+                      htmlFor='arrivalWindow'
                       className='block text-sm font-medium text-gray-700 mb-2'
                     >
-                      Arrival Window Start
+                      Arrival Window
                     </label>
-                    <input
-                      type='time'
-                      id='arrival-window-start'
-                      name='arrivalWindowStart'
-                      value={job.arrivalWindowStart}
-                      onChange={handleChange}
-                      className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                    />
+                    <div className='relative'>
+                      <select
+                        id='arrivalWindow'
+                        name='arrivalWindow'
+                        value={job.arrivalWindow}
+                        onChange={handleChange}
+                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                      >
+                        <option value=''>None</option>
+                        <option value='15'>15 minutes</option>
+                        <option value='30'>30 minutes</option>
+                        <option value='60'>1 hour</option>
+                        <option value='120'>2 hour</option>
+                        <option value='180'>3 hour</option>
+                        <option value='240'>4 hour</option>
+                      </select>
+                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
+                        <ChevronDown className='w-5 h-5' />
+                      </div>
+                    </div>
                   </div>
-                  <div>
+
+                  {/* <div>
                     <label
                       htmlFor='arrival-window-end'
                       className='block text-sm font-medium text-gray-700 mb-2'
@@ -837,7 +836,7 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
                       onChange={handleChange}
                       className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
                     />
-                  </div>
+                  </div> */}
                 </div>
 
                 {job.jobType === JobType.Recurring && (
@@ -894,10 +893,10 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
               </div>
 
               {/* Team Members Section */}
-              <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+              <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  <Users className='w-5 h-5 text-[#356852]' />
-                  <h3 className='font-semibold text-lg text-gray-900'>
+                  {/* <Users className='w-5 h-5 text-[#356852]' /> */}
+                  <h3 className='font-semibold text-xl text-text-primary'>
                     Assigned Team Members
                   </h3>
                 </div>
@@ -927,25 +926,17 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
 
               {/* Line Items Section - Always show at least one */}
               <div className='space-y-6'>
-                <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
+                <div className='flex justify-between items-center'>
                   <div className='flex items-center space-x-3'>
-                    <FileText className='w-5 h-5 text-[#356852]' />
-                    <h3 className='font-semibold text-lg text-gray-900'>
+                    {/* <FileText className='w-5 h-5 text-[#356852]' /> */}
+                    <h3 className='font-semibold text-xl text-text-primary'>
                       Line items
                     </h3>
                   </div>
-                  <button
-                    type='button'
-                    onClick={() => addNewLineItem(job, setJob)}
-                    className='flex items-center px-4 py-2 bg-[#356852] text-white rounded-lg hover:bg-[#2d5a44] transition-colors font-medium text-sm shadow-md'
-                  >
-                    <Plus className='w-4 h-4 mr-2' />
-                    Add Service
-                  </button>
                 </div>
 
                 <div className='grid grid-cols-12 gap-4 text-xs font-semibold text-gray-600 uppercase pb-2 border-b border-gray-200'>
-                  <div className='col-span-6'>Service</div>
+                  <div className='col-span-6'>Item name</div>
                   <div className='col-span-2'>Qty</div>
                   <div className='col-span-2'>Unit Price</div>
                   <div className='col-span-2 text-right'>Total</div>
@@ -1074,27 +1065,34 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
 
                         <div className='col-span-2'>
                           {job.lineItems.length > 1 && (
-                            <button
-                              type='button'
+                            <CustomButton
                               onClick={() => removeLineItem(job, index, setJob)}
-                              className='flex items-center cursor-pointer px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium'
+                              customStyle='text-red-600 py-2 px-4 hover:bg-gray-50 hover:border-gray-300'
                             >
-                              <Trash2 className='w-4 h-4 mr-1' />
                               Remove
-                            </button>
+                            </CustomButton>
                           )}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
+                <div className='flex items-center space-x-3'>
+                  <IconButton
+                    icon={<Plus className='w-4 h-4 mr-2' />}
+                    onClick={() => addNewLineItem(job, setJob)}
+                    customStyle='py-2 px-4 text-white bg-bg-primary'
+                  >
+                    Add Line Item
+                  </IconButton>
+                </div>
               </div>
 
               {/* Pricing Summary and Discounts */}
-              <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+              <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  <DollarSign className='w-5 h-5 text-[#356852]' />
-                  <h3 className='font-semibold text-lg text-gray-900'>
+                  {/* <DollarSign className='w-5 h-5 text-[#356852]' /> */}
+                  <h3 className='font-semibold text-xl text-text-primary'>
                     Pricing & Payment
                   </h3>
                 </div>
@@ -1229,37 +1227,39 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
                   </div>
                 </div>
 
-                <div className='mt-8 pt-6 border-t border-gray-200 space-y-3'>
-                  <div className='flex justify-between items-center text-sm text-gray-700'>
-                    <span>Subtotal:</span>
-                    <span className='font-medium'>
-                      {formatCurrency(subtotal)}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center text-sm text-gray-700'>
-                    <span>Discount:</span>
-                    <span className='font-medium text-red-600'>
-                      -{formatCurrency(discountAmount)}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center text-sm text-gray-700'>
-                    <span>Tax ({job.taxRate}%):</span>
-                    <span className='font-medium'>
-                      {formatCurrency(taxAmount)}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center text-lg font-bold text-gray-900 pt-2'>
-                    <span>Total:</span>
-                    <span>{formatCurrency(total)}</span>
+                <div className='w-full flex justify-end mt-8 pt-6 border-t border-gray-200'>
+                  <div className='w-1/2 space-y-3'>
+                    <div className='flex justify-between items-center text-sm text-gray-700'>
+                      <span>Subtotal:</span>
+                      <span className='font-medium'>
+                        {formatCurrency(subtotal)}
+                      </span>
+                    </div>
+                    <div className='flex justify-between items-center text-sm text-gray-700'>
+                      <span>Discount:</span>
+                      <span className='font-medium text-bg-primary'>
+                        -{formatCurrency(discountAmount)}
+                      </span>
+                    </div>
+                    <div className='flex justify-between items-center text-sm text-gray-700'>
+                      <span>Tax ({job.taxRate}%):</span>
+                      <span className='font-medium'>
+                        {formatCurrency(taxAmount)}
+                      </span>
+                    </div>
+                    <div className='flex justify-between border-t border-gray-200 items-center text-lg font-bold text-gray-900 pt-2'>
+                      <span>Total:</span>
+                      <span>{formatCurrency(total)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Communication Settings */}
-              <div className='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+              <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  <Bell className='w-5 h-5 text-[#356852]' />
-                  <h3 className='font-semibold text-lg text-gray-900'>
+                  {/* <Bell className='w-5 h-5 text-[#356852]' /> */}
+                  <h3 className='font-semibold text-xl text-text-primary'>
                     Communication & Notes
                   </h3>
                 </div>
@@ -1364,23 +1364,25 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
                   >
                     Tags
                   </label>
-                  <div className='flex flex-wrap items-center gap-2 mb-2'>
-                    {job.tags?.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className='flex items-center bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium'
-                      >
-                        {tag}
-                        <button
-                          type='button'
-                          onClick={() => removeTag(tag)}
-                          className='ml-2 text-gray-500 hover:text-gray-700'
+                  {job.tags && job.tags.length > 0 && (
+                    <div className='flex flex-wrap items-center gap-2 mb-2'>
+                      {job.tags?.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className='flex items-center bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium'
                         >
-                          <X className='w-3 h-3' />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                          {tag}
+                          <button
+                            type='button'
+                            onClick={() => removeTag(tag)}
+                            className='ml-2 text-gray-500 hover:text-gray-700'
+                          >
+                            <X className='w-3 h-3' />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <input
                     type='text'
                     id='tags'
@@ -1393,24 +1395,7 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
                   />
                 </div>
               </div>
-
-              {/* Action Buttons inside the form */}
-              <div className='mt-8 pt-6 border-t border-gray-200 flex flex-col space-y-4'>
-                <button
-                  type='submit'
-                  className='w-full bg-[#356852] text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-[#2d5a44] transition-colors shadow-lg'
-                >
-                  Create Job
-                </button>
-                <button
-                  type='button'
-                  onClick={onClose}
-                  className='w-full bg-white text-gray-700 border border-gray-300 py-3 px-6 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm'
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
 
           {/* Right Sidebar - Job Summary */}
@@ -1544,6 +1529,23 @@ const NewJobModal = ({ isOpen, onClose }: INewJobModal) => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+        {/* Action Buttons */}
+        <div className='sticky bottom-0 bg-white z-10 px-8 py-4 border-t border-gray-100'>
+          <div className='flex items-center justify-end space-x-3'>
+            <CustomButton
+              onClick={onClose}
+              customStyle='px-5 py-2.5 shadow-sm border-gray-300 hover:bg-gray-50'
+            >
+              Cancel
+            </CustomButton>
+            <CustomButton
+              onClick={handleSubmit}
+              customStyle='px-5 py-2.5 bg-bg-primary text-white hover:bg-bg-primary-hover'
+            >
+              Create Job
+            </CustomButton>
           </div>
         </div>
       </div>

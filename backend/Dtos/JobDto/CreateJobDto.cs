@@ -19,8 +19,7 @@ public class CreateJobDto
     public JobPriority Priority { get; set; } = JobPriority.Normal;
     public DateTime StartDate { get; set; }
     public DateTime StartTime { get; set; }
-    public DateTime? ArrivalWindowStart { get; set; }
-    public DateTime? ArrivalWindowEnd { get; set; }
+    public int? ArrivalWindow { get; set; }
     public int? Duration { get; set; }
     public string TimeZone { get; set; } = "UTC";
     public int EstimatedDurationMinutes { get; set; }

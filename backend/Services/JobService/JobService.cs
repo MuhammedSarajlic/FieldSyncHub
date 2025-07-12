@@ -352,8 +352,7 @@ public class JobService : IJobService
         existingJob.Priority = updatedJobDto.Priority ?? existingJob.Priority;
         existingJob.StartDate = updatedJobDto.StartDate ?? existingJob.StartDate;
         existingJob.StartTime = updatedJobDto.StartTime ?? existingJob.StartTime;
-        existingJob.ArrivalWindowStart = updatedJobDto.ArrivalWindowStart ?? existingJob.ArrivalWindowStart;
-        existingJob.ArrivalWindowEnd = updatedJobDto.ArrivalWindowEnd ?? existingJob.ArrivalWindowEnd;
+        existingJob.ArrivalWindow = updatedJobDto.ArrivalWindow ?? existingJob.ArrivalWindow;
         existingJob.Duration = updatedJobDto.Duration ?? existingJob.Duration;
         existingJob.EstimatedDurationMinutes = updatedJobDto.EstimatedDurationMinutes ?? existingJob.EstimatedDurationMinutes;
         existingJob.DepositAmount = updatedJobDto.DepositAmount ?? existingJob.DepositAmount;

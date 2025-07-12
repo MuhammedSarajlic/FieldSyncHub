@@ -16,8 +16,7 @@ public class UpdateJobDto
     public JobPriority? Priority { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? StartTime { get; set; }
-    public DateTime? ArrivalWindowStart { get; set; }
-    public DateTime? ArrivalWindowEnd { get; set; }
+    public int? ArrivalWindow { get; set; }
     public int? Duration { get; set; }
     public int? EstimatedDurationMinutes { get; set; }
     public List<Employee>? AssignedTeamMembers { get; set; }

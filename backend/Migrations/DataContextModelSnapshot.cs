@@ -463,11 +463,8 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime?>("ArrivalWindowEnd")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("ArrivalWindowStart")
-                        .HasColumnType("datetime(6)");
+                    b.Property<int?>("ArrivalWindow")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime(6)");

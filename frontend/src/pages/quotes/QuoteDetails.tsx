@@ -445,7 +445,13 @@ const QuoteDetails = () => {
                           (header) => (
                             <th
                               key={header}
-                              className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                              className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                                header === 'Item'
+                                  ? 'text-left'
+                                  : header === 'Status'
+                                  ? 'text-center'
+                                  : 'text-right'
+                              }`}
                             >
                               {header}
                             </th>
@@ -466,26 +472,26 @@ const QuoteDetails = () => {
                               </p>
                             </div>
                           </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
                             {item.quantity}
                           </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
                             {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
+                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm font-medium text-gray-900'>
                             {formatCurrency(item.quantity * item.unitPrice)}
                           </td>
-                          {/* <td className='px-6 py-4 whitespace-nowrap'>
+                          <td className='px-6 py-4 whitespace-nowrap'>
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                item.optional
+                                item.isOptional
                                   ? 'bg-yellow-100 text-yellow-800'
                                   : 'bg-green-100 text-green-800'
                               }`}
                             >
-                              {item.optional ? 'Optional' : 'Required'}
+                              {item.isOptional ? 'Optional' : 'Required'}
                             </span>
-                          </td> */}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
