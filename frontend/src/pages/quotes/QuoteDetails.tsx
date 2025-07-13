@@ -56,10 +56,9 @@ import EditQuoteModal from '../../components/Quotes/QuotesModals/EditQuoteModal'
 import {
   downloadPdfFile,
   openPdfAndPrint,
-  openPdfForPrinting,
-  printPdfFile,
 } from '../../utils/FuntionHelpers/downloadPdfFile';
 import ConvertQuoteToJobModal from '../../components/Quotes/QuotesModals/ConvertQuoteToJobModal';
+import DuplicateQuoteModal from '../../components/Quotes/QuotesModals/DuplicateQuoteModal';
 
 const mockSendQuoteApi = async (data: {
   recipientEmail: string;
@@ -93,6 +92,8 @@ const QuoteDetails = () => {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isArchiveQuote, setIsArchiveQuote] = useState(false);
   const [isDeleteQuote, setIsDeleteQuote] = useState(false);
+  const [isDuplicateQuoteModalOpen, setIsDuplicateQuoteModalOpen] =
+    useState(false);
   const [isConvertQuoteModalOpen, setIsConvertQuoteModalOpen] = useState(false);
 
   const [internalNote, setInternalNote] = useState('');
@@ -256,7 +257,7 @@ const QuoteDetails = () => {
 
   useEffect(() => {
     fetchQuote();
-  }, []);
+  }, [quoteId]);
 
   if (!quote) return <div>Loading</div>;
 
@@ -268,9 +269,9 @@ const QuoteDetails = () => {
         {/* Enhanced Header */}
         <div className='shadow-sm'>
           <div className='px-6'>
-            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between py-6 gap-4'>
+            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between py-6'>
               <div className=''>
-                <h1 className='text-2xl font-bold text-primary'>
+                <h1 className='text-2xl font-bold text-text-primary'>
                   {quote.title}
                 </h1>
                 <div className='flex items-center space-x-3'>
@@ -334,13 +335,13 @@ const QuoteDetails = () => {
                           <Eye className='w-4 h-4 mr-2' />
                           Preview
                         </a>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        <button
+                          onClick={() => setIsDuplicateQuoteModalOpen(true)}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <CopyIcon className='w-4 h-4 mr-2' />
                           Duplicate
-                        </a>
+                        </button>
                         <button
                           onClick={() => setIsConvertQuoteModalOpen(true)}
                           className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
@@ -961,6 +962,11 @@ const QuoteDetails = () => {
         isOpen={isConvertQuoteModalOpen}
         onClose={() => setIsConvertQuoteModalOpen(false)}
         quote={quote}
+      />
+      <DuplicateQuoteModal
+        isOpen={isDuplicateQuoteModalOpen}
+        onClose={() => setIsDuplicateQuoteModalOpen(false)}
+        quoteToDuplicate={quote}
       />
     </div>
   );

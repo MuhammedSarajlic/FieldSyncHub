@@ -33,62 +33,70 @@ import IconButton from '../../CustomElements/Buttons/IconButton';
 import { GetEmployeesByWorkspace } from '../../../services/Employee';
 import { TEmployee } from '../../../types/Employee';
 import { useClickOutside } from '../../../hooks/useClickOutside';
+import { useNavigate } from 'react-router';
 
 interface INewQuoteModal {
   isOpen?: boolean;
   onClose: () => void;
-  setQuotes: React.Dispatch<React.SetStateAction<TQuote[]>>;
+  quoteToDuplicate: TQuote;
 }
 
-// Main NewQuoteModal functional component
-const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
+const DuplicateQuoteModal = ({
+  isOpen,
+  onClose,
+  quoteToDuplicate,
+}: INewQuoteModal) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [customers, setCustomers] = useState<TCustomer[]>([]);
-  // const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
+  const [employees, setEmployees] = useState<TEmployee[]>([]);
+  const [filteredEmployees, setFilteredEmployees] = useState<TEmployee[]>([]);
   const [filteredServiceItems, setFilteredServiceItems] = useState<
     TServiceItem[]
   >([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(
-    null
+  const [assignedUserName, setAssignedUserName] = useState(
+    quoteToDuplicate.assignedToUser.fullName
   );
+  const [selectedCustomer, setSelectedCustomer] = useState(
+    quoteToDuplicate.customerId
+  );
+
   const [isAssignUserOpen, setIsAssignUserOpen] = useState<boolean>(false);
-  const [assignedUserName, setAssignedUserName] = useState(user?.fullName);
+  const [isAssignedUserLoading, setIsAssignedUserLoading] =
+    useState<boolean>(false);
+  const [isAddDiscount, setIsAddDiscount] = useState<boolean>(
+    quoteToDuplicate.discountValue > 0
+  );
+  const [isAddTax, setIsAddTax] = useState<boolean>(
+    quoteToDuplicate.taxAmount > 0
+  );
 
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const debouncedUserSearchTerm = useDebounce(userSearchTerm, 300);
-  const [employees, setEmployees] = useState<TEmployee[]>([]);
-  const [filteredEmployees, setFilteredEmployees] = useState<TEmployee[]>([]);
-  const [isAssignedUserLoading, setIsAssignedUserLoading] =
-    useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(
+    null
+  );
+
+  const searchInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const assignUserRef = useClickOutside<HTMLDivElement>(() =>
     setIsAssignUserOpen(false)
   );
-  const [isAddDiscount, setIsAddDiscount] = useState<boolean>(false);
-  const [isAddTax, setIsAddTax] = useState<boolean>(false);
-
-  const searchInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [quote, setQuote] = useState<TAddQuote>({
-    workspaceId: '',
-    customerId: '',
-    createdByUserId: '',
-    assignedToUserId: user?.id || '',
+    workspaceId: quoteToDuplicate.workspaceId,
+    customerId: quoteToDuplicate.customerId,
+    createdByUserId: quoteToDuplicate.createdByUserId,
+    assignedToUserId: quoteToDuplicate.assignedToUserId || '',
     status: QuoteStatus.Draft,
-    title: '',
-    propertyId: '',
-    lineItems: [
-      {
-        quantity: 1,
-        name: '',
-        unitPrice: 0,
-        description: '',
-        isOptional: false,
-      },
-    ],
-    discountType: DiscountType.Percentage,
-    discountValue: 0,
-    taxRate: 0,
+    title: quoteToDuplicate.title,
+    propertyId: quoteToDuplicate.propertyId,
+    lineItems: quoteToDuplicate.lineItems,
+    discountType: quoteToDuplicate.discountType,
+    discountValue: quoteToDuplicate.discountValue,
+    taxRate: quoteToDuplicate.taxRate * 100,
     customerNotes: [
       {
         createdBy: '',
@@ -104,11 +112,8 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
       },
     ],
     activityHistory: [],
-    source: '',
+    source: quoteToDuplicate.source,
   });
-
-  const [selectedCustomer, setSelectedCustomer] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
 
@@ -254,13 +259,11 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     }
     const updatedQuote = {
       ...quote,
-      workspaceId: user.workspace.id,
-      createdByUserId: user.id,
       taxRate: quote.taxRate / 100,
-      customerNotes: quote.customerNotes.filter(
+      customerNotes: quote.customerNotes?.filter(
         (n) => n.noteText?.trim() && n.createdBy && n.createdByName
       ),
-      internalNotes: quote.internalNotes.filter(
+      internalNotes: quote.internalNotes?.filter(
         (n) => n.noteText?.trim() && n.createdBy && n.createdByName
       ),
     };
@@ -268,9 +271,8 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
       const response = await CreateQuote(updatedQuote);
       if (response.status === 200) {
         console.log(response);
-
-        setQuotes((prev) => [response.data, ...prev]);
         onClose();
+        navigate(`/quotes/${response.data.id}`);
       } else {
         console.error(
           'Failed to create quote:',
@@ -310,27 +312,6 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     }
     setIsAssignedUserLoading(false);
   };
-
-  // const fetchAllServiceItems = async () => {
-  //   if (!user?.workspace) return;
-  //   try {
-  //     const response = await GetServiceItemsByWorkspace(
-  //       user.workspace.id,
-  //       1,
-  //       10
-  //     );
-  //     if (response.status === 200) {
-  //       setServiceItems(response.data.payload.items);
-  //     } else {
-  //       console.error(
-  //         'Failed to fetch service items:',
-  //         response.data?.message ?? 'Unknown error'
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching service items:', error);
-  //   }
-  // };
 
   const searchServiceItems = async (term: string): Promise<TServiceItem[]> => {
     if (!term || !user?.workspace) return [];
@@ -372,7 +353,6 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
 
   useEffect(() => {
     fetchCustomers();
-    // fetchAllServiceItems();
   }, []);
 
   useEffect(() => {
@@ -409,7 +389,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
         <div className='sticky top-0 bg-white z-10 flex justify-between items-center px-8 py-5 border-b border-gray-100 shadow-sm'>
           <div>
             <h2 className='text-2xl font-bold text-text-primary'>
-              Create Quote
+              Duplicate Quote
             </h2>
           </div>
           <button
@@ -1087,4 +1067,4 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
   );
 };
 
-export default NewQuoteModal;
+export default DuplicateQuoteModal;
