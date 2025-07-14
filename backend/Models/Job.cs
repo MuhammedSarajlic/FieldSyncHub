@@ -67,7 +67,7 @@ public enum JobStatus
     Dispatched,
     InProgress,
     Completed,
-    Cancelled,
+    Canceled,
 }
 
 public enum JobPriority

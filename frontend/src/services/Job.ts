@@ -48,3 +48,8 @@ export async function CreateJob(job: TAddJob) {
   const response = await api.post('/job', job);
   return response;
 }
+
+export async function DeleteJob(jobId: string) {
+  const response = await api.delete(`/job/${jobId}`);
+  return response;
+}

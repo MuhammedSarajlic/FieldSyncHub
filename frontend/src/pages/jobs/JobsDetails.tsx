@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { TJob } from '../../types/Job';
-import { GetJobById } from '../../services/Job';
+import { DeleteJob, GetJobById } from '../../services/Job';
 import {
   JobPriority,
   JobStatus,
@@ -12,77 +13,60 @@ import {
 } from '../../constants/Enumeration/JobEnum/JobEnum';
 import { formatDate } from '../../utils/FuntionHelpers/formatDate';
 import {
-  Calendar,
   MapPin,
   User,
   Phone,
   Mail,
-  DollarSign,
-  AlertCircle,
   Edit3,
-  MessageSquare,
-  MoreHorizontal,
-  Star,
-  CreditCard,
-  Receipt,
-  Loader2,
-  Trash2,
+  MoreVertical,
+  X,
+  Copy,
   Archive,
   Printer,
-  Share2,
   Download,
-  Copy,
-  ChevronLeft,
+  Receipt,
   CalendarClock,
+  Trash2,
   Send,
+  Star,
 } from 'lucide-react';
 import { getJobPriority } from '../../utils/FuntionHelpers/JobUtils/getJobPriority';
 import { getJobStatus } from '../../utils/FuntionHelpers/JobUtils/getJobStatus';
 import { getPaymentStatusColor } from '../../utils/FuntionHelpers/JobUtils/getPaymentStatusColor';
-import CustomIconButton from '../../components/CustomElements/CustomIconButton';
-import JobDetailsOverviewTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsOverviewTab';
-import JobDetailsTimelineTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsTimelineTab';
-import JobDetailsBillingTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsBillingTab';
-import JobDetailsTeamTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsTeamTab';
 import JobDetailsMediaTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsMediaTab';
 import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
+import IconButton from '../../components/CustomElements/Buttons/IconButton';
+import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
+import { useClickOutside } from '../../hooks/useClickOutside'; // Assuming you have this hook from QuoteDetails
+import { formatTime } from '../../utils/FuntionHelpers/formatTime';
+import EditJobModal from '../../components/Jobs/JobsModal/EditJobModal';
+import { formatPercent } from '../../utils/FuntionHelpers/formatPercent';
 
 const JobDetails = () => {
   const { jobId } = useParams();
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState('overview');
-  const [jobDetails, setJobDetails] = useState<TJob>();
+  const [jobDetails, setJobDetails] = useState<TJob | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isEditJobModalOpen, setIsEditJobModalOpen] = useState<boolean>(false);
 
   const fetchJobById = async () => {
+    if (!jobId) return;
     setIsLoading(true);
     const response = await GetJobById(jobId);
     if (response.status === 200) {
-      console.log(response);
       setJobDetails(response.data.payload);
     }
     setIsLoading(false);
   };
 
-  // Sample photos and documents
-  // const [jobMedia, setJobMedia] = useState([
-  //   {
-  //     id: '1',
-  //     type: 'photo',
-  //     title: 'Before: Kitchen Sink',
-  //     url: '/api/placeholder/80/60',
-  //     uploaded_at: '2025-05-01T14:35:00',
-  //   },
-  //   {
-  //     id: '2',
-  //     type: 'document',
-  //     title: 'Customer Authorization',
-  //     url: '#',
-  //     uploaded_at: '2025-05-01T14:40:00',
-  //   },
-  // ]);
-
   const [showMoreActions, setShowMoreActions] = useState(false);
-  const [jobMedia, setJobMedia] = useState([
+  const showMoreRef = useClickOutside<HTMLDivElement>(() =>
+    setShowMoreActions(false)
+  );
+
+  const [jobMedia] = useState([
     {
       id: '1',
       type: 'photo' as const, // Use 'as const' for literal types
@@ -125,15 +109,70 @@ const JobDetails = () => {
     },
   ]);
 
-  // Handle send reminder
+  // Handle send reminder (keeping it as a placeholder as in original)
   const handleSendReminder = () => {
-    setJob({ ...job, reminder_sent: true });
-    // In a real app, make API call to send reminder
+    if (jobDetails) {
+      setJobDetails({ ...jobDetails, ReminderSent: true }); // Assuming ReminderSent exists
+      // In a real app, make API call to send reminder
+    }
+  };
+
+  const handleDeleteJob = async () => {
+    if (!jobId) return;
+    const response = await DeleteJob(jobId);
+    if (response.status === 200) {
+      navigate('/jobs');
+    }
+  };
+
+  const handlePrintJobDetails = () => {
+    console.log('Print Job Details');
+    // Implement print logic here, similar to QuoteDetails
+  };
+
+  const handleDownloadJobDetails = () => {
+    console.log('Download Job Details');
+    // Implement download logic here, similar to QuoteDetails
+  };
+
+  const [lat, setLat] = useState<number | null>(null);
+  const [lon, setLon] = useState<number | null>(null);
+
+  const getPropertyPosition = async () => {
+    if (!jobDetails?.property?.address) {
+      console.log('Address not loaded yet');
+      return;
+    }
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        jobDetails.property.address
+      )}`
+    );
+    const data = await response.json();
+
+    if (data.length > 0) {
+      setLat(parseFloat(data[0].lat));
+      setLon(parseFloat(data[0].lon));
+    } else {
+      console.log(
+        'No location found for address:',
+        jobDetails.property.address
+      );
+    }
   };
 
   useEffect(() => {
     fetchJobById();
   }, [jobId]);
+
+  useEffect(() => {
+    if (jobDetails?.property?.address) {
+      getPropertyPosition();
+    }
+  }, [jobDetails?.property?.address]);
+
+  if (!jobDetails) return <p>Loading</p>;
 
   return (
     <div className='flex'>
@@ -143,8 +182,7 @@ const JobDetails = () => {
 
         {!isLoading && jobDetails ? (
           <>
-            <div className='shadow-sm bg-white border-b border-gray-200'>
-              {/* Added shadow and border-b */}
+            <div className='shadow-sm'>
               <div className='px-6'>
                 <div className='flex items-center justify-between py-6'>
                   <div>
@@ -156,19 +194,21 @@ const JobDetails = () => {
                     </p>
                   </div>
                   <div className='flex items-center space-x-3'>
-                    <button className='px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center shadow-md'>
-                      {' '}
-                      {/* Added shadow */}
-                      <Edit3 className='w-4 h-4 mr-2' />
-                      Edit Job
-                    </button>
+                    <IconButton
+                      icon={<Edit3 className='w-4 h-4 mr-2' />}
+                      onClick={() => setIsEditJobModalOpen(true)}
+                      customStyle='py-2 px-4 bg-bg-primary border-none text-white hover:bg-bg-primary-hover'
+                    >
+                      Edit
+                    </IconButton>
                     <div className='relative'>
-                      <button
+                      <IconButton
+                        icon={<MoreVertical className='w-4 h-4 mr-2' />}
+                        customStyle='py-2 px-4 hover:border-gray-300'
                         onClick={() => setShowMoreActions(!showMoreActions)}
-                        className='p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 shadow-sm' // Added border and shadow
                       >
-                        <MoreHorizontal className='w-5 h-5' />
-                      </button>
+                        More
+                      </IconButton>
 
                       {showMoreActions && (
                         <>
@@ -176,34 +216,64 @@ const JobDetails = () => {
                             className='fixed inset-0 z-10'
                             onClick={() => setShowMoreActions(false)}
                           ></div>
-                          <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-20 transform origin-top-right animate-fade-in-down'>
-                            {' '}
-                            {/* Added shadow-xl and animation */}
+                          <div
+                            ref={showMoreRef}
+                            className='absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-20 transform origin-top-right animate-fade-in-down'
+                          >
                             <div className='py-1'>
+                              {/* Quick Actions moved here */}
+                              <div className='px-3 py-1 text-xs font-medium text-gray-500'>
+                                Quick Actions
+                              </div>
                               <button className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'>
-                                <Copy className='w-4 h-4 mr-3 text-gray-500' />{' '}
-                                {/* Added text-gray-500 for icon */}
+                                <Send className='w-4 h-4 mr-2 text-gray-500' />
+                                Send Message
+                              </button>
+                              <button className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'>
+                                <Receipt className='w-4 h-4 mr-2 text-gray-500' />
+                                Send Invoice
+                              </button>
+                              <button className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'>
+                                <CalendarClock className='w-4 h-4 mr-2 text-gray-500' />
+                                Reschedule
+                              </button>
+                              {/* Other actions */}
+                              <div className='border-t border-gray-100 my-1'></div>
+                              <div className='px-3 py-1 text-xs font-medium text-gray-500'>
+                                Other Actions
+                              </div>
+                              <button className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'>
+                                <Copy className='w-4 h-4 mr-2 text-gray-500' />
                                 Duplicate Job
                               </button>
                               <button className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'>
-                                <Download className='w-4 h-4 mr-3 text-gray-500' />
-                                Export PDF
+                                <X className='w-4 h-4 mr-2 text-gray-500' />
+                                Cancel Job
                               </button>
-                              <button className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'>
-                                <Share2 className='w-4 h-4 mr-3 text-gray-500' />
-                                Share Job
-                              </button>
-                              <button className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'>
-                                <Printer className='w-4 h-4 mr-3 text-gray-500' />
+                              <button
+                                onClick={handlePrintJobDetails}
+                                className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'
+                              >
+                                <Printer className='w-4 h-4 mr-2 text-gray-500' />
                                 Print Details
+                              </button>
+                              <button
+                                onClick={handleDownloadJobDetails}
+                                className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'
+                              >
+                                <Download className='w-4 h-4 mr-2 text-gray-500' />
+                                Download Details
                               </button>
                               <div className='border-t border-gray-100 my-1'></div>
                               <button className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors'>
-                                <Archive className='w-4 h-4 mr-3 text-gray-500' />
+                                <Archive className='w-4 h-4 mr-2 text-gray-500' />
                                 Archive Job
                               </button>
-                              <button className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors'>
-                                <Trash2 className='w-4 h-4 mr-3' />
+                              <button
+                                onClick={handleDeleteJob}
+                                className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors'
+                              >
+                                <Trash2 className='w-4 h-4 mr-2' />
                                 Delete Job
                               </button>
                             </div>
@@ -216,85 +286,19 @@ const JobDetails = () => {
               </div>
             </div>
 
-            <div className='px-4 sm:px-6 lg:px-8 py-8'>
-              <div className='grid lg:grid-cols-4 gap-8'>
+            <div className='p-6'>
+              <div className='flex w-full gap-8'>
                 {/* Main Content */}
-                <div className='lg:col-span-3'>
-                  {/* Status Cards */}
-                  <div className='grid md:grid-cols-3 gap-6 mb-8'>
-                    <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
-                      <div className='flex items-center justify-between'>
-                        <div>
-                          <p className='text-sm font-medium text-gray-600'>
-                            Status
-                          </p>
-                          <div
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border mt-2 ${
-                              getJobStatus(jobDetails.status).color
-                            }`}
-                          >
-                            {getJobStatus(jobDetails.status).icon}
-                            {JobStatus[jobDetails.status]}
-                          </div>
-                        </div>
-                        <AlertCircle className='w-8 h-8 text-orange-500' />
-                      </div>
-                    </div>
-
-                    <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
-                      <div className='flex items-center justify-between'>
-                        <div>
-                          <p className='text-sm font-medium text-gray-600'>
-                            Priority
-                          </p>
-                          <div
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-2 border ${getJobPriority(
-                              jobDetails.priority
-                            )}`}
-                          >
-                            <Star className='w-3 h-3 mr-2 fill-current' />
-                            {JobPriority[jobDetails.priority]}
-                          </div>
-                        </div>
-                        <Star className='w-8 h-8 text-orange-500' />
-                      </div>
-                    </div>
-
-                    <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
-                      <div className='flex items-center justify-between'>
-                        <div>
-                          <p className='text-sm font-medium text-gray-600'>
-                            Payment
-                          </p>
-                          <div
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-2 border ${getPaymentStatusColor(
-                              jobDetails.paymentStatus
-                            )}`}
-                          >
-                            <CreditCard className='w-3 h-3 mr-2' />
-                            {PaymentStatus[jobDetails.paymentStatus]}
-                          </div>
-                        </div>
-                        <DollarSign className='w-8 h-8 text-green-500' />
-                      </div>
-                    </div>
-                  </div>
-
+                <div className='w-3/4'>
                   {/* Tabs */}
                   <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
                     <div className='border-b border-gray-200'>
                       <nav className='flex space-x-8 px-6'>
-                        {[
-                          'overview',
-                          'timeline',
-                          'billing & services',
-                          'team',
-                          'media & files',
-                        ].map((tab) => (
+                        {['overview', 'media & files'].map((tab) => (
                           <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
+                            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors cursor-pointer ${
                               activeTab === tab
                                 ? 'border-blue-500 text-blue-600'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -308,25 +312,336 @@ const JobDetails = () => {
 
                     <div className='p-6'>
                       {activeTab === 'overview' && (
-                        <JobDetailsOverviewTab jobDetails={jobDetails} />
+                        <div className='space-y-10'>
+                          {/* Job Status, Priority, Payment Info */}
+
+                          {/* Description */}
+                          <div className=''>
+                            <h3 className='text-xl font-semibold text-text-primary mb-3'>
+                              Description
+                            </h3>
+                            {jobDetails.description ? (
+                              <p className='text-gray-700 text-sm leading-relaxed'>
+                                {jobDetails.description}
+                              </p>
+                            ) : (
+                              <p className='text-gray-500 text-sm italic'>
+                                Description not provided
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Job Schedule */}
+                          <div className=''>
+                            <h2 className='font-semibold text-xl mb-4 text-text-primary'>
+                              Job Information
+                            </h2>
+                            <div className='grid grid-cols-3 gap-6'>
+                              <div>
+                                <p className='text-gray-500 text-sm mb-1'>
+                                  Scheduled Date
+                                </p>
+                                <p className='font-medium'>
+                                  {formatDate(jobDetails.startDate)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className='text-gray-500 text-sm mb-1'>
+                                  Scheduled Time
+                                </p>
+                                <p className='font-medium'>
+                                  {formatTime(jobDetails.startTime)}
+                                </p>
+                              </div>
+                              {/* Status */}
+                              <div className='flex items-center space-x-3'>
+                                <div>
+                                  <p className='text-sm text-gray-600'>
+                                    Status
+                                  </p>
+                                  <div
+                                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border mt-1 ${
+                                      getJobStatus(jobDetails.status).color
+                                    }`}
+                                  >
+                                    {getJobStatus(jobDetails.status).icon}
+                                    {JobStatus[jobDetails.status]}
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <p className='text-gray-500 text-sm mb-1'>
+                                  Arrival Window
+                                </p>
+                                <p className='font-medium'>
+                                  {formatTime(jobDetails.startTime)} -{' '}
+                                  {formatTime(jobDetails.startTime)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className='text-gray-500 text-sm mb-1'>
+                                  Estimated Duration
+                                </p>
+                                <p className='font-medium'>
+                                  {jobDetails.estimatedDurationMinutes > 59
+                                    ? `${
+                                        jobDetails.estimatedDurationMinutes / 60
+                                      } hours`
+                                    : `${jobDetails.estimatedDurationMinutes} minutes`}
+                                </p>
+                              </div>
+
+                              {/* Priority */}
+                              <div className='flex items-center space-x-3'>
+                                <div>
+                                  <p className='text-sm text-gray-600'>
+                                    Priority
+                                  </p>
+                                  <div
+                                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-1 border ${getJobPriority(
+                                      jobDetails.priority
+                                    )}`}
+                                  >
+                                    <Star className='w-3 h-3 mr-2 fill-current' />
+                                    {JobPriority[jobDetails.priority]}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Line Items */}
+                          <div className='bg-white overflow-hidden'>
+                            {/* <h2 className='font-semibold text-xl mb-4 text-text-primary'>
+                              Line items
+                            </h2> */}
+                            <div className='overflow-x-auto'>
+                              <table className='min-w-full divide-y divide-gray-200'>
+                                <thead className='bg-gray-50'>
+                                  <tr>
+                                    {[
+                                      'Item',
+                                      'Qty',
+                                      'Unit Price',
+                                      'Total',
+                                      'Status',
+                                    ].map((header) => (
+                                      <th
+                                        key={header}
+                                        className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                                          header === 'Item'
+                                            ? 'text-left'
+                                            : header === 'Status'
+                                            ? 'text-center'
+                                            : 'text-right'
+                                        }`}
+                                      >
+                                        {header}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody className='bg-white divide-y divide-gray-200'>
+                                  {jobDetails?.lineItems.map((item) => (
+                                    <tr key={item.id}>
+                                      <td className='px-6 py-4'>
+                                        <div className='flex-1 min-w-0'>
+                                          <p className='text-sm font-medium text-gray-900 truncate'>
+                                            {item.name}
+                                          </p>
+                                          <p className='text-sm text-gray-500'>
+                                            {item.description}
+                                          </p>
+                                        </div>
+                                      </td>
+                                      <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
+                                        {item.quantity}
+                                      </td>
+                                      <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
+                                        {formatCurrency(item.unitPrice)}
+                                      </td>
+                                      <td className='px-6 py-4 text-right whitespace-nowrap text-sm font-medium text-gray-900'>
+                                        {formatCurrency(
+                                          item.quantity * item.unitPrice
+                                        )}
+                                      </td>
+                                      <td className='px-6 py-4 whitespace-nowrap'>
+                                        <span
+                                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                            item.isOptional
+                                              ? 'bg-yellow-100 text-yellow-800'
+                                              : 'bg-green-100 text-green-800'
+                                          }`}
+                                        >
+                                          {item.isOptional
+                                            ? 'Optional'
+                                            : 'Required'}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Enhanced Pricing Summary */}
+                            <div className='bg-gray-50 p-6 border-t border-gray-200'>
+                              <div className='flex justify-end'>
+                                <div className='w-2/5 space-y-2'>
+                                  {[
+                                    {
+                                      label: 'Subtotal:',
+                                      value: `${formatCurrency(
+                                        jobDetails?.subtotal
+                                      )}`,
+                                      color: 'text-gray-900',
+                                    },
+                                    jobDetails.discountValue > 0 && {
+                                      label: `Discount (${
+                                        jobDetails?.discountValue
+                                      }${
+                                        jobDetails?.discountType === 0
+                                          ? '%'
+                                          : '$'
+                                      }):`,
+                                      value: `-${formatCurrency(
+                                        jobDetails?.discount
+                                      )}`,
+                                      color: 'text-green-600',
+                                    },
+                                    {
+                                      label: `Tax (${formatPercent(
+                                        jobDetails?.taxRate * 100
+                                      )}%):`,
+                                      value: `${formatCurrency(
+                                        jobDetails?.taxAmount
+                                      )}`,
+                                      color: 'text-gray-900',
+                                    },
+                                    {
+                                      label: 'Total:',
+                                      value: `${formatCurrency(
+                                        jobDetails?.totalAmount
+                                      )}`,
+                                      color: 'text-text-primary',
+                                      isTotal: true,
+                                      customColor: 'text-text-primary',
+                                    },
+                                  ]
+                                    .filter(Boolean)
+                                    .map(
+                                      (
+                                        item,
+                                        index // Filter Boolean to remove false for conditional items
+                                      ) => (
+                                        <div
+                                          key={index}
+                                          className={`flex justify-between ${
+                                            item?.isTotal
+                                              ? 'pt-2 border-t border-gray-200'
+                                              : ''
+                                          }`}
+                                        >
+                                          <span
+                                            className={`${
+                                              item?.isTotal
+                                                ? 'font-semibold text-text-primary'
+                                                : 'text-gray-600'
+                                            }`}
+                                          >
+                                            {item?.label}
+                                          </span>
+                                          <span
+                                            className={`${
+                                              item?.isTotal
+                                                ? 'font-semibold'
+                                                : 'font-medium'
+                                            } ${item?.color}`}
+                                            style={
+                                              item?.customColor
+                                                ? { color: item.customColor }
+                                                : {}
+                                            }
+                                          >
+                                            {item?.value}
+                                          </span>
+                                        </div>
+                                      )
+                                    )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Assigned Team Members */}
+                          {jobDetails.assignedTeamMembers &&
+                            jobDetails.assignedTeamMembers.length > 0 && (
+                              <div className=''>
+                                <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                                  Assigned Team
+                                </h3>
+                                <div className='space-y-3'>
+                                  {jobDetails.assignedTeamMembers.map(
+                                    (member) => (
+                                      <div
+                                        key={member.id}
+                                        className='flex items-center space-x-3'
+                                      >
+                                        <div className='w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-medium text-sm'>
+                                          {member.user.fullName.charAt(0)}
+                                        </div>
+                                        <p className='text-sm font-medium text-gray-900'>
+                                          {member.user.fullName}
+                                        </p>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                          {/* Job Status History (Timeline) */}
+                          {jobDetails.statusHistory &&
+                            jobDetails.statusHistory.length > 0 && (
+                              <div className='bg-white rounded-xl shadow border border-gray-200 p-6'>
+                                <div className='flex items-center justify-between mb-6'>
+                                  <h3 className='text-xl font-semibold text-gray-800'>
+                                    Job Activity History
+                                  </h3>
+                                </div>
+                              </div>
+                            )}
+
+                          {/* Customer Notes */}
+                          {jobDetails.customerNotes && (
+                            <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
+                              <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                                Customer Notes
+                              </h3>
+                              <p className='text-sm text-gray-700 leading-relaxed'>
+                                {jobDetails.customerNotes}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Internal Notes */}
+                          {jobDetails.internalNotes && (
+                            <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
+                              <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                                Internal Notes
+                              </h3>
+                              <p className='text-sm text-gray-700 leading-relaxed'>
+                                {jobDetails.internalNotes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       )}
 
-                      {activeTab === 'timeline' && (
-                        <JobDetailsTimelineTab jobDetails={jobDetails} />
-                      )}
-
-                      {activeTab === 'billing & services' && (
-                        <JobDetailsBillingTab jobDetails={jobDetails} />
-                      )}
-
-                      {activeTab === 'team' && (
-                        <JobDetailsTeamTab jobDetails={jobDetails} />
-                      )}
-
-                      {activeTab === 'media & files' && ( // Render new tab content
+                      {activeTab === 'media & files' && (
                         <JobDetailsMediaTab
                           jobMedia={jobMedia}
-                          jobDetails={jobDetails}
+                          jobDetails={jobDetails} // Make sure this prop is compatible if TJob is changed
                         />
                       )}
                     </div>
@@ -334,63 +649,7 @@ const JobDetails = () => {
                 </div>
 
                 {/* Sidebar */}
-                <div className='lg:col-span-1 space-y-6'>
-                  {/* Quick Actions */}
-                  <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200'>
-                    <h3 className='text-lg font-semibold text-gray-900 mb-5'>
-                      Quick Actions
-                    </h3>
-                    <div className='space-y-4'>
-                      {/* Send Message */}
-                      <button className='w-full flex items-center p-3 rounded-xl hover:bg-blue-50 transition-colors border border-blue-200 group'>
-                        <div className='w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105'>
-                          <Send className='w-4 h-4 text-white' />
-                        </div>
-                        <div className='ml-3 text-left flex-grow'>
-                          <p className='text-sm font-semibold text-blue-900'>
-                            Send Message
-                          </p>
-                          <p className='text-xs text-blue-600'>
-                            Notify customer or team
-                          </p>
-                        </div>
-                        <ChevronLeft className='w-5 h-5 text-blue-400 rotate-180 group-hover:text-blue-600 transition-colors' />
-                      </button>
-
-                      {/* Send Invoice */}
-                      <button className='w-full flex items-center p-3 rounded-xl hover:bg-emerald-50 transition-colors border border-emerald-200 group'>
-                        <div className='w-9 h-9 bg-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105'>
-                          <Receipt className='w-4 h-4 text-white' />
-                        </div>
-                        <div className='ml-3 text-left flex-grow'>
-                          <p className='text-sm font-semibold text-emerald-900'>
-                            Send Invoice
-                          </p>
-                          <p className='text-xs text-emerald-600'>
-                            Generate & send billing
-                          </p>
-                        </div>
-                        <ChevronLeft className='w-5 h-5 text-emerald-400 rotate-180 group-hover:text-emerald-600 transition-colors' />
-                      </button>
-
-                      {/* Reschedule */}
-                      <button className='w-full flex items-center p-3 rounded-xl hover:bg-amber-50 transition-colors border border-amber-200 group'>
-                        <div className='w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105'>
-                          <CalendarClock className='w-4 h-4 text-white' />
-                        </div>
-                        <div className='ml-3 text-left flex-grow'>
-                          <p className='text-sm font-semibold text-amber-900'>
-                            Reschedule
-                          </p>
-                          <p className='text-xs text-amber-600'>
-                            Change appointment time
-                          </p>
-                        </div>
-                        <ChevronLeft className='w-5 h-5 text-amber-400 rotate-180 group-hover:text-amber-600 transition-colors' />
-                      </button>
-                    </div>
-                  </div>
-
+                <div className='w-1/4 space-y-6'>
                   {/* Job Meta */}
                   <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
                     <h3 className='text-lg font-semibold text-gray-900 mb-4'>
@@ -403,24 +662,75 @@ const JobDetails = () => {
                           {formatDate(jobDetails.createdAt)}
                         </span>
                       </div>
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>Source</span>
-                        <span className='text-gray-900'>
-                          {jobDetails.source}
-                        </span>
-                      </div>
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>Duration</span>
-                        <span className='text-gray-900'>
-                          {jobDetails.estimatedDurationMinutes / 60}h
-                        </span>
-                      </div>
+                      {jobDetails.source && (
+                        <div className='flex justify-between'>
+                          <span className='text-gray-600'>Source</span>
+                          <span className='text-gray-900'>
+                            {jobDetails.source}
+                          </span>
+                        </div>
+                      )}
+                      {/* {jobDetails.estimatedDurationMinutes && (
+                        <div className='flex justify-between'>
+                          <span className='text-gray-600'>Duration</span>
+                          <span className='text-gray-900'>
+                            {jobDetails.estimatedDurationMinutes / 60}h
+                          </span>
+                        </div>
+                      )} */}
                       <div className='flex justify-between'>
                         <span className='text-gray-600'>Type</span>
                         <span className='text-gray-900'>
                           {JobType[jobDetails.jobType]}
                         </span>
                       </div>
+                      {jobDetails.completedAt && (
+                        <div className='flex justify-between'>
+                          <span className='text-gray-600'>Completed At</span>
+                          <span className='text-gray-900'>
+                            {formatDate(jobDetails.completedAt)}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className='flex justify-between'>
+                        <span className='text-gray-600'>Invoice #</span>
+
+                        {jobDetails.invoiceSent ? (
+                          <span className='text-bg-primary font-medium hover:underline cursor-pointer'>
+                            FSH-250714-0001
+                          </span>
+                        ) : (
+                          <span className='text-text-primary'>
+                            Not yet generated
+                          </span>
+                        )}
+                      </div>
+
+                      <div className='flex justify-between'>
+                        <span className='text-gray-600'>Payment Status</span>
+                        <span
+                          className={`py-0.5 px-2.5 text-xs rounded-full ${getPaymentStatusColor(
+                            jobDetails.paymentStatus
+                          )}`}
+                        >
+                          {PaymentStatus[jobDetails.paymentStatus]}
+                        </span>
+                      </div>
+                      {/* {jobDetails.tags && jobDetails.tags.length > 0 && (
+                        <div className='flex flex-wrap gap-2 pt-3 border-t border-gray-100'>
+                          <span className='text-gray-600'>Tags:</span>
+                          {jobDetails.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className='inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800'
+                            >
+                              <Tag className='w-3 h-3 mr-1' />
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )} */}
                     </div>
                   </div>
 
@@ -444,30 +754,52 @@ const JobDetails = () => {
                         </div>
                       </div>
                       <div className='space-y-2'>
-                        <div className='flex items-center text-sm text-gray-600'>
-                          <Phone className='w-4 h-4 mr-3 text-gray-400' />
-                          {jobDetails.customer?.customerPhones?.[0].phoneNumber}
-                        </div>
-                        <div className='flex items-center text-sm text-gray-600'>
-                          <Mail className='w-4 h-4 mr-3 text-gray-400' />
-                          {jobDetails.customer?.emails?.[0]}
-                        </div>
+                        {jobDetails.customer?.customerPhones?.[0]
+                          ?.phoneNumber && (
+                          <div className='flex items-center text-sm text-gray-600'>
+                            <Phone className='w-4 h-4 mr-3 text-gray-400' />
+                            {
+                              jobDetails.customer?.customerPhones?.[0]
+                                .phoneNumber
+                            }
+                          </div>
+                        )}
+                        {jobDetails.customer?.emails?.[0] && (
+                          <div className='flex items-center text-sm text-gray-600'>
+                            <Mail className='w-4 h-4 mr-3 text-gray-400' />
+                            {jobDetails.customer?.emails?.[0]}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Property Information */}
-                  <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
-                    <h3 className='text-lg font-semibold text-gray-900 mb-4'>
-                      Property
-                    </h3>
-                    <div className='flex items-start'>
-                      <MapPin className='w-5 h-5 text-gray-400 mr-3 mt-0.5' />
-                      <div className='text-sm text-gray-700'>
-                        <p>{jobDetails.property?.address}</p>
+                  {jobDetails.property?.address && lat && lon && (
+                    <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
+                      <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                        Property
+                      </h3>
+                      <div className='flex items-center mb-4'>
+                        <MapPin className='w-5.5 h-5.5 text-gray-400 mr-3 mt-0.5' />
+                        <div className='text-sm text-gray-700'>
+                          <p>{jobDetails.property?.address}</p>
+                        </div>
+                      </div>
+                      <div className='w-full h-52 rounded-xl overflow-hidden'>
+                        <MapContainer
+                          center={[lat, lon]}
+                          zoom={15}
+                          style={{ height: '100%', width: '100%' }}
+                        >
+                          <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
+                          <Marker position={[lat, lon]}>
+                            <Popup>{jobDetails.property?.address}</Popup>
+                          </Marker>
+                        </MapContainer>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -476,6 +808,11 @@ const JobDetails = () => {
           <PageLoader />
         )}
       </div>
+      <EditJobModal
+        isOpen={isEditJobModalOpen}
+        onClose={() => setIsEditJobModalOpen(false)}
+        jobToEdit={jobDetails}
+      />
     </div>
   );
 };

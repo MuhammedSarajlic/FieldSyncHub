@@ -13,7 +13,7 @@ import {
   Home,
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
-import { TAddJob, TJob } from '../../../types/Job';
+import { TAddJob, TJob, TUpdateJob } from '../../../types/Job';
 import { GetAllCustomers } from '../../../services/Customer';
 import { TCustomer } from '../../../types/Customer';
 import {
@@ -42,10 +42,10 @@ import CustomButton from '../../CustomElements/Buttons/CustomButton';
 interface INewJobModal {
   isOpen: boolean;
   onClose: () => void;
-  setJobs: React.Dispatch<React.SetStateAction<TJob[]>>;
+  jobToEdit: TJob;
 }
 
-const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
+const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
   const { user } = useAuth();
   const [customers, setCustomers] = useState<TCustomer[]>([]);
   const [employees, setEmployees] = useState<TEmployee[]>([]);
@@ -62,53 +62,41 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
   // Ref for the service item search input to manage focus
   const searchInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const [job, setJob] = useState<TAddJob>({
-    workspaceId: '',
-    title: '',
-    description: '',
-    customerId: '',
-    propertyId: '',
-    jobType: JobType.OneTime,
-    repeats: 'weekly',
-    lineItems: [
-      {
-        quantity: 1,
-        name: '',
-        unitPrice: 0,
-        description: '',
-        isOptional: false,
-      },
-    ],
-    status: JobStatus.Scheduled,
-    statusHistory: [],
-    priority: JobPriority.Normal,
-    startDate: '',
-    startTime: '',
-    arrivalWindow: 0,
-    duration: 1,
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    estimatedDurationMinutes: 60,
-    assignedTeamMembers: [],
-    paymentStatus: PaymentStatus.Unpaid,
-    depositAmount: 0,
-    discountType: DiscountType.Percentage,
-    discountValue: 0,
-    taxRate: 0,
-    sendInvoice: false,
-    sendReminder: false,
-    reminderDaysBefore: 1,
-    confirmationSent: false,
-    reminderSent: false,
-    invoiceSent: false,
-    createdBy: '',
-    source: '',
-    tags: [],
-    customerNotes: '',
-    internalNotes: '',
+  const [job, setJob] = useState<TUpdateJob>({
+    id: jobToEdit.id,
+    title: jobToEdit.title,
+    description: jobToEdit.description,
+    propertyId: jobToEdit.propertyId,
+    jobType: jobToEdit.jobType,
+    repeats: jobToEdit.repeats,
+    lineItems: jobToEdit.lineItems,
+    priority: jobToEdit.priority,
+    startDate: jobToEdit.startDate,
+    startTime: jobToEdit.startTime,
+    arrivalWindow: jobToEdit.arrivalWindow,
+    duration: jobToEdit.duration,
+    estimatedDurationMinutes: jobToEdit.estimatedDurationMinutes,
+    assignedTeamMembers: jobToEdit.assignedTeamMembers,
+    depositAmount: jobToEdit.depositAmount,
+    discountType: jobToEdit.discountType,
+    discountValue: jobToEdit.discountValue,
+    taxRate: jobToEdit.taxRate,
+    sendInvoice: jobToEdit.sendInvoice,
+    sendReminder: jobToEdit.sendReminder,
+    reminderDaysBefore: jobToEdit.reminderDaysBefore,
+    confirmationSent: jobToEdit.confirmationSent,
+    reminderSent: jobToEdit.reminderSent,
+    invoiceSent: jobToEdit.invoiceSent,
+    source: jobToEdit.source,
+    tags: jobToEdit.tags,
   });
 
-  const [selectedCustomer, setSelectedCustomer] = useState('');
-  const [selectedProperty, setSelectedProperty] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState(
+    jobToEdit.customerId
+  );
+  const [selectedProperty, setSelectedProperty] = useState(
+    jobToEdit.propertyId
+  );
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -317,32 +305,31 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
     }));
   };
 
-  const combineDateTimeToISO = (
-    dateStr: string,
-    timeStr: string
-  ): string | undefined => {
-    if (!dateStr || !timeStr) {
-      return undefined; // Return undefined if date or time is missing
-    }
-    // Construct a string in local format (e.g., "2023-10-27T10:30:00")
-    const dateTimeLocalString = `${dateStr}T${timeStr}:00`;
-    const combinedDateTime = new Date(dateTimeLocalString);
-
-    // Check if the date is valid before converting
-    if (isNaN(combinedDateTime.getTime())) {
-      console.warn(
-        `Invalid date/time combination: Date: ${dateStr}, Time: ${timeStr}`
-      );
-      return undefined;
-    }
-    return combinedDateTime.toISOString(); // Convert to UTC ISO string
-  };
-
   const handleSubmit = async () => {
     if (!user?.workspace) {
       console.error('User or workspace not available.');
       return;
     }
+    const combineDateTimeToISO = (
+      dateStr: string,
+      timeStr: string
+    ): string | undefined => {
+      if (!dateStr || !timeStr) {
+        return undefined; // Return undefined if date or time is missing
+      }
+      // Construct a string in local format (e.g., "2023-10-27T10:30:00")
+      const dateTimeLocalString = `${dateStr}T${timeStr}:00`;
+      const combinedDateTime = new Date(dateTimeLocalString);
+
+      // Check if the date is valid before converting
+      if (isNaN(combinedDateTime.getTime())) {
+        console.warn(
+          `Invalid date/time combination: Date: ${dateStr}, Time: ${timeStr}`
+        );
+        return undefined;
+      }
+      return combinedDateTime.toISOString(); // Convert to UTC ISO string
+    };
 
     job.startTime = combineDateTimeToISO(job.startDate, job.startTime);
     const updatedJob = {
@@ -356,7 +343,6 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
     try {
       const response = await CreateJob(updatedJob);
       if (response.status === 200) {
-        setJobs((prev) => [response.data.payload, ...prev]);
         onClose();
       } else {
         console.error(
@@ -452,14 +438,11 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
 
   return (
     <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-inter'>
-      <div className='bg-white rounded-xl shadow-2xl w-full max-w-[75%] max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header - White background */}
         <div className='bg-white flex justify-between items-center px-8 py-6 border-b border-gray-200 shadow-sm'>
           <div>
-            <h2 className='text-2xl font-bold text-gray-900'>Create Job</h2>
-            <p className='text-gray-600 text-sm mt-1'>
-              Schedule and manage service jobs for your customers
-            </p>
+            <h2 className='text-2xl font-bold text-gray-900'>Edit Job</h2>
           </div>
           <button
             onClick={onClose}
@@ -1257,282 +1240,10 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
                   </div>
                 </div>
               </div>
-
-              {/* Communication Settings */}
-              <div className=''>
-                <div className='flex items-center space-x-3 mb-6'>
-                  {/* <Bell className='w-5 h-5 text-[#356852]' /> */}
-                  <h3 className='font-semibold text-xl text-text-primary'>
-                    Communication & Notes
-                  </h3>
-                </div>
-
-                <div className='space-y-4'>
-                  <div className='flex items-center'>
-                    <input
-                      type='checkbox'
-                      id='send-invoice'
-                      name='sendInvoice'
-                      checked={job.sendInvoice}
-                      onChange={handleChange}
-                      className='form-checkbox h-4 w-4 text-[#356852] rounded focus:ring-[#356852]'
-                    />
-                    <label
-                      htmlFor='send-invoice'
-                      className='ml-2 block text-sm text-gray-900'
-                    >
-                      Send Invoice
-                    </label>
-                  </div>
-
-                  <div className='flex items-center'>
-                    <input
-                      type='checkbox'
-                      id='send-reminder'
-                      name='sendReminder'
-                      checked={job.sendReminder}
-                      onChange={handleChange}
-                      className='form-checkbox h-4 w-4 text-[#356852] rounded focus:ring-[#356852]'
-                    />
-                    <label
-                      htmlFor='send-reminder'
-                      className='ml-2 block text-sm text-gray-900'
-                    >
-                      Send Reminder
-                    </label>
-                  </div>
-
-                  {job.sendReminder && (
-                    <div className='ml-6'>
-                      <label
-                        htmlFor='reminder-days-before'
-                        className='block text-sm font-medium text-gray-700 mb-2'
-                      >
-                        Reminder Days Before
-                      </label>
-                      <input
-                        type='number'
-                        id='reminder-days-before'
-                        name='reminderDaysBefore'
-                        value={job.reminderDaysBefore}
-                        onChange={handleChange}
-                        min='0'
-                        className='w-full max-w-[150px] border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                        placeholder='e.g., 1'
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className='mt-6'>
-                  <label
-                    htmlFor='customer-notes'
-                    className='block text-sm font-medium text-gray-700 mb-2'
-                  >
-                    Customer Notes
-                  </label>
-                  <textarea
-                    id='customer-notes'
-                    name='customerNotes'
-                    value={job.customerNotes}
-                    onChange={handleChange}
-                    rows={3}
-                    className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] resize-y text-sm'
-                    placeholder='Notes visible to the customer...'
-                  />
-                </div>
-
-                <div className='mt-6'>
-                  <label
-                    htmlFor='internal-notes'
-                    className='block text-sm font-medium text-gray-700 mb-2'
-                  >
-                    Internal Notes
-                  </label>
-                  <textarea
-                    id='internal-notes'
-                    name='internalNotes'
-                    value={job.internalNotes}
-                    onChange={handleChange}
-                    rows={3}
-                    className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] resize-y text-sm'
-                    placeholder='Private notes for your team...'
-                  />
-                </div>
-
-                <div className='mt-6'>
-                  <label
-                    htmlFor='tags'
-                    className='block text-sm font-medium text-gray-700 mb-2'
-                  >
-                    Tags
-                  </label>
-                  {job.tags && job.tags.length > 0 && (
-                    <div className='flex flex-wrap items-center gap-2 mb-2'>
-                      {job.tags?.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className='flex items-center bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium'
-                        >
-                          {tag}
-                          <button
-                            type='button'
-                            onClick={() => removeTag(tag)}
-                            className='ml-2 text-gray-500 hover:text-gray-700'
-                          >
-                            <X className='w-3 h-3' />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <input
-                    type='text'
-                    id='tags'
-                    name='tagInput'
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={handleTagAdd}
-                    className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                    placeholder='Add tags (press Enter to add)'
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Sidebar - Job Summary */}
-          <div className='lg:w-2/5 bg-gray-50 p-6 overflow-y-auto border-l border-gray-200'>
-            <div className='sticky top-0 space-y-6'>
-              <div className='bg-white rounded-lg p-6 border border-gray-200 shadow-sm'>
-                <h3 className='font-semibold text-xl text-text-primary mb-4 flex items-center'>
-                  Job Summary
-                </h3>
-                <div className='space-y-4'>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Customer:
-                    </span>
-                    <span className='text-sm font-semibold text-gray-900'>
-                      {selectedCustomerData?.fullName || 'Not selected'}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Property:
-                    </span>
-                    <span className='text-sm font-semibold text-gray-900 text-right break-words max-w-[60%]'>
-                      {selectedPropertyData?.address || 'Not selected'}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Job Type:
-                    </span>
-                    <span className='text-sm font-semibold text-gray-900'>
-                      {job.jobType === JobType.OneTime
-                        ? 'One Time'
-                        : 'Recurring'}
-                    </span>
-                  </div>
-                  {job.jobType === JobType.Recurring && (
-                    <>
-                      <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                        <span className='text-sm font-medium text-gray-600'>
-                          Repeats:
-                        </span>
-                        <span className='text-sm font-semibold text-gray-900'>
-                          {job.repeats}
-                        </span>
-                      </div>
-                      <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                        <span className='text-sm font-medium text-gray-600'>
-                          Number of Visits:
-                        </span>
-                        <span className='text-sm font-semibold text-gray-900'>
-                          {job.duration}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Priority:
-                    </span>
-                    <span
-                      className={`font-semibold px-2 py-1 rounded-full text-xs ${getJobPriority(
-                        job.priority
-                      )}`}
-                    >
-                      {JobPriority[job.priority]}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Status:
-                    </span>
-                    <span
-                      className={`font-semibold px-2 py-1 rounded-full text-xs ${
-                        getJobStatus(job.status).color
-                      }`}
-                    >
-                      {JobStatus[job.status]}
-                    </span>
-                  </div>
-                  {job.startDate && ( // Using startDate as scheduledDate
-                    <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                      <span className='text-sm font-medium text-gray-600'>
-                        Scheduled:
-                      </span>
-                      <span className='text-sm font-semibold text-gray-900'>
-                        {new Date(job.startDate).toLocaleDateString()}
-                        {job.startTime && ` at ${job.startTime}`}
-                      </span>
-                    </div>
-                  )}
-                  {job.arrivalWindowStart && job.arrivalWindowEnd && (
-                    <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                      <span className='text-sm font-medium text-gray-600'>
-                        Arrival Window:
-                      </span>
-                      <span className='text-sm font-semibold text-gray-900'>
-                        {job.arrivalWindowStart} - {job.arrivalWindowEnd}
-                      </span>
-                    </div>
-                  )}
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Estimated Duration:
-                    </span>
-                    <span className='text-sm font-semibold text-gray-900'>
-                      {job.estimatedDurationMinutes} minutes
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Assigned To:
-                    </span>
-                    <div className='text-sm font-semibold text-gray-900 text-right'>
-                      {job.assignedTeamMembers.length > 0
-                        ? job.assignedTeamMembers
-                            .map((employee) => employee.user.fullName)
-                            .join(', ')
-                        : 'Not assigned'}
-                    </div>
-                  </div>
-                  <div className='pt-4 bg-gray-50 rounded-lg p-4'>
-                    <div className='text-center'>
-                      <div className='text-2xl font-bold text-[#356852]'>
-                        {formatCurrency(total)}
-                      </div>
-                      <div className='text-sm text-gray-600'>Total Amount</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
+
         {/* Action Buttons */}
         <div className='sticky bottom-0 bg-white z-10 px-8 py-4 border-t border-gray-100'>
           <div className='flex items-center justify-end space-x-3'>
@@ -1546,7 +1257,7 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
               onClick={handleSubmit}
               customStyle='px-5 py-2.5 bg-bg-primary text-white hover:bg-bg-primary-hover'
             >
-              Create Job
+              Update Job
             </CustomButton>
           </div>
         </div>
@@ -1555,4 +1266,4 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
   );
 };
 
-export default NewJobModal;
+export default EditJobModal;

@@ -38,6 +38,7 @@ export type TJob = {
   discountType: DiscountType;
   discountValue: number;
   taxRate: number;
+  taxAmount: number;
   subtotal: number;
   discount: number;
   totalAmount: number;

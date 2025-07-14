@@ -3,7 +3,7 @@ export enum JobStatus {
   Dispatched,
   InProgress,
   Completed,
-  Cancelled,
+  Canceled,
 }
 
 export enum JobPriority {

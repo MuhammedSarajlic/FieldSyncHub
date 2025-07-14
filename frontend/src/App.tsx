@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router';
+import 'leaflet/dist/leaflet.css';
 import Signin from './pages/auth/Signin';
 import Signup from './pages/auth/Signup';
 import Home from './pages/Home';

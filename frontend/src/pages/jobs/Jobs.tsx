@@ -245,6 +245,7 @@ const Jobs = () => {
       <NewJobModal
         isOpen={isNewJobModalOpen}
         onClose={() => setIsNewJobModalOpen(false)}
+        setJobs={setJobs}
       />
     </div>
   );

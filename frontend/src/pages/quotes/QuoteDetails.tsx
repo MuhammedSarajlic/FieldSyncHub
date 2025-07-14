@@ -292,7 +292,7 @@ const QuoteDetails = () => {
               <div className='flex flex-wrap gap-2 relative'>
                 <IconButton
                   icon={<Send className='w-4 h-4 mr-2' />}
-                  customStyle='py-2 px-4 bg-bg-primary border-none text-white hover:border-gray-300 hover:bg-bg-primary-hover'
+                  customStyle='py-2 px-4 bg-bg-primary border-none text-white hover:bg-bg-primary-hover'
                   onClick={() => setIsSendModalOpen(true)}
                 >
                   Send
