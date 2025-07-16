@@ -37,9 +37,8 @@ export type TAddInvoice = {
   taxRate: number;
   discount: number;
   discountType: DiscountType;
-  status: InvoiceStatus;
+  dueDate?: string;
   issueDate: string;
-  dueDate: string;
   paymentTerms: string;
   notes: string;
   internalNotes: string;

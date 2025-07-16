@@ -16,9 +16,8 @@ public class CreateInvoiceDto
     public decimal Discount { get; set; }
     public DiscountType DiscountType { get; set; } = DiscountType.Percentage;
 
-    public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public DateTime IssueDate { get; set; } = DateTime.UtcNow;
-    public DateTime DueDate { get; set; }
+    public DateTime? DueDate { get; set; }
     public string PaymentTerms { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
     public string InternalNotes { get; set; } = string.Empty;

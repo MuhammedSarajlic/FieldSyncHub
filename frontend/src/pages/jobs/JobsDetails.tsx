@@ -29,6 +29,8 @@ import {
   Trash2,
   Send,
   Star,
+  Plus,
+  MapIcon,
 } from 'lucide-react';
 import { getJobPriority } from '../../utils/FuntionHelpers/JobUtils/getJobPriority';
 import { getJobStatus } from '../../utils/FuntionHelpers/JobUtils/getJobStatus';
@@ -291,14 +293,14 @@ const JobDetails = () => {
                 {/* Main Content */}
                 <div className='w-3/4'>
                   {/* Tabs */}
-                  <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
+                  <div className=' overflow-hidden'>
                     <div className='border-b border-gray-200'>
-                      <nav className='flex space-x-8 px-6'>
+                      <nav className='flex space-x-8 '>
                         {['overview', 'media & files'].map((tab) => (
                           <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors cursor-pointer ${
+                            className={`pb-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors cursor-pointer ${
                               activeTab === tab
                                 ? 'border-blue-500 text-blue-600'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -310,14 +312,14 @@ const JobDetails = () => {
                       </nav>
                     </div>
 
-                    <div className='p-6'>
+                    <div className='py-6'>
                       {activeTab === 'overview' && (
-                        <div className='space-y-10'>
+                        <div className='space-y-6 divide-y divide-gray-200'>
                           {/* Job Status, Priority, Payment Info */}
 
                           {/* Description */}
-                          <div className=''>
-                            <h3 className='text-xl font-semibold text-text-primary mb-3'>
+                          <div className='pb-6 px-2'>
+                            <h3 className='text-xl font-semibold text-text-primary mb-2'>
                               Description
                             </h3>
                             {jobDetails.description ? (
@@ -332,7 +334,7 @@ const JobDetails = () => {
                           </div>
 
                           {/* Job Schedule */}
-                          <div className=''>
+                          <div className='pb-6 px-2'>
                             <h2 className='font-semibold text-xl mb-4 text-text-primary'>
                               Job Information
                             </h2>
@@ -411,72 +413,56 @@ const JobDetails = () => {
                           </div>
 
                           {/* Line Items */}
-                          <div className='bg-white overflow-hidden'>
-                            {/* <h2 className='font-semibold text-xl mb-4 text-text-primary'>
+                          <div className='bg-white overflow-hidden pb-6 px-2'>
+                            <h2 className='font-semibold text-xl mb-4 text-text-primary'>
                               Line items
-                            </h2> */}
-                            <div className='overflow-x-auto'>
+                            </h2>
+                            <div className='overflow-x-auto '>
                               <table className='min-w-full divide-y divide-gray-200'>
                                 <thead className='bg-gray-50'>
                                   <tr>
-                                    {[
-                                      'Item',
-                                      'Qty',
-                                      'Unit Price',
-                                      'Total',
-                                      'Status',
-                                    ].map((header) => (
-                                      <th
-                                        key={header}
-                                        className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                                          header === 'Item'
-                                            ? 'text-left'
-                                            : header === 'Status'
-                                            ? 'text-center'
-                                            : 'text-right'
-                                        }`}
-                                      >
-                                        {header}
-                                      </th>
-                                    ))}
+                                    <th className='w-1/2 px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left'>
+                                      Item
+                                    </th>
+                                    <th className='w-1/6 px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right'>
+                                      Qty
+                                    </th>
+                                    <th className='w-1/6 px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right'>
+                                      Unit Price
+                                    </th>
+                                    <th className='w-1/6 px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right'>
+                                      Total
+                                    </th>
                                   </tr>
                                 </thead>
                                 <tbody className='bg-white divide-y divide-gray-200'>
                                   {jobDetails?.lineItems.map((item) => (
                                     <tr key={item.id}>
-                                      <td className='px-6 py-4'>
+                                      <td className='w-1/2 px-6 py-4'>
                                         <div className='flex-1 min-w-0'>
                                           <p className='text-sm font-medium text-gray-900 truncate'>
-                                            {item.name}
+                                            {item.name}{' '}
+                                            {item.isOptional && (
+                                              <span className='text-xs text-gray-500'>
+                                                (Optional)
+                                              </span>
+                                            )}
                                           </p>
                                           <p className='text-sm text-gray-500'>
                                             {item.description}
                                           </p>
                                         </div>
                                       </td>
-                                      <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
+                                      <td className='w-1/6 px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
                                         {item.quantity}
                                       </td>
-                                      <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
+                                      <td className='w-1/6 px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
                                         {formatCurrency(item.unitPrice)}
                                       </td>
-                                      <td className='px-6 py-4 text-right whitespace-nowrap text-sm font-medium text-gray-900'>
+                                      <td className='w-1/6 px-6 py-4 text-right whitespace-nowrap text-sm font-medium text-gray-900'>
                                         {formatCurrency(
                                           item.quantity * item.unitPrice
                                         )}
-                                      </td>
-                                      <td className='px-6 py-4 whitespace-nowrap'>
-                                        <span
-                                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                            item.isOptional
-                                              ? 'bg-yellow-100 text-yellow-800'
-                                              : 'bg-green-100 text-green-800'
-                                          }`}
-                                        >
-                                          {item.isOptional
-                                            ? 'Optional'
-                                            : 'Required'}
-                                        </span>
                                       </td>
                                     </tr>
                                   ))}
@@ -485,7 +471,7 @@ const JobDetails = () => {
                             </div>
 
                             {/* Enhanced Pricing Summary */}
-                            <div className='bg-gray-50 p-6 border-t border-gray-200'>
+                            <div className='p-6 border-t border-gray-200'>
                               <div className='flex justify-end'>
                                 <div className='w-2/5 space-y-2'>
                                   {[
@@ -576,8 +562,8 @@ const JobDetails = () => {
                           {/* Assigned Team Members */}
                           {jobDetails.assignedTeamMembers &&
                             jobDetails.assignedTeamMembers.length > 0 && (
-                              <div className=''>
-                                <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                              <div className='pb-6 px-2'>
+                                <h3 className='font-semibold text-xl mb-4 text-text-primary'>
                                   Assigned Team
                                 </h3>
                                 <div className='space-y-3'>
@@ -605,7 +591,7 @@ const JobDetails = () => {
                             jobDetails.statusHistory.length > 0 && (
                               <div className='bg-white rounded-xl shadow border border-gray-200 p-6'>
                                 <div className='flex items-center justify-between mb-6'>
-                                  <h3 className='text-xl font-semibold text-gray-800'>
+                                  <h3 className='font-semibold text-xl mb-4 text-text-primary'>
                                     Job Activity History
                                   </h3>
                                 </div>
@@ -614,10 +600,11 @@ const JobDetails = () => {
 
                           {/* Customer Notes */}
                           {jobDetails.customerNotes && (
-                            <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
-                              <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                            <div className='bg-white pb-6 px-2'>
+                              <h3 className='font-semibold text-xl mb-4 text-text-primary'>
                                 Customer Notes
                               </h3>
+
                               <p className='text-sm text-gray-700 leading-relaxed'>
                                 {jobDetails.customerNotes}
                               </p>
@@ -626,8 +613,8 @@ const JobDetails = () => {
 
                           {/* Internal Notes */}
                           {jobDetails.internalNotes && (
-                            <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
-                              <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                            <div className='bg-white px-2'>
+                              <h3 className='font-semibold text-xl mb-4 text-text-primary'>
                                 Internal Notes
                               </h3>
                               <p className='text-sm text-gray-700 leading-relaxed'>
@@ -670,14 +657,6 @@ const JobDetails = () => {
                           </span>
                         </div>
                       )}
-                      {/* {jobDetails.estimatedDurationMinutes && (
-                        <div className='flex justify-between'>
-                          <span className='text-gray-600'>Duration</span>
-                          <span className='text-gray-900'>
-                            {jobDetails.estimatedDurationMinutes / 60}h
-                          </span>
-                        </div>
-                      )} */}
                       <div className='flex justify-between'>
                         <span className='text-gray-600'>Type</span>
                         <span className='text-gray-900'>
@@ -717,20 +696,30 @@ const JobDetails = () => {
                           {PaymentStatus[jobDetails.paymentStatus]}
                         </span>
                       </div>
-                      {/* {jobDetails.tags && jobDetails.tags.length > 0 && (
-                        <div className='flex flex-wrap gap-2 pt-3 border-t border-gray-100'>
-                          <span className='text-gray-600'>Tags:</span>
-                          {jobDetails.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className='inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800'
-                            >
-                              <Tag className='w-3 h-3 mr-1' />
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )} */}
+                    </div>
+                  </div>
+
+                  <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
+                    <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                      Tags
+                    </h3>
+                    <div className='flex space-x-3'>
+                      {jobDetails.tags &&
+                        jobDetails.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className='bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm'
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      <IconButton
+                        icon={<Plus className='w-4 h-4 mr-1' />}
+                        onClick={() => {}}
+                        customStyle='bg-gray-100 hover:bg-gray-200 text-gray-600! px-3 py-1 rounded-full! border-none'
+                      >
+                        Add Tag
+                      </IconButton>
                     </div>
                   </div>
 
@@ -775,7 +764,7 @@ const JobDetails = () => {
                   </div>
 
                   {/* Property Information */}
-                  {jobDetails.property?.address && lat && lon && (
+                  {jobDetails.property?.address && (
                     <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
                       <h3 className='text-lg font-semibold text-gray-900 mb-4'>
                         Property
@@ -787,16 +776,22 @@ const JobDetails = () => {
                         </div>
                       </div>
                       <div className='w-full h-52 rounded-xl overflow-hidden'>
-                        <MapContainer
-                          center={[lat, lon]}
-                          zoom={15}
-                          style={{ height: '100%', width: '100%' }}
-                        >
-                          <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
-                          <Marker position={[lat, lon]}>
-                            <Popup>{jobDetails.property?.address}</Popup>
-                          </Marker>
-                        </MapContainer>
+                        {lat && lon ? (
+                          <MapContainer
+                            center={[lat, lon]}
+                            zoom={15}
+                            style={{ height: '100%', width: '100%' }}
+                          >
+                            <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
+                            <Marker position={[lat, lon]}>
+                              <Popup>{jobDetails.property?.address}</Popup>
+                            </Marker>
+                          </MapContainer>
+                        ) : (
+                          <div className='h-full w-full flex items-center justify-center bg-gray-300'>
+                            <MapIcon className='w-10 h-10 text-gray-600' />
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -812,6 +807,7 @@ const JobDetails = () => {
         isOpen={isEditJobModalOpen}
         onClose={() => setIsEditJobModalOpen(false)}
         jobToEdit={jobDetails}
+        setJobDetails={setJobDetails}
       />
     </div>
   );

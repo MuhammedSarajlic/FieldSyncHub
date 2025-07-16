@@ -61,28 +61,28 @@ export const sidebar = [
     slug: 'pricebook',
     icon: icons.pricebookIcon,
   },
-  {
-    id: 11,
-    name: 'Reports',
-    slug: 'reports',
-    icon: icons.reportIcon,
-  },
-  {
-    id: 12,
-    name: 'Marketing',
-    slug: 'marketing',
-    icon: icons.marketingIcon,
-  },
+  // {
+  //   id: 11,
+  //   name: 'Reports',
+  //   slug: 'reports',
+  //   icon: icons.reportIcon,
+  // },
+  // {
+  //   id: 12,
+  //   name: 'Marketing',
+  //   slug: 'marketing',
+  //   icon: icons.marketingIcon,
+  // },
   {
     id: 13,
     name: 'Settings',
     slug: 'settings',
     icon: icons.settingsIcon,
   },
-  {
-    id: 14,
-    name: 'Help & Support',
-    slug: 'support',
-    icon: icons.helpIcon,
-  },
+  // {
+  //   id: 14,
+  //   name: 'Help & Support',
+  //   slug: 'support',
+  //   icon: icons.helpIcon,
+  // },
 ];

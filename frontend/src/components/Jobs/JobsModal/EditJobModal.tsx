@@ -2,54 +2,56 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   X,
   Plus,
-  Settings,
   Building2,
   Mail,
   Phone,
   Percent,
   DollarSign,
   ChevronDown,
-  UserPlus,
   Home,
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
-import { TAddJob, TJob, TUpdateJob } from '../../../types/Job';
+import { TJob, TUpdateJob } from '../../../types/Job';
 import { GetAllCustomers } from '../../../services/Customer';
 import { TCustomer } from '../../../types/Customer';
-import {
-  GetServiceItems,
-  GetServiceItemsByFilter,
-} from '../../../services/ServiceItem';
+import { GetServiceItemsByFilter } from '../../../services/ServiceItem';
 import { TServiceItem } from '../../../types/ServiceItem';
 import { useAuth } from '../../../context/AuthProvider';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { TAddLineItem } from '../../../types/LineItem';
 import {
   JobPriority,
-  JobStatus,
   JobType,
   PaymentStatus,
 } from '../../../constants/Enumeration/JobEnum/JobEnum';
 import { DiscountType } from '../../../constants/Enumeration/CommonEnum/DiscountEnum';
 import { GetEmployeesByWorkspace } from '../../../services/Employee';
 import { TEmployee } from '../../../types/Employee';
-import { CreateJob } from '../../../services/Job';
-import { getJobStatus } from '../../../utils/FuntionHelpers/JobUtils/getJobStatus';
-import { getJobPriority } from '../../../utils/FuntionHelpers/JobUtils/getJobPriority';
+import { UpdateJob } from '../../../services/Job';
 import IconButton from '../../CustomElements/Buttons/IconButton';
 import CustomButton from '../../CustomElements/Buttons/CustomButton';
+import { formatPercent } from '../../../utils/FuntionHelpers/formatPercent';
+import {
+  extractLocalDate,
+  extractLocalTime,
+} from '../../../utils/FuntionHelpers/DateAndTimeUtils/DateAndTimeExtract';
 
 interface INewJobModal {
   isOpen: boolean;
   onClose: () => void;
   jobToEdit: TJob;
+  setJobDetails: React.Dispatch<React.SetStateAction<TJob | null>>;
 }
 
-const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
+const EditJobModal = ({
+  isOpen,
+  onClose,
+  jobToEdit,
+  setJobDetails,
+}: INewJobModal) => {
   const { user } = useAuth();
   const [customers, setCustomers] = useState<TCustomer[]>([]);
   const [employees, setEmployees] = useState<TEmployee[]>([]);
-  const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
   const [filteredServiceItems, setFilteredServiceItems] = useState<
     TServiceItem[]
   >([]);
@@ -57,7 +59,6 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
   const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(
     null
   );
-  const [showAddCustomer, setShowAddCustomer] = useState(false);
 
   // Ref for the service item search input to manage focus
   const searchInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -71,8 +72,8 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
     repeats: jobToEdit.repeats,
     lineItems: jobToEdit.lineItems,
     priority: jobToEdit.priority,
-    startDate: jobToEdit.startDate,
-    startTime: jobToEdit.startTime,
+    startDate: extractLocalDate(jobToEdit.startDate),
+    startTime: extractLocalTime(jobToEdit.startTime),
     arrivalWindow: jobToEdit.arrivalWindow,
     duration: jobToEdit.duration,
     estimatedDurationMinutes: jobToEdit.estimatedDurationMinutes,
@@ -80,7 +81,7 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
     depositAmount: jobToEdit.depositAmount,
     discountType: jobToEdit.discountType,
     discountValue: jobToEdit.discountValue,
-    taxRate: jobToEdit.taxRate,
+    taxRate: jobToEdit.taxRate * 100,
     sendInvoice: jobToEdit.sendInvoice,
     sendReminder: jobToEdit.sendReminder,
     reminderDaysBefore: jobToEdit.reminderDaysBefore,
@@ -97,8 +98,9 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
   const [selectedProperty, setSelectedProperty] = useState(
     jobToEdit.propertyId
   );
-  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
+  const [selectedEmployees, setSelectedEmployees] = useState(
+    jobToEdit.assignedTeamMembers
+  );
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
@@ -143,47 +145,8 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
     }));
   };
 
-  const handleEmployeeSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const options = Array.from(e.target.options);
-    const selectedIds = options
-      .filter((option) => option.selected)
-      .map((option) => option.value);
-
-    setSelectedEmployeeIds(selectedIds);
-
-    const selectedEmployeeObjects = employees.filter((emp) =>
-      selectedIds.includes(emp.id)
-    );
-
-    setJob((prevJob) => ({
-      ...prevJob,
-      assignedTeamMembers: selectedEmployeeObjects,
-    }));
-  };
-
-  const handleTagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      const newTag = tagInput.trim();
-      if (!job.tags?.includes(newTag)) {
-        setJob((prev) => ({
-          ...prev,
-          tags: [...(prev.tags || []), newTag],
-        }));
-      }
-      setTagInput('');
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setJob((prev) => ({
-      ...prev,
-      tags: prev.tags?.filter((tag) => tag !== tagToRemove) || [],
-    }));
-  };
-
-  const calculateJobTotals = (currentJob: TAddJob) => {
-    const subtotal = currentJob.lineItems.reduce(
+  const calculateJobTotals = (currentJob: TUpdateJob) => {
+    const subtotal = currentJob.lineItems?.reduce(
       (sum, item) => sum + item.quantity * item.unitPrice,
       0
     );
@@ -201,10 +164,10 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
     calculateJobTotals(job);
 
   const selectServiceItem = (
-    currentJob: TAddJob,
+    currentJob: TUpdateJob,
     index: number,
     serviceItem: TServiceItem,
-    setJob: React.Dispatch<React.SetStateAction<TAddJob>>,
+    setJob: React.Dispatch<React.SetStateAction<TUpdateJob>>,
     setSearchTerm: React.Dispatch<React.SetStateAction<string>>,
     setActiveSearchIndex: React.Dispatch<React.SetStateAction<number | null>>
   ) => {
@@ -225,11 +188,11 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
   };
 
   const handleLineItemChange = (
-    currentJob: TAddJob,
+    currentJob: TUpdateJob,
     index: number,
     field: keyof TAddLineItem,
     value: any,
-    setJob: React.Dispatch<React.SetStateAction<TAddJob>>
+    setJob: React.Dispatch<React.SetStateAction<TUpdateJob>>
   ) => {
     setJob((prev) => {
       const newLineItems = [...prev.lineItems];
@@ -254,8 +217,8 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
   };
 
   const addNewLineItem = (
-    currentJob: TAddJob,
-    setJob: React.Dispatch<React.SetStateAction<TAddJob>>
+    currentJob: TUpdateJob,
+    setJob: React.Dispatch<React.SetStateAction<TUpdateJob>>
   ) => {
     setJob((prev) => ({
       ...prev,
@@ -273,14 +236,14 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
   };
 
   const removeLineItem = (
-    currentJob: TAddJob,
+    currentJob: TUpdateJob,
     index: number,
-    setJob: React.Dispatch<React.SetStateAction<TAddJob>>
+    setJob: React.Dispatch<React.SetStateAction<TUpdateJob>>
   ) => {
-    if (currentJob.lineItems.length > 1) {
+    if (currentJob.lineItems?.length > 1) {
       setJob((prev) => ({
         ...prev,
-        lineItems: prev.lineItems.filter((_, i) => i !== index),
+        lineItems: prev.lineItems?.filter((_, i) => i !== index),
       }));
     }
   };
@@ -288,11 +251,11 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
   const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const customerId = e.target.value;
     setSelectedCustomer(customerId);
-    setSelectedProperty(''); // Reset property selection
+    setSelectedProperty('');
     setJob((prev) => ({
       ...prev,
       customerId: customerId,
-      propertyId: '', // Reset property ID
+      propertyId: '',
     }));
   };
 
@@ -305,44 +268,23 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleEditJob = async () => {
     if (!user?.workspace) {
       console.error('User or workspace not available.');
       return;
     }
-    const combineDateTimeToISO = (
-      dateStr: string,
-      timeStr: string
-    ): string | undefined => {
-      if (!dateStr || !timeStr) {
-        return undefined; // Return undefined if date or time is missing
-      }
-      // Construct a string in local format (e.g., "2023-10-27T10:30:00")
-      const dateTimeLocalString = `${dateStr}T${timeStr}:00`;
-      const combinedDateTime = new Date(dateTimeLocalString);
-
-      // Check if the date is valid before converting
-      if (isNaN(combinedDateTime.getTime())) {
-        console.warn(
-          `Invalid date/time combination: Date: ${dateStr}, Time: ${timeStr}`
-        );
-        return undefined;
-      }
-      return combinedDateTime.toISOString(); // Convert to UTC ISO string
-    };
-
-    job.startTime = combineDateTimeToISO(job.startDate, job.startTime);
     const updatedJob = {
       ...job,
-      workspaceId: user.workspace.id,
-      createdBy: user.id,
-      taxRate: job.taxRate / 100,
+      assignedTeamMembers: selectedEmployees,
+      startTime: `${job.startDate}T${job.startTime}`,
     };
     console.log(updatedJob);
-
     try {
-      const response = await CreateJob(updatedJob);
+      const response = await UpdateJob(updatedJob);
       if (response.status === 200) {
+        console.log(response);
+
+        setJobDetails(response.data.payload);
         onClose();
       } else {
         console.error(
@@ -353,6 +295,30 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
     } catch (error) {
       console.error('Error creating job:', error);
     }
+  };
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleToggleEmployee = (employee: TEmployee) => {
+    const isSelected = selectedEmployees.some(
+      (selected) => selected.id === employee.id
+    );
+
+    if (isSelected) {
+      // Remove employee
+      setSelectedEmployees(
+        selectedEmployees.filter((selected) => selected.id !== employee.id)
+      );
+    } else {
+      // Add employee
+      setSelectedEmployees([...selectedEmployees, employee]);
+    }
+  };
+
+  const handleRemoveEmployee = (employeeId: string) => {
+    setSelectedEmployees(
+      selectedEmployees.filter((selected) => selected.id !== employeeId)
+    );
   };
 
   const fetchCustomers = async () => {
@@ -376,22 +342,6 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
     const result = await GetEmployeesByWorkspace(user.workspace.id);
     if (result.status === 200) {
       setEmployees(result.data.payload);
-    }
-  };
-
-  const fetchAllServiceItems = async () => {
-    try {
-      const response = await GetServiceItems();
-      if (response.status === 200) {
-        setServiceItems(response.data.payload);
-      } else {
-        console.error(
-          'Failed to fetch service items:',
-          response.data?.message ?? 'Unknown error'
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching service items:', error);
     }
   };
 
@@ -421,7 +371,6 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
   useEffect(() => {
     fetchCustomers();
     fetchEmployees();
-    fetchAllServiceItems();
   }, []);
 
   useEffect(() => {
@@ -460,7 +409,6 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
               {/* Job Basic Information */}
               <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  {/* <FileText className='w-5 h-5 text-[#356852]' /> */}
                   <h3 className='font-semibold text-xl text-text-primary'>
                     Job Information
                   </h3>
@@ -528,23 +476,14 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
               <div className=''>
                 <div className='flex items-center justify-between mb-6'>
                   <div className='flex items-center space-x-3'>
-                    {/* <User className='w-5 h-5 text-[#356852]' /> */}
                     <h3 className='font-semibold text-xl text-text-primary'>
                       Customer & Property
                     </h3>
                   </div>
-                  <button
-                    type='button'
-                    onClick={() => setShowAddCustomer(true)}
-                    className='flex items-center px-4 py-2 bg-[#356852] text-white rounded-lg hover:bg-[#2d5a44] transition-colors font-medium text-sm shadow-md'
-                  >
-                    <UserPlus className='w-4 h-4 mr-2' />
-                    Add Customer
-                  </button>
                 </div>
 
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                  <div>
+                <div className='flex items-end space-x-6'>
+                  <div className='w-1/2'>
                     <label
                       htmlFor='customer-select'
                       className='block text-sm font-medium text-gray-700 mb-2'
@@ -557,7 +496,8 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                         value={selectedCustomer}
                         onChange={handleCustomerChange}
                         required
-                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                        disabled // Disable customer selection
+                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed'
                       >
                         <option value=''>Select a customer...</option>
                         {customers.map((customer) => (
@@ -570,97 +510,100 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                         <ChevronDown className='w-5 h-5' />
                       </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor='property-select'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Choose property <span className='text-red-500'>*</span>
-                    </label>
-                    <div className='relative'>
-                      <select
-                        id='property-select'
-                        value={selectedProperty}
-                        onChange={handlePropertyChange}
-                        required
-                        disabled={!selectedCustomer}
-                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none disabled:bg-gray-100'
+                    <div className='mt-4'>
+                      {' '}
+                      {/* Moved property dropdown under customer */}
+                      <label
+                        htmlFor='property-select'
+                        className='block text-sm font-medium text-gray-700 mb-2'
                       >
-                        <option value=''>Select a property...</option>
-                        {customerProperties?.map((property) => (
-                          <option key={property.id} value={property.id}>
-                            {property.address}
-                          </option>
-                        ))}
-                      </select>
-                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                        <ChevronDown className='w-5 h-5' />
+                        Choose property <span className='text-red-500'>*</span>
+                      </label>
+                      <div className='relative'>
+                        <select
+                          id='property-select'
+                          value={selectedProperty}
+                          onChange={handlePropertyChange}
+                          required
+                          disabled={!selectedCustomer}
+                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none disabled:bg-gray-100'
+                        >
+                          <option value=''>Select a property...</option>
+                          {customerProperties?.map((property) => (
+                            <option key={property.id} value={property.id}>
+                              {property.address}
+                            </option>
+                          ))}
+                        </select>
+                        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
+                          <ChevronDown className='w-5 h-5' />
+                        </div>
                       </div>
+                      {!selectedCustomer && (
+                        <p className='text-sm text-gray-500 mt-1'>
+                          Select a customer first to see their properties
+                        </p>
+                      )}
                     </div>
-                    {!selectedCustomer && (
-                      <p className='text-sm text-gray-500 mt-1'>
-                        Select a customer first to see their properties
-                      </p>
-                    )}
                   </div>
-                </div>
 
-                {selectedCustomerData && (
-                  <div className='mt-6 bg-white rounded-lg p-4 border border-gray-200 shadow-sm'>
-                    <div className='flex items-start space-x-3'>
-                      <div className='w-9 h-9 bg-[#e6f4ed] rounded-full flex items-center justify-center flex-shrink-0'>
-                        <Building2 className='w-5 h-5 text-[#356852]' />
-                      </div>
-                      <div className='flex-1'>
-                        <h4 className='font-semibold text-gray-900 text-base'>
-                          {selectedCustomerData.fullName}
-                        </h4>
-                        {selectedPropertyData && (
-                          <p className='text-sm text-gray-600 mt-1'>
-                            <Home className='w-4 h-4 inline mr-1' />
-                            {selectedPropertyData.address}
-                          </p>
-                        )}
-                        <div className='mt-2 space-y-1 text-sm text-gray-600'>
-                          {selectedCustomerData.emails?.[0] && (
-                            <div className='flex items-center'>
-                              <Mail className='w-4 h-4 mr-2 text-gray-500' />
-                              <a
-                                href={`mailto:${selectedCustomerData.emails[0]}`}
-                                className='hover:underline'
-                              >
-                                {selectedCustomerData.emails[0]}
-                              </a>
-                            </div>
+                  {selectedCustomerData && (
+                    <div className='w-1/2 bg-white rounded-lg p-4 border border-gray-200 shadow-sm h-fit'>
+                      {' '}
+                      {/* Added h-fit to keep its height minimal */}
+                      <div className='flex items-start space-x-3'>
+                        <div className='w-9 h-9 bg-[#e6f4ed] rounded-full flex items-center justify-center flex-shrink-0'>
+                          <Building2 className='w-5 h-5 text-[#356852]' />
+                        </div>
+                        <div className='flex-1'>
+                          <h4 className='font-semibold text-gray-900 text-base'>
+                            {selectedCustomerData.fullName}
+                          </h4>
+                          {selectedPropertyData && (
+                            <p className='text-sm text-gray-600 mt-1'>
+                              <Home className='w-4 h-4 inline mr-1' />
+                              {selectedPropertyData.address}
+                            </p>
                           )}
-                          {selectedCustomerData.customerPhones?.[0]
-                            ?.phoneNumber && (
-                            <div className='flex items-center'>
-                              <Phone className='w-4 h-4 mr-2 text-gray-500' />
-                              <a
-                                href={`tel:${selectedCustomerData.customerPhones[0].phoneNumber}`}
-                                className='hover:underline'
-                              >
-                                {
-                                  selectedCustomerData.customerPhones[0]
-                                    .phoneNumber
-                                }
-                              </a>
-                            </div>
-                          )}
+                          <div className='mt-2 space-y-1 text-sm text-gray-600'>
+                            {selectedCustomerData.emails?.[0] && (
+                              <div className='flex items-center'>
+                                <Mail className='w-4 h-4 mr-2 text-gray-500' />
+                                <a
+                                  href={`mailto:${selectedCustomerData.emails[0]}`}
+                                  className='hover:underline'
+                                >
+                                  {selectedCustomerData.emails[0]}
+                                </a>
+                              </div>
+                            )}
+                            {selectedCustomerData.customerPhones?.[0]
+                              ?.phoneNumber && (
+                              <div className='flex items-center'>
+                                <Phone className='w-4 h-4 mr-2 text-gray-500' />
+                                <a
+                                  href={`tel:${selectedCustomerData.customerPhones[0].phoneNumber}`}
+                                  className='hover:underline'
+                                >
+                                  {
+                                    selectedCustomerData.customerPhones[0]
+                                      .phoneNumber
+                                  }
+                                </a>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Job Details Section */}
               <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  {/* <Calendar className='w-5 h-5 text-[#356852]' /> */}
                   <h3 className='font-semibold text-xl text-text-primary'>
                     Job Details
                   </h3>
@@ -806,23 +749,6 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                       </div>
                     </div>
                   </div>
-
-                  {/* <div>
-                    <label
-                      htmlFor='arrival-window-end'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Arrival Window End
-                    </label>
-                    <input
-                      type='time'
-                      id='arrival-window-end'
-                      name='arrivalWindowEnd'
-                      value={job.arrivalWindowEnd}
-                      onChange={handleChange}
-                      className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                    />
-                  </div> */}
                 </div>
 
                 {job.jobType === JobType.Recurring && (
@@ -881,32 +807,114 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
               {/* Team Members Section */}
               <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  {/* <Users className='w-5 h-5 text-[#356852]' /> */}
                   <h3 className='font-semibold text-xl text-text-primary'>
                     Assigned Team Members
                   </h3>
                 </div>
-                <div className='relative'>
-                  <select
-                    id='assigned-team-members'
-                    multiple
-                    value={selectedEmployeeIds}
-                    onChange={handleEmployeeSelection}
-                    className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none h-32' // Added h-32 for better multi-select visibility
-                  >
-                    {employees.map((employee) => (
-                      <option key={employee.id} value={employee.id}>
-                        {employee.user.fullName}
-                      </option>
-                    ))}
-                  </select>
-                  <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                    <ChevronDown className='w-5 h-5' />
-                  </div>
+
+                {/* Selected Members Display */}
+                <div className='mb-6'>
+                  {selectedEmployees.length > 0 ? (
+                    <div className='flex flex-wrap gap-2'>
+                      {selectedEmployees.map((employee) => (
+                        <div
+                          key={employee.id}
+                          className='flex items-center bg-[#356852] text-white px-3 py-1.5 rounded-full text-sm'
+                        >
+                          <span className='mr-2'>{employee.user.fullName}</span>
+                          <button
+                            type='button'
+                            onClick={() => handleRemoveEmployee(employee.id)}
+                            className='hover:bg-[#2d5543] rounded-full p-0.5 transition-colors'
+                          >
+                            <X className='w-4 h-4' />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className='text-gray-500 text-sm'>
+                      No team members selected yet
+                    </p>
+                  )}
                 </div>
+
+                {/* Custom Dropdown with Checkboxes */}
+                <div className='relative'>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                    Team Members
+                  </label>
+                  <div className='relative'>
+                    <button
+                      type='button'
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm text-left bg-white hover:bg-gray-50 transition-colors'
+                    >
+                      {selectedEmployees.length > 0
+                        ? `${selectedEmployees.length} member${
+                            selectedEmployees.length > 1 ? 's' : ''
+                          } selected`
+                        : 'Select team members...'}
+                    </button>
+                    <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
+                      <ChevronDown
+                        className={`w-5 h-5 transition-transform ${
+                          isDropdownOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </div>
+
+                    {/* Dropdown Menu */}
+                    {isDropdownOpen && (
+                      <div className='absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto'>
+                        {employees.length > 0 ? (
+                          employees.map((employee) => {
+                            const isSelected = selectedEmployees.some(
+                              (selected) => selected.id === employee.id
+                            );
+                            return (
+                              <div
+                                key={employee.id}
+                                className='flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer'
+                                onClick={() => handleToggleEmployee(employee)}
+                              >
+                                <input
+                                  type='checkbox'
+                                  checked={isSelected}
+                                  onChange={() =>
+                                    handleToggleEmployee(employee)
+                                  }
+                                  className='h-4 w-4 text-[#356852] focus:ring-[#356852] border-gray-300 rounded mr-3' // Green checkbox
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className='text-sm text-gray-900 flex-1'>
+                                  {employee.user.fullName}
+                                </span>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className='px-3 py-2 text-sm text-gray-500'>
+                            No employees available
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Click outside to close dropdown */}
+                  {isDropdownOpen && (
+                    <div
+                      className='fixed inset-0 z-0'
+                      onClick={() => setIsDropdownOpen(false)}
+                    />
+                  )}
+                </div>
+
+                {/* Info text */}
                 <p className='text-xs text-gray-500 mt-2'>
-                  Hold Ctrl (Windows) or Command (Mac) to select multiple team
-                  members.
+                  Click on employees to select/deselect them. Selected members
+                  will appear above.
                 </p>
               </div>
 
@@ -914,7 +922,6 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
               <div className='space-y-6'>
                 <div className='flex justify-between items-center'>
                   <div className='flex items-center space-x-3'>
-                    {/* <FileText className='w-5 h-5 text-[#356852]' /> */}
                     <h3 className='font-semibold text-xl text-text-primary'>
                       Line items
                     </h3>
@@ -929,7 +936,7 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                 </div>
 
                 <div className='space-y-6'>
-                  {job.lineItems.map((item, index) => (
+                  {job.lineItems?.map((item, index) => (
                     <div
                       key={item.serviceItemId || `new-item-${index}`}
                       className=''
@@ -1050,7 +1057,7 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                         </div>
 
                         <div className='col-span-2'>
-                          {job.lineItems.length > 1 && (
+                          {job.lineItems?.length > 1 && (
                             <CustomButton
                               onClick={() => removeLineItem(job, index, setJob)}
                               customStyle='text-red-600 py-2 px-4 hover:bg-gray-50 hover:border-gray-300'
@@ -1077,7 +1084,6 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
               {/* Pricing Summary and Discounts */}
               <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  {/* <DollarSign className='w-5 h-5 text-[#356852]' /> */}
                   <h3 className='font-semibold text-xl text-text-primary'>
                     Pricing & Payment
                   </h3>
@@ -1119,17 +1125,22 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                     >
                       Deposit Amount
                     </label>
-                    <input
-                      type='number'
-                      id='deposit-amount'
-                      name='depositAmount'
-                      value={job.depositAmount}
-                      onChange={handleChange}
-                      min='0'
-                      step='0.01'
-                      className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                      placeholder='e.g., 50.00'
-                    />
+                    <div className='relative'>
+                      <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500'>
+                        <DollarSign className='w-4 h-4' />
+                      </span>
+                      <input
+                        type='number'
+                        id='deposit-amount'
+                        name='depositAmount'
+                        value={job.depositAmount}
+                        onChange={handleChange}
+                        min='0'
+                        step='0.01'
+                        className='w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
+                        placeholder='e.g., 50.00'
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1143,28 +1154,29 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                       Discount
                     </label>
                     <div className='flex items-center gap-2'>
-                      <div className='relative flex-1 min-w-[60px]'>
-                        {' '}
-                        {/* Added min-w to the parent flex-1 div */}
+                      <div className='relative flex-1'>
                         <select
                           id='discount-type'
                           name='discountType'
                           value={job.discountType}
                           onChange={handleChange}
-                          // Removed pr-3 from here, let absolute positioned chevron handle right spacing
-                          className='w-full border border-gray-300 rounded-lg pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                          className='w-full border border-gray-300 rounded-lg pl-3 pr-10 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
                         >
                           <option value={DiscountType.Percentage}>%</option>
-                          <option value={DiscountType.FixedAmount}>
-                            $
-                          </option>{' '}
-                          {/* Confirmed FixedAmount */}
+                          <option value={DiscountType.FixedAmount}>$</option>
                         </select>
-                        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-gray-700'>
+                        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
                           <ChevronDown className='w-5 h-5' />
                         </div>
                       </div>
                       <div className='relative w-full'>
+                        <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500'>
+                          {job.discountType === DiscountType.Percentage ? (
+                            <Percent className='w-4 h-4' />
+                          ) : (
+                            <DollarSign className='w-4 h-4' />
+                          )}
+                        </span>
                         <input
                           type='number'
                           id='discount-value'
@@ -1173,20 +1185,13 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                           onChange={handleChange}
                           min='0'
                           step='0.01'
-                          className='w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
+                          className='w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
                           placeholder={
                             job.discountType === DiscountType.Percentage
                               ? 'e.g., 10'
                               : 'e.g., 25.00'
                           }
                         />
-                        <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500'>
-                          {job.discountType === DiscountType.Percentage ? (
-                            <Percent className='w-4 h-4' />
-                          ) : (
-                            <DollarSign className='w-4 h-4' />
-                          )}
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -1198,18 +1203,23 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                     >
                       Tax Rate (%)
                     </label>
-                    <input
-                      type='number'
-                      id='tax-rate'
-                      name='taxRate'
-                      value={job.taxRate}
-                      onChange={handleChange}
-                      min='0'
-                      max='100'
-                      step='0.01'
-                      className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                      placeholder='e.g., 8.25'
-                    />
+                    <div className='relative'>
+                      <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500'>
+                        <Percent className='w-4 h-4' />
+                      </span>
+                      <input
+                        type='number'
+                        id='tax-rate'
+                        name='taxRate'
+                        value={formatPercent(job.taxRate)}
+                        onChange={handleChange}
+                        min='0'
+                        max='100'
+                        step='0.01'
+                        className='w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
+                        placeholder='e.g., 8.25'
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1222,13 +1232,15 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
                       </span>
                     </div>
                     <div className='flex justify-between items-center text-sm text-gray-700'>
-                      <span>Discount:</span>
+                      <span>{`Discount (${job.discountValue}${
+                        job.discountType === 0 ? '%' : '$'
+                      }):`}</span>
                       <span className='font-medium text-bg-primary'>
                         -{formatCurrency(discountAmount)}
                       </span>
                     </div>
                     <div className='flex justify-between items-center text-sm text-gray-700'>
-                      <span>Tax ({job.taxRate}%):</span>
+                      <span>Tax ({formatPercent(job.taxRate)}%):</span>
                       <span className='font-medium'>
                         {formatCurrency(taxAmount)}
                       </span>
@@ -1254,7 +1266,7 @@ const EditJobModal = ({ isOpen, onClose, jobToEdit }: INewJobModal) => {
               Cancel
             </CustomButton>
             <CustomButton
-              onClick={handleSubmit}
+              onClick={handleEditJob}
               customStyle='px-5 py-2.5 bg-bg-primary text-white hover:bg-bg-primary-hover'
             >
               Update Job

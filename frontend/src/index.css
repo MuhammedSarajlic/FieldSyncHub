@@ -11,3 +11,7 @@
   --color-text-secondary: #356852;
   --color-border-primary: #e3e3e3;
 }
+
+.leaflet-container {
+  z-index: 0 !important;
+}

@@ -1,4 +1,4 @@
-import { TAddJob } from '../types/Job';
+import { TAddJob, TUpdateJob } from '../types/Job';
 import api from './api';
 
 export async function GetJobs() {
@@ -46,6 +46,11 @@ export async function GetJobsByFilter(
 
 export async function CreateJob(job: TAddJob) {
   const response = await api.post('/job', job);
+  return response;
+}
+
+export async function UpdateJob(job: TUpdateJob) {
+  const response = await api.put('/job', job);
   return response;
 }
 
