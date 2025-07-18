@@ -3,6 +3,7 @@ import { InvoiceStatus } from '../constants/Enumeration/InvoiceEnum/InvoiceEnum'
 import { TCustomer } from './Customer';
 import { TJob } from './Job';
 import { TAddLineItem, TLineItem, TUpdateLineItem } from './LineItem';
+import { TProperty } from './Property';
 
 export type TInvoice = {
   id: string;
@@ -10,8 +11,11 @@ export type TInvoice = {
   customer: TCustomer;
   workspaceId: string;
   invoiceNumber: string;
+  propertyId: string;
+  property?: TProperty;
   jobId?: string;
   job?: TJob;
+  title: string;
   lineItems: TLineItem[];
   taxRate: number;
   discount: number;
@@ -32,13 +36,15 @@ export type TInvoice = {
 export type TAddInvoice = {
   customerId: string;
   workspaceId: string;
+  propertyId: string;
   jobId?: string;
+  title: string;
   lineItems: TAddLineItem[];
   taxRate: number;
   discount: number;
   discountType: DiscountType;
-  dueDate?: string;
   issueDate: string;
+  dueDate?: string;
   paymentTerms: string;
   notes: string;
   internalNotes: string;
@@ -46,6 +52,7 @@ export type TAddInvoice = {
 
 export type TUpdateInvoice = {
   id: string;
+  title: string;
   lineItems: TUpdateLineItem[];
   taxRate?: number;
   discount?: number;

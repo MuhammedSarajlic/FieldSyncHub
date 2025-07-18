@@ -434,11 +434,18 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("char(36)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<decimal>("TaxRate")
                         .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -451,6 +458,8 @@ namespace backend.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("JobId");
+
+                    b.HasIndex("PropertyId");
 
                     b.HasIndex("WorkspaceId");
 
@@ -1206,9 +1215,17 @@ namespace backend.Migrations
                         .WithMany()
                         .HasForeignKey("JobId");
 
+                    b.HasOne("backend.Models.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Customer");
 
                     b.Navigation("Job");
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("backend.Models.Job", b =>

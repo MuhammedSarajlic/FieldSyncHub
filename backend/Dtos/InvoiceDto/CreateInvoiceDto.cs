@@ -9,8 +9,11 @@ public class CreateInvoiceDto
     public Guid CustomerId { get; set; }
     public Guid WorkspaceId { get; set; }
 
+    public Guid PropertyId { get; set; }
+
     public Guid? JobId { get; set; }
 
+    public string Title { get; set; }
     public List<CreateLineItemDto> LineItems { get; set; } = [];
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }

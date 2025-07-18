@@ -8,14 +8,18 @@ public class Invoice
 {
     [Key]
     public Guid Id { get; set; }
+    public Guid WorkspaceId { get; set; }
     public Guid CustomerId { get; set; }
     public Customer? Customer { get; set; }
-    public Guid WorkspaceId { get; set; }
     public string InvoiceNumber { get; set; } = string.Empty;
+
+    public Guid PropertyId { get; set; }
+    public Property? Property { get; set; }
 
     public Guid? JobId { get; set; }
     public Job? Job { get; set; }
 
+    public string Title { get; set; }
     public List<LineItem> LineItems { get; set; } = [];
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }

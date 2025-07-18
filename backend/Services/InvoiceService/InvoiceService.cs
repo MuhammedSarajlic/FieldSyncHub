@@ -36,12 +36,14 @@ public class InvoiceService : IInvoiceService
     public async Task<Invoice?> GetInvoiceById(Guid id)
     {
         var invoice = await _context.Invoices
-            .AsNoTracking()
+            .Where(i => i.Id == id)
             .Include(i => i.Customer)
+                .ThenInclude(c => c.CustomerPhones)
             .Include(i => i.Job)
             .Include(i => i.LineItems)
-            .ThenInclude(item => item.ServiceItem)
-            .FirstOrDefaultAsync(i => i.Id == id);
+                .ThenInclude(item => item.ServiceItem)
+            .Include(i => i.Property)
+            .FirstOrDefaultAsync();
 
         return invoice ?? throw new KeyNotFoundException($"Invoice with ID {id} not found.");
     }
