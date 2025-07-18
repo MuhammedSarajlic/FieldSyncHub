@@ -10,7 +10,7 @@ import CustomButton from '../../CustomElements/CustomButton';
 import { TInvoice, TUpdateInvoice } from '../../../types/Invoice';
 import { TAddLineItem } from '../../../types/LineItem';
 import { useAuth } from '../../../context/AuthProvider';
-import { updateInvoice } from '../../../services/Invoice';
+import { UpdateInvoice } from '../../../services/Invoice';
 
 interface ICreateInvoiceModal {
   isOpen: boolean;
@@ -153,7 +153,7 @@ const UpdateInvoiceModal = ({
 
     try {
       // Example service call to update
-      const response = await updateInvoice(invoice.invoiceId, updatedInvoice);
+      const response = await UpdateInvoice(invoice.invoiceId, updatedInvoice);
       if (response.status === 200) {
         alert('Invoice updated successfully!');
         onClose();

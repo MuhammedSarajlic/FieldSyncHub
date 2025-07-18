@@ -1,5 +1,5 @@
-import { useParams } from 'react-router';
-import { GetInvoiceById } from '../../services/Invoice';
+import { useNavigate, useParams } from 'react-router';
+import { DeleteInvoice, GetInvoiceById } from '../../services/Invoice';
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
@@ -17,6 +17,14 @@ import {
   FileText,
   Briefcase,
   X,
+  Eye,
+  CopyIcon,
+  HardHat,
+  Send,
+  Check,
+  Archive,
+  Trash2,
+  CheckCircle,
 } from 'lucide-react';
 import { TInvoice } from '../../types/Invoice';
 import { useAuth } from '../../context/AuthProvider';
@@ -33,18 +41,31 @@ import {
   openPdfAndPrint,
 } from '../../utils/FuntionHelpers/downloadPdfFile';
 import { DiscountType } from '../../constants/Enumeration/CommonEnum/DiscountEnum';
+import ActionConfirmationModal from '../../components/Quotes/QuotesModals/ActionConfirmationModal';
 
 const InvoiceDetails = () => {
   const { invoiceId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [invoice, setInvoice] = useState<TInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
   const showMoreRef = useClickOutside<HTMLDivElement>(() =>
     setIsActionsOpen(false)
   ); // Use useClickOutside for the actions dropdown
+
+  const deleteInvoice = async () => {
+    if (!invoiceId) return;
+    const response = await DeleteInvoice(invoiceId);
+    if (response.status === 200) {
+      navigate('/invoices');
+      console.log(response);
+    }
+  };
 
   const fetchInvoice = async () => {
     if (!invoiceId) return;
@@ -75,11 +96,6 @@ const InvoiceDetails = () => {
   const handleSendEmail = () => {
     console.log('Send by email');
     // Implement actual email sending logic here
-  };
-
-  const handleSendText = () => {
-    console.log('Send by text');
-    // Implement actual text sending logic here
   };
 
   const handleDownloadInvoicePdf = async () => {
@@ -203,6 +219,14 @@ const InvoiceDetails = () => {
 
               <div className='flex flex-wrap gap-2 relative'>
                 <IconButton
+                  icon={<Send className='w-4 h-4 mr-2' />}
+                  customStyle='py-2 px-4 bg-bg-primary border-none text-white hover:bg-bg-primary-hover'
+                  // onClick={() => setIsSendModalOpen(true)}
+                  onClick={() => {}}
+                >
+                  Send
+                </IconButton>
+                <IconButton
                   icon={<Edit className='w-4 h-4 mr-2' />}
                   customStyle='py-2 px-4 hover:border-gray-300'
                   onClick={() => setIsUpdateModalOpen(true)}
@@ -221,54 +245,88 @@ const InvoiceDetails = () => {
 
                   {isActionsOpen && (
                     <motion.div
+                      ref={showMoreRef}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className='absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg border border-gray-200 z-10'
                     >
                       <div className='py-1'>
+                        {/* View/Print group */}
+                        <div className='px-3 py-1 text-xs font-medium text-gray-500'>
+                          View
+                        </div>
+                        <a
+                          href='#'
+                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
+                          <Eye className='w-4 h-4 mr-2' />
+                          Preview
+                        </a>
+                        <button
+                          // onClick={() => setIsDuplicateQuoteModalOpen(true)}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
+                          <CopyIcon className='w-4 h-4 mr-2' />
+                          Duplicate
+                        </button>
+
+                        {/* Status group */}
+                        <div className='border-t border-gray-100 my-1'></div>
+                        <div className='px-3 py-1 text-xs font-medium text-gray-500'>
+                          Status
+                        </div>
+                        <button
+                          // onClick={() =>
+                          //   handleChangeQuoteStatus(QuoteStatus.Sent)
+                          // }
+                          className='flex items-center cursor-pointer w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
+                          <Send className='w-4 h-4 mr-2' />
+                          Mark as Sent
+                        </button>
+                        <button
+                          // onClick={() =>
+                          //   handleChangeQuoteStatus(QuoteStatus.Approved)
+                          // }
+                          className='flex items-center cursor-pointer w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        >
+                          <CheckCircle className='w-4 h-4 mr-2' />
+                          Mark as Paid
+                        </button>
+
                         {/* Actions group */}
+                        <div className='border-t border-gray-100 my-1'></div>
                         <div className='px-3 py-1 text-xs font-medium text-gray-500'>
                           Actions
                         </div>
+
                         <button
-                          onClick={() => {
-                            handleSendEmail();
-                            setIsActionsOpen(false);
-                          }}
-                          className='flex items-center gap-2 w-full p-3 text-sm text-gray-700 hover:bg-gray-100'
+                          // onClick={handlePrintQuotePdf}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
-                          <Mail className='w-4 h-4' />
-                          Email
+                          <Printer className='w-4 h-4 mr-2' />
+                          Print
                         </button>
                         <button
-                          onClick={() => {
-                            handleSendText();
-                            setIsActionsOpen(false);
-                          }}
-                          className='flex items-center gap-2 w-full p-3 text-sm text-gray-700 hover:bg-gray-100'
+                          // onClick={handleDownloadQuotePdf}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
-                          <MessageSquare className='w-4 h-4' />
-                          Text
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleDownloadInvoicePdf();
-                            setIsActionsOpen(false);
-                          }}
-                          className='flex items-center gap-2 w-full p-3 text-sm text-gray-700 hover:bg-gray-100'
-                        >
-                          <Download className='w-4 h-4' />
+                          <Download className='w-4 h-4 mr-2' />
                           Download
                         </button>
                         <button
-                          onClick={() => {
-                            handlePrintInvoicePdf();
-                            setIsActionsOpen(false);
-                          }}
-                          className='flex items-center gap-2 w-full p-3 text-sm text-gray-700 hover:bg-gray-100'
+                          onClick={() => setIsArchiveModalOpen(true)}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
-                          <Printer className='w-4 h-4' />
-                          Print
+                          <Archive className='w-4 h-4 mr-2' />
+                          Archive
+                        </button>
+                        <button
+                          onClick={() => setIsDeleteModalOpen(true)}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100'
+                        >
+                          <Trash2 className='w-4 h-4 mr-2 text-red-600' />
+                          Delete
                         </button>
                       </div>
                     </motion.div>
@@ -358,7 +416,7 @@ const InvoiceDetails = () => {
                               : formatCurrency(invoice.discount)}
                             ):
                           </span>
-                          <span className='font-medium text-red-600'>
+                          <span className='font-medium text-green-600'>
                             -
                             {formatCurrency(
                               invoice.discountType === DiscountType.Percentage
@@ -443,10 +501,10 @@ const InvoiceDetails = () => {
                     </div>
                   </div>
                   <div className='space-y-2'>
-                    {invoice.customer?.customerPhones?.[0]?.phoneNumber && (
+                    {invoice.customer.customerPhones?.length > 0 && (
                       <div className='flex items-center text-sm text-gray-600'>
                         <Phone className='w-4 h-4 mr-3 text-gray-400' />
-                        {invoice.customer.customerPhones[0].phoneNumber}
+                        {invoice.customer.customerPhones?.[0]?.phoneNumber}
                       </div>
                     )}
                     {invoice.customer?.emails?.[0] && (
@@ -585,6 +643,22 @@ const InvoiceDetails = () => {
           invoice={invoice}
         />
       )}
+      <ActionConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={deleteInvoice}
+        itemName={invoice.title || 'Invoice'}
+        actionType='delete'
+        itemType='invoice'
+      />
+      <ActionConfirmationModal
+        isOpen={isArchiveModalOpen}
+        onClose={() => setIsArchiveModalOpen(false)}
+        onConfirm={() => {}}
+        itemName={invoice.title || 'Invoice'}
+        actionType='archive'
+        itemType='invoice'
+      />
     </div>
   );
 };

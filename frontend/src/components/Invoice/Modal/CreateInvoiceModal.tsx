@@ -51,6 +51,8 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
   const [invoice, setInvoice] = useState<TAddInvoice>({
     customerId: '',
     workspaceId: '',
+    propertyId: '',
+    title: '',
     lineItems: [
       {
         quantity: 1,
@@ -230,6 +232,7 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
     const finalInvoice = {
       ...invoice,
       workspaceId: user.workspace.id,
+      propertyId: selectedProperty,
       notes: invoice.notes,
       internalNotes: invoice.internalNotes,
       // If propertyId needs to be sent, add it here based on selectedProperty state
@@ -251,6 +254,8 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
         setInvoice({
           customerId: '',
           workspaceId: '',
+          propertyId: '',
+          title: '',
           lineItems: [
             {
               quantity: 1,
@@ -496,6 +501,24 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
               <h3 className='font-semibold text-xl text-text-primary'>
                 Invoice Details
               </h3>
+              <div>
+                <label
+                  htmlFor='issueDate'
+                  className='block text-sm font-medium text-gray-700 mb-2'
+                >
+                  Title <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='text'
+                  id='title'
+                  name='title'
+                  value={invoice.title}
+                  onChange={handleChange}
+                  placeholder='Title'
+                  required
+                  className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-bg-primary focus:border-transparent text-sm'
+                />
+              </div>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div>
                   <label

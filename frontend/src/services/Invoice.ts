@@ -61,10 +61,15 @@ export async function CreateInvoice(invoice: TAddInvoice) {
   return response;
 }
 
-export async function updateInvoice(
+export async function UpdateInvoice(
   invoiceId: string,
   invoice: TUpdateInvoice
 ) {
   const response = await api.put(`/invoice/${invoiceId}`, invoice);
+  return response;
+}
+
+export async function DeleteInvoice(invoiceId: string) {
+  const response = await api.delete(`/invoice/${invoiceId}`);
   return response;
 }

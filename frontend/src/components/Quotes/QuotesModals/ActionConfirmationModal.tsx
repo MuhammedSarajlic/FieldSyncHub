@@ -9,7 +9,7 @@ interface ActionConfirmationModalProps {
   onConfirm: () => Promise<void>;
   itemName: string;
   actionType: 'delete' | 'archive';
-  itemType?: string; // Optional - defaults to 'item'
+  itemType?: string;
 }
 
 const ActionConfirmationModal = ({
@@ -59,7 +59,7 @@ const ActionConfirmationModal = ({
       buttonText: 'Archive',
       actionIcon: Archive,
       title: `Archive ${itemType}`,
-      description: `Are you sure you want to archive this ${itemType}?`,
+      description: `Are you sure you want to archive ${itemType}`,
       bulletPoints: [
         `The ${itemType} will be marked as inactive`,
         'All historical data will be preserved',
