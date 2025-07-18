@@ -14,9 +14,10 @@ public class QuotePdfGenerator
     private readonly string _primaryColor = "#343a40";
     private byte[]? Logo { get; set; }
 
-    public QuotePdfGenerator(Quote quote)
+    public QuotePdfGenerator(Quote quote, byte[]? logo = null)
     {
         _quote = quote;
+        Logo = logo;
     }
 
     public byte[] GeneratePdf()
@@ -31,7 +32,7 @@ public class QuotePdfGenerator
 
                 page.Header().Element(ComposeHeader);
                 page.Content().Element(ComposeContent);
-                page.Footer().Element(ComposeFooter);
+                // page.Footer().Element(ComposeFooter);
             });
         });
 
@@ -40,60 +41,57 @@ public class QuotePdfGenerator
 
     private void ComposeHeader(IContainer container)
     {
-        container.Row(row =>
+        container.Column(column =>
         {
-            // Company info section
-            row.RelativeItem(2).Column(column =>
+            // First: Company Name and Logo
+            column.Item().Row(row =>
             {
-                // Company logo (assuming LogoData is a byte[] in Workspace model)
-                if (_quote.CreatedByUser.Workspace?.LogoUrl != null && _quote.CreatedByUser.Workspace?.LogoUrl.Length > 0)
-                {
-                    column.Item().AlignRight().Width(120).Height(60).Image(_quote.CreatedByUser.Workspace?.LogoUrl);
-                }
-
                 // Company Name
-                if (!string.IsNullOrEmpty(_quote.CreatedByUser.Workspace?.Name))
+                row.RelativeItem().AlignLeft().Height(60).AlignMiddle().Text(text =>
                 {
-                    column.Item().AlignLeft().PaddingTop(10).Text(text =>
-                    {
-                        text.DefaultTextStyle(x => x.FontSize(12).SemiBold());
-                        text.Line(_quote.CreatedByUser.Workspace?.Name);
-                    });
-                }
+                    text.DefaultTextStyle(x => x.FontSize(18).SemiBold().FontColor(Colors.Black));
+                    text.Line(_quote.CreatedByUser.Workspace?.Name ?? "Company Name");
+                });
 
-                // Company Address (assuming Address property exists in Workspace)
-                // if (!string.IsNullOrEmpty(_quote.Workspace?.Address))
-                // {
-                //     column.Item().AlignLeft().PaddingTop(5).Text(_quote.Workspace.Address)
-                //         .FontSize(9).LineHeight(1.2f);
-                // }
+                // Company Logo (if available)
+                if (Logo != null && Logo.Length > 0)
+                {
+                    row.ConstantItem(120).AlignRight().Height(60).AlignTop().Image(Logo, ImageScaling.FitArea);
+                }
             });
 
-            // Quote info section
-            row.RelativeItem(1).Column(column =>
+            // Then: Quote Info Block
+            column.Item().Row(row =>
             {
-                column.Item().AlignRight().Text("QUOTE")
-                    .FontSize(24).Bold().FontColor(_primaryColor);
-
-                column.Item().PaddingTop(20).Column(info =>
+                row.RelativeItem(2).Column(col =>
                 {
-                    info.Item().Row(r =>
-                    {
-                        r.RelativeItem().AlignRight().Text("Quote #").Bold();
-                        r.ConstantItem(80).AlignRight().Text(_quote.QuoteNumber ?? "N/A");
-                    });
+                    // Empty block or left-side space
+                });
 
-                    info.Item().PaddingTop(5).Row(r =>
+                row.RelativeItem(1).Column(info =>
+                {
+                    info.Item().PaddingTop(20).Column(inner =>
                     {
-                        r.RelativeItem().AlignRight().Text("Quote Date").Bold();
-                        r.ConstantItem(80).AlignRight().Text(_quote.CreatedAt.ToString("dd-MM-yyyy"));
-                    });
+                        // Quote Number
+                        inner.Item().Row(r =>
+                        {
+                            r.RelativeItem().AlignRight().Text("Quote #").Bold();
+                            r.ConstantItem(80).AlignRight().Text(_quote.QuoteNumber ?? "N/A");
+                        });
 
-                    // Due date (assuming DueDate property exists in Quote)
-                    info.Item().PaddingTop(5).Row(r =>
-                    {
-                        r.RelativeItem().AlignRight().Text("Due Date").Bold();
-                        r.ConstantItem(80).AlignRight().Text(_quote.CreatedAt.ToString("dd-MM-yyyy"));
+                        // Issue Date
+                        inner.Item().PaddingTop(5).Row(r =>
+                        {
+                            r.RelativeItem().AlignRight().Text("Issue Date").Bold();
+                            r.ConstantItem(80).AlignRight().Text(_quote.CreatedAt.ToString("dd-MM-yyyy"));
+                        });
+
+                        // Due Date
+                        inner.Item().PaddingTop(5).Row(r =>
+                        {
+                            r.RelativeItem().AlignRight().Text("Due Date").Bold();
+                            r.ConstantItem(80).AlignRight().Text(_quote.CreatedAt.ToString("dd-MM-yyyy"));
+                        });
                     });
                 });
             });
@@ -113,7 +111,8 @@ public class QuotePdfGenerator
                     billTo.Item().PaddingTop(5).BorderLeft(3).BorderColor(_primaryColor)
                         .PaddingLeft(10).Column(customerInfo =>
                         {
-                            customerInfo.Item().Text(_quote.Customer?.FullName ?? "N/A").Bold();
+                            customerInfo.Item().PaddingBottom(5).Text(_quote.Customer?.FullName ?? "N/A")
+                                .FontSize(12).SemiBold().FontColor(Colors.Black);
 
                             var firstPropertyAddress = _quote.Customer?.Properties?.FirstOrDefault()?.Address;
                             if (!string.IsNullOrEmpty(firstPropertyAddress))
@@ -124,13 +123,13 @@ public class QuotePdfGenerator
                             var firstCustomerPhone = _quote.Customer?.CustomerPhones?.FirstOrDefault()?.PhoneNumber;
                             if (!string.IsNullOrEmpty(firstCustomerPhone))
                             {
-                                customerInfo.Item().Text($"Phone: {firstCustomerPhone}");
+                                customerInfo.Item().Text($"{firstCustomerPhone}");
                             }
 
                             var firstCustomerEmail = _quote.Customer?.Emails?.FirstOrDefault();
                             if (!string.IsNullOrEmpty(firstCustomerEmail))
                             {
-                                customerInfo.Item().Text($"Email: {firstCustomerEmail}");
+                                customerInfo.Item().Text($"{firstCustomerEmail}");
                             }
                         });
                 });
@@ -152,22 +151,19 @@ public class QuotePdfGenerator
                 // Header
                 table.Header(header =>
                 {
-                    header.Cell().Element(CellStyle).Text("Name").Bold();
+                    header.Cell().Element(CellStyle).Text("Product/Service").Bold();
                     header.Cell().Element(CellStyle).AlignCenter().Text("QTY").Bold();
                     header.Cell().Element(CellStyle).AlignRight().Text("Unit Price").Bold();
-                    header.Cell().Element(CellStyle).AlignRight().Text("Amount").Bold();
+                    header.Cell().Element(CellStyle).AlignRight().Text("Total").Bold();
                 });
 
                 // Line items
-                foreach (var item in _quote.LineItems ?? []) // Ensure LineItems is not null
+                foreach (var item in _quote.LineItems ?? [])
                 {
-                    // Item Name and Description cell
                     table.Cell().Element(CellStyle).Column(column =>
                     {
-                        // Item Name - bold and darker color
                         column.Item().Text(item.Name ?? "").Bold().FontColor(Colors.Black);
 
-                        // Description - lighter color and normal weight
                         if (!string.IsNullOrEmpty(item.Description))
                         {
                             column.Item().PaddingTop(2).Text(item.Description).FontColor(Colors.Grey.Darken2);
@@ -186,20 +182,16 @@ public class QuotePdfGenerator
             // Totals section
             column.Item().PaddingTop(20).AlignRight().Width(300).Column(totals =>
             {
-                // Subtotal
-                totals.Item()
-                    .Row(r =>
-                    {
-                        r.RelativeItem().Text("Subtotal");
-                        r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.Subtotal));
-                    });
+                totals.Item().Row(r =>
+                {
+                    r.RelativeItem().Text("Subtotal");
+                    r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.Subtotal));
+                });
 
-                // Discount
                 if (_quote.Discount > 0)
                 {
                     totals.Item().PaddingTop(5).Row(r =>
                     {
-                        // Assuming DiscountType enum and DiscountValue property in your Quote model
                         string discountText = _quote.DiscountType == DiscountType.Percentage
                             ? $"Discount ({_quote.DiscountValue:N2}%)"
                             : "Discount";
@@ -208,53 +200,23 @@ public class QuotePdfGenerator
                     });
                 }
 
-                // Tax
                 if (_quote.TaxAmount > 0)
                 {
                     totals.Item().PaddingTop(5).Row(r =>
                     {
-                        r.RelativeItem().Text(text =>
-                        {
-                            // Assuming TaxName and TaxRate properties in your Quote model
-                            text.Span($"Tax name ({_quote.TaxRate * 100:N2}%)");
-                        });
+                        r.RelativeItem().Text($"Tax name ({_quote.TaxRate * 100:N2}%)");
                         r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.TaxAmount));
                     });
                 }
 
-                // Total
                 totals.Item().PaddingTop(10).BorderTop(2).BorderColor(_primaryColor)
                     .PaddingTop(5).Row(r =>
                     {
-                        r.RelativeItem().Text($"Total").Bold().FontSize(12);
+                        r.RelativeItem().Text("Total").Bold().FontSize(12);
                         r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.Total))
                             .Bold().FontSize(12);
                     });
             });
-        });
-    }
-
-    private void ComposeFooter(IContainer container)
-    {
-        container.AlignCenter().Row(row =>
-        {
-            var footerItems = new List<string>();
-
-            // Access Workspace and CreatedByUser properties safely
-            if (!string.IsNullOrEmpty(_quote.CreatedByUser?.Workspace.PhoneNumber))
-                footerItems.Add($"📞 {_quote.CreatedByUser?.Workspace.PhoneNumber}");
-
-            if (!string.IsNullOrEmpty(_quote.CreatedByUser?.Email))
-                footerItems.Add($"✉ {_quote.CreatedByUser.Email}");
-
-            if (!string.IsNullOrEmpty(_quote.CreatedByUser?.Workspace.CompanyUrl))
-                footerItems.Add($"🌐 {_quote.CreatedByUser?.Workspace.CompanyUrl}");
-
-            if (footerItems.Any())
-            {
-                row.RelativeItem().AlignCenter().Text(string.Join(" • ", footerItems))
-                    .FontSize(8).FontColor(Colors.Grey.Darken1);
-            }
         });
     }
 
@@ -266,7 +228,6 @@ public class QuotePdfGenerator
     private string FormatCurrency(decimal amount)
     {
         return $"$ {amount:N2}";
-
     }
 }
 
@@ -280,13 +241,38 @@ public class QuotePdfService(DataContext context)
                                         .Include(q => q.CreatedByUser)
                                             .ThenInclude(u => u.Workspace)
                                         .Include(q => q.Customer)
+                                        .ThenInclude(c => c.CustomerPhones)
+                                        .Include(q => q.Customer)
+                                        .ThenInclude(c => c.Properties)
                                         .Include(q => q.LineItems)
                                         .FirstOrDefaultAsync();
 
         // Ensure QuestPDF license is set
         QuestPDF.Settings.License = LicenseType.Community;
 
-        var generator = new QuotePdfGenerator(quote);
+        byte[]? logoBytes = null;
+        var logoUrl = quote?.CreatedByUser?.Workspace?.LogoUrl;
+
+        if (!string.IsNullOrWhiteSpace(logoUrl))
+        {
+            logoBytes = await FetchLogoAsync(logoUrl);
+        }
+
+        var generator = new QuotePdfGenerator(quote!, logoBytes);
         return generator.GeneratePdf();
     }
+
+    private async Task<byte[]?> FetchLogoAsync(string logoUrl)
+    {
+        using var httpClient = new HttpClient();
+        try
+        {
+            return await httpClient.GetByteArrayAsync(logoUrl);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
 }
