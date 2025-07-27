@@ -1,507 +1,123 @@
-import { useEffect, useState } from 'react';
-import {
-  Plus,
-  MapPin,
-  DollarSign,
-  MessageSquare,
-  CheckCircle,
-  Briefcase,
-  UserCheck,
-  Clipboard,
-  FileText,
-  Clock,
-  Calendar,
-  ChevronRight,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar/Sidebar';
 import Navbar from '../components/Navbar/Navbar';
-import CustomIconButton from '../components/CustomElements/CustomIconButton';
-import IconButton from '../components/CustomElements/Buttons/IconButton';
-import { Link } from 'react-router';
-
-// Mock data types for demonstration
-interface TJob {
-  id: string;
-  title: string;
-  customerName: string;
-  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Pending';
-  technician: string;
-  time: string;
-  location: string;
-}
-
-interface TTechnician {
-  id: string;
-  name: string;
-  status: 'Available' | 'On Job' | 'Offline';
-  currentJob: string | null;
-  location: string;
-}
-
-interface TInvoice {
-  id: string;
-  invoiceNumber: string;
-  customerName: string;
-  amount: number;
-  dueDate: string;
-}
-
-interface TCustomerMessage {
-  id: string;
-  customerName: string;
-  messageSnippet: string;
-  unread: boolean;
-}
-
-interface TPendingApproval {
-  id: string;
-  quoteNumber: string;
-  customerName: string;
-  status: 'Pending' | 'Approved' | 'Declined';
-}
+import {
+  Calendar,
+  TrendingUp,
+  Clock,
+  AlertCircle,
+  DollarSign,
+  MapPin,
+} from 'lucide-react'; // Using Feather icons for example
 
 const Home = () => {
-  const [todaysJobs, setTodaysJobs] = useState<TJob[]>([]);
-  const [technicians, setTechnicians] = useState<TTechnician[]>([]);
-  const [outstandingInvoices, setOutstandingInvoices] = useState<TInvoice[]>([]);
-  const [unreadMessages, setUnreadMessages] = useState<TCustomerMessage[]>([]);
-  const [pendingApprovals, setPendingApprovals] = useState<TPendingApproval[]>(
-    []
-  );
-
-  // Mock data fetching
-  useEffect(() => {
-    // Simulate API calls
-    const fetchMockData = () => {
-      setTodaysJobs([
-        {
-          id: 'job-1',
-          title: 'HVAC Repair',
-          customerName: 'Alice Johnson',
-          status: 'In Progress',
-          technician: 'John Doe',
-          time: '10:00 AM',
-          location: '123 Main St',
-        },
-        {
-          id: 'job-2',
-          title: 'Plumbing Inspection',
-          customerName: 'Bob Williams',
-          status: 'Scheduled',
-          technician: 'Jane Smith',
-          time: '02:00 PM',
-          location: '456 Oak Ave',
-        },
-        {
-          id: 'job-3',
-          title: 'Electrical Wiring',
-          customerName: 'Charlie Brown',
-          status: 'Pending',
-          technician: 'Unassigned',
-          time: '09:00 AM',
-          location: '789 Pine Ln',
-        },
-        {
-          id: 'job-4',
-          title: 'Roof Repair',
-          customerName: 'Diana Prince',
-          status: 'Completed',
-          technician: 'Clark Kent',
-          time: '01:00 PM',
-          location: '101 Cedar Rd',
-        },
-      ]);
-
-      setTechnicians([
-        {
-          id: 'tech-1',
-          name: 'John Doe',
-          status: 'On Job',
-          currentJob: 'HVAC Repair (job-1)',
-          location: '123 Main St',
-        },
-        {
-          id: 'tech-2',
-          name: 'Jane Smith',
-          status: 'Available',
-          currentJob: null,
-          location: 'Office',
-        },
-        {
-          id: 'tech-3',
-          name: 'Clark Kent',
-          status: 'Offline',
-          currentJob: null,
-          location: 'Home',
-        },
-      ]);
-
-      setOutstandingInvoices([
-        {
-          id: 'inv-1',
-          invoiceNumber: 'INV-001',
-          customerName: 'Alice Johnson',
-          amount: 550.0,
-          dueDate: '2025-07-20',
-        },
-        {
-          id: 'inv-2',
-          invoiceNumber: 'INV-002',
-          customerName: 'Bob Williams',
-          amount: 1200.0,
-          dueDate: '2025-07-25',
-        },
-      ]);
-
-      setUnreadMessages([
-        {
-          id: 'msg-1',
-          customerName: 'Alice Johnson',
-          messageSnippet: 'Regarding the HVAC repair, can you...',
-          unread: true,
-        },
-        {
-          id: 'msg-2',
-          customerName: 'Charlie Brown',
-          messageSnippet: 'Is the quote for the wiring still valid?',
-          unread: true,
-        },
-      ]);
-
-      setPendingApprovals([
-        {
-          id: 'app-1',
-          quoteNumber: 'QTE-005',
-          customerName: 'Eve Adams',
-          status: 'Pending',
-        },
-        {
-          id: 'app-2',
-          quoteNumber: 'QTE-006',
-          customerName: 'Frank Green',
-          status: 'Pending',
-        },
-      ]);
-    };
-
-    fetchMockData();
-  }, []);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'In Progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'Scheduled':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Completed':
-        return 'bg-green-100 text-green-800';
-      case 'Pending':
-        return 'bg-purple-100 text-purple-800';
-      case 'Available':
-        return 'bg-green-100 text-green-800';
-      case 'On Job':
-        return 'bg-blue-100 text-blue-800';
-      case 'Offline':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  // Mock data - replace with your API calls
+  const todayStats = {
+    scheduledJobs: 14,
+    completed: 8,
+    overdue: 2,
+    revenue: '$3,850',
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
+  const upcomingJobs = [
+    {
+      id: 1,
+      customer: 'Smith Residence',
+      time: '9:00 AM',
+      service: 'AC Repair',
+      tech: 'John D.',
+    },
+    {
+      id: 2,
+      customer: 'Cafe Milano',
+      time: '11:30 AM',
+      service: 'Plumbing',
+      tech: 'Sarah K.',
+    },
+  ];
 
   return (
     <div className='flex min-h-screen bg-gray-50'>
       <Sidebar />
       <div className='flex-1 ml-[260px]'>
         <Navbar />
+
+        {/* Main Content */}
         <div className='p-6'>
-          <h1 className='text-3xl font-bold text-gray-800 mb-6'>
-            FieldSyncHub Command Center
-          </h1>
+          {/* Header */}
+          <div className='flex justify-between items-center mb-6'>
+            <h1 className='text-2xl font-bold text-gray-800'>Dashboard</h1>
+            <div className='flex items-center space-x-4'>
+              <button className='flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'>
+                <Calendar className='mr-2' size={18} />
+                Today: {new Date().toLocaleDateString()}
+              </button>
+            </div>
+          </div>
 
-          {/* Quick Action Buttons */}
-          <motion.div
-            className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'
-            initial='hidden'
-            animate='visible'
-            variants={{
-              visible: {
-                transition: {
-                  staggerChildren: 0.1,
-                },
-              },
-            }}
-          >
-            <motion.div variants={cardVariants}>
-              <IconButton
-                icon={<Plus className='w-5 h-5 mr-2' />}
-                customStyle='w-full py-3 px-4 bg-bg-primary text-white hover:bg-bg-primary-hover shadow-md rounded-xl'
-                onClick={() => console.log('Create Job/Lead')}
-              >
-                Create Job / Lead
-              </IconButton>
-            </motion.div>
-            <motion.div variants={cardVariants}>
-              <IconButton
-                icon={<CheckCircle className='w-5 h-5 mr-2' />}
-                customStyle='w-full py-3 px-4 bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 shadow-md rounded-xl'
-                onClick={() => console.log('Mark Job Started')}
-              >
-                Mark Job Started
-              </IconButton>
-            </motion.div>
-            <motion.div variants={cardVariants}>
-              <IconButton
-                icon={<Clipboard className='w-5 h-5 mr-2' />}
-                customStyle='w-full py-3 px-4 bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 shadow-md rounded-xl'
-                onClick={() => console.log('Quick Create Quote')}
-              >
-                Quick Create Quote
-              </IconButton>
-            </motion.div>
-            <motion.div variants={cardVariants}>
-              <IconButton
-                icon={<FileText className='w-5 h-5 mr-2' />}
-                customStyle='w-full py-3 px-4 bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 shadow-md rounded-xl'
-                onClick={() => console.log('Quick Create Invoice')}
-              >
-                Quick Create Invoice
-              </IconButton>
-            </motion.div>
-          </motion.div>
+          {/* Stats Cards */}
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
+            <StatCard
+              icon={<TrendingUp className='text-blue-500' />}
+              title='Scheduled'
+              value={todayStats.scheduledJobs}
+              trend='+2 from yesterday'
+            />
+            <StatCard
+              icon={<Clock className='text-green-500' />}
+              title='Completed'
+              value={todayStats.completed}
+              trend='On track'
+            />
+            <StatCard
+              icon={<AlertCircle className='text-red-500' />}
+              title='Overdue'
+              value={todayStats.overdue}
+              trend='Needs attention'
+            />
+            <StatCard
+              icon={<DollarSign className='text-purple-500' />}
+              title="Today's Revenue"
+              value={todayStats.revenue}
+              trend='+12% from avg'
+            />
+          </div>
 
+          {/* Two-Column Layout */}
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-            {/* Left Column */}
-            <div className='lg:col-span-2 space-y-6'>
-              {/* Today's Jobs & Visits */}
-              <motion.div
-                className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'
-                initial='hidden'
-                animate='visible'
-                variants={cardVariants}
-              >
-                <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-                  <Calendar className='w-5 h-5 mr-2 text-bg-primary' /> Today's
-                  Jobs & Visits
-                </h2>
-                {todaysJobs.length > 0 ? (
-                  <div className='space-y-4'>
-                    {todaysJobs.map((job) => (
-                      <div
-                        key={job.id}
-                        className='flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md transition-shadow duration-200'
-                      >
-                        <div>
-                          <h3 className='font-medium text-gray-900'>
-                            {job.title}
-                          </h3>
-                          <p className='text-sm text-gray-600'>
-                            {job.customerName} - {job.time}
-                          </p>
-                          <p className='text-xs text-gray-500 flex items-center mt-1'>
-                            <MapPin className='w-3 h-3 mr-1' /> {job.location}
-                          </p>
-                        </div>
-                        <div className='flex items-center gap-3'>
-                          <span
-                            className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              job.status
-                            )}`}
-                          >
-                            {job.status}
-                          </span>
-                          <span className='text-sm text-gray-700'>
-                            {job.technician}
-                          </span>
-                          <Link to={`/jobs/${job.id}`}>
-                            <ChevronRight className='w-5 h-5 text-gray-400 hover:text-gray-600' />
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className='text-gray-500'>No jobs scheduled for today.</p>
-                )}
-              </motion.div>
-
-              {/* Technician Status Tracking */}
-              <motion.div
-                className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'
-                initial='hidden'
-                animate='visible'
-                variants={cardVariants}
-              >
-                <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-                  <UserCheck className='w-5 h-5 mr-2 text-bg-primary' />{' '}
-                  Technician Status
-                </h2>
-                {technicians.length > 0 ? (
-                  <div className='space-y-4'>
-                    {technicians.map((tech) => (
-                      <div
-                        key={tech.id}
-                        className='flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100'
-                      >
-                        <div>
-                          <h3 className='font-medium text-gray-900'>
-                            {tech.name}
-                          </h3>
-                          <p className='text-sm text-gray-600'>
-                            {tech.currentJob ? tech.currentJob : 'Idle'}
-                          </p>
-                          <p className='text-xs text-gray-500 flex items-center mt-1'>
-                            <MapPin className='w-3 h-3 mr-1' /> {tech.location}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                            tech.status
-                          )}`}
-                        >
-                          {tech.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className='text-gray-500'>No technicians available.</p>
-                )}
-              </motion.div>
+            {/* Upcoming Jobs */}
+            <div className='lg:col-span-2 bg-white rounded-xl shadow-sm p-6'>
+              <div className='flex justify-between items-center mb-4'>
+                <h2 className='text-lg font-semibold'>Today's Schedule</h2>
+                <button className='text-blue-600 hover:text-blue-800 text-sm font-medium'>
+                  View All
+                </button>
+              </div>
+              <div className='space-y-4'>
+                {upcomingJobs.map((job) => (
+                  <JobCard key={job.id} job={job} />
+                ))}
+              </div>
             </div>
 
-            {/* Right Column */}
-            <div className='lg:col-span-1 space-y-6'>
-              {/* Light Financial Snapshot */}
-              <motion.div
-                className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'
-                initial='hidden'
-                animate='visible'
-                variants={cardVariants}
-              >
-                <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-                  <DollarSign className='w-5 h-5 mr-2 text-bg-primary' />{' '}
-                  Financial Snapshot
-                </h2>
-                <div className='space-y-4'>
-                  <div className='flex items-center justify-between'>
-                    <p className='text-gray-700 font-medium'>
-                      Outstanding Invoices:
-                    </p>
-                    <span className='text-lg font-bold text-red-600'>
-                      ${outstandingInvoices.reduce((sum, inv) => sum + inv.amount, 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <p className='text-sm text-gray-500'>
-                    ({outstandingInvoices.length} invoices awaiting payment)
-                  </p>
-                  <Link
-                    to='/invoices'
-                    className='text-bg-primary hover:underline text-sm flex items-center'
-                  >
-                    View All Invoices <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
+            {/* Quick Actions + Map */}
+            <div className='space-y-6'>
+              <div className='bg-white rounded-xl shadow-sm p-6'>
+                <h2 className='text-lg font-semibold mb-4'>Quick Actions</h2>
+                <div className='grid grid-cols-2 gap-3'>
+                  <ActionButton icon={<Calendar />} label='New Job' />
+                  <ActionButton icon={<DollarSign />} label='Create Invoice' />
+                  <ActionButton icon={<MapPin />} label='Dispatch Board' />
+                  <ActionButton icon={<TrendingUp />} label='Reports' />
                 </div>
-              </motion.div>
+              </div>
 
-              {/* Customer Communications */}
-              <motion.div
-                className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'
-                initial='hidden'
-                animate='visible'
-                variants={cardVariants}
-              >
-                <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-                  <MessageSquare className='w-5 h-5 mr-2 text-bg-primary' />{' '}
-                  Customer Communications
-                </h2>
-                <div className='space-y-4'>
-                  {unreadMessages.length > 0 ? (
-                    unreadMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className='flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100'
-                      >
-                        <div>
-                          <p className='font-medium text-gray-900'>
-                            {msg.customerName}
-                          </p>
-                          <p className='text-sm text-gray-600'>
-                            {msg.messageSnippet}
-                          </p>
-                        </div>
-                        {msg.unread && (
-                          <span className='px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800'>
-                            New
-                          </span>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <p className='text-gray-500'>No unread messages.</p>
-                  )}
-                  <Link
-                    to='/messages'
-                    className='text-bg-primary hover:underline text-sm flex items-center'
-                  >
-                    View All Messages{' '}
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
+              {/* Mini Map Placeholder */}
+              <div className='bg-white rounded-xl shadow-sm p-6 h-64'>
+                <h2 className='text-lg font-semibold mb-2'>Tech Locations</h2>
+                <div className='bg-gray-100 rounded-lg h-full flex items-center justify-center text-gray-400'>
+                  Map Integration (Google Maps/Mapbox)
                 </div>
-              </motion.div>
-
-              {/* Pending Approvals */}
-              <motion.div
-                className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'
-                initial='hidden'
-                animate='visible'
-                variants={cardVariants}
-              >
-                <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-                  <Clock className='w-5 h-5 mr-2 text-bg-primary' /> Pending
-                  Approvals
-                </h2>
-                <div className='space-y-4'>
-                  {pendingApprovals.length > 0 ? (
-                    pendingApprovals.map((approval) => (
-                      <div
-                        key={approval.id}
-                        className='flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100'
-                      >
-                        <div>
-                          <p className='font-medium text-gray-900'>
-                            Quote #{approval.quoteNumber}
-                          </p>
-                          <p className='text-sm text-gray-600'>
-                            {approval.customerName}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(
-                            approval.status
-                          )}`}
-                        >
-                          {approval.status}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className='text-gray-500'>No pending approvals.</p>
-                  )}
-                  <Link
-                    to='/quotes?status=pending'
-                    className='text-bg-primary hover:underline text-sm flex items-center'
-                  >
-                    View All Quotes{' '}
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
-              </motion.div>
+              </div>
             </div>
           </div>
         </div>
@@ -509,5 +125,44 @@ const Home = () => {
     </div>
   );
 };
+
+// Reusable Components
+const StatCard = ({ icon, title, value, trend }) => (
+  <div className='bg-white p-5 rounded-xl shadow-sm'>
+    <div className='flex items-center justify-between'>
+      <div className='p-3 rounded-full bg-gray-100'>{icon}</div>
+    </div>
+    <h3 className='text-gray-500 mt-3 text-sm font-medium'>{title}</h3>
+    <p className='text-2xl font-bold mt-1'>{value}</p>
+    <p className='text-xs mt-2 text-gray-500'>{trend}</p>
+  </div>
+);
+
+const JobCard = ({ job }) => (
+  <div className='border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors'>
+    <div className='flex justify-between'>
+      <div>
+        <h3 className='font-medium'>{job.customer}</h3>
+        <p className='text-sm text-gray-600'>{job.service}</p>
+      </div>
+      <span className='text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded'>
+        {job.time}
+      </span>
+    </div>
+    <div className='flex items-center mt-3 text-sm text-gray-500'>
+      <span className='bg-gray-100 px-2 py-1 rounded mr-2'>{job.tech}</span>
+      <button className='ml-auto text-blue-600 hover:text-blue-800 text-sm'>
+        Details
+      </button>
+    </div>
+  </div>
+);
+
+const ActionButton = ({ icon, label }) => (
+  <button className='flex flex-col items-center justify-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors'>
+    <div className='text-blue-600 mb-1'>{icon}</div>
+    <span className='text-sm'>{label}</span>
+  </button>
+);
 
 export default Home;

@@ -19,7 +19,7 @@ public class TokenService : ITokenService
 
     public (string accessToken, string refreshToken) GenerateTokens(GetUserDto user)
     {
-        var accessToken = CreateToken(user, DateTime.UtcNow.AddMinutes(60));
+        var accessToken = CreateToken(user, DateTime.UtcNow.AddHours(24));
         var refreshToken = CreateToken(user, DateTime.UtcNow.AddDays(30));
         return (accessToken, refreshToken);
     }

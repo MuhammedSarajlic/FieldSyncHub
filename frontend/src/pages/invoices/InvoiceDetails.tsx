@@ -196,13 +196,11 @@ const InvoiceDetails = () => {
             <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between py-6'>
               <div className=''>
                 <h1 className='text-2xl font-bold text-text-primary'>
-                  Invoice #{invoice.invoiceNumber}
+                  {invoice.title}
                 </h1>
                 <div className='flex items-center space-x-3'>
                   <p className='text-sm text-gray-500'>
-                    {invoice.customer.isCompany
-                      ? invoice.customer.companyName
-                      : invoice.customer.fullName}
+                    Invoice #{invoice.invoiceNumber}
                   </p>
                   <div
                     className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
@@ -338,56 +336,54 @@ const InvoiceDetails = () => {
         </div>
 
         {/* Content */}
-        <div className='px-6 py-8'>
+        <div className='p-6'>
           <motion.div
             initial='hidden'
             animate='visible'
-            className='grid grid-cols-1 lg:grid-cols-3 gap-6'
+            className='w-full flex gap-6'
           >
             {/* Main Content (Left Column) */}
-            <div className='lg:col-span-2 space-y-6'>
+            <div className='w-3/4 space-y-6'>
               {/* Line Items */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
                 <div className='overflow-x-auto'>
                   <table className='min-w-full divide-y divide-gray-200'>
                     <thead className='bg-gray-50'>
                       <tr>
-                        {['Item', 'Qty', 'Unit Price', 'Total'].map(
-                          (header) => (
-                            <th
-                              key={header}
-                              className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                                header === 'Item' ? 'text-left' : 'text-right'
-                              }`}
-                            >
-                              {header}
-                            </th>
-                          )
-                        )}
+                        <th className='px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left w-1/2'>
+                          Item
+                        </th>
+                        <th className='px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right w-1/6'>
+                          Qty
+                        </th>
+                        <th className='px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right w-1/6'>
+                          Unit Price
+                        </th>
+                        <th className='px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right w-1/6'>
+                          Total
+                        </th>
                       </tr>
                     </thead>
                     <tbody className='bg-white divide-y divide-gray-200'>
-                      {invoice.lineItems.map((item, index) => (
-                        <tr key={item.id || index}>
-                          <td className='px-6 py-4'>
-                            <div className='flex-1 min-w-0'>
+                      {invoice.lineItems.map((item) => (
+                        <tr key={item.id}>
+                          <td className='px-6 py-4 w-1/2'>
+                            <div className='min-w-0'>
                               <p className='text-sm font-medium text-gray-900 truncate'>
                                 {item.name}
                               </p>
-                              {item.description && (
-                                <p className='text-sm text-gray-500'>
-                                  {item.description}
-                                </p>
-                              )}
+                              <p className='text-sm text-gray-500'>
+                                {item.description}
+                              </p>
                             </div>
                           </td>
-                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
+                          <td className='px-6 py-4 text-right text-sm text-gray-900 w-1/6'>
                             {item.quantity}
                           </td>
-                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
+                          <td className='px-6 py-4 text-right text-sm text-gray-900 w-1/6'>
                             {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm font-medium text-gray-900'>
+                          <td className='px-6 py-4 text-right text-sm font-medium text-gray-900 w-1/6'>
                             {formatCurrency(item.quantity * item.unitPrice)}
                           </td>
                         </tr>
@@ -396,58 +392,81 @@ const InvoiceDetails = () => {
                   </table>
                 </div>
 
-                {/* Pricing Summary */}
+                {/* Enhanced Pricing Summary */}
                 <div className='bg-gray-50 p-6 border-t border-gray-200'>
                   <div className='flex justify-end'>
-                    <div className='w-full md:w-2/3 lg:w-1/2 space-y-2'>
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>Subtotal:</span>
-                        <span className='font-medium text-gray-900'>
-                          {formatCurrency(invoice.subtotal)}
-                        </span>
-                      </div>
-
-                      {invoice.discount > 0 && (
-                        <div className='flex justify-between'>
-                          <span className='text-gray-600'>
-                            Discount (
-                            {invoice.discountType === DiscountType.Percentage
+                    <div className='w-2/5 space-y-2'>
+                      {[
+                        {
+                          label: 'Subtotal:',
+                          value: `${formatCurrency(invoice?.subtotal)}`,
+                          color: 'text-gray-900',
+                        },
+                        invoice.discount > 0 && {
+                          label: `Discount (${
+                            invoice.discountType === DiscountType.Percentage
                               ? `${invoice.discount}%`
-                              : formatCurrency(invoice.discount)}
-                            ):
-                          </span>
-                          <span className='font-medium text-green-600'>
-                            -
-                            {formatCurrency(
-                              invoice.discountType === DiscountType.Percentage
+                              : formatCurrency(invoice.discount)
+                          }):`,
+                          value: `-${formatCurrency(
+                            invoice.discountType === DiscountType.Percentage
+                              ? invoice.subtotal * (invoice.discount / 100)
+                              : invoice.discount
+                          )}`,
+                          color: 'text-green-600',
+                        },
+                        {
+                          label: `Tax (${invoice?.taxRate * 100}%):`,
+                          value: `${formatCurrency(
+                            (invoice.subtotal -
+                              (invoice.discountType === DiscountType.Percentage
                                 ? invoice.subtotal * (invoice.discount / 100)
-                                : invoice.discount
-                            )}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>
-                          Tax ({invoice.taxRate * 100}%):
-                        </span>
-                        <span className='font-medium text-gray-900'>
-                          {formatCurrency(
-                            (invoice.subtotal - invoice.discount) *
+                                : invoice.discount)) *
                               invoice.taxRate
-                          )}
-                        </span>
-                      </div>
-
-                      <div className='pt-2 border-t border-gray-200 flex justify-between items-center'>
-                        <span className='font-semibold text-text-primary text-lg'>
-                          Total:
-                        </span>
-                        <span className='font-semibold text-text-primary text-lg'>
-                          {formatCurrency(invoice.total)}
-                        </span>
-                      </div>
-
+                          )}`,
+                          color: 'text-gray-900',
+                        },
+                        {
+                          label: 'Total:',
+                          value: `${formatCurrency(invoice?.total)}`,
+                          color: 'text-text-primary',
+                          isTotal: true,
+                          customColor: 'text-text-primary',
+                        },
+                      ]
+                        .filter(Boolean)
+                        .map((item, index) => (
+                          <div
+                            key={index}
+                            className={`flex justify-between ${
+                              item?.isTotal
+                                ? 'pt-2 border-t border-gray-200'
+                                : ''
+                            }`}
+                          >
+                            <span
+                              className={`${
+                                item?.isTotal
+                                  ? 'font-semibold text-text-primary'
+                                  : 'text-gray-600'
+                              }`}
+                            >
+                              {item?.label}
+                            </span>
+                            <span
+                              className={`${
+                                item?.isTotal ? 'font-semibold' : 'font-medium'
+                              } ${item?.color}`}
+                              style={
+                                item?.customColor
+                                  ? { color: item.customColor }
+                                  : {}
+                              }
+                            >
+                              {item?.value}
+                            </span>
+                          </div>
+                        ))}
                       {invoice.isPaid && (
                         <div className='border-t border-gray-200 pt-4 mt-4'>
                           <div className='flex justify-between items-center py-2'>
@@ -455,7 +474,7 @@ const InvoiceDetails = () => {
                               Payment on{' '}
                               {DateTime.fromISO(invoice.updatedAt, {
                                 zone: 'utc',
-                              }) // Assuming updatedAt marks payment date
+                              })
                                 .toLocal()
                                 .toFormat('MMM dd, yyyy')}
                             </span>
@@ -480,7 +499,7 @@ const InvoiceDetails = () => {
             </div>
 
             {/* Sidebar (Right Column) */}
-            <div className='lg:col-span-1 space-y-6'>
+            <div className='w-1/4 space-y-6'>
               {/* Customer Information */}
               <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
                 <h3 className='text-lg font-semibold text-gray-900 mb-4'>
@@ -531,67 +550,51 @@ const InvoiceDetails = () => {
               </div>
 
               {/* Invoice Details Section */}
-              <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+              <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
                 <h3 className='text-lg font-semibold text-gray-900 mb-4'>
                   Invoice Details
                 </h3>
-                <div className='space-y-3 text-sm text-gray-700'>
-                  {/* Issue Date */}
+                <div className='space-y-3 text-sm'>
                   {invoice.issueDate && (
-                    <div className='flex items-center'>
-                      <Calendar className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Issue Date:{' '}
-                        <span className='font-medium'>
-                          {DateTime.fromISO(invoice.issueDate, { zone: 'utc' })
-                            .toLocal()
-                            .toFormat('MMM dd, yyyy')}
-                        </span>
-                      </p>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Issue Date</span>
+                      <span className='text-gray-900'>
+                        {DateTime.fromISO(invoice.issueDate, { zone: 'utc' })
+                          .toLocal()
+                          .toFormat('MMM dd, yyyy')}
+                      </span>
                     </div>
                   )}
 
-                  {/* Due Date */}
                   {invoice.dueDate && (
-                    <div className='flex items-center'>
-                      <Calendar className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Due Date:{' '}
-                        <span className='font-medium'>
-                          {DateTime.fromISO(invoice.dueDate, { zone: 'utc' })
-                            .toLocal()
-                            .toFormat('MMM dd, yyyy')}
-                        </span>
-                      </p>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Due Date</span>
+                      <span className='text-gray-900'>
+                        {DateTime.fromISO(invoice.dueDate, { zone: 'utc' })
+                          .toLocal()
+                          .toFormat('MMM dd, yyyy')}
+                      </span>
                     </div>
                   )}
 
-                  {/* Payment Terms */}
                   {invoice.paymentTerms && (
-                    <div className='flex items-center'>
-                      <FileText className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Payment Terms:{' '}
-                        <span className='font-medium'>
-                          {getPaymentTermDisplay(invoice.paymentTerms)}
-                        </span>
-                      </p>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Payment Terms</span>
+                      <span className='text-gray-900'>
+                        {getPaymentTermDisplay(invoice.paymentTerms)}
+                      </span>
                     </div>
                   )}
 
-                  {/* Link to Job (if converted) */}
                   {invoice.jobId && (
-                    <div className='flex items-center'>
-                      <Briefcase className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Linked Job:{' '}
-                        <a
-                          href={`/jobs/${invoice.jobId}`} // Adjust this path to your actual job details route
-                          className='text-blue-600 hover:underline font-medium'
-                        >
-                          View Job #{invoice.jobId}
-                        </a>
-                      </p>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Linked Job</span>
+                      <a
+                        href={`/jobs/${invoice.jobId}`}
+                        className='text-blue-600 hover:underline font-medium'
+                      >
+                        View Job #{invoice.jobId}
+                      </a>
                     </div>
                   )}
                 </div>

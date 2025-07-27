@@ -427,44 +427,40 @@ const QuoteDetails = () => {
         </div>
 
         {/* Content */}
-        <div className='px-6 py-8'>
+        <div className='p-6'>
           <motion.div
             variants={containerVariants}
             initial='hidden'
             animate='visible'
-            className='grid grid-cols-1 lg:grid-cols-3 gap-6'
+            className='w-full flex gap-6'
           >
             {/* Main Content */}
-            <div className='lg:col-span-2 space-y-6'>
+            <div className='w-3/4 space-y-6'>
               {/* Line Items */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
                 <div className='overflow-x-auto'>
                   <table className='min-w-full divide-y divide-gray-200'>
                     <thead className='bg-gray-50'>
                       <tr>
-                        {['Item', 'Qty', 'Unit Price', 'Total', 'Status'].map(
-                          (header) => (
-                            <th
-                              key={header}
-                              className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                                header === 'Item'
-                                  ? 'text-left'
-                                  : header === 'Status'
-                                  ? 'text-center'
-                                  : 'text-right'
-                              }`}
-                            >
-                              {header}
-                            </th>
-                          )
-                        )}
+                        <th className='px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left w-1/2'>
+                          Item
+                        </th>
+                        <th className='px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right w-1/6'>
+                          Qty
+                        </th>
+                        <th className='px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right w-1/6'>
+                          Unit Price
+                        </th>
+                        <th className='px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right w-1/6'>
+                          Total
+                        </th>
                       </tr>
                     </thead>
                     <tbody className='bg-white divide-y divide-gray-200'>
-                      {quote?.lineItems.map((item) => (
+                      {quote.lineItems.map((item) => (
                         <tr key={item.id}>
-                          <td className='px-6 py-4'>
-                            <div className='flex-1 min-w-0'>
+                          <td className='px-6 py-4 w-1/2'>
+                            <div className='min-w-0'>
                               <p className='text-sm font-medium text-gray-900 truncate'>
                                 {item.name}
                               </p>
@@ -473,25 +469,14 @@ const QuoteDetails = () => {
                               </p>
                             </div>
                           </td>
-                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
+                          <td className='px-6 py-4 text-right text-sm text-gray-900 w-1/6'>
                             {item.quantity}
                           </td>
-                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm text-gray-900'>
+                          <td className='px-6 py-4 text-right text-sm text-gray-900 w-1/6'>
                             {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className='px-6 py-4 text-right whitespace-nowrap text-sm font-medium text-gray-900'>
+                          <td className='px-6 py-4 text-right text-sm font-medium text-gray-900 w-1/6'>
                             {formatCurrency(item.quantity * item.unitPrice)}
-                          </td>
-                          <td className='px-6 py-4 whitespace-nowrap'>
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                item.isOptional
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-green-100 text-green-800'
-                              }`}
-                            >
-                              {item.isOptional ? 'Optional' : 'Required'}
-                            </span>
                           </td>
                         </tr>
                       ))}
@@ -657,7 +642,7 @@ const QuoteDetails = () => {
             </div>
 
             {/* Enhanced Sidebar */}
-            <div className='space-y-6'>
+            <div className='w-1/4 space-y-6'>
               {/* Customer Information */}
               <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
                 <h3 className='text-lg font-semibold text-gray-900 mb-4'>
@@ -702,80 +687,58 @@ const QuoteDetails = () => {
               </div>
 
               {/* NEW: Quote Details Section */}
-              <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+              <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
                 <h3 className='text-lg font-semibold text-gray-900 mb-4'>
                   Quote Details
                 </h3>
-                <div className='space-y-3 text-sm text-gray-700'>
-                  {/* Created At */}
+                <div className='space-y-3 text-sm'>
                   {quote.createdAt && (
-                    <div className='flex items-center'>
-                      <Calendar className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Created:{' '}
-                        <span className='font-medium'>
-                          {DateTime.fromISO(quote.createdAt, { zone: 'utc' })
-                            .toLocal()
-                            .toFormat('MMM dd, yyyy')}
-                        </span>
-                      </p>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Created</span>
+                      <span className='text-gray-900'>
+                        {DateTime.fromISO(quote.createdAt, { zone: 'utc' })
+                          .toLocal()
+                          .toFormat('MMM dd, yyyy')}
+                      </span>
                     </div>
                   )}
 
-                  {/* Expires At */}
                   {quote.expiresAt && (
-                    <div className='flex items-center'>
-                      <Calendar className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Expires:{' '}
-                        <span className='font-medium'>
-                          {DateTime.fromISO(quote.expiresAt, { zone: 'utc' })
-                            .toLocal()
-                            .toFormat('MMM dd, yyyy')}
-                        </span>
-                      </p>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Expires</span>
+                      <span className='text-gray-900'>
+                        {DateTime.fromISO(quote.expiresAt, { zone: 'utc' })
+                          .toLocal()
+                          .toFormat('MMM dd, yyyy')}
+                      </span>
                     </div>
                   )}
 
-                  {/* Assigned To */}
                   {quote.assignedToUser && (
-                    <div className='flex items-center'>
-                      <User className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Assigned To:{' '}
-                        <span className='font-medium'>
-                          {quote.assignedToUser.fullName}
-                        </span>
-                      </p>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Assigned To</span>
+                      <span className='text-gray-900'>
+                        {quote.assignedToUser.fullName}
+                      </span>
                     </div>
                   )}
 
-                  {/* Source */}
-                  {quote.source && ( // Assuming quote.source exists as a string
-                    <div className='flex items-center'>
-                      <FileText className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Source:{' '}
-                        <span className='font-medium'>{quote.source}</span>
-                      </p>
+                  {quote.source && (
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Source</span>
+                      <span className='text-gray-900'>{quote.source}</span>
                     </div>
                   )}
 
-                  {/* Link to Job (if converted) */}
-                  {/* IMPORTANT: This assumes 'quote.jobId' exists when the quote is converted to a job.
-                              You'll need to replace `/jobs/${quote.jobId}` with your actual job details route. */}
                   {quote.jobId && (
-                    <div className='flex items-center'>
-                      <Briefcase className='w-4 h-4 mr-3 text-gray-400' />
-                      <p>
-                        Converted to Job:{' '}
-                        <a
-                          href={`/jobs/${quote.jobId}`}
-                          className='text-blue-600 hover:underline font-medium'
-                        >
-                          View Job #{quote.jobId}
-                        </a>
-                      </p>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Converted to Job</span>
+                      <a
+                        href={`/jobs/${quote.jobId}`}
+                        className='text-blue-600 hover:underline font-medium'
+                      >
+                        View Job #{quote.jobId}
+                      </a>
                     </div>
                   )}
                 </div>

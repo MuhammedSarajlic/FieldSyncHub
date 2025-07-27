@@ -289,7 +289,7 @@ const JobDetails = () => {
             </div>
 
             <div className='p-6'>
-              <div className='flex w-full gap-8'>
+              <div className='flex w-full gap-6'>
                 {/* Main Content */}
                 <div className='w-3/4'>
                   {/* Tabs */}

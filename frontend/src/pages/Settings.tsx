@@ -1,1816 +1,1116 @@
 import React, { useState } from 'react';
-import Sidebar from '../components/Sidebar/Sidebar';
-import Navbar from '../components/Navbar/Navbar';
 import {
-  FiUser,
-  FiUsers,
-  FiCalendar,
-  FiBook,
-  FiCreditCard,
-  FiFileText,
-  FiMessageSquare,
-  FiLink,
-  FiTrello,
-  FiPieChart,
-  FiLock,
-  FiSmartphone,
-  FiHelpCircle,
-  FiSettings,
-} from 'react-icons/fi';
-import PageUnderDevelopment from '../components/CustomElements/PageUnderDevelopment';
+  User,
+  Building2,
+  CreditCard,
+  Bell,
+  Shield,
+  Smartphone,
+  Globe,
+  Users,
+  Wrench,
+  FileText,
+  Calendar,
+  DollarSign,
+  Truck,
+  MapPin,
+  Clock,
+  Mail,
+  Phone,
+  Printer,
+  Database,
+  Zap,
+  BarChart3,
+  Settings as SettingsIcon,
+  ChevronRight,
+  Save,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
+import Navbar from '../components/Navbar/Navbar';
+import Sidebar from '../components/Sidebar/Sidebar';
 
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeSection, setActiveSection] = useState('company');
+  const [showPassword, setShowPassword] = useState(false);
+  const [settings, setSettings] = useState({
+    // Company Settings
+    companyName: 'ABC Service Company',
+    businessType: 'plumbing',
+    address: '123 Main St, City, State 12345',
+    phone: '(555) 123-4567',
+    email: 'contact@abcservice.com',
+    website: 'www.abcservice.com',
+    taxId: '12-3456789',
 
-  const tabs = [
-    { id: 'general', name: 'General', icon: <FiSettings /> },
-    { id: 'users', name: 'Users & Roles', icon: <FiUsers /> },
-    { id: 'scheduling', name: 'Scheduling', icon: <FiCalendar /> },
-    { id: 'pricebook', name: 'Pricebook', icon: <FiBook /> },
-    { id: 'payments', name: 'Payments & Invoices', icon: <FiCreditCard /> },
-    { id: 'quotes', name: 'Quotes & Requests', icon: <FiFileText /> },
-    { id: 'communication', name: 'Communication', icon: <FiMessageSquare /> },
-    { id: 'integrations', name: 'Integrations', icon: <FiLink /> },
-    { id: 'marketing', name: 'Marketing', icon: <FiTrello /> },
-    { id: 'reports', name: 'Reports', icon: <FiPieChart /> },
-    { id: 'security', name: 'Security', icon: <FiLock /> },
-    { id: 'mobile', name: 'Mobile App', icon: <FiSmartphone /> },
-    { id: 'help', name: 'Help & Support', icon: <FiHelpCircle /> },
-    { id: 'advanced', name: 'Advanced', icon: <FiSettings /> },
+    // User Settings
+    firstName: 'John',
+    lastName: 'Smith',
+    userEmail: 'john@abcservice.com',
+    role: 'admin',
+    timezone: 'America/New_York',
+
+    // Billing Settings
+    billingAddress: '123 Billing St, City, State 12345',
+    paymentMethod: 'visa-1234',
+    billingCycle: 'monthly',
+
+    // Notifications
+    emailNotifications: true,
+    smsNotifications: true,
+    jobAlerts: true,
+    paymentAlerts: true,
+    scheduleChanges: true,
+
+    // Security
+    twoFactorAuth: false,
+    loginAlerts: true,
+    sessionTimeout: '30',
+
+    // Mobile Settings
+    gpsTracking: true,
+    offlineMode: true,
+    photoCompression: 'medium',
+
+    // Service Settings
+    businessHours: {
+      monday: { open: '08:00', close: '17:00', enabled: true },
+      tuesday: { open: '08:00', close: '17:00', enabled: true },
+      wednesday: { open: '08:00', close: '17:00', enabled: true },
+      thursday: { open: '08:00', close: '17:00', enabled: true },
+      friday: { open: '08:00', close: '17:00', enabled: true },
+      saturday: { open: '09:00', close: '15:00', enabled: true },
+      sunday: { open: '09:00', close: '15:00', enabled: false },
+    },
+    emergencyHours: true,
+    bookingLeadTime: '2',
+    maxJobsPerDay: '8',
+
+    // Pricing
+    taxRate: '8.5',
+    currency: 'USD',
+    defaultMarkup: '25',
+    laborRate: '85',
+
+    // Integrations
+    quickbooks: false,
+    googleCalendar: true,
+    mailchimp: false,
+    zapier: false,
+    stripe: true,
+  });
+
+  const settingSections = [
+    { id: 'company', name: 'Company Profile', icon: Building2 },
+    { id: 'user', name: 'User Account', icon: User },
+    { id: 'billing', name: 'Billing & Plans', icon: CreditCard },
+    { id: 'notifications', name: 'Notifications', icon: Bell },
+    { id: 'security', name: 'Security', icon: Shield },
+    { id: 'mobile', name: 'Mobile App', icon: Smartphone },
+    { id: 'service', name: 'Service Settings', icon: Wrench },
+    { id: 'scheduling', name: 'Scheduling', icon: Calendar },
+    { id: 'pricing', name: 'Pricing & Taxes', icon: DollarSign },
+    { id: 'field', name: 'Field Operations', icon: Truck },
+    { id: 'forms', name: 'Forms & Templates', icon: FileText },
+    { id: 'integrations', name: 'Integrations', icon: Zap },
+    { id: 'reports', name: 'Reports & Analytics', icon: BarChart3 },
+    { id: 'system', name: 'System Preferences', icon: SettingsIcon },
   ];
 
-  const [isConstruction, setIsConstruction] = useState<boolean>(true);
+  const handleInputChange = (field, value) => {
+    setSettings((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
-  return (
-    <div className='flex h-screen'>
-      <Sidebar />
-      <div className='flex-1 ml-[260px]'>
-        <Navbar />
-        {!isConstruction ? (
-          <div className='p-6'>
-            <h1 className='text-2xl font-bold mb-6'>Settings</h1>
+  const handleBusinessHourChange = (day, field, value) => {
+    setSettings((prev) => ({
+      ...prev,
+      businessHours: {
+        ...prev.businessHours,
+        [day]: {
+          ...prev.businessHours[day],
+          [field]: value,
+        },
+      },
+    }));
+  };
 
-            {/* Tabs */}
-            <div className='border-b border-gray-200 mb-6'>
-              <div className='flex overflow-x-auto'>
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap ${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <span className='mr-2'>{tab.icon}</span>
-                    {tab.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tab content */}
-            <div className='bg-white rounded-lg shadow-sm p-6'>
-              {activeTab === 'general' && <CompanyProfile />}
-              {activeTab === 'users' && <UsersAndPermissions />}
-              {activeTab === 'scheduling' && <SchedulingSettings />}
-              {activeTab === 'pricebook' && <PricebookSettings />}
-              {activeTab === 'payments' && <InvoiceSettings />}
-              {activeTab === 'quotes' && <QuotesSettings />}
-              {activeTab === 'communication' && <CommunicationSettings />}
-              {activeTab === 'integrations' && <IntegrationsSettings />}
-              {activeTab === 'marketing' && <MarketingSettings />}
-              {activeTab === 'reports' && <ReportsSettings />}
-              {activeTab === 'security' && <SecuritySettings />}
-              {activeTab === 'mobile' && <MobileAppSettings />}
-              {activeTab === 'help' && <HelpSupportSettings />}
-              {activeTab === 'advanced' && <AdvancedSettings />}
-            </div>
-          </div>
-        ) : (
-          <PageUnderDevelopment />
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Company Profile Component
-const CompanyProfile = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>Company Profile</h2>
+  const renderCompanySettings = () => (
+    <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-gray-900 mb-6'>Company Profile</h2>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
             Company Name
           </label>
           <input
             type='text'
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            placeholder='Your Company Name'
+            value={settings.companyName}
+            onChange={(e) => handleInputChange('companyName', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
           />
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Logo
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Business Type
           </label>
-          <div className='flex items-center'>
-            <div className='w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center mr-4'>
-              <FiUser className='text-gray-400' size={24} />
-            </div>
-            <button className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700'>
-              Upload Logo
-            </button>
-          </div>
+          <select
+            value={settings.businessType}
+            onChange={(e) => handleInputChange('businessType', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          >
+            <option value='plumbing'>Plumbing</option>
+            <option value='electrical'>Electrical</option>
+            <option value='hvac'>HVAC</option>
+            <option value='cleaning'>Cleaning</option>
+            <option value='landscaping'>Landscaping</option>
+            <option value='handyman'>Handyman</option>
+            <option value='pest-control'>Pest Control</option>
+            <option value='roofing'>Roofing</option>
+          </select>
         </div>
+      </div>
 
-        <div className='md:col-span-2'>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Business Address
-          </label>
-          <textarea
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            rows={3}
-            placeholder='Enter your business address'
-          />
-        </div>
+      <div>
+        <label className='block text-sm font-medium text-gray-700 mb-2'>
+          Business Address
+        </label>
+        <input
+          type='text'
+          value={settings.address}
+          onChange={(e) => handleInputChange('address', e.target.value)}
+          className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+        />
+      </div>
 
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
             Phone Number
           </label>
           <input
             type='tel'
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            placeholder='(555) 555-5555'
+            value={settings.phone}
+            onChange={(e) => handleInputChange('phone', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
           />
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
             Email Address
           </label>
           <input
             type='email'
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            placeholder='contact@yourcompany.com'
+            value={settings.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
           />
         </div>
+      </div>
 
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
             Website
           </label>
           <input
             type='url'
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            placeholder='https://yourcompany.com'
+            value={settings.website}
+            onChange={(e) => handleInputChange('website', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
           />
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Time Zone
-          </label>
-          <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-            <option>Eastern Time (ET)</option>
-            <option>Central Time (CT)</option>
-            <option>Mountain Time (MT)</option>
-            <option>Pacific Time (PT)</option>
-            <option>Alaska Time (AKT)</option>
-            <option>Hawaii-Aleutian Time (HST)</option>
-          </select>
-        </div>
-
-        <div className='md:col-span-2'>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Business Hours
-          </label>
-          <div className='grid grid-cols-3 gap-4'>
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-1'>Day</p>
-              <div className='space-y-2'>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='monday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='monday'>Monday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='tuesday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='tuesday'>Tuesday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='wednesday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='wednesday'>Wednesday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='thursday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='thursday'>Thursday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='friday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='friday'>Friday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input type='checkbox' id='saturday' className='mr-2' />
-                  <label htmlFor='saturday'>Saturday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input type='checkbox' id='sunday' className='mr-2' />
-                  <label htmlFor='sunday'>Sunday</label>
-                </div>
-              </div>
-            </div>
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-1'>Open</p>
-              <div className='space-y-2'>
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='09:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='10:00'
-                />
-              </div>
-            </div>
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-1'>Close</p>
-              <div className='space-y-2'>
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='15:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='14:00'
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            License Numbers
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Tax ID / EIN
           </label>
           <input
             type='text'
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            placeholder='Enter license numbers for regulated trades'
+            value={settings.taxId}
+            onChange={(e) => handleInputChange('taxId', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
           />
         </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Tax ID (optional)
-          </label>
-          <input
-            type='text'
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            placeholder='Enter Tax ID'
-          />
-        </div>
-      </div>
-
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
       </div>
     </div>
   );
-};
 
-// Users & Permissions Component
-const UsersAndPermissions = () => {
-  const users = [
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      role: 'Admin',
-      status: 'Active',
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      role: 'Technician',
-      status: 'Active',
-    },
-    {
-      id: 3,
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      role: 'Dispatcher',
-      status: 'Active',
-    },
-    {
-      id: 4,
-      name: 'Sarah Williams',
-      email: 'sarah@example.com',
-      role: 'Office Staff',
-      status: 'Inactive',
-    },
-  ];
+  const renderUserSettings = () => (
+    <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-gray-900 mb-6'>User Account</h2>
 
-  return (
-    <div>
-      <div className='flex justify-between items-center mb-6'>
-        <h2 className='text-xl font-semibold'>Users & Permissions</h2>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 flex items-center'>
-          <span className='mr-2'>+</span> Invite New User
-        </button>
-      </div>
-
-      {/* User List */}
-      <div className='overflow-x-auto'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
-            <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Name
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Email
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Role
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Status
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td className='px-6 py-4 whitespace-nowrap'>{user.name}</td>
-                <td className='px-6 py-4 whitespace-nowrap'>{user.email}</td>
-                <td className='px-6 py-4 whitespace-nowrap'>{user.role}</td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.status === 'Active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {user.status}
-                  </span>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                  <button className='text-blue-600 hover:text-blue-900 mr-2'>
-                    Edit
-                  </button>
-                  <button className='text-red-600 hover:text-red-900'>
-                    {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Roles & Permissions Section */}
-      <div className='mt-8'>
-        <h3 className='text-lg font-medium mb-4'>Roles & Permissions</h3>
-
-        <div className='border rounded-md overflow-hidden'>
-          <div className='bg-gray-50 px-4 py-3 border-b'>
-            <div className='grid grid-cols-5 gap-4'>
-              <div className='font-medium'>Role</div>
-              <div className='font-medium'>View</div>
-              <div className='font-medium'>Create</div>
-              <div className='font-medium'>Edit</div>
-              <div className='font-medium'>Delete</div>
-            </div>
-          </div>
-
-          {/* Admin Role */}
-          <div className='px-4 py-3 border-b'>
-            <div className='grid grid-cols-5 gap-4'>
-              <div className='font-medium'>Admin</div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-            </div>
-          </div>
-
-          {/* Technician Role */}
-          <div className='px-4 py-3 border-b'>
-            <div className='grid grid-cols-5 gap-4'>
-              <div className='font-medium'>Technician</div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' />
-              </div>
-              <div>
-                <input type='checkbox' />
-              </div>
-              <div>
-                <input type='checkbox' />
-              </div>
-            </div>
-          </div>
-
-          {/* Dispatcher Role */}
-          <div className='px-4 py-3 border-b'>
-            <div className='grid grid-cols-5 gap-4'>
-              <div className='font-medium'>Dispatcher</div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' />
-              </div>
-            </div>
-          </div>
-
-          {/* Office Staff Role */}
-          <div className='px-4 py-3'>
-            <div className='grid grid-cols-5 gap-4'>
-              <div className='font-medium'>Office Staff</div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' checked readOnly />
-              </div>
-              <div>
-                <input type='checkbox' />
-              </div>
-              <div>
-                <input type='checkbox' />
-              </div>
-            </div>
-          </div>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            First Name
+          </label>
+          <input
+            type='text'
+            value={settings.firstName}
+            onChange={(e) => handleInputChange('firstName', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
         </div>
 
-        <div className='mt-4'>
-          <button className='text-blue-600 hover:text-blue-900 flex items-center'>
-            <span className='mr-1'>+</span> Create New Role
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Last Name
+          </label>
+          <input
+            type='text'
+            value={settings.lastName}
+            onChange={(e) => handleInputChange('lastName', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className='block text-sm font-medium text-gray-700 mb-2'>
+          Email Address
+        </label>
+        <input
+          type='email'
+          value={settings.userEmail}
+          onChange={(e) => handleInputChange('userEmail', e.target.value)}
+          className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+        />
+      </div>
+
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Role
+          </label>
+          <select
+            value={settings.role}
+            onChange={(e) => handleInputChange('role', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          >
+            <option value='admin'>Administrator</option>
+            <option value='manager'>Manager</option>
+            <option value='technician'>Technician</option>
+            <option value='dispatcher'>Dispatcher</option>
+          </select>
+        </div>
+
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Timezone
+          </label>
+          <select
+            value={settings.timezone}
+            onChange={(e) => handleInputChange('timezone', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          >
+            <option value='America/New_York'>Eastern Time</option>
+            <option value='America/Chicago'>Central Time</option>
+            <option value='America/Denver'>Mountain Time</option>
+            <option value='America/Los_Angeles'>Pacific Time</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className='block text-sm font-medium text-gray-700 mb-2'>
+          Change Password
+        </label>
+        <div className='relative'>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder='Enter new password'
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12'
+          />
+          <button
+            type='button'
+            onClick={() => setShowPassword(!showPassword)}
+            className='absolute right-3 top-3 text-gray-400 hover:text-gray-600'
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
       </div>
-
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
-      </div>
     </div>
   );
-};
 
-// Scheduling Settings Component
-const SchedulingSettings = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>
-        Dispatch & Scheduling Settings
+  const renderNotificationSettings = () => (
+    <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+        Notification Preferences
       </h2>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Default Job Duration
-          </label>
-          <div className='flex items-center'>
-            <input
-              type='number'
-              className='w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-              defaultValue='2'
-            />
-            <span className='ml-2'>hours</span>
-          </div>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Time Slot Intervals
-          </label>
-          <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-            <option>15 minutes</option>
-            <option>30 minutes</option>
-            <option selected>1 hour</option>
-            <option>2 hours</option>
-          </select>
-        </div>
-
-        <div>
-          <label className='flex items-center'>
-            <input type='checkbox' className='h-4 w-4 text-blue-600' />
-            <span className='ml-2 text-sm'>
-              Travel Time Buffer (auto-add travel time between jobs)
-            </span>
-          </label>
-        </div>
-
-        <div>
-          <label className='flex items-center'>
-            <input type='checkbox' className='h-4 w-4 text-blue-600' />
-            <span className='ml-2 text-sm'>Auto-assign technician</span>
-          </label>
-        </div>
-
-        <div>
-          <label className='flex items-center'>
-            <input type='checkbox' className='h-4 w-4 text-blue-600' checked />
-            <span className='ml-2 text-sm'>
-              Enable Live Technician Tracking
-            </span>
-          </label>
-        </div>
-
-        <div className='md:col-span-2'>
-          <h3 className='text-lg font-medium mb-3'>
-            Business Hours (for scheduling)
-          </h3>
-          <div className='grid grid-cols-3 gap-4'>
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-1'>Day</p>
-              <div className='space-y-2'>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='sch-monday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='sch-monday'>Monday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='sch-tuesday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='sch-tuesday'>Tuesday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='sch-wednesday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='sch-wednesday'>Wednesday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='sch-thursday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='sch-thursday'>Thursday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='sch-friday'
-                    defaultChecked
-                    className='mr-2'
-                  />
-                  <label htmlFor='sch-friday'>Friday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input type='checkbox' id='sch-saturday' className='mr-2' />
-                  <label htmlFor='sch-saturday'>Saturday</label>
-                </div>
-                <div className='flex items-center'>
-                  <input type='checkbox' id='sch-sunday' className='mr-2' />
-                  <label htmlFor='sch-sunday'>Sunday</label>
-                </div>
-              </div>
-            </div>
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-1'>Start</p>
-              <div className='space-y-2'>
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='08:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='09:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='10:00'
-                />
-              </div>
-            </div>
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-1'>End</p>
-              <div className='space-y-2'>
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='17:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='15:00'
-                />
-                <input
-                  type='time'
-                  className='border border-gray-300 rounded p-1'
-                  defaultValue='14:00'
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Pricebook Settings Component
-const PricebookSettings = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>Pricebook Settings</h2>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Default Tax Rate (%)
-          </label>
-          <input
-            type='number'
-            step='0.01'
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            defaultValue='8.25'
-          />
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Currency Format
-          </label>
-          <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-            <option>$ (USD)</option>
-            <option>€ (EUR)</option>
-            <option>£ (GBP)</option>
-            <option>¥ (JPY)</option>
-            <option>$ (CAD)</option>
-            <option>$ (AUD)</option>
-          </select>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Default Unit of Measure
-          </label>
-          <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-            <option>hours</option>
-            <option>pieces</option>
-            <option>units</option>
-            <option>sq. ft.</option>
-            <option>linear ft.</option>
-          </select>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Default Labor Rate ($ per hour)
-          </label>
-          <input
-            type='number'
-            step='0.01'
-            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-            defaultValue='85.00'
-          />
-        </div>
-      </div>
-
-      <div className='mt-6'>
-        <h3 className='text-lg font-medium mb-3'>Markup Rules</h3>
-
-        <div className='border rounded-md overflow-hidden'>
-          <table className='min-w-full divide-y divide-gray-200'>
-            <thead className='bg-gray-50'>
-              <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Item Type
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Markup Type
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Markup Value
-                </th>
-              </tr>
-            </thead>
-            <tbody className='bg-white divide-y divide-gray-200'>
-              <tr>
-                <td className='px-6 py-4'>Parts</td>
-                <td className='px-6 py-4'>
-                  <select className='border border-gray-300 rounded-md p-1'>
-                    <option>Percentage</option>
-                    <option>Fixed Amount</option>
-                  </select>
-                </td>
-                <td className='px-6 py-4'>
-                  <input
-                    type='number'
-                    className='border border-gray-300 rounded-md p-1 w-24'
-                    defaultValue='35'
-                  />
-                  <span className='ml-1'>%</span>
-                </td>
-              </tr>
-              <tr>
-                <td className='px-6 py-4'>Materials</td>
-                <td className='px-6 py-4'>
-                  <select className='border border-gray-300 rounded-md p-1'>
-                    <option>Percentage</option>
-                    <option>Fixed Amount</option>
-                  </select>
-                </td>
-                <td className='px-6 py-4'>
-                  <input
-                    type='number'
-                    className='border border-gray-300 rounded-md p-1 w-24'
-                    defaultValue='25'
-                  />
-                  <span className='ml-1'>%</span>
-                </td>
-              </tr>
-              <tr>
-                <td className='px-6 py-4'>Equipment</td>
-                <td className='px-6 py-4'>
-                  <select className='border border-gray-300 rounded-md p-1'>
-                    <option>Percentage</option>
-                    <option>Fixed Amount</option>
-                  </select>
-                </td>
-                <td className='px-6 py-4'>
-                  <input
-                    type='number'
-                    className='border border-gray-300 rounded-md p-1 w-24'
-                    defaultValue='20'
-                  />
-                  <span className='ml-1'>%</span>
-                </td>
-              </tr>
-              <tr>
-                <td className='px-6 py-4'>Subcontractor</td>
-                <td className='px-6 py-4'>
-                  <select className='border border-gray-300 rounded-md p-1'>
-                    <option>Percentage</option>
-                    <option>Fixed Amount</option>
-                  </select>
-                </td>
-                <td className='px-6 py-4'>
-                  <input
-                    type='number'
-                    className='border border-gray-300 rounded-md p-1 w-24'
-                    defaultValue='15'
-                  />
-                  <span className='ml-1'>%</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Invoice Settings Component
-const InvoiceSettings = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>Payment & Invoice Settings</h2>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <h3 className='text-lg font-medium mb-3'>Payment Methods</h3>
-
-          <div className='space-y-3'>
-            <div className='flex items-center'>
-              <input type='checkbox' id='cash' className='mr-2' checked />
-              <label htmlFor='cash'>Cash</label>
-            </div>
-            <div className='flex items-center'>
-              <input type='checkbox' id='check' className='mr-2' checked />
-              <label htmlFor='check'>Check</label>
-            </div>
-            <div className='flex items-center'>
-              <input
-                type='checkbox'
-                id='credit-card'
-                className='mr-2'
-                checked
-              />
-              <label htmlFor='credit-card'>Credit Card</label>
-            </div>
-            <div className='flex items-center'>
-              <input
-                type='checkbox'
-                id='bank-transfer'
-                className='mr-2'
-                checked
-              />
-              <label htmlFor='bank-transfer'>Bank Transfer (ACH)</label>
-            </div>
-            <div className='flex items-center'>
-              <input type='checkbox' id='financing' className='mr-2' />
-              <label htmlFor='financing'>Financing</label>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className='text-lg font-medium mb-3'>Payment Processing</h3>
-
+      <div className='space-y-4'>
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>
-              Default Payment Processor
-            </label>
-            <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-              <option>Stripe</option>
-              <option>Square</option>
-              <option>PayPal</option>
-              <option>Authorize.net</option>
-              <option>None</option>
-            </select>
+            <h3 className='font-medium text-gray-900'>Email Notifications</h3>
+            <p className='text-sm text-gray-500'>Receive updates via email</p>
           </div>
-
-          <div className='mt-4'>
-            <button className='text-blue-600 hover:text-blue-900'>
-              Configure Payment Gateway
-            </button>
-          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.emailNotifications}
+              onChange={(e) =>
+                handleInputChange('emailNotifications', e.target.checked)
+              }
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
         </div>
 
-        <div className='md:col-span-2'>
-          <h3 className='text-lg font-medium mb-3'>Invoice Settings</h3>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Invoice Prefix
-              </label>
-              <input
-                type='text'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                defaultValue='INV-'
-              />
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Invoice Starting Number
-              </label>
-              <input
-                type='number'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                defaultValue='1001'
-              />
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Due Terms
-              </label>
-              <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-                <option>Due on receipt</option>
-                <option>Net 15</option>
-                <option selected>Net 30</option>
-                <option>Net 60</option>
-                <option>Net 90</option>
-              </select>
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Late Fee
-              </label>
-              <div className='flex items-center'>
-                <input
-                  type='number'
-                  className='w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                  defaultValue='2.5'
-                />
-                <span className='ml-2'>%</span>
-              </div>
-            </div>
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div>
+            <h3 className='font-medium text-gray-900'>SMS Notifications</h3>
+            <p className='text-sm text-gray-500'>
+              Receive alerts via text message
+            </p>
           </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.smsNotifications}
+              onChange={(e) =>
+                handleInputChange('smsNotifications', e.target.checked)
+              }
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
         </div>
-      </div>
 
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div>
+            <h3 className='font-medium text-gray-900'>Job Alerts</h3>
+            <p className='text-sm text-gray-500'>
+              Get notified about new jobs and updates
+            </p>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.jobAlerts}
+              onChange={(e) => handleInputChange('jobAlerts', e.target.checked)}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div>
+            <h3 className='font-medium text-gray-900'>Payment Alerts</h3>
+            <p className='text-sm text-gray-500'>
+              Notifications about payments and invoices
+            </p>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.paymentAlerts}
+              onChange={(e) =>
+                handleInputChange('paymentAlerts', e.target.checked)
+              }
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div>
+            <h3 className='font-medium text-gray-900'>Schedule Changes</h3>
+            <p className='text-sm text-gray-500'>
+              Alerts when appointments are modified
+            </p>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.scheduleChanges}
+              onChange={(e) =>
+                handleInputChange('scheduleChanges', e.target.checked)
+              }
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
       </div>
     </div>
   );
-};
 
-// Quotes Settings Component
-const QuotesSettings = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>
-        Quotes & Service Request Settings
+  const renderServiceSettings = () => (
+    <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+        Service Settings
       </h2>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <h3 className='text-lg font-medium mb-3'>Quote Settings</h3>
-
-          <div className='space-y-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Quote Prefix
-              </label>
-              <input
-                type='text'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                defaultValue='QUO-'
-              />
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Quote Starting Number
-              </label>
-              <input
-                type='number'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                defaultValue='2001'
-              />
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Quote Expiration
-              </label>
-              <div className='flex items-center'>
+      <div>
+        <h3 className='text-lg font-medium text-gray-900 mb-4'>
+          Business Hours
+        </h3>
+        <div className='space-y-3'>
+          {Object.entries(settings.businessHours).map(([day, hours]) => (
+            <div
+              key={day}
+              className='flex items-center space-x-4 p-3 bg-gray-50 rounded-lg'
+            >
+              <div className='w-20'>
+                <label className='relative inline-flex items-center cursor-pointer'>
+                  <input
+                    type='checkbox'
+                    checked={hours.enabled}
+                    onChange={(e) =>
+                      handleBusinessHourChange(day, 'enabled', e.target.checked)
+                    }
+                    className='sr-only peer'
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              <div className='w-24 capitalize font-medium text-gray-700'>
+                {day}
+              </div>
+              <div className='flex items-center space-x-2'>
                 <input
-                  type='number'
-                  className='w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                  defaultValue='30'
+                  type='time'
+                  value={hours.open}
+                  onChange={(e) =>
+                    handleBusinessHourChange(day, 'open', e.target.value)
+                  }
+                  disabled={!hours.enabled}
+                  className='p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400'
                 />
-                <span className='ml-2'>days</span>
+                <span className='text-gray-500'>to</span>
+                <input
+                  type='time'
+                  value={hours.close}
+                  onChange={(e) =>
+                    handleBusinessHourChange(day, 'close', e.target.value)
+                  }
+                  disabled={!hours.enabled}
+                  className='p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400'
+                />
               </div>
             </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className='text-lg font-medium mb-3'>Service Request Settings</h3>
-
-          <div className='space-y-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Request Prefix
-              </label>
-              <input
-                type='text'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                defaultValue='REQ-'
-              />
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Request Starting Number
-              </label>
-              <input
-                type='number'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                defaultValue='3001'
-              />
-            </div>
-
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>
-                  Enable Online Service Request Form
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className='md:col-span-2'>
-          <h3 className='text-lg font-medium mb-3'>
-            Required Fields for Service Requests
-          </h3>
-
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>Name</span>
-              </label>
-            </div>
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>Phone</span>
-              </label>
-            </div>
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>Email</span>
-              </label>
-            </div>
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>Address</span>
-              </label>
-            </div>
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>Service Type</span>
-              </label>
-            </div>
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>Description</span>
-              </label>
-            </div>
-            <div>
-              <label className='flex items-center'>
-                <input type='checkbox' className='h-4 w-4 text-blue-600' />
-                <span className='ml-2 text-sm'>Preferred Date</span>
-              </label>
-            </div>
-            <div>
-              <label className='flex items-center'>
-                <input type='checkbox' className='h-4 w-4 text-blue-600' />
-                <span className='ml-2 text-sm'>Preferred Time</span>
-              </label>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
-
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Communication Settings Component
-const CommunicationSettings = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>Communication Settings</h2>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
-          <h3 className='text-lg font-medium mb-3'>Email Templates</h3>
-
-          <div className='border rounded-md overflow-hidden'>
-            <div className='bg-gray-50 px-4 py-3 border-b'>
-              <h4 className='font-medium'>Template Types</h4>
-            </div>
-            <div className='px-4 py-3 border-b hover:bg-gray-50 cursor-pointer'>
-              New Service Request
-            </div>
-            <div className='px-4 py-3 border-b hover:bg-gray-50 cursor-pointer'>
-              Quote Confirmation
-            </div>
-            <div className='px-4 py-3 border-b hover:bg-gray-50 cursor-pointer'>
-              Appointment Confirmation
-            </div>
-            <div className='px-4 py-3 border-b hover:bg-gray-50 cursor-pointer'>
-              Invoice
-            </div>
-            <div className='px-4 py-3 hover:bg-gray-50 cursor-pointer'>
-              Follow-up
-            </div>
-          </div>
-
-          <div className='mt-4'>
-            <button className='text-blue-600 hover:text-blue-900 flex items-center'>
-              <span className='mr-1'>+</span> Create New Template
-            </button>
-          </div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Booking Lead Time (hours)
+          </label>
+          <input
+            type='number'
+            value={settings.bookingLeadTime}
+            onChange={(e) =>
+              handleInputChange('bookingLeadTime', e.target.value)
+            }
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
         </div>
 
         <div>
-          <h3 className='text-lg font-medium mb-3'>SMS Notifications</h3>
-
-          <div className='space-y-4'>
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>
-                  Send SMS appointment reminders
-                </span>
-              </label>
-            </div>
-
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>
-                  Send SMS when technician is on the way
-                </span>
-              </label>
-            </div>
-
-            <div>
-              <label className='flex items-center'>
-                <input type='checkbox' className='h-4 w-4 text-blue-600' />
-                <span className='ml-2 text-sm'>
-                  Send SMS for invoice notifications
-                </span>
-              </label>
-            </div>
-
-            <div>
-              <label className='flex items-center'>
-                <input type='checkbox' className='h-4 w-4 text-blue-600' />
-                <span className='ml-2 text-sm'>
-                  Send SMS for payment confirmations
-                </span>
-              </label>
-            </div>
-
-            <div className='mt-4'>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                SMS Provider
-              </label>
-              <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-                <option>Twilio</option>
-                <option>Nexmo</option>
-                <option>MessageBird</option>
-                <option>None</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className='md:col-span-2'>
-          <h3 className='text-lg font-medium mb-3'>Automatic Notifications</h3>
-
-          <div className='overflow-x-auto'>
-            <table className='min-w-full divide-y divide-gray-200'>
-              <thead className='bg-gray-50'>
-                <tr>
-                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Event
-                  </th>
-                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Email
-                  </th>
-                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    SMS
-                  </th>
-                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Push
-                  </th>
-                </tr>
-              </thead>
-              <tbody className='bg-white divide-y divide-gray-200'>
-                <tr>
-                  <td className='px-6 py-4'>Service request received</td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' checked />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' checked />
-                  </td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4'>Appointment scheduled</td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' checked />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' checked />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4'>Technician on the way</td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' checked />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4'>Job completed</td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' checked />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4'>Invoice sent</td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' checked />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4'>Payment received</td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' checked />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                  <td className='px-6 py-4'>
-                    <input type='checkbox' />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Max Jobs Per Day
+          </label>
+          <input
+            type='number'
+            value={settings.maxJobsPerDay}
+            onChange={(e) => handleInputChange('maxJobsPerDay', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
         </div>
       </div>
 
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Integrations Settings Component
-const IntegrationsSettings = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>Integrations</h2>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div className='border rounded-md p-4 flex items-center justify-between'>
-          <div className='flex items-center'>
-            <div className='w-12 h-12 bg-blue-100 rounded-md flex items-center justify-center mr-4'>
-              <span className='text-blue-600 font-bold'>QB</span>
-            </div>
-            <div>
-              <h3 className='font-medium'>QuickBooks Online</h3>
-              <p className='text-sm text-gray-500'>Connected</p>
-            </div>
-          </div>
-          <button className='text-red-600 hover:text-red-900'>
-            Disconnect
-          </button>
-        </div>
-
-        <div className='border rounded-md p-4 flex items-center justify-between'>
-          <div className='flex items-center'>
-            <div className='w-12 h-12 bg-red-100 rounded-md flex items-center justify-center mr-4'>
-              <span className='text-red-600 font-bold'>G</span>
-            </div>
-            <div>
-              <h3 className='font-medium'>Google Calendar</h3>
-              <p className='text-sm text-gray-500'>Not connected</p>
-            </div>
-          </div>
-          <button className='text-blue-600 hover:text-blue-900'>Connect</button>
-        </div>
-
-        <div className='border rounded-md p-4 flex items-center justify-between'>
-          <div className='flex items-center'>
-            <div className='w-12 h-12 bg-green-100 rounded-md flex items-center justify-center mr-4'>
-              <span className='text-green-600 font-bold'>Z</span>
-            </div>
-            <div>
-              <h3 className='font-medium'>Zapier</h3>
-              <p className='text-sm text-gray-500'>Not connected</p>
-            </div>
-          </div>
-          <button className='text-blue-600 hover:text-blue-900'>Connect</button>
-        </div>
-
-        <div className='border rounded-md p-4 flex items-center justify-between'>
-          <div className='flex items-center'>
-            <div className='w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mr-4'>
-              <span className='text-gray-600 font-bold'>S</span>
-            </div>
-            <div>
-              <h3 className='font-medium'>SupplyHouse</h3>
-              <p className='text-sm text-gray-500'>Not connected</p>
-            </div>
-          </div>
-          <button className='text-blue-600 hover:text-blue-900'>Connect</button>
-        </div>
-      </div>
-
-      <div className='mt-6'>
-        <h3 className='text-lg font-medium mb-3'>API Access</h3>
-
-        <div className='bg-gray-50 p-4 rounded-md mb-4'>
-          <p className='text-sm mb-2'>
-            Use the API key below to connect custom applications to your
-            account.
+      <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+        <div>
+          <h3 className='font-medium text-gray-900'>Emergency Hours</h3>
+          <p className='text-sm text-gray-500'>
+            Accept emergency calls outside business hours
           </p>
-          <div className='flex items-center'>
+        </div>
+        <label className='relative inline-flex items-center cursor-pointer'>
+          <input
+            type='checkbox'
+            checked={settings.emergencyHours}
+            onChange={(e) =>
+              handleInputChange('emergencyHours', e.target.checked)
+            }
+            className='sr-only peer'
+          />
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    </div>
+  );
+
+  const renderPricingSettings = () => (
+    <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-gray-900 mb-6'>Pricing & Taxes</h2>
+
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Currency
+          </label>
+          <select
+            value={settings.currency}
+            onChange={(e) => handleInputChange('currency', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          >
+            <option value='USD'>USD - US Dollar</option>
+            <option value='CAD'>CAD - Canadian Dollar</option>
+            <option value='EUR'>EUR - Euro</option>
+            <option value='GBP'>GBP - British Pound</option>
+          </select>
+        </div>
+
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Tax Rate (%)
+          </label>
+          <input
+            type='number'
+            step='0.1'
+            value={settings.taxRate}
+            onChange={(e) => handleInputChange('taxRate', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
+        </div>
+      </div>
+
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Default Labor Rate (per hour)
+          </label>
+          <input
+            type='number'
+            value={settings.laborRate}
+            onChange={(e) => handleInputChange('laborRate', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
+        </div>
+
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Default Markup (%)
+          </label>
+          <input
+            type='number'
+            value={settings.defaultMarkup}
+            onChange={(e) => handleInputChange('defaultMarkup', e.target.value)}
+            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderIntegrationsSettings = () => (
+    <div className='space-y-6'>
+      <h2 className='text-2xl font-bold text-gray-900 mb-6'>Integrations</h2>
+
+      <div className='space-y-4'>
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div className='flex items-center space-x-3'>
+            <div className='w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
+              <Database className='w-5 h-5 text-blue-600' />
+            </div>
+            <div>
+              <h3 className='font-medium text-gray-900'>QuickBooks</h3>
+              <p className='text-sm text-gray-500'>
+                Sync invoices and payments
+              </p>
+            </div>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
             <input
-              type='text'
-              className='flex-1 px-3 py-2 border border-gray-300 rounded-md mr-2 bg-gray-100'
-              value='api_key_3f8a9c12d45e67b8901..'
-              readOnly
+              type='checkbox'
+              checked={settings.quickbooks}
+              onChange={(e) =>
+                handleInputChange('quickbooks', e.target.checked)
+              }
+              className='sr-only peer'
             />
-            <button className='bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300'>
-              Copy
-            </button>
-          </div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
         </div>
 
-        <button className='text-blue-600 hover:text-blue-900'>
-          Generate New API Key
-        </button>
-      </div>
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div className='flex items-center space-x-3'>
+            <div className='w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center'>
+              <Calendar className='w-5 h-5 text-green-600' />
+            </div>
+            <div>
+              <h3 className='font-medium text-gray-900'>Google Calendar</h3>
+              <p className='text-sm text-gray-500'>
+                Sync appointments and schedules
+              </p>
+            </div>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.googleCalendar}
+              onChange={(e) =>
+                handleInputChange('googleCalendar', e.target.checked)
+              }
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
 
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div className='flex items-center space-x-3'>
+            <div className='w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center'>
+              <CreditCard className='w-5 h-5 text-purple-600' />
+            </div>
+            <div>
+              <h3 className='font-medium text-gray-900'>Stripe</h3>
+              <p className='text-sm text-gray-500'>
+                Process payments and subscriptions
+              </p>
+            </div>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.stripe}
+              onChange={(e) => handleInputChange('stripe', e.target.checked)}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div className='flex items-center space-x-3'>
+            <div className='w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center'>
+              <Zap className='w-5 h-5 text-orange-600' />
+            </div>
+            <div>
+              <h3 className='font-medium text-gray-900'>Zapier</h3>
+              <p className='text-sm text-gray-500'>
+                Automate workflows with 3000+ apps
+              </p>
+            </div>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.zapier}
+              onChange={(e) => handleInputChange('zapier', e.target.checked)}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+          <div className='flex items-center space-x-3'>
+            <div className='w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center'>
+              <Mail className='w-5 h-5 text-yellow-600' />
+            </div>
+            <div>
+              <h3 className='font-medium text-gray-900'>Mailchimp</h3>
+              <p className='text-sm text-gray-500'>
+                Email marketing and customer communications
+              </p>
+            </div>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.mailchimp}
+              onChange={(e) => handleInputChange('mailchimp', e.target.checked)}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
       </div>
     </div>
   );
-};
 
-// Marketing Settings Component
-const MarketingSettings = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>Marketing Settings</h2>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <h3 className='text-lg font-medium mb-3'>Email Marketing</h3>
-
-          <div className='space-y-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Email Provider
-              </label>
-              <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-                <option>None</option>
-                <option>Mailchimp</option>
-                <option>Constant Contact</option>
-                <option>Campaign Monitor</option>
-                <option>SendGrid</option>
-              </select>
-            </div>
-
-            <button className='text-blue-600 hover:text-blue-900'>
-              Configure Email Provider
-            </button>
-
-            <div>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 text-blue-600'
-                  checked
-                />
-                <span className='ml-2 text-sm'>
-                  Automatically add new customers to mailing list
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className='text-lg font-medium mb-3'>Review Management</h3>
-
-          <div className='space-y-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Automatically request reviews
-              </label>
-              <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-                <option>Immediately after job completion</option>
-                <option>24 hours after job completion</option>
-                <option>48 hours after job completion</option>
-                <option>1 week after job completion</option>
-                <option>Never</option>
-              </select>
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Preferred Review Platform
-              </label>
-              <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-                <option>Google</option>
-                <option>Yelp</option>
-                <option>Facebook</option>
-                <option>Ask customer for preference</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className='md:col-span-2'>
-          <h3 className='text-lg font-medium mb-3'>Referral Program</h3>
-
-          <div className='space-y-4'>
-            <div>
-              <label className='flex items-center'>
-                <input type='checkbox' className='h-4 w-4 text-blue-600' />
-                <span className='ml-2 text-sm'>
-                  Enable Customer Referral Program
-                </span>
-              </label>
-            </div>
-
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Referral Reward
-                </label>
-                <div className='flex items-center'>
-                  <span className='mr-2'>$</span>
-                  <input
-                    type='number'
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                    defaultValue='25'
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  New Customer Discount
-                </label>
-                <div className='flex items-center'>
-                  <span className='mr-2'>$</span>
-                  <input
-                    type='number'
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                    defaultValue='25'
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Reports Settings Component
-const ReportsSettings = () => {
-  return (
-    <div>
-      <h2 className='text-xl font-semibold mb-6'>Reports Settings</h2>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <h3 className='text-lg font-medium mb-3'>Favorite Reports</h3>
-
-          <div className='space-y-2'>
-            <div className='flex items-center'>
-              <input type='checkbox' id='revenue' className='mr-2' checked />
-              <label htmlFor='revenue'>Revenue Summary</label>
-            </div>
-            <div className='flex items-center'>
-              <input type='checkbox' id='jobs' className='mr-2' checked />
-              <label htmlFor='jobs'>Jobs by Type</label>
-            </div>
-            <div className='flex items-center'>
-              <input type='checkbox' id='technician' className='mr-2' checked />
-              <label htmlFor='technician'>Technician Performance</label>
-            </div>
-            <div className='flex items-center'>
-              <input type='checkbox' id='customer' className='mr-2' />
-              <label htmlFor='customer'>Customer Acquisition</label>
-            </div>
-            <div className='flex items-center'>
-              <input type='checkbox' id='marketing' className='mr-2' />
-              <label htmlFor='marketing'>Marketing ROI</label>
-            </div>
-            <div className='flex items-center'>
-              <input type='checkbox' id='inventory' className='mr-2' />
-              <label htmlFor='inventory'>Inventory Usage</label>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className='text-lg font-medium mb-3'>Scheduled Reports</h3>
-
-          <div className='space-y-4'>
-            <div className='flex items-center justify-between border-b pb-2'>
-              <span>Weekly Revenue</span>
-              <span className='text-sm text-gray-500'>Every Monday</span>
-            </div>
-            <div className='flex items-center justify-between border-b pb-2'>
-              <span>Monthly Performance</span>
-              <span className='text-sm text-gray-500'>1st of month</span>
-            </div>
-            <div>
-              <button className='text-blue-600 hover:text-blue-900 flex items-center'>
-                <span className='mr-1'>+</span> Add Scheduled Report
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case 'company':
+        return renderCompanySettings();
+      case 'user':
+        return renderUserSettings();
+      case 'notifications':
+        return renderNotificationSettings();
+      case 'service':
+        return renderServiceSettings();
+      case 'pricing':
+        return renderPricingSettings();
+      case 'integrations':
+        return renderIntegrationsSettings();
+      case 'billing':
+        return (
+          <div className='space-y-6'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+              Billing & Plans
+            </h2>
+            <div className='bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200'>
+              <h3 className='text-lg font-semibold text-blue-900 mb-2'>
+                Professional Plan
+              </h3>
+              <p className='text-blue-700 mb-4'>
+                $89/month • Up to 10 users • Unlimited jobs
+              </p>
+              <button className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'>
+                Manage Subscription
               </button>
             </div>
-          </div>
-        </div>
-
-        <div className='md:col-span-2'>
-          <h3 className='text-lg font-medium mb-3'>Default Report Settings</h3>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Default Date Range
-              </label>
-              <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-                <option>Current Month</option>
-                <option>Previous Month</option>
-                <option>Current Quarter</option>
-                <option>Year to Date</option>
-                <option>Last 30 Days</option>
-                <option>Last 90 Days</option>
-                <option>Custom</option>
-              </select>
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Default Chart Type
-              </label>
-              <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-                <option>Bar Chart</option>
-                <option>Line Chart</option>
-                <option>Pie Chart</option>
-                <option>Area Chart</option>
-              </select>
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Export Format
-              </label>
-              <select className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'>
-                <option>PDF</option>
-                <option>Excel</option>
-                <option>CSV</option>
-              </select>
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                Email Reports To
+              <label className='block text-sm font-medium text-gray-700 mb-2'>
+                Billing Address
               </label>
               <input
-                type='email'
-                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                placeholder='email@example.com'
+                type='text'
+                value={settings.billingAddress}
+                onChange={(e) =>
+                  handleInputChange('billingAddress', e.target.value)
+                }
+                className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
               />
             </div>
           </div>
-        </div>
-      </div>
+        );
+      case 'security':
+        return (
+          <div className='space-y-6'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+              Security Settings
+            </h2>
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+                <div>
+                  <h3 className='font-medium text-gray-900'>
+                    Two-Factor Authentication
+                  </h3>
+                  <p className='text-sm text-gray-500'>
+                    Add an extra layer of security
+                  </p>
+                </div>
+                <label className='relative inline-flex items-center cursor-pointer'>
+                  <input
+                    type='checkbox'
+                    checked={settings.twoFactorAuth}
+                    onChange={(e) =>
+                      handleInputChange('twoFactorAuth', e.target.checked)
+                    }
+                    className='sr-only peer'
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Session Timeout (minutes)
+                </label>
+                <select
+                  value={settings.sessionTimeout}
+                  onChange={(e) =>
+                    handleInputChange('sessionTimeout', e.target.value)
+                  }
+                  className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                >
+                  <option value='15'>15 minutes</option>
+                  <option value='30'>30 minutes</option>
+                  <option value='60'>1 hour</option>
+                  <option value='120'>2 hours</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+      case 'mobile':
+        return (
+          <div className='space-y-6'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+              Mobile App Settings
+            </h2>
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+                <div>
+                  <h3 className='font-medium text-gray-900'>GPS Tracking</h3>
+                  <p className='text-sm text-gray-500'>
+                    Track technician locations
+                  </p>
+                </div>
+                <label className='relative inline-flex items-center cursor-pointer'>
+                  <input
+                    type='checkbox'
+                    checked={settings.gpsTracking}
+                    onChange={(e) =>
+                      handleInputChange('gpsTracking', e.target.checked)
+                    }
+                    className='sr-only peer'
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Photo Compression
+                </label>
+                <select
+                  value={settings.photoCompression}
+                  onChange={(e) =>
+                    handleInputChange('photoCompression', e.target.value)
+                  }
+                  className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                >
+                  <option value='low'>
+                    Low (Higher quality, more storage)
+                  </option>
+                  <option value='medium'>Medium (Balanced)</option>
+                  <option value='high'>
+                    High (Lower quality, less storage)
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+      case 'scheduling':
+        return (
+          <div className='space-y-6'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+              Scheduling Preferences
+            </h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Default Appointment Duration
+                </label>
+                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
+                  <option value='30'>30 minutes</option>
+                  <option value='60'>1 hour</option>
+                  <option value='90'>1.5 hours</option>
+                  <option value='120'>2 hours</option>
+                </select>
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Auto-assign Jobs
+                </label>
+                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
+                  <option value='proximity'>By Proximity</option>
+                  <option value='availability'>By Availability</option>
+                  <option value='skills'>By Skills</option>
+                  <option value='manual'>Manual Assignment</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+      case 'field':
+        return (
+          <div className='space-y-6'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+              Field Operations
+            </h2>
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+                <div>
+                  <h3 className='font-medium text-gray-900'>
+                    Require Job Photos
+                  </h3>
+                  <p className='text-sm text-gray-500'>
+                    Technicians must take before/after photos
+                  </p>
+                </div>
+                <label className='relative inline-flex items-center cursor-pointer'>
+                  <input type='checkbox' className='sr-only peer' />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+                <div>
+                  <h3 className='font-medium text-gray-900'>
+                    Digital Signatures
+                  </h3>
+                  <p className='text-sm text-gray-500'>
+                    Require customer signatures for job completion
+                  </p>
+                </div>
+                <label className='relative inline-flex items-center cursor-pointer'>
+                  <input
+                    type='checkbox'
+                    defaultChecked
+                    className='sr-only peer'
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+        );
+      case 'forms':
+        return (
+          <div className='space-y-6'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+              Forms & Templates
+            </h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='p-4 border border-gray-200 rounded-lg'>
+                <h3 className='font-medium text-gray-900 mb-2'>
+                  Service Agreement
+                </h3>
+                <p className='text-sm text-gray-500 mb-3'>
+                  Standard terms and conditions
+                </p>
+                <button className='text-blue-600 hover:text-blue-800 text-sm font-medium'>
+                  Edit Template
+                </button>
+              </div>
+              <div className='p-4 border border-gray-200 rounded-lg'>
+                <h3 className='font-medium text-gray-900 mb-2'>
+                  Customer Satisfaction Survey
+                </h3>
+                <p className='text-sm text-gray-500 mb-3'>
+                  Post-job feedback form
+                </p>
+                <button className='text-blue-600 hover:text-blue-800 text-sm font-medium'>
+                  Edit Template
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      case 'reports':
+        return (
+          <div className='space-y-6'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+              Reports & Analytics
+            </h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Default Report Period
+                </label>
+                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
+                  <option value='week'>Last 7 days</option>
+                  <option value='month'>Last 30 days</option>
+                  <option value='quarter'>Last 90 days</option>
+                  <option value='year'>Last 365 days</option>
+                </select>
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Email Reports
+                </label>
+                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
+                  <option value='none'>Never</option>
+                  <option value='weekly'>Weekly</option>
+                  <option value='monthly'>Monthly</option>
+                  <option value='quarterly'>Quarterly</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+      case 'system':
+        return (
+          <div className='space-y-6'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+              System Preferences
+            </h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Date Format
+                </label>
+                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
+                  <option value='MM/DD/YYYY'>MM/DD/YYYY</option>
+                  <option value='DD/MM/YYYY'>DD/MM/YYYY</option>
+                  <option value='YYYY-MM-DD'>YYYY-MM-DD</option>
+                </select>
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Time Format
+                </label>
+                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
+                  <option value='12'>12-hour (AM/PM)</option>
+                  <option value='24'>24-hour</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return renderCompanySettings();
+    }
+  };
 
-      <div className='mt-6 flex justify-end'>
-        <button className='bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700'>
-          Save Changes
-        </button>
+  return (
+    <div className='flex h-screen'>
+      {/* Sidebar placeholder */}
+      <Sidebar />
+      <div className='flex-1 ml-[260px]'>
+        {/* Navbar placeholder */}
+        <Navbar />
+
+        <div className='flex h-full'>
+          {/* Settings Sidebar */}
+          <div className='w-80 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto'>
+            <div className='space-y-1'>
+              {settingSections.map((section) => {
+                const Icon = section.icon;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                      activeSection === section.id
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon className='w-5 h-5' />
+                    <span className='font-medium'>{section.name}</span>
+                    <ChevronRight className='w-4 h-4 ml-auto' />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className='flex-1 p-8 overflow-y-auto'>
+            <div className=''>
+              {renderSectionContent()}
+
+              {/* Save Button */}
+              <div className='mt-8 pt-6 border-t border-gray-200'>
+                <div className='flex items-center justify-end space-x-4'>
+                  <button className='px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'>
+                    Cancel
+                  </button>
+                  <button className='px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2'>
+                    <Save className='w-4 h-4' />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
