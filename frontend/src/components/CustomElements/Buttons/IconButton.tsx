@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 
 interface IIconButton {
-  children: ReactNode;
+  children?: ReactNode;
   icon: ReactNode;
   iconPosition?: string;
   customStyle?: string;
