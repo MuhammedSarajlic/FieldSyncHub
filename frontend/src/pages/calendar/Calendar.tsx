@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,14 +7,29 @@ import {
   Map,
   Search,
   X,
-  CalendarX, // Added for unscheduled jobs icon
+  CalendarX,
+  Plus,
 } from 'lucide-react';
-import Sidebar from '../components/Sidebar/Sidebar';
-import Navbar from '../components/Navbar/Navbar';
-import CustomButton from '../components/CustomElements/Buttons/CustomButton';
-import IconButton from '../components/CustomElements/Buttons/IconButton';
+import Sidebar from '../../components/Sidebar/Sidebar';
+import Navbar from '../../components/Navbar/Navbar';
+import CustomButton from '../../components/CustomElements/Buttons/CustomButton';
+import IconButton from '../../components/CustomElements/Buttons/IconButton';
 import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
 import L from 'leaflet'; // Import Leaflet library
+import CalendarEvent from '../../components/Calendar/CalendarEvent';
+import UnscheduledJob from '../../components/Calendar/UnscheduledJob';
+import CreateCalendarEventModal from '../../components/Calendar/CreateCalendarEventModal';
+import SmallCalendar from '../../components/Calendar/SmallCalendar';
+import CustomDropdown from '../../components/Calendar/CustomDropdown';
+import {
+  formatMonthYear,
+  getCurrentGMTPlusOffset,
+  getDaysForWeek,
+} from '../../utils/CalendarHelpers';
+import { formatDate } from '../../utils/FuntionHelpers/formatDate';
+import { useClickOutside } from '../../hooks/useClickOutside';
+import CustomCheckbox from '../../components/CustomElements/Checkbox/CustomCheckbox';
+import CreateEventModal from '../../components/Calendar/CreateEventModal';
 
 // Define the days of the week
 const DAYS = [
@@ -27,56 +42,13 @@ const DAYS = [
   'Sunday',
 ];
 
-// Define hours for week/day/dispatch views
 const HOURS = Array.from({ length: 18 }, (_, i) => {
-  // From 6 AM to 11 PM
   const hour = i + 6;
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const displayHour = hour > 12 ? hour - 12 : hour;
   return `${displayHour}:00 ${ampm}`;
 });
 
-// Event categories with their styling
-const EVENT_CATEGORIES = {
-  job: {
-    name: 'Job',
-    colors: 'bg-bg-primary text-white',
-    hoverColors: 'hover:bg-emerald-600',
-    leftBorder: 'border-l-4 border-text-primary',
-  },
-  appointment: {
-    name: 'Appointment',
-    colors: 'bg-indigo-500 text-white',
-    hoverColors: 'hover:bg-indigo-600',
-    leftBorder: 'border-l-4 border-indigo-700',
-  },
-  event: {
-    name: 'Event',
-    colors: 'bg-amber-500 text-white',
-    hoverColors: 'hover:bg-amber-600',
-    leftBorder: 'border-l-4 border-amber-700',
-  },
-  timeoff: {
-    name: 'Time Off',
-    colors: 'bg-rose-500 text-white',
-    hoverColors: 'hover:bg-rose-600',
-    leftBorder: 'border-l-4 border-rose-700',
-  },
-  block: {
-    name: 'Block',
-    colors: 'bg-slate-500 text-white',
-    hoverColors: 'hover:bg-slate-600',
-    leftBorder: 'border-l-4 border-slate-700',
-  },
-  reminder: {
-    name: 'Reminder',
-    colors: 'bg-orange-500 text-white',
-    hoverColors: 'hover:bg-orange-600',
-    leftBorder: 'border-l-4 border-orange-700',
-  },
-};
-
-// Sample events data
 const sampleEvents = [
   {
     id: 1,
@@ -88,7 +60,7 @@ const sampleEvents = [
     location: '123 Main St',
     priority: 'High',
     employeeId: 'emp1',
-    coords: [40.7128, -74.006], // New York City
+    coords: [40.7128, -74.006],
   },
   {
     id: 2,
@@ -100,7 +72,7 @@ const sampleEvents = [
     location: '456 Oak Ave',
     priority: 'Medium',
     employeeId: 'emp2',
-    coords: [34.0522, -118.2437], // Los Angeles
+    coords: [34.0522, -118.2437],
   },
   {
     id: 3,
@@ -111,7 +83,7 @@ const sampleEvents = [
     location: 'Office',
     priority: 'Low',
     employeeId: 'emp1',
-    coords: [41.8781, -87.6298], // Chicago
+    coords: [41.8781, -87.6298],
   },
   {
     id: 4,
@@ -122,31 +94,31 @@ const sampleEvents = [
     automated: true,
     priority: 'Medium',
     employeeId: 'emp3',
-    coords: [29.7604, -95.3698], // Houston
+    coords: [29.7604, -95.3698],
   },
   {
     id: 8,
     title: 'Emergency Repair',
     category: 'job',
-    date: new Date(new Date().setDate(new Date().getDate() + 1)), // Tomorrow
+    date: new Date(new Date().setDate(new Date().getDate() + 1)),
     time: '11:00 AM',
     customer: 'Alice Wonderland',
     location: '777 Fantasy Ln',
     priority: 'High',
     employeeId: 'emp2',
-    coords: [33.4484, -112.074], // Phoenix
+    coords: [33.4484, -112.074],
   },
   {
     id: 9,
     title: 'Routine Check-up',
     category: 'appointment',
-    date: new Date(new Date().setDate(new Date().getDate() - 2)), // Two days ago
+    date: new Date(new Date().setDate(new Date().getDate() - 2)),
     time: '3:00 PM',
     customer: 'Bob The Builder',
     location: 'Construction Site',
     priority: 'Low',
     employeeId: 'emp1',
-    coords: [39.9526, -75.1652], // Philadelphia
+    coords: [39.9526, -75.1652],
   },
 ];
 
@@ -189,188 +161,6 @@ const employees = [
   { id: 'emp4', name: 'Diana Prince' },
 ];
 
-// Custom Dropdown Component
-const CustomDropdown = ({ value, options, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className='relative'>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className='min-w-32 flex items-center justify-between space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-bg-primary focus:border-bg-primary'
-      >
-        <span className='text-sm font-medium'>{value}</span>
-        <ChevronDown
-          className={`w-4 h-4 transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
-
-      {isOpen && (
-        <div className='absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-10'>
-          {options.map((option) => (
-            <button
-              key={option}
-              onClick={() => {
-                onChange(option);
-                setIsOpen(false);
-              }}
-              className='w-full text-left px-4 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg'
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Mini Calendar Component
-const MiniCalendar = ({ selectedDate, onDateSelect, onClose }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date(selectedDate));
-
-  const getDaysInMonth = (year, month) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (year, month) => {
-    return new Date(year, month, 1);
-  };
-
-  const generateCalendarDays = (date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-
-    const firstDayOfMonth = getFirstDayOfMonth(year, month);
-    let startDayOfWeek = firstDayOfMonth.getDay();
-    startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Adjust for Monday start
-
-    const days = [];
-
-    const numDaysInPrevMonth = getDaysInMonth(year, month - 1);
-    for (let i = 0; i < startDayOfWeek; i++) {
-      days.unshift({
-        date: new Date(year, month - 1, numDaysInPrevMonth - i),
-        isCurrentMonth: false,
-      });
-    }
-
-    const numDaysInCurrentMonth = getDaysInMonth(year, month);
-    for (let i = 1; i <= numDaysInCurrentMonth; i++) {
-      days.push({
-        date: new Date(year, month, i),
-        isCurrentMonth: true,
-      });
-    }
-
-    let nextMonthDay = 1;
-    while (days.length % 7 !== 0 || days.length < 35) {
-      days.push({
-        date: new Date(year, month + 1, nextMonthDay),
-        isCurrentMonth: false,
-      });
-      nextMonthDay++;
-    }
-
-    return days;
-  };
-
-  const calendarDays = generateCalendarDays(currentMonth);
-
-  return (
-    <div className='absolute top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-20 w-80'>
-      <div className='flex items-center justify-between mb-4'>
-        <button
-          onClick={() =>
-            setCurrentMonth(
-              new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1)
-            )
-          }
-          className='p-1 hover:bg-gray-100 rounded'
-        >
-          <ChevronLeft className='w-4 h-4' />
-        </button>
-        <span className='font-medium'>
-          {currentMonth.toLocaleString('en-US', {
-            month: 'long',
-            year: 'numeric',
-          })}
-        </span>
-        <button
-          onClick={() =>
-            setCurrentMonth(
-              new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1)
-            )
-          }
-          className='p-1 hover:bg-gray-100 rounded'
-        >
-          <ChevronRight className='w-4 h-4' />
-        </button>
-      </div>
-
-      <div className='grid grid-cols-7 gap-1 mb-2'>
-        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => (
-          <div
-            key={day}
-            className='text-center text-xs font-medium text-gray-500 py-1'
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-
-      <div className='grid grid-cols-7 gap-1'>
-        {calendarDays.slice(0, 35).map((day, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              onDateSelect(day.date);
-              onClose();
-            }}
-            className={`
-              p-1 text-xs rounded hover:bg-gray-100
-              ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
-              ${
-                day.date.toDateString() === selectedDate.toDateString()
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : ''
-              }
-              ${
-                day.date.toDateString() === new Date().toDateString()
-                  ? 'font-bold'
-                  : ''
-              }
-            `}
-          >
-            {day.date.getDate()}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Unscheduled Job Component
-const UnscheduledJob = ({ job, onClick }) => {
-  const category = EVENT_CATEGORIES[job.category];
-
-  return (
-    <div
-      className={`
-        ${category.colors} ${category.hoverColors} ${category.leftBorder}
-        p-2 font-medium cursor-pointer
-        text-sm transition-all duration-200 shadow-sm mb-2 rounded-md
-      `}
-      onClick={() => onClick(job)}
-    >
-      <div className='font-semibold truncate flex-1'>{job.title}</div>
-      <div className='text-xs opacity-90'>{job.customer}</div>
-    </div>
-  );
-};
-
 // Function to get events for a specific date
 const getEventsForDate = (date, events) => {
   return events.filter(
@@ -387,33 +177,6 @@ const getEventsForDateAndEmployee = (date, employeeId, events) => {
   );
 };
 
-// Event component
-const CalendarEvent = ({ event, onClick }) => {
-  const category = EVENT_CATEGORIES[event.category];
-
-  return (
-    <div
-      className={`
-        ${category.colors} ${category.hoverColors} ${category.leftBorder}
-        py-1.5 px-2 font-medium cursor-pointer
-        text-xs transition-all duration-200 shadow-sm rounded-md
-        ${event.automated ? 'opacity-80' : ''}
-      `}
-      onClick={() => onClick(event)}
-      title={`${event.title} ${event.time ? `- ${event.time}` : ''}`}
-    >
-      <div className='flex items-center justify-between'>
-        <span className='font-semibold truncate flex-1'>{event.title}</span>
-        {event.time && (
-          <span className='text-xs opacity-90 ml-1 flex-shrink-0'>
-            {event.time}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-};
-
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedView, setSelectedView] = useState('Month'); // 'Month', 'Week', 'Day', 'Dispatch'
@@ -422,6 +185,45 @@ const Calendar = () => {
   const [unscheduledSearch, setUnscheduledSearch] = useState('');
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
   const [mapInstance, setMapInstance] = useState(null); // State to hold the Leaflet map instance
+  const [isCalendarEventModalOpen, setIsCalendarEventModalOpen] =
+    useState<boolean>(false);
+  const [
+    createCalendarEventModalPosition,
+    setCreateCalendarEventModalPosition,
+  ] = useState({
+    x: 0,
+    y: 0,
+  });
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  const calendarRef = useRef<HTMLDivElement | null>(null);
+  const calendarEventModalRef = useClickOutside<HTMLDivElement>(() =>
+    setIsCalendarEventModalOpen(false)
+  );
+
+  const handleCalendarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!calendarRef.current) return;
+
+    const calendarRect = calendarRef.current.getBoundingClientRect();
+    const modalWidth = 200;
+    const modalHeight = 165;
+
+    const relativeX = e.clientX - calendarRect.left;
+    const relativeY = e.clientY - calendarRect.top;
+
+    let posX = relativeX;
+    let posY = relativeY;
+
+    if (posX + modalWidth > calendarRect.width) posX -= modalWidth;
+
+    if (posY + modalHeight > calendarRect.height) posY -= modalHeight;
+
+    setCreateCalendarEventModalPosition({
+      x: posX,
+      y: posY,
+    });
+    setIsCalendarEventModalOpen(true);
+  };
 
   // Function to get the number of days in a specific month and year
   const getDaysInMonth = (year, month) => {
@@ -476,53 +278,6 @@ const Calendar = () => {
 
   const calendarDays = generateCalendarDays(currentDate);
 
-  // Helper to format the current month and year for display
-  const formatMonthYear = (date) => {
-    return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-  };
-
-  // Helper to format date as "Month Day, Year"
-  const formatDate = (date) => {
-    return date.toLocaleString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  // Helper to get the start of the week (Monday) for a given date
-  const getStartOfWeek = (date) => {
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
-    return new Date(date.getFullYear(), date.getMonth(), diff);
-  };
-
-  // Helper to get days for the current week
-  const getDaysForWeek = (date) => {
-    const startOfWeek = getStartOfWeek(date);
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(startOfWeek);
-      d.setDate(startOfWeek.getDate() + i);
-      return d;
-    });
-  };
-
-  // Helper to get current GMT offset
-  const getCurrentGMTPlusOffset = () => {
-    const date = new Date();
-    const offsetMinutes = date.getTimezoneOffset(); // Offset in minutes from UTC
-    const offsetHours = -offsetMinutes / 60; // Convert to hours, negate because getTimezoneOffset is UTC-local
-    const sign = offsetHours >= 0 ? '+' : '-';
-    const absOffsetHours = Math.abs(Math.floor(offsetHours));
-    const absOffsetMinutes = Math.abs(offsetMinutes % 60);
-
-    const formattedOffset = `GMT${sign}${String(absOffsetHours).padStart(
-      2,
-      '0'
-    )}:${String(absOffsetMinutes).padStart(2, '0')}`;
-    return formattedOffset;
-  };
-
   const goToPrevious = () => {
     setCurrentDate((prevDate) => {
       const newDate = new Date(prevDate);
@@ -565,35 +320,34 @@ const Calendar = () => {
 
   // Effect for Leaflet Map Initialization
   useEffect(() => {
+    let currentMapInstance = null; // Declare here so it's scoped to this effect run
+
     if (!isCalendarView) {
-      // Only initialize map if Map view is active
-      if (mapInstance) {
-        mapInstance.remove(); // Clean up existing map instance
-      }
+      // The div with id 'map-container' will only exist in the DOM when !isCalendarView is true
+      // So it's safe to create a new map instance here without worrying about reuse
+      currentMapInstance = L.map('map-container').setView(
+        [44.20169, 17.90397],
+        6
+      );
 
-      // Initialize the map
-      const newMap = L.map('map-container').setView([39.8283, -98.5795], 4); // Centered on USA
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
+        currentMapInstance
+      );
 
-      // Add OpenStreetMap tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(newMap);
-
-      setMapInstance(newMap);
-
-      return () => {
-        // Cleanup function: remove map when component unmounts or view changes
-        newMap.remove();
-        setMapInstance(null);
-      };
-    } else {
-      if (mapInstance) {
-        mapInstance.remove(); // Remove map if switching back to calendar view
-        setMapInstance(null);
-      }
+      // Store the instance in state if needed for future interactions (e.g., adding markers later)
+      setMapInstance(currentMapInstance);
     }
-  }, [isCalendarView]); // Re-run effect when isCalendarView changes
+
+    return () => {
+      // This cleanup function runs when the component unmounts or
+      // before the effect re-runs (i.e., when isCalendarView changes).
+      if (currentMapInstance) {
+        // Check if a map was actually created in this effect run
+        currentMapInstance.remove();
+        setMapInstance(null); // Ensure state is cleared
+      }
+    };
+  }, [isCalendarView]); // Dependency array: re-run effect when isCalendarView changes
 
   // Render logic for different views
   const renderCalendarView = () => {
@@ -604,13 +358,17 @@ const Calendar = () => {
             {DAYS.map((day) => (
               <div
                 key={day}
-                className='text-center py-3 text-sm font-medium text-gray-600'
+                className='text-center py-3 text-sm font-semibold text-text-primary'
               >
                 {day}
               </div>
             ))}
           </div>
-          <div className='divide-y divide-gray-200'>
+          <div
+            ref={calendarRef}
+            onClick={(e) => handleCalendarClick(e)}
+            className='relative divide-y divide-gray-200'
+          >
             {[0, 1, 2, 3, 4, 5].map((weekIndex) => (
               <div
                 key={weekIndex}
@@ -624,6 +382,7 @@ const Calendar = () => {
                     return (
                       <div
                         key={index}
+                        onClick={() => setSelectedDay(day.date)}
                         className={`px-2 pt-2 h-40 flex flex-col justify-between
                           ${
                             day.isCurrentMonth
@@ -634,8 +393,12 @@ const Calendar = () => {
                             day.date.toDateString() ===
                             new Date().toDateString()
                               ? 'bg-blue-50'
+                              : +selectedDay == +day.date
+                              ? 'bg-bg-primary/20'
                               : ''
-                          }`}
+                          }
+                          ${+selectedDay == +day.date && 'bg-bg-primary/20'}
+                          `}
                       >
                         <div
                           className={`text-left text-sm font-semibold mb-1.5 ${
@@ -670,6 +433,13 @@ const Calendar = () => {
                   })}
               </div>
             ))}
+            <CreateCalendarEventModal
+              ref={calendarEventModalRef}
+              isOpen={isCalendarEventModalOpen}
+              createCalendarEventModalPosition={
+                createCalendarEventModalPosition
+              }
+            />
           </div>
         </div>
       );
@@ -833,39 +603,49 @@ const Calendar = () => {
     } else if (selectedView === 'Dispatch') {
       const currentDay = currentDate; // Only one day for dispatch view
       return (
-        <div className='rounded-lg border border-gray-200 overflow-hidden'>
-          {/* Header row: Employee | Hours (scrollable) */}
-          <div className='flex border-b-3 border-gray-200 rounded-t-lg'>
-            <div className='w-[160px] text-center py-3 text-sm font-medium text-gray-600 flex items-center justify-center border-r border-gray-200 flex-shrink-0'>
+        <div className='w-full max-w-full flex rounded-lg border border-gray-200'>
+          <div className='w-1/10 overflow-x-scroll'>
+            <div className='min-h-[53px] text-center border-b py-4 text-sm font-medium text-gray-600 flex items-center justify-center border-r border-gray-200 flex-shrink-0'>
+              {' '}
+              {/* Changed border-b-[3px] to border-b and added border-r for consistency */}
               Employee
             </div>
-            <div className='flex-1 overflow-x-auto'>
-              {' '}
-              {/* This will scroll horizontally */}
-              <div className='grid grid-flow-col auto-cols-[minmax(100px,1fr)] divide-x divide-gray-200'>
-                {HOURS.map((hour, index) => (
-                  <div
-                    key={index}
-                    className='text-center py-3 text-sm font-medium text-gray-600'
-                  >
-                    {hour}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Content rows: Employee Name | Events for hours (scrollable) */}
-          <div className='divide-y divide-gray-200'>
-            {employees.map((employee) => (
-              <div key={employee.id} className='flex'>
-                <div className='w-[160px] py-2 px-2 text-sm font-medium text-gray-700 flex items-center border-r border-gray-200 flex-shrink-0'>
+            <div className='divide-y divide-gray-200'>
+              {employees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className='py-4 px-2 text-sm font-medium text-gray-700 flex items-center border-r border-gray-200 flex-shrink-0'
+                >
                   {employee.name}
                 </div>
-                <div className='flex-1 overflow-x-auto'>
+              ))}
+            </div>
+          </div>
+          <div className='w-9/10 flex-1 overflow-x-scroll'>
+            {/* Added border-b to this flex container for a single, consistent bottom border under all hours */}
+            <div className='flex '>
+              {HOURS.map((hour, index) => (
+                <div
+                  key={index}
+                  // Changed border-b-[3px] to border-b for consistent thickness
+                  // Added border-r to ensure last column has a right border
+                  className='border-b min-w-[100px] text-center py-4 text-sm font-medium text-gray-600 border-r border-gray-200'
+                >
+                  {hour}
+                </div>
+              ))}
+            </div>
+            {/* Content rows: Employee Name | Events for hours (scrollable) */}
+            {/* <div className=''> */}
+            {employees.map((employee) => (
+              <div key={employee.id} className='flex'>
+                {' '}
+                {/* Removed extra space here */}
+                <div className='flex-1'>
                   {' '}
-                  {/* This will scroll horizontally */}
-                  <div className='grid grid-flow-col auto-cols-[minmax(100px,1fr)] divide-x divide-gray-200'>
+                  {/* Removed extra space here */}
+                  {/* Added border-b to each employee's event row to ensure horizontal separation */}
+                  <div className='grid grid-flow-col auto-cols-[minmax(100px,1fr)] divide-x divide-gray-200 border-b border-gray-200'>
                     {HOURS.map((hour, hourIndex) => {
                       const hourStart = parseInt(hour.split(':')[0]);
                       const ampm = hour.split(' ')[1];
@@ -895,13 +675,9 @@ const Calendar = () => {
                       return (
                         <div
                           key={hourIndex}
-                          className={`px-2 py-2 flex flex-col justify-start items-start min-h-[60px]
-                            ${
-                              currentDay.toDateString() ===
-                              new Date().toDateString()
-                                ? 'bg-blue-50'
-                                : ''
-                            }`}
+                          // Added border-r to ensure last column has a right border
+                          // Changed min-h from 60px back to 53px as per your current code
+                          className={`px-2 py-2 flex flex-col justify-start items-start min-h-[52px] overflow-hidden border-r border-gray-200`}
                         >
                           {eventsForEmployeeAndHour.map((event) => (
                             <CalendarEvent
@@ -928,7 +704,7 @@ const Calendar = () => {
   return (
     <div className='flex'>
       <Sidebar />
-      <div className='flex-1 ml-64'>
+      <div className='overflow-hidden flex-1 ml-64'>
         <Navbar />
         <div className='p-6'>
           <div className='flex justify-between items-center mb-6'>
@@ -964,7 +740,7 @@ const Calendar = () => {
                   </IconButton>
 
                   {showMiniCalendar && (
-                    <MiniCalendar
+                    <SmallCalendar
                       selectedDate={currentDate}
                       onDateSelect={setCurrentDate}
                       onClose={() => setShowMiniCalendar(false)}
@@ -1010,6 +786,7 @@ const Calendar = () => {
                 value={selectedView}
                 options={['Month', 'Week', 'Day', 'Dispatch']}
                 onChange={setSelectedView}
+                isCalendarView={isCalendarView}
               />
 
               {/* Unscheduled Jobs Icon */}
@@ -1039,10 +816,10 @@ const Calendar = () => {
                 renderCalendarView()
               ) : (
                 <div className='rounded-lg border border-gray-200 overflow-hidden'>
-                  {/* Map Container */}
+                  {/* Map Container is now conditionally rendered inside this div */}
                   <div
                     id='map-container'
-                    style={{ height: '600px', width: '100%' }}
+                    style={{ height: '700px', width: '100%' }}
                   ></div>
                 </div>
               )}
@@ -1106,6 +883,7 @@ const Calendar = () => {
           </div>
         </div>
       </div>
+      <CreateEventModal />
     </div>
   );
 };

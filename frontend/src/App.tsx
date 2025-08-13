@@ -3,7 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import Signin from './pages/auth/Signin';
 import Signup from './pages/auth/Signup';
 import Home from './pages/Home';
-import Calendar from './pages/Calendar';
+import Calendar from './pages/calendar/Calendar';
 import Customers from './pages/customers/Customers';
 import Jobs from './pages/jobs/Jobs';
 import Invoices from './pages/invoices/Invoices';
