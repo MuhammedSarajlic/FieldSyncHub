@@ -1,28 +1,32 @@
 using System.ComponentModel.DataAnnotations;
+using backend.Dtos.RecurrenceRuleDto;
 
-namespace backend.Models;
+namespace backend.Dtos.EventDto;
 
-public class Event
+public class UpdateEventDto
 {
-    [Key]
+    [Required]
     public Guid Id { get; set; }
+
     [Required]
     public Guid WorkspaceId { get; set; }
+
     [Required]
     public string Title { get; set; } = string.Empty;
+
     public string? Description { get; set; }
-    public List<Guid> AssignedToIds { get; set; } = [];
-    public List<Employee>? AssignedTo { get; set; }
+
+    public List<Guid> AssignedToIds { get; set; } = new();
+
     [Required]
     public DateTime StartDateTime { get; set; }
+
     [Required]
     public DateTime EndDateTime { get; set; }
     public bool IsAllDay { get; set; } = false;
+
     public bool IsRecurring { get; set; } = false;
+
     public Guid? RecurrenceRuleId { get; set; }
-    public RecurrenceRule? RecurrenceRule { get; set; }
-    [Required]
-    public Guid CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public UpdateRecurrenceRuleDto? RecurrenceRule { get; set; }
 }

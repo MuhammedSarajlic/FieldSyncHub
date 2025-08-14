@@ -29,6 +29,8 @@ public class DataContext : DbContext
     public DbSet<Request> Requests => Set<Request>();
     public DbSet<QuoteAttachment> QuoteAttachments => Set<QuoteAttachment>();
     public DbSet<ActivityHistory> ActivityHistorys => Set<ActivityHistory>();
+    public DbSet<Event> Events => Set<Event>();
+    public DbSet<RecurrenceRule> RecurrenceRules => Set<RecurrenceRule>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -151,6 +153,15 @@ public class DataContext : DbContext
             .HasMany(q => q.InternalNotes)
             .WithMany()
             .UsingEntity(j => j.ToTable("QuoteInternalNotes"));
+
+        modelBuilder.Entity<Event>()
+            .HasMany(e => e.AssignedTo)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "EventEmployees",
+                j => j.HasOne<Employee>().WithMany().HasForeignKey("EmployeeId"),
+                j => j.HasOne<Event>().WithMany().HasForeignKey("EventId")
+            );
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);

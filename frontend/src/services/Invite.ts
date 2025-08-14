@@ -7,6 +7,7 @@ export async function SendInvite(email: string, workspaceId: string) {
   );
   return response;
 }
+
 export async function SendInviteBulk(emails: string[], workspaceId: string) {
   const response = await api.post(`/invite/send-invite/bulk`, {
     emails,

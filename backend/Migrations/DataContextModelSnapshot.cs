@@ -310,6 +310,9 @@ namespace backend.Migrations
                     b.Property<string>("Department")
                         .HasColumnType("longtext");
 
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("HireDate")
                         .HasColumnType("datetime(6)");
 
@@ -341,6 +344,8 @@ namespace backend.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EventId");
 
                     b.HasIndex("UserId");
 
@@ -386,6 +391,57 @@ namespace backend.Migrations
                     b.HasIndex("WorkspaceId");
 
                     b.ToTable("EmployeeInvites");
+                });
+
+            modelBuilder.Entity("backend.Models.Event", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.PrimitiveCollection<string>("AssignedToIds")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("EndDateTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsAllDay")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid?>("RecurrenceRuleId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("StartDateTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("WorkspaceId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecurrenceRuleId");
+
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("backend.Models.Invoice", b =>
@@ -843,6 +899,54 @@ namespace backend.Migrations
                     b.ToTable("QuoteAttachments");
                 });
 
+            modelBuilder.Entity("backend.Models.RecurrenceRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("DayOfMonth")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DayOfWeekInMonth")
+                        .HasColumnType("int");
+
+                    b.PrimitiveCollection<string>("DaysOfWeek")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("EndType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Frequency")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Interval")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MonthOfYear")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OccurrenceCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("WeekOfMonth")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RecurrenceRules");
+                });
+
             modelBuilder.Entity("backend.Models.RequestModels.Request", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1175,6 +1279,10 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Employee", b =>
                 {
+                    b.HasOne("backend.Models.Event", null)
+                        .WithMany("AssignedTo")
+                        .HasForeignKey("EventId");
+
                     b.HasOne("backend.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1201,6 +1309,15 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Workspace");
+                });
+
+            modelBuilder.Entity("backend.Models.Event", b =>
+                {
+                    b.HasOne("backend.Models.RecurrenceRule", "RecurrenceRule")
+                        .WithMany()
+                        .HasForeignKey("RecurrenceRuleId");
+
+                    b.Navigation("RecurrenceRule");
                 });
 
             modelBuilder.Entity("backend.Models.Invoice", b =>
@@ -1397,6 +1514,11 @@ namespace backend.Migrations
                     b.Navigation("CustomerPhones");
 
                     b.Navigation("Properties");
+                });
+
+            modelBuilder.Entity("backend.Models.Event", b =>
+                {
+                    b.Navigation("AssignedTo");
                 });
 
             modelBuilder.Entity("backend.Models.Invoice", b =>

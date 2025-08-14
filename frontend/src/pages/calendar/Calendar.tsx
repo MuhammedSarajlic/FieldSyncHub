@@ -30,6 +30,8 @@ import { formatDate } from '../../utils/FuntionHelpers/formatDate';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import CustomCheckbox from '../../components/CustomElements/Checkbox/CustomCheckbox';
 import CreateEventModal from '../../components/Calendar/CreateEventModal';
+import { GetEventsByWorkspace } from '../../services/Event';
+import { useAuth } from '../../context/AuthProvider';
 
 // Define the days of the week
 const DAYS = [
@@ -163,9 +165,11 @@ const employees = [
 
 // Function to get events for a specific date
 const getEventsForDate = (date, events) => {
-  return events.filter(
-    (event) => event.date.toDateString() === date.toDateString()
-  );
+  return events.filter((event) => {
+    const eventDate = new Date(event.startDateTime).toLocaleDateString();
+    const selectedDate = date.toLocaleDateString();
+    return eventDate === selectedDate;
+  });
 };
 
 // Function to get events for a specific date and employee
@@ -178,13 +182,16 @@ const getEventsForDateAndEmployee = (date, employeeId, events) => {
 };
 
 const Calendar = () => {
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedView, setSelectedView] = useState('Month'); // 'Month', 'Week', 'Day', 'Dispatch'
   const [isCalendarView, setIsCalendarView] = useState(true); // Toggles between Calendar and Map
   const [isUnscheduledOpen, setIsUnscheduledOpen] = useState(false); // Controls unscheduled jobs sidebar visibility
   const [unscheduledSearch, setUnscheduledSearch] = useState('');
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
-  const [mapInstance, setMapInstance] = useState(null); // State to hold the Leaflet map instance
+  const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
+  const [mapInstance, setMapInstance] = useState(null);
+  const [calendarEvents, setCalendarEvents] = useState([]);
   const [isCalendarEventModalOpen, setIsCalendarEventModalOpen] =
     useState<boolean>(false);
   const [
@@ -318,6 +325,18 @@ const Calendar = () => {
       job.location.toLowerCase().includes(unscheduledSearch.toLowerCase())
   );
 
+  const fetchCalendarEvents = async () => {
+    if (!user?.workspace) return;
+    const response = await GetEventsByWorkspace(user.workspace.id);
+    if (response.status === 200) {
+      setCalendarEvents(response.data);
+    }
+  };
+
+  useEffect(() => {
+    fetchCalendarEvents();
+  }, []);
+
   // Effect for Leaflet Map Initialization
   useEffect(() => {
     let currentMapInstance = null; // Declare here so it's scoped to this effect run
@@ -377,7 +396,10 @@ const Calendar = () => {
                 {calendarDays
                   .slice(weekIndex * 7, weekIndex * 7 + 7)
                   .map((day, index) => {
-                    const dayEvents = getEventsForDate(day.date, sampleEvents);
+                    const dayEvents = getEventsForDate(
+                      day.date,
+                      calendarEvents
+                    );
 
                     return (
                       <div
@@ -436,9 +458,11 @@ const Calendar = () => {
             <CreateCalendarEventModal
               ref={calendarEventModalRef}
               isOpen={isCalendarEventModalOpen}
+              onClose={() => setIsCalendarEventModalOpen(false)}
               createCalendarEventModalPosition={
                 createCalendarEventModalPosition
               }
+              setIsCreateEventModalOpen={setIsCreateEventModalOpen}
             />
           </div>
         </div>
@@ -883,7 +907,11 @@ const Calendar = () => {
           </div>
         </div>
       </div>
-      <CreateEventModal />
+      <CreateEventModal
+        isOpen={isCreateEventModalOpen}
+        onClose={() => setIsCreateEventModalOpen(false)}
+        selectedDay={selectedDay}
+      />
     </div>
   );
 };
