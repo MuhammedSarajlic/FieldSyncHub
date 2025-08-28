@@ -521,7 +521,7 @@ const Marketing = () => {
                       </div>
                       <div className='ml-3'>
                         <p className='text-sm font-medium text-gray-900'>
-                          Review Request
+                          Review Lead
                         </p>
                         <p className='mt-1 text-sm text-gray-500'>
                           Ask for Google review 3 days after job completion

@@ -3,11 +3,11 @@ import { TWorkspace } from './Workspace';
 import { TAddLineItem, TLineItem } from './LineItem';
 import { TQuote } from './Quote';
 import {
-  RequestPriority,
-  RequestStatus,
-} from '../constants/Enumeration/RequestEnum/RequestEnum';
+  LeadPriority,
+  LeadStatus,
+} from '../constants/Enumeration/LeadEnum/LeadEnum';
 
-export type TRequest = {
+export type TLead = {
   id: string;
   customerId: string;
   customer?: TCustomer;
@@ -19,15 +19,15 @@ export type TRequest = {
   description: string;
   preferredDate?: string;
   preferredTime?: string;
-  status: RequestStatus;
-  priority: RequestPriority;
+  status: LeadStatus;
+  priority: LeadPriority;
   lineItems: TLineItem[];
   notes?: string;
   createdAt: string;
   updatedAt: string;
 };
 
-export type TAddRequest = {
+export type TAddLead = {
   customerId: string;
   quoteId?: string;
   workspaceId: string;
@@ -35,19 +35,19 @@ export type TAddRequest = {
   description: string;
   preferredDate?: string;
   preferredTime?: string;
-  priority: RequestPriority;
+  priority: LeadPriority;
   lineItems: TAddLineItem[];
   notes?: string;
 };
 
-export type TUpdateRequest = {
+export type TUpdateLead = {
   id: string;
   requestedDate?: string;
   description?: string;
   preferredDate?: string;
   preferredTime?: string;
-  status?: RequestStatus;
-  priority?: RequestPriority;
+  status?: LeadStatus;
+  priority?: LeadPriority;
   lineItems?: TAddLineItem[];
   notes?: string;
 };

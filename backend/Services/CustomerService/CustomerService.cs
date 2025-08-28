@@ -64,7 +64,7 @@ public class CustomerService : ICustomerService
         var totalInvoiceValue = invoices.Sum(i => i.Total);
 
         var jobsCount = await _context.Jobs.CountAsync(j => j.CustomerId == id);
-        var requestsCount = await _context.Requests.CountAsync(r => r.CustomerId == id);
+        var leadsCount = await _context.Leads.CountAsync(r => r.CustomerId == id);
         var quotesCount = await _context.Quotes.CountAsync(q => q.CustomerId == id);
         var invoicesCount = invoices.Count;
 
@@ -78,7 +78,7 @@ public class CustomerService : ICustomerService
                 Counts = new
                 {
                     Jobs = jobsCount,
-                    Requests = requestsCount,
+                    Leads = leadsCount,
                     Quotes = quotesCount,
                     Invoices = invoicesCount
                 }

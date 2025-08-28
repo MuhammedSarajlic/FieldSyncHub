@@ -7,9 +7,9 @@ const CalendarEvent = ({ event, onClick }) => {
       className={`
         ${category.colors} ${category.hoverColors} ${category.leftBorder}
         py-1.5 px-2 font-medium cursor-pointer
-        text-xs transition-all duration-200 shadow-sm rounded-md
+        text-xs transition-all duration-200 shadow-sm rounded-md z-50
       `}
-      onClick={() => onClick(event)}
+      onClick={(e) => onClick(e, event)}
       title={`${event.title} ${
         event.startDateTime ? `- ${event.startDateTime}` : ''
       }`}

@@ -6,7 +6,7 @@ export type TEvent = {
   workspaceId: string;
   title: string;
   description?: string;
-  assignedToIds: string[];
+  // assignedToIds: string[];
   assignedTo: TEmployee[];
   startDateTime: string;
   endDateTime: string;

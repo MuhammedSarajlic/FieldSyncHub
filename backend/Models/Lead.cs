@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using backend.Models.QuoteModels;
 
-namespace backend.Models.RequestModels;
+namespace backend.Models;
 
-public class Request
+public class Lead
 {
     [Key]
     public Guid Id { get; set; }
@@ -19,8 +19,8 @@ public class Request
     public string Description { get; set; } = string.Empty;
     public DateTime? PreferredDate { get; set; }
     public string? PreferredTime { get; set; }
-    public RequestStatus Status { get; set; } = RequestStatus.Pending;
-    public RequestPriority Priority { get; set; } = RequestPriority.Normal;
+    public LeadStatus Status { get; set; } = LeadStatus.Pending;
+    public LeadPriority Priority { get; set; } = LeadPriority.Normal;
     public List<LineItem> LineItems { get; set; } = [];
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -28,7 +28,7 @@ public class Request
 }
 
 
-public enum RequestStatus
+public enum LeadStatus
 {
     Pending,
     Reviewed,
@@ -37,7 +37,7 @@ public enum RequestStatus
     Converted
 }
 
-public enum RequestPriority
+public enum LeadPriority
 {
     Low,
     Normal,

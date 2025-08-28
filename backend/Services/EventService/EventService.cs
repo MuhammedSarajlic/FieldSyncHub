@@ -42,13 +42,14 @@ public class EventService : IEventService
 
     public async Task<Event> CreateEventAsync(CreateEventDto dto)
     {
+        var assignedIds = dto.AssignedToIds.ToArray();
+
         var entity = new Event
         {
             Id = Guid.NewGuid(),
             WorkspaceId = dto.WorkspaceId,
             Title = dto.Title,
             Description = dto.Description,
-            AssignedToIds = dto.AssignedToIds,
             StartDateTime = dto.StartDateTime,
             EndDateTime = dto.EndDateTime,
             IsAllDay = dto.IsAllDay,
@@ -56,8 +57,13 @@ public class EventService : IEventService
             RecurrenceRuleId = dto.RecurrenceRuleId,
             CreatedBy = dto.CreatedBy,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            AssignedTo = _context.Employees
+                .AsEnumerable()
+                .Where(e => dto.AssignedToIds.Contains(e.Id))
+                .ToList()
         };
+
 
         if (dto.RecurrenceRule != null)
         {
@@ -89,6 +95,7 @@ public class EventService : IEventService
     {
         var entity = await _context.Events
             .Include(e => e.RecurrenceRule)
+            .Include(e => e.AssignedTo)
             .FirstOrDefaultAsync(e => e.Id == dto.Id);
 
         if (entity == null)
@@ -97,13 +104,31 @@ public class EventService : IEventService
         entity.WorkspaceId = dto.WorkspaceId;
         entity.Title = dto.Title;
         entity.Description = dto.Description;
-        entity.AssignedToIds = dto.AssignedToIds;
         entity.StartDateTime = dto.StartDateTime;
         entity.EndDateTime = dto.EndDateTime;
         entity.IsAllDay = dto.IsAllDay;
         entity.IsRecurring = dto.IsRecurring;
         entity.RecurrenceRuleId = dto.RecurrenceRuleId;
         entity.UpdatedAt = DateTime.UtcNow;
+
+        if (dto.AssignedToIds != null)
+        {
+            var currentIds = entity.AssignedTo.Select(e => e.Id).ToList();
+            var newIds = dto.AssignedToIds;
+
+            // remove old
+            var toRemove = entity.AssignedTo.Where(e => !newIds.Contains(e.Id)).ToList();
+            foreach (var emp in toRemove)
+                entity.AssignedTo.Remove(emp);
+
+            // add new
+            var toAdd = _context.Employees
+                .AsEnumerable()
+                .Where(e => newIds.Except(currentIds).Contains(e.Id))
+                .ToList();
+            foreach (var emp in toAdd)
+                entity.AssignedTo.Add(emp);
+        }
 
         if (dto.RecurrenceRule != null)
         {
@@ -132,6 +157,8 @@ public class EventService : IEventService
         await _context.SaveChangesAsync();
         return entity;
     }
+
+
 
     public async Task<bool> DeleteEventAsync(Guid id)
     {

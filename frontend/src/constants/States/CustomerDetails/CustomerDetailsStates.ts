@@ -3,7 +3,7 @@ import { TCustomerDetailsStats, TCustomerTab } from '../../../types/Customer';
 import { TInvoice } from '../../../types/Invoice';
 import { TJob } from '../../../types/Job';
 import { TQuote } from '../../../types/Quote';
-import { TRequest } from '../../../types/Request';
+import { TRequest } from '../../../types/Lead';
 
 export const customerStatsInitialState: TCustomerDetailsStats = {
   totalJobs: 0,
@@ -24,8 +24,8 @@ export const customerTabsInitialState: TCustomerTab[] = [
     icon: Briefcase,
   },
   {
-    id: 'requests',
-    label: 'Requests',
+    id: 'leads',
+    label: 'Leads',
     count: 0,
     loaded: false,
     loading: false,

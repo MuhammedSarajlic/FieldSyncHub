@@ -11,7 +11,7 @@ import CustomerDetails from './pages/customers/CustomerDetails';
 import JobDetails from './pages/jobs/JobsDetails';
 import Employees from './pages/employees/Employees';
 import Dispatch from './pages/Dispatch';
-import Requests from './pages/Requests';
+import Leads from './pages/Leads';
 import Quotes from './pages/quotes/Quotes';
 import Pricebook from './pages/pricebook/Pricebook';
 import Marketing from './pages/Marketing';
@@ -68,7 +68,7 @@ function App() {
             <Route path='employees' element={<Employees />} />
             <Route path='employees/:employeeId' element={<EmployeeDetails />} />
             <Route path='dispatch' element={<Dispatch />} />
-            <Route path='requests' element={<Requests />} />
+            <Route path='leads' element={<Leads />} />
             <Route path='quotes' element={<Quotes />} />
             <Route path='quotes/:quoteId' element={<QuoteDetails />} />
             <Route path='pricebook' element={<Pricebook />} />

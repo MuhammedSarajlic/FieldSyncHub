@@ -11,13 +11,14 @@ using backend.Services.NotesService;
 using backend.Services.CustomerPhoneService;
 using backend.Services.PropertyService;
 using backend.Services.QuoteService;
-using backend.Services.RequestService;
+using backend.Services.LeadService;
 using backend.Services.ServiceItemService;
 using backend.Services.TokenService;
 using backend.Services.UserService;
 using backend.Services.WorkspaceService;
 using backend.Services.PdfService;
 using backend.Services.EventService;
+using backend.Services.CalendarService;
 
 namespace backend.Extensions;
 
@@ -43,8 +44,9 @@ public static class ServiceExtension
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IQuoteService, QuoteService>();
-        services.AddScoped<IRequestService, RequestService>();
+        services.AddScoped<ILeadService, LeadService>();
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<ICalendarService, CalendarService>();
         services.AddScoped<QuotePdfService>();
     }
 }

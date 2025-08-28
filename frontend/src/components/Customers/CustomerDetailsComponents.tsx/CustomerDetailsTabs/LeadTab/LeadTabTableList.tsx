@@ -1,22 +1,20 @@
 import { TCustomerTab } from '../../../../../types/Customer';
-import { TRequest } from '../../../../../types/Request';
+import { TLead } from '../../../../../types/Lead';
 import TabTableLoader from '../../../../CustomElements/Loaders/TabTableLoader';
 import EmptyTabTable from '../EmptyTabTable';
-import RequestTabItem from './RequestTabItem';
+import LeadTabItem from './LeadTabItem';
 
-interface ICustomerRequests {
-  requests: TRequest[];
+interface ILeadTabTableList {
+  leads: TLead[];
   tab: TCustomerTab;
 }
 
-const RequestTabTableList = ({ requests, tab }: ICustomerRequests) => {
+const LeadTabTableList = ({ leads, tab }: ILeadTabTableList) => {
   if (tab.loading) return <TabTableLoader label={tab.label} />;
   return (
     <div className='w-full'>
-      {requests.length > 0 ? (
-        requests.map((request) => (
-          <RequestTabItem key={request.id} request={request} />
-        ))
+      {leads.length > 0 ? (
+        leads.map((lead) => <LeadTabItem key={lead.id} lead={lead} />)
       ) : (
         <EmptyTabTable tab={tab} onButtonClick={() => {}} />
       )}
@@ -24,4 +22,4 @@ const RequestTabTableList = ({ requests, tab }: ICustomerRequests) => {
   );
 };
 
-export default RequestTabTableList;
+export default LeadTabTableList;

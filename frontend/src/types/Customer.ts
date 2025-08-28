@@ -5,7 +5,7 @@ import { TJob } from './Job';
 import { TNote } from './Note';
 import { TAddProperty, TProperty } from './Property';
 import { TQuote } from './Quote';
-import { TRequest } from './Request';
+import { TRequest } from './Lead';
 import { TAddCustomFieldValue, TCustomFieldValue } from './CustomFieldValue';
 
 export type TCustomer = {

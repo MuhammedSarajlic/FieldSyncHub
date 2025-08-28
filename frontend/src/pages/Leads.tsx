@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import PageUnderDevelopment from '../components/CustomElements/PageUnderDevelopment';
 
-// Mock data for service requests
-const requestsData = [
+// Mock data for service leads
+const leadsData = [
   {
     id: 'REQ-001',
     clientName: 'Robertson Construction',
@@ -81,8 +81,8 @@ const requestsData = [
   },
 ];
 
-const Requests = () => {
-  const [requests, setRequests] = useState(requestsData);
+const Leads = () => {
+  const [leads, setLeads] = useState(leadsData);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -90,22 +90,22 @@ const Requests = () => {
   const [sortOrder, setSortOrder] = useState('desc');
 
   // Filter and sort function
-  const filteredRequests = requests
-    .filter((request) => {
+  const filteredLeads = leads
+    .filter((lead) => {
       // Search filter
       const matchesSearch =
-        request.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.serviceType.toLowerCase().includes(searchQuery.toLowerCase());
+        lead.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.serviceType.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Status filter
       const matchesStatus =
-        statusFilter === 'All' || request.status === statusFilter;
+        statusFilter === 'All' || lead.status === statusFilter;
 
       // Priority filter
       const matchesPriority =
-        priorityFilter === 'All' || request.priority === priorityFilter;
+        priorityFilter === 'All' || lead.priority === priorityFilter;
 
       return matchesSearch && matchesStatus && matchesPriority;
     })
@@ -266,7 +266,7 @@ const Requests = () => {
                   </div>
                   <input
                     type='text'
-                    placeholder='Search requests...'
+                    placeholder='Search leads...'
                     className='pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -317,9 +317,9 @@ const Requests = () => {
               </div>
             </div>
 
-            {/* Requests Table */}
+            {/* Leads Table */}
             <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
-              {filteredRequests.length > 0 ? (
+              {filteredLeads.length > 0 ? (
                 <div className='overflow-x-auto'>
                   <table className='min-w-full divide-y divide-gray-200'>
                     <thead className='bg-gray-50'>
@@ -329,7 +329,7 @@ const Requests = () => {
                           onClick={() => handleSort('id')}
                         >
                           <div className='flex items-center'>
-                            <span>Request ID</span>
+                            <span>Lead ID</span>
                             {sortBy === 'id' && (
                               <ChevronDown
                                 className={`ml-1 h-4 w-4 transform ${
@@ -435,34 +435,34 @@ const Requests = () => {
                       </tr>
                     </thead>
                     <tbody className='bg-white divide-y divide-gray-200'>
-                      {filteredRequests.map((request) => (
+                      {filteredLeads.map((lead) => (
                         <tr
-                          key={request.id}
+                          key={lead.id}
                           className='hover:bg-gray-50 cursor-pointer transition-colors duration-150'
                         >
                           <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600'>
-                            {request.id}
+                            {lead.id}
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
                             <div className='flex items-center'>
                               <User className='h-4 w-4 mr-2 text-gray-500' />
-                              {request.clientName}
+                              {lead.clientName}
                             </div>
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                            {request.serviceType}
+                            {lead.serviceType}
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                            {formatDate(request.dateSubmitted)}
+                            {formatDate(lead.dateSubmitted)}
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                            {formatDate(request.scheduledDate)}
+                            {formatDate(lead.scheduledDate)}
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap'>
-                            <PriorityBadge priority={request.priority} />
+                            <PriorityBadge priority={lead.priority} />
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap'>
-                            <StatusBadge status={request.status} />
+                            <StatusBadge status={lead.status} />
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
                             <div className='flex space-x-2'>
@@ -482,17 +482,15 @@ const Requests = () => {
               ) : (
                 <div className='text-center py-10'>
                   <p className='text-gray-500'>
-                    No requests found matching your filters.
+                    No leads found matching your filters.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Request Details (Expandable) */}
+            {/* Lead Details (Expandable) */}
             <div className='mt-6 bg-white p-6 rounded-lg shadow-sm hidden'>
-              <h2 className='text-xl font-bold mb-4'>
-                Request Details - REQ-001
-              </h2>
+              <h2 className='text-xl font-bold mb-4'>Lead Details - REQ-001</h2>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div>
                   <div className='mb-4'>
@@ -524,7 +522,7 @@ const Requests = () => {
                 <div>
                   <div className='mb-4'>
                     <h3 className='text-sm font-medium text-gray-500'>
-                      Request Details
+                      Lead Details
                     </h3>
                     <p className='mt-1 text-sm text-gray-900'>
                       <span className='font-medium'>Service Type:</span>{' '}
@@ -560,4 +558,4 @@ const Requests = () => {
   );
 };
 
-export default Requests;
+export default Leads;

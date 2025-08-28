@@ -13,7 +13,7 @@ public class CreateEventDto
 
     public string? Description { get; set; }
 
-    public List<Guid> AssignedToIds { get; set; } = [];
+    public ICollection<Guid> AssignedToIds { get; set; } = [];
 
     [Required]
     public DateTime StartDateTime { get; set; }

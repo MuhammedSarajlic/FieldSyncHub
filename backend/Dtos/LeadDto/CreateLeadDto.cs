@@ -1,9 +1,9 @@
 using backend.Dtos.LineItemDto;
-using backend.Models.RequestModels;
+using backend.Models;
 
-namespace backend.Dtos.RequestDto;
+namespace backend.Dtos.LeadDto;
 
-public class CreateRequestDto
+public class CreateLeadDto
 {
     public Guid CustomerId { get; set; }
     public Guid? QuoteId { get; set; }
@@ -12,7 +12,7 @@ public class CreateRequestDto
     public string Description { get; set; } = string.Empty;
     public DateTime? PreferredDate { get; set; }
     public string? PreferredTime { get; set; }
-    public RequestPriority Priority { get; set; } = RequestPriority.Normal;
+    public LeadPriority Priority { get; set; } = LeadPriority.Normal;
     public List<CreateLineItemDto> LineItems { get; set; } = [];
     public string? Notes { get; set; }
 }

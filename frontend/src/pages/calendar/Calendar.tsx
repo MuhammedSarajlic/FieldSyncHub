@@ -438,7 +438,11 @@ const Calendar = () => {
                             <CalendarEvent
                               key={event.id}
                               event={event}
-                              onClick={(event) => {
+                              onClick={(
+                                e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+                                event
+                              ) => {
+                                e.stopPropagation();
                                 console.log('Event clicked:', event);
                               }}
                             />

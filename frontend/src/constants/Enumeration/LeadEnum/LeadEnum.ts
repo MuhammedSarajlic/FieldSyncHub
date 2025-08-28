@@ -1,4 +1,4 @@
-export enum RequestStatus {
+export enum LeadStatus {
   Pending,
   Reviewed,
   Approved,
@@ -6,7 +6,7 @@ export enum RequestStatus {
   Converted,
 }
 
-export enum RequestPriority {
+export enum LeadPriority {
   Low,
   Normal,
   High,

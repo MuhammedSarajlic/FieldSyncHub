@@ -20,20 +20,20 @@ import CustomerEditModal from '../../components/Customers/EditCustomerModal/Cust
 import { GetJobsByCustomer } from '../../services/Job';
 import { GetQuotesByCustomer } from '../../services/Quote';
 import { GetInvoicesByCustomer } from '../../services/Invoice';
-import { GetRequestsByCustomer } from '../../services/Request';
+import { GetLeadsByCustomer } from '../../services/Lead';
 import { TJob } from '../../types/Job';
 import { TInvoice } from '../../types/Invoice';
 import { TQuote } from '../../types/Quote';
 
 import JobTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerJobTab/JobTabTableList';
-import RequestTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/RequestTab/RequestTabTableList';
+import LeadTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/LeadTab/LeadTabTableList';
 import QuoteTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/CustomerQuoteTab/QuoteTabTableList';
 import InvoiceTabTableList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerDetailsTabs/InvoiceTab/InvoiceTabTableList';
 import CustomerInformation from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerInformation';
 import CustomerPropertyList from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/CustomerPropertyList';
 import CustomerEditPropertyModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/Modals/CustomerEditPropertyModal';
 import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
-import { TRequest } from '../../types/Request';
+import { TLead, TRequest } from '../../types/Lead';
 import CustomerStatCards from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerStatCards/CustomerStatCards';
 import {
   customerStatsInitialState,
@@ -73,7 +73,7 @@ const CustomerDetails = () => {
 
     let dataToUpdate = {};
     let jobs;
-    let requests;
+    let leads;
     let quotes;
     let invoices;
 
@@ -86,11 +86,11 @@ const CustomerDetails = () => {
           };
         }
         break;
-      case 'requests':
-        requests = await GetRequestsByCustomer(customerId);
-        if (requests.status === 200) {
+      case 'leads':
+        leads = await GetLeadsByCustomer(customerId);
+        if (leads.status === 200) {
           dataToUpdate = {
-            items: requests.data.payload,
+            items: leads.data.payload,
           };
         }
         break;
@@ -147,8 +147,8 @@ const CustomerDetails = () => {
           switch (tab.id) {
             case 'jobs':
               return { ...tab, count: counts.jobs };
-            case 'requests':
-              return { ...tab, count: counts.requests };
+            case 'leads':
+              return { ...tab, count: counts.leads };
             case 'quotes':
               return { ...tab, count: counts.quotes };
             case 'invoices':
@@ -205,10 +205,10 @@ const CustomerDetails = () => {
         return (
           <JobTabTableList jobs={activeTab.items as TJob[]} tab={activeTab} />
         );
-      case 'requests':
+      case 'leads':
         return (
-          <RequestTabTableList
-            requests={activeTab.items as TRequest[]}
+          <LeadTabTableList
+            leads={activeTab.items as TLead[]}
             tab={activeTab}
           />
         );

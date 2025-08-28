@@ -2,8 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using backend.Models.QuoteModels;
-using backend.Models.RequestModels;
-
 namespace backend.Models;
 
 public class LineItem
@@ -34,9 +32,9 @@ public class LineItem
     public Guid? QuoteId { get; set; }
     [JsonIgnore]
     public Quote? Quote { get; set; }
-    public Guid? RequestId { get; set; }
+    public Guid? LeadId { get; set; }
     [JsonIgnore]
-    public Request? Request { get; set; }
+    public Lead? Lead { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

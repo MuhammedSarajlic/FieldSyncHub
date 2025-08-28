@@ -15,7 +15,7 @@ export type TLineItem = {
   jobId?: string;
   invoiceId?: string;
   quoteId?: string;
-  requestId?: string;
+  leadId?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -48,7 +48,7 @@ export type TAddLineItem = {
   jobId?: string;
   invoiceId?: string;
   quoteId?: string;
-  requestId?: string;
+  leadId?: string;
 };
 
 export type TUpdateLineItem = {

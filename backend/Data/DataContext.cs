@@ -1,6 +1,5 @@
 using backend.Models;
 using backend.Models.QuoteModels;
-using backend.Models.RequestModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data;
@@ -26,7 +25,7 @@ public class DataContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Quote> Quotes => Set<Quote>();
-    public DbSet<Request> Requests => Set<Request>();
+    public DbSet<Lead> Leads => Set<Lead>();
     public DbSet<QuoteAttachment> QuoteAttachments => Set<QuoteAttachment>();
     public DbSet<ActivityHistory> ActivityHistorys => Set<ActivityHistory>();
     public DbSet<Event> Events => Set<Event>();
@@ -111,11 +110,11 @@ public class DataContext : DbContext
             .HasForeignKey(li => li.JobId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Request → LineItems
-        modelBuilder.Entity<Request>()
+        // Lead → LineItems
+        modelBuilder.Entity<Lead>()
             .HasMany(r => r.LineItems)
-            .WithOne(li => li.Request)
-            .HasForeignKey(li => li.RequestId)
+            .WithOne(li => li.Lead)
+            .HasForeignKey(li => li.LeadId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Job → StatusChange
@@ -125,8 +124,8 @@ public class DataContext : DbContext
             .HasForeignKey(s => s.JobId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Quote ↔ Request (optional)
-        modelBuilder.Entity<Request>()
+        // Quote ↔ Lead (optional)
+        modelBuilder.Entity<Lead>()
             .HasOne(r => r.Quote)
             .WithMany()
             .HasForeignKey(r => r.QuoteId)
@@ -156,12 +155,8 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<Event>()
             .HasMany(e => e.AssignedTo)
-            .WithMany()
-            .UsingEntity<Dictionary<string, object>>(
-                "EventEmployees",
-                j => j.HasOne<Employee>().WithMany().HasForeignKey("EmployeeId"),
-                j => j.HasOne<Event>().WithMany().HasForeignKey("EventId")
-            );
+            .WithMany() // if Employee doesn’t have backref
+            .UsingEntity(j => j.ToTable("EventEmployees")); // join table name
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);

@@ -11,8 +11,7 @@ public class Event
     [Required]
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public List<Guid> AssignedToIds { get; set; } = [];
-    public List<Employee>? AssignedTo { get; set; }
+    public ICollection<Employee> AssignedTo { get; set; } = [];
     [Required]
     public DateTime StartDateTime { get; set; }
     [Required]
