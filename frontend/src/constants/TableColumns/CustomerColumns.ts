@@ -35,10 +35,4 @@ export const customerColumns: TTableColumns = [
     accessor: (customer: TCustomer) => customer.emails?.[0] ?? '-',
     type: 'text',
   },
-  //   {
-  //     header: 'Tags',
-  //     accessor: 'tags',
-  //     type: 'currency',
-  //     align: 'right',
-  //   },
 ];

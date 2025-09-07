@@ -6,6 +6,7 @@ interface ICreateCalendarEventModal {
   createCalendarEventModalPosition: { x: number; y: number };
   onClose: () => void;
   setIsCreateEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsCreateJobModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CreateCalendarEventModal = forwardRef<
@@ -18,6 +19,7 @@ const CreateCalendarEventModal = forwardRef<
       createCalendarEventModalPosition,
       onClose,
       setIsCreateEventModalOpen,
+      setIsCreateJobModalOpen,
     },
     ref
   ) => {
@@ -37,9 +39,17 @@ const CreateCalendarEventModal = forwardRef<
         </div>
         <div className='p-2'>
           <ul>
-            <li className='p-2 flex items-center space-x-2 text-text-primary font-semibold rounded-md hover:bg-bg-primary/20 cursor-pointer'>
-              <Briefcase className='w-5.5 h-5.5' />
-              <p className='text-sm'>Job</p>
+            <li className=''>
+              <button
+                onClick={() => {
+                  setIsCreateJobModalOpen(true);
+                  onClose();
+                }}
+                className='p-2 w-full flex items-center space-x-2 text-text-primary font-semibold rounded-md hover:bg-bg-primary/20 cursor-pointer'
+              >
+                <Briefcase className='w-5.5 h-5.5' />
+                <p className='text-sm'>Job</p>
+              </button>
             </li>
             <li className='p-2 flex items-center space-x-2 text-text-primary font-semibold rounded-md hover:bg-bg-primary/20 cursor-pointer'>
               <ClipboardCheck className='w-5.5 h-5.5' />

@@ -140,7 +140,7 @@ const Pricebook = () => {
   return (
     <div className='flex h-screen'>
       <Sidebar />
-      <div className='flex-1 ml-[260px] flex flex-col'>
+      <div className='flex-1 ml-64'>
         <Navbar />
 
         <div className='px-6 pt-6 flex flex-col flex-1'>

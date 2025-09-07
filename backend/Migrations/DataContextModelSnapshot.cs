@@ -568,8 +568,8 @@ namespace backend.Migrations
                     b.Property<decimal>("DiscountValue")
                         .HasColumnType("decimal(65,30)");
 
-                    b.Property<int?>("Duration")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("EndDateTime")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("EstimatedDurationMinutes")
                         .HasColumnType("int");
@@ -596,15 +596,14 @@ namespace backend.Migrations
                     b.Property<Guid?>("PropertyId")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid?>("RecurrenceRuleId")
+                        .HasColumnType("char(36)");
+
                     b.Property<int>("ReminderDaysBefore")
                         .HasColumnType("int");
 
                     b.Property<bool>("ReminderSent")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Repeats")
-                        .IsRequired()
-                        .HasColumnType("longtext");
 
                     b.Property<bool>("SendInvoice")
                         .HasColumnType("tinyint(1)");
@@ -615,10 +614,7 @@ namespace backend.Migrations
                     b.Property<string>("Source")
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("StartTime")
+                    b.Property<DateTime>("StartDateTime")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("Status")
@@ -630,10 +626,6 @@ namespace backend.Migrations
 
                     b.Property<decimal>("TaxRate")
                         .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("TimeZone")
-                        .IsRequired()
-                        .HasColumnType("longtext");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -650,6 +642,8 @@ namespace backend.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("PropertyId");
+
+                    b.HasIndex("RecurrenceRuleId");
 
                     b.HasIndex("WorkspaceId");
 
@@ -672,13 +666,10 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Notes")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("PreferredDate")
+                    b.Property<DateTime?>("EndDateTime")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("PreferredTime")
+                    b.Property<string>("Notes")
                         .HasColumnType("longtext");
 
                     b.Property<int>("Priority")
@@ -688,6 +679,9 @@ namespace backend.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("RequestedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("StartDateTime")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("Status")
@@ -1374,9 +1368,15 @@ namespace backend.Migrations
                         .WithMany()
                         .HasForeignKey("PropertyId");
 
+                    b.HasOne("backend.Models.RecurrenceRule", "RecurrenceRule")
+                        .WithMany()
+                        .HasForeignKey("RecurrenceRuleId");
+
                     b.Navigation("Customer");
 
                     b.Navigation("Property");
+
+                    b.Navigation("RecurrenceRule");
                 });
 
             modelBuilder.Entity("backend.Models.Lead", b =>

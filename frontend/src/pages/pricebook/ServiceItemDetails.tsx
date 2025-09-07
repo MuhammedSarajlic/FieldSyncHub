@@ -90,7 +90,7 @@ const ServiceItemDetails = () => {
   return (
     <div className='flex h-screen'>
       <Sidebar />
-      <div className='flex-1 ml-[260px]'>
+      <div className='flex-1 ml-64'>
         <Navbar />
         {serviceItem ? (
           <>

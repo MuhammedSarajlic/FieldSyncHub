@@ -1,4 +1,5 @@
 using backend.Dtos.LineItemDto;
+using backend.Dtos.RecurrenceRuleDto;
 using backend.Models;
 using backend.Models.QuoteModels;
 
@@ -11,13 +12,12 @@ public class UpdateJobDto
     public string? Description { get; set; }
     public Guid? PropertyId { get; set; }
     public JobType? JobType { get; set; }
-    public string? Repeats { get; set; }
     public ICollection<UpdateLineItemDto>? LineItems { get; set; }
     public JobPriority? Priority { get; set; }
-    public DateTime? StartDate { get; set; }
-    public DateTime? StartTime { get; set; }
+    public DateTime StartDateTime { get; set; }
+    public DateTime EndDateTime { get; set; }
+    public UpdateRecurrenceRuleDto? RecurrenceRule { get; set; }
     public int? ArrivalWindow { get; set; }
-    public int? Duration { get; set; }
     public int? EstimatedDurationMinutes { get; set; }
     public List<Employee>? AssignedTeamMembers { get; set; }
     public decimal? DepositAmount { get; set; }

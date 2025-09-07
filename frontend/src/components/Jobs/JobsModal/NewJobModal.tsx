@@ -11,6 +11,7 @@ import {
   ChevronDown,
   UserPlus,
   Home,
+  Calendar,
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
 import { TAddJob, TJob } from '../../../types/Job';
@@ -38,14 +39,27 @@ import { getJobStatus } from '../../../utils/FuntionHelpers/JobUtils/getJobStatu
 import { getJobPriority } from '../../../utils/FuntionHelpers/JobUtils/getJobPriority';
 import IconButton from '../../CustomElements/Buttons/IconButton';
 import CustomButton from '../../CustomElements/Buttons/CustomButton';
+import {
+  DayOfWeek,
+  RecurrenceEndType,
+  RecurrenceFrequency,
+} from '../../../constants/Enumeration/RecurrenceRuleEnum/RecurrenceRuleEnum';
+import { TAddRecurrenceRule } from '../../../types/RecurrenceRule';
+import { formatDateTime } from '../../../utils/CalendarHelpers';
 
 interface INewJobModal {
   isOpen: boolean;
   onClose: () => void;
   setJobs: React.Dispatch<React.SetStateAction<TJob[]>>;
+  selectedDay?: string | null;
 }
 
-const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
+const NewJobModal = ({
+  isOpen,
+  onClose,
+  setJobs,
+  selectedDay,
+}: INewJobModal) => {
   const { user } = useAuth();
   const [customers, setCustomers] = useState<TCustomer[]>([]);
   const [employees, setEmployees] = useState<TEmployee[]>([]);
@@ -62,6 +76,11 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
   // Ref for the service item search input to manage focus
   const searchInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  const now = new Date();
+  const startBase = selectedDay ? new Date(selectedDay) : now;
+  const defaultStart = formatDateTime(startBase, 9, 0);
+  const defaultEnd = formatDateTime(startBase, 10, 0);
+
   const [job, setJob] = useState<TAddJob>({
     workspaceId: '',
     title: '',
@@ -69,7 +88,6 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
     customerId: '',
     propertyId: '',
     jobType: JobType.OneTime,
-    repeats: 'weekly',
     lineItems: [
       {
         quantity: 1,
@@ -82,11 +100,11 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
     status: JobStatus.Scheduled,
     statusHistory: [],
     priority: JobPriority.Normal,
-    startDate: '',
-    startTime: '',
+    startDateTime: defaultStart,
+    endDateTime: defaultEnd,
+    recurrenceRuleId: null,
+    recurrenceRule: undefined,
     arrivalWindow: 0,
-    duration: 1,
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     estimatedDurationMinutes: 60,
     assignedTeamMembers: [],
     paymentStatus: PaymentStatus.Unpaid,
@@ -112,6 +130,9 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<
+    RecurrenceFrequency | ''
+  >('');
 
   const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
   const customerProperties = selectedCustomerData?.properties.filter(
@@ -153,6 +174,100 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
       ...prev,
       [name]: parsedValue,
     }));
+  };
+
+  // ====== Recurrence Rule Builder ======
+  const buildRecurrenceRule = (
+    frequency: RecurrenceFrequency,
+    startISO: string,
+    end: {
+      endType?: RecurrenceEndType;
+      occurrenceCount?: number | null;
+      endDate?: string | null;
+    } = {}
+  ): TAddRecurrenceRule => {
+    const d = new Date(startISO);
+    const jsDow = d.getDay(); // 0..6 (Sun..Sat)
+    const dayOfMonth = d.getDate(); // 1..31
+    const monthOfYear = d.getMonth() + 1; // 1..12
+
+    const dayOfWeek = jsDow as unknown as DayOfWeek;
+
+    const base: TAddRecurrenceRule = {
+      frequency,
+      interval: 1,
+      daysOfWeek: [],
+      dayOfMonth: null,
+      weekOfMonth: null,
+      dayOfWeekInMonth: null,
+      monthOfYear: null,
+      endType: end.endType ?? RecurrenceEndType.Never,
+      occurrenceCount: end.occurrenceCount ?? null,
+      endDate: end.endDate ?? null,
+    };
+
+    switch (frequency) {
+      case RecurrenceFrequency.Daily:
+        return base;
+      case RecurrenceFrequency.Weekly:
+        return { ...base, daysOfWeek: [dayOfWeek] };
+      case RecurrenceFrequency.Monthly:
+        return { ...base, dayOfMonth };
+      case RecurrenceFrequency.Yearly:
+        return { ...base, monthOfYear, dayOfMonth };
+      default:
+        return base;
+    }
+  };
+
+  const handleDateTimeChange = (
+    field: 'startDateTime' | 'endDateTime',
+    part: 'date' | 'time',
+    value: string
+  ) => {
+    setJob((prev) => {
+      const [currDate, currTime] = prev[field].split('T');
+      const newDate = part === 'date' ? value : currDate;
+      const newTime =
+        part === 'time' ? value : (currTime || '00:00:00').slice(0, 8);
+
+      let next: TAddJob = {
+        ...prev,
+        [field]: `${newDate}T${newTime}`,
+      };
+
+      if (field === 'startDateTime') {
+        const [endDateOnly, endTimeOnly] = prev.endDateTime.split('T');
+        if (newDate > endDateOnly) {
+          next.endDateTime = `${newDate}T${endTimeOnly}`;
+        } else if (
+          newDate === endDateOnly &&
+          new Date(`${newDate}T${newTime}`).getTime() >
+            new Date(prev.endDateTime).getTime()
+        ) {
+          next.endDateTime = `${newDate}T${newTime}`;
+        }
+      }
+
+      // Keep recurrence rule in sync
+      if (
+        field === 'startDateTime' &&
+        next.jobType == JobType.Recurring &&
+        recurrenceFrequency
+      ) {
+        next.recurrenceRule = buildRecurrenceRule(
+          recurrenceFrequency,
+          `${newDate}T${newTime}`,
+          {
+            endType: next.recurrenceRule?.endType ?? RecurrenceEndType.Never,
+            occurrenceCount: next.recurrenceRule?.occurrenceCount ?? null,
+            endDate: next.recurrenceRule?.endDate ?? null,
+          }
+        );
+      }
+
+      return next;
+    });
   };
 
   const handleEmployeeSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -344,14 +459,12 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
       return;
     }
 
-    job.startTime = combineDateTimeToISO(job.startDate, job.startTime);
     const updatedJob = {
       ...job,
       workspaceId: user.workspace.id,
       createdBy: user.id,
       taxRate: job.taxRate / 100,
     };
-    console.log(updatedJob);
 
     try {
       const response = await CreateJob(updatedJob);
@@ -364,6 +477,8 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
           response.data?.message ?? 'Unknown error'
         );
       }
+
+      console.log(updatedJob);
     } catch (error) {
       console.error('Error creating job:', error);
     }
@@ -433,6 +548,18 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
   };
 
   useEffect(() => {
+    const baseDate = selectedDay ? new Date(selectedDay) : new Date();
+    const defaultStart = formatDateTime(baseDate, 9, 0);
+    const defaultEnd = formatDateTime(baseDate, 10, 0);
+
+    setJob((prev) => ({
+      ...prev,
+      startDateTime: defaultStart,
+      endDateTime: defaultEnd,
+    }));
+  }, [selectedDay]);
+
+  useEffect(() => {
     fetchCustomers();
     fetchEmployees();
     fetchAllServiceItems();
@@ -452,14 +579,11 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
 
   return (
     <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-inter'>
-      <div className='bg-white rounded-xl shadow-2xl w-full max-w-[75%] max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header - White background */}
-        <div className='bg-white flex justify-between items-center px-8 py-6 border-b border-gray-200 shadow-sm'>
+        <div className='bg-white flex justify-between items-center px-8 py-4 border-b border-gray-200 shadow-sm'>
           <div>
             <h2 className='text-2xl font-bold text-gray-900'>Create Job</h2>
-            <p className='text-gray-600 text-sm mt-1'>
-              Schedule and manage service jobs for your customers
-            </p>
           </div>
           <button
             onClick={onClose}
@@ -677,222 +801,217 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
               {/* Job Details Section */}
               <div className=''>
                 <div className='flex items-center space-x-3 mb-6'>
-                  {/* <Calendar className='w-5 h-5 text-[#356852]' /> */}
-                  <h3 className='font-semibold text-xl text-text-primary'>
+                  <h3 className='font-bold text-xl text-text-primary'>
                     Job Details
                   </h3>
                 </div>
-
-                {/* Job Type & Priority */}
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-                  <div>
-                    <label
-                      htmlFor='job-type'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Job Type <span className='text-red-500'>*</span>
-                    </label>
-                    <div className='relative'>
-                      <select
-                        id='job-type'
-                        name='jobType'
-                        value={job.jobType}
-                        onChange={handleChange}
-                        required
-                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
-                      >
-                        <option value={JobType.OneTime}>One Time</option>
-                        <option value={JobType.Recurring}>Recurring</option>
-                      </select>
-                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                        <ChevronDown className='w-5 h-5' />
+                <div className='flex gap-6'>
+                  <div className='w-1/2 space-y-6'>
+                    <div className='w-full flex'>
+                      <div className='w-2/3'>
+                        <label
+                          htmlFor='start-date'
+                          className='block text-sm font-medium text-gray-700 mb-2'
+                        >
+                          Start Date
+                        </label>
+                        <input
+                          id='start-date'
+                          type='date'
+                          name='startDateTime'
+                          onChange={(e) =>
+                            handleDateTimeChange(
+                              'startDateTime',
+                              'date',
+                              e.target.value
+                            )
+                          }
+                          value={job.startDateTime.split('T')[0] || ''}
+                          className='w-full h-10 py-5 px-4 text-sm outline-none border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-bg-primary focus:ring-offset-1'
+                        />
+                      </div>
+                      <div className='w-1/3'>
+                        <label
+                          htmlFor='start-time'
+                          className='block text-sm font-medium text-gray-700 mb-2'
+                        >
+                          Start Time
+                        </label>
+                        <input
+                          id='start-time'
+                          type='time'
+                          name='startDateTime'
+                          onChange={(e) =>
+                            handleDateTimeChange(
+                              'startDateTime',
+                              'time',
+                              e.target.value
+                            )
+                          }
+                          value={
+                            job.startDateTime.split('T')[1].slice(0, 5) || ''
+                          }
+                          className='w-full h-10 py-5 px-4 text-sm outline-none border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-bg-primary focus:ring-offset-1'
+                        />
                       </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor='priority'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Priority
-                    </label>
-                    <div className='relative'>
-                      <select
-                        id='priority'
-                        name='priority'
-                        value={job.priority}
-                        onChange={handleChange}
-                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
-                      >
-                        <option value={JobPriority.Low}>Low</option>
-                        <option value={JobPriority.Normal}>Normal</option>
-                        <option value={JobPriority.High}>High</option>
-                        <option value={JobPriority.Urgent}>Urgent</option>
-                      </select>
-                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                        <ChevronDown className='w-5 h-5' />
+                    <div className='w-full flex'>
+                      <div className='w-2/3'>
+                        <label
+                          htmlFor='end-date'
+                          className='block text-sm font-medium text-gray-700 mb-2'
+                        >
+                          End Date
+                        </label>
+                        <input
+                          id='end-date'
+                          type='date'
+                          name='endDateTime'
+                          onChange={(e) =>
+                            handleDateTimeChange(
+                              'endDateTime',
+                              'date',
+                              e.target.value
+                            )
+                          }
+                          value={job.endDateTime.split('T')[0]}
+                          className='w-full h-10 py-5 px-4 text-sm outline-none border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-bg-primary focus:ring-offset-1'
+                        />
+                      </div>
+                      <div className='w-1/3'>
+                        <label
+                          htmlFor='end-time'
+                          className='block text-sm font-medium text-gray-700 mb-2'
+                        >
+                          End Time
+                        </label>
+                        <input
+                          id='end-time'
+                          type='time'
+                          name='endDateTime'
+                          onChange={(e) =>
+                            handleDateTimeChange(
+                              'endDateTime',
+                              'time',
+                              e.target.value
+                            )
+                          }
+                          value={job.endDateTime.split('T')[1].slice(0, 5)}
+                          className='w-full h-10 py-5 px-4 text-sm outline-none border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-bg-primary focus:ring-offset-1'
+                        />
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Scheduling Details */}
-                <div className='grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-6'>
-                  <div>
-                    <label
-                      htmlFor='start-date'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Start Date <span className='text-red-500'>*</span>
-                    </label>
-                    <input
-                      type='date'
-                      id='start-date'
-                      name='startDate'
-                      value={job.startDate}
-                      onChange={handleChange}
-                      required
-                      className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor='start-time'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Start Time <span className='text-red-500'>*</span>
-                    </label>
-                    <input
-                      type='time'
-                      id='start-time'
-                      name='startTime'
-                      value={job.startTime}
-                      onChange={handleChange}
-                      required
-                      className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor='estimated-duration'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Estimated Duration (minutes)
-                    </label>
-                    <input
-                      type='number'
-                      id='estimated-duration'
-                      name='estimatedDurationMinutes'
-                      value={job.estimatedDurationMinutes}
-                      onChange={handleChange}
-                      min='1'
-                      className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                      placeholder='e.g., 60 for 1 hour'
-                    />
-                  </div>
-
-                  {/* Arrival Window */}
-                  <div>
-                    <label
-                      htmlFor='arrivalWindow'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Arrival Window
-                    </label>
-                    <div className='relative'>
-                      <select
-                        id='arrivalWindow'
-                        name='arrivalWindow'
-                        value={job.arrivalWindow}
-                        onChange={handleChange}
-                        className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
-                      >
-                        <option value=''>None</option>
-                        <option value='15'>15 minutes</option>
-                        <option value='30'>30 minutes</option>
-                        <option value='60'>1 hour</option>
-                        <option value='120'>2 hour</option>
-                        <option value='180'>3 hour</option>
-                        <option value='240'>4 hour</option>
-                      </select>
-                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                        <ChevronDown className='w-5 h-5' />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* <div>
-                    <label
-                      htmlFor='arrival-window-end'
-                      className='block text-sm font-medium text-gray-700 mb-2'
-                    >
-                      Arrival Window End
-                    </label>
-                    <input
-                      type='time'
-                      id='arrival-window-end'
-                      name='arrivalWindowEnd'
-                      value={job.arrivalWindowEnd}
-                      onChange={handleChange}
-                      className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                    />
-                  </div> */}
-                </div>
-
-                {job.jobType === JobType.Recurring && (
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200'>
                     <div>
                       <label
-                        htmlFor='repeats'
+                        htmlFor='reccurence-select'
+                        className='text-sm text-text-primary font-semibold'
+                      >
+                        Repeats
+                      </label>
+                      <div className='relative mt-1'>
+                        <select
+                          id='reccurence-select'
+                          className='w-full px-4 py-2.5 pr-10 text-sm text-text-primary bg-white border border-gray-300 rounded-lg appearance-none hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-bg-primary focus:ring-offset-1 transition-all'
+                        >
+                          <option value=''>Never</option>
+                          <option value={RecurrenceFrequency.Daily}>
+                            Daily
+                          </option>
+                          <option value={RecurrenceFrequency.Weekly}>
+                            Weekly
+                          </option>
+                          <option value={RecurrenceFrequency.Monthly}>
+                            Monthly
+                          </option>
+                          <option value={RecurrenceFrequency.Yearly}>
+                            Yearly
+                          </option>
+                        </select>
+                        <div className='absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none'>
+                          <ChevronDown className='w-4.5 h-4.5 text-gray-600' />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='w-1/2 space-y-6'>
+                    <div>
+                      <label
+                        htmlFor='priority'
                         className='block text-sm font-medium text-gray-700 mb-2'
                       >
-                        Repeats <span className='text-red-500'>*</span>
+                        Priority
                       </label>
                       <div className='relative'>
                         <select
-                          id='repeats'
-                          name='repeats'
-                          value={job.repeats}
+                          id='priority'
+                          name='priority'
+                          value={job.priority}
                           onChange={handleChange}
                           className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
                         >
-                          <option value='weekly'>Weekly</option>
-                          <option value='biweekly'>Bi-weekly</option>
-                          <option value='monthly'>Monthly</option>
-                          <option value='quarterly'>Quarterly</option>
-                          <option value='semiannually'>Semi-annually</option>
-                          <option value='annually'>Annually</option>
-                          <option value='custom'>Custom</option>
+                          <option value={JobPriority.Low}>Low</option>
+                          <option value={JobPriority.Normal}>Normal</option>
+                          <option value={JobPriority.High}>High</option>
+                          <option value={JobPriority.Urgent}>Urgent</option>
                         </select>
                         <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
                           <ChevronDown className='w-5 h-5' />
                         </div>
                       </div>
                     </div>
-
                     <div>
                       <label
-                        htmlFor='duration'
+                        htmlFor='estimated-duration'
                         className='block text-sm font-medium text-gray-700 mb-2'
                       >
-                        Number of Visits/Occurrences
+                        Estimated Duration (minutes)
                       </label>
                       <input
                         type='number'
-                        id='duration'
-                        name='duration'
-                        value={job.duration}
+                        id='estimated-duration'
+                        name='estimatedDurationMinutes'
+                        value={job.estimatedDurationMinutes}
                         onChange={handleChange}
                         min='1'
                         className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
-                        placeholder='e.g., 12 for 12 visits'
+                        placeholder='e.g., 60 for 1 hour'
                       />
                     </div>
+
+                    {/* Arrival Window */}
+                    <div>
+                      <label
+                        htmlFor='arrivalWindow'
+                        className='block text-sm font-medium text-gray-700 mb-2'
+                      >
+                        Arrival Window
+                      </label>
+                      <div className='relative'>
+                        <select
+                          id='arrivalWindow'
+                          name='arrivalWindow'
+                          value={job.arrivalWindow}
+                          onChange={handleChange}
+                          className='w-full border border-gray-300 rounded-lg pr-10 pl-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm appearance-none'
+                        >
+                          <option value=''>None</option>
+                          <option value='15'>15 minutes</option>
+                          <option value='30'>30 minutes</option>
+                          <option value='60'>1 hour</option>
+                          <option value='120'>2 hour</option>
+                          <option value='180'>3 hour</option>
+                          <option value='240'>4 hour</option>
+                        </select>
+                        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
+                          <ChevronDown className='w-5 h-5' />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Team Members Section */}
@@ -1400,139 +1519,8 @@ const NewJobModal = ({ isOpen, onClose, setJobs }: INewJobModal) => {
               </div>
             </div>
           </div>
-
-          {/* Right Sidebar - Job Summary */}
-          <div className='lg:w-2/5 bg-gray-50 p-6 overflow-y-auto border-l border-gray-200'>
-            <div className='sticky top-0 space-y-6'>
-              <div className='bg-white rounded-lg p-6 border border-gray-200 shadow-sm'>
-                <h3 className='font-semibold text-xl text-text-primary mb-4 flex items-center'>
-                  Job Summary
-                </h3>
-                <div className='space-y-4'>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Customer:
-                    </span>
-                    <span className='text-sm font-semibold text-gray-900'>
-                      {selectedCustomerData?.fullName || 'Not selected'}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Property:
-                    </span>
-                    <span className='text-sm font-semibold text-gray-900 text-right break-words max-w-[60%]'>
-                      {selectedPropertyData?.address || 'Not selected'}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Job Type:
-                    </span>
-                    <span className='text-sm font-semibold text-gray-900'>
-                      {job.jobType === JobType.OneTime
-                        ? 'One Time'
-                        : 'Recurring'}
-                    </span>
-                  </div>
-                  {job.jobType === JobType.Recurring && (
-                    <>
-                      <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                        <span className='text-sm font-medium text-gray-600'>
-                          Repeats:
-                        </span>
-                        <span className='text-sm font-semibold text-gray-900'>
-                          {job.repeats}
-                        </span>
-                      </div>
-                      <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                        <span className='text-sm font-medium text-gray-600'>
-                          Number of Visits:
-                        </span>
-                        <span className='text-sm font-semibold text-gray-900'>
-                          {job.duration}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Priority:
-                    </span>
-                    <span
-                      className={`font-semibold px-2 py-1 rounded-full text-xs ${getJobPriority(
-                        job.priority
-                      )}`}
-                    >
-                      {JobPriority[job.priority]}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Status:
-                    </span>
-                    <span
-                      className={`font-semibold px-2 py-1 rounded-full text-xs ${
-                        getJobStatus(job.status).color
-                      }`}
-                    >
-                      {JobStatus[job.status]}
-                    </span>
-                  </div>
-                  {job.startDate && ( // Using startDate as scheduledDate
-                    <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                      <span className='text-sm font-medium text-gray-600'>
-                        Scheduled:
-                      </span>
-                      <span className='text-sm font-semibold text-gray-900'>
-                        {new Date(job.startDate).toLocaleDateString()}
-                        {job.startTime && ` at ${job.startTime}`}
-                      </span>
-                    </div>
-                  )}
-                  {job.arrivalWindowStart && job.arrivalWindowEnd && (
-                    <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                      <span className='text-sm font-medium text-gray-600'>
-                        Arrival Window:
-                      </span>
-                      <span className='text-sm font-semibold text-gray-900'>
-                        {job.arrivalWindowStart} - {job.arrivalWindowEnd}
-                      </span>
-                    </div>
-                  )}
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Estimated Duration:
-                    </span>
-                    <span className='text-sm font-semibold text-gray-900'>
-                      {job.estimatedDurationMinutes} minutes
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center pb-2 border-b border-gray-200'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Assigned To:
-                    </span>
-                    <div className='text-sm font-semibold text-gray-900 text-right'>
-                      {job.assignedTeamMembers.length > 0
-                        ? job.assignedTeamMembers
-                            .map((employee) => employee.user.fullName)
-                            .join(', ')
-                        : 'Not assigned'}
-                    </div>
-                  </div>
-                  <div className='pt-4 bg-gray-50 rounded-lg p-4'>
-                    <div className='text-center'>
-                      <div className='text-2xl font-bold text-[#356852]'>
-                        {formatCurrency(total)}
-                      </div>
-                      <div className='text-sm text-gray-600'>Total Amount</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
+
         {/* Action Buttons */}
         <div className='sticky bottom-0 bg-white z-10 px-8 py-4 border-t border-gray-100'>
           <div className='flex items-center justify-end space-x-3'>

@@ -9,16 +9,26 @@ import {
 
 export type TLead = {
   id: string;
-  customerId: string;
-  customer?: TCustomer;
+  // customerId: string;
+  // customer?: TCustomer;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  phoneNumber: string;
+  email: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
   quoteId?: string;
   quote?: TQuote;
   workspaceId: string;
   workspace?: TWorkspace;
-  requestedDate: string;
+  // requestedDate: string;
   description: string;
-  preferredDate?: string;
-  preferredTime?: string;
+  startDateTime?: string;
+  endDateTime?: string;
   status: LeadStatus;
   priority: LeadPriority;
   lineItems: TLineItem[];
@@ -28,13 +38,23 @@ export type TLead = {
 };
 
 export type TAddLead = {
-  customerId: string;
+  // customerId: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  phoneNumber: string;
+  email: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
   quoteId?: string;
   workspaceId: string;
-  requestedDate: string;
+  // requestedDate: string;
   description: string;
-  preferredDate?: string;
-  preferredTime?: string;
+  startDateTime?: string;
+  endDateTime?: string;
   priority: LeadPriority;
   lineItems: TAddLineItem[];
   notes?: string;
@@ -42,10 +62,20 @@ export type TAddLead = {
 
 export type TUpdateLead = {
   id: string;
-  requestedDate?: string;
+  // requestedDate?: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  phoneNumber: string;
+  email: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
   description?: string;
-  preferredDate?: string;
-  preferredTime?: string;
+  startDateTime?: string;
+  endDateTime?: string;
   status?: LeadStatus;
   priority?: LeadPriority;
   lineItems?: TAddLineItem[];

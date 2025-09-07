@@ -168,8 +168,8 @@ public class LeadService : ILeadService
 
         if (updatedLeadDto.RequestedDate.HasValue) lead.RequestedDate = updatedLeadDto.RequestedDate.Value;
         if (updatedLeadDto.Description != null) lead.Description = updatedLeadDto.Description;
-        if (updatedLeadDto.PreferredDate.HasValue) lead.PreferredDate = updatedLeadDto.PreferredDate.Value;
-        if (updatedLeadDto.PreferredTime != null) lead.PreferredTime = updatedLeadDto.PreferredTime;
+        if (updatedLeadDto.StartDateTime.HasValue) lead.StartDateTime = updatedLeadDto.StartDateTime.Value;
+        if (updatedLeadDto.EndDateTime != null) lead.EndDateTime = updatedLeadDto.EndDateTime;
         if (updatedLeadDto.Status.HasValue) lead.Status = updatedLeadDto.Status.Value;
         if (updatedLeadDto.Priority.HasValue) lead.Priority = updatedLeadDto.Priority.Value;
         if (updatedLeadDto.Notes != null) lead.Notes = updatedLeadDto.Notes;

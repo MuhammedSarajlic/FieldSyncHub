@@ -68,14 +68,14 @@ public class CalendarService : ICalendarService
 
             Jobs = await _context.Jobs
                 .Where(j => j.WorkspaceId == workspaceId &&
-                            j.StartDate >= startDate &&
-                            j.StartDate <= endDate)
+                            j.StartDateTime >= startDate &&
+                            j.EndDateTime <= endDate)
                 .ToListAsync(),
 
             Leads = await _context.Leads
                 .Where(r => r.WorkspaceId == workspaceId &&
-                            r.PreferredDate >= startDate &&
-                            r.PreferredDate <= endDate)
+                            r.StartDateTime >= startDate &&
+                            r.EndDateTime <= endDate)
                 .ToListAsync()
         };
 

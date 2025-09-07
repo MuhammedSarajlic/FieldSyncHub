@@ -32,6 +32,12 @@ import CustomCheckbox from '../../components/CustomElements/Checkbox/CustomCheck
 import CreateEventModal from '../../components/Calendar/CreateEventModal';
 import { GetEventsByWorkspace } from '../../services/Event';
 import { useAuth } from '../../context/AuthProvider';
+import NewJobModal from '../../components/Jobs/JobsModal/NewJobModal';
+import { GetCalendarEventsByWorkspaceAndDateRange } from '../../services/Calendar';
+import { TCalendarEvents } from '../../types/Calendar';
+import { TJob } from '../../types/Job';
+import { TEvent } from '../../types/Event';
+import { TLead } from '../../types/Lead';
 
 // Define the days of the week
 const DAYS = [
@@ -164,9 +170,9 @@ const employees = [
 ];
 
 // Function to get events for a specific date
-const getEventsForDate = (date, events) => {
-  return events.filter((event) => {
-    const eventDate = new Date(event.startDateTime).toLocaleDateString();
+const getCalendarEventsForDate = (date, items: TJob[] | TEvent[] | TLead[]) => {
+  return items.filter((item) => {
+    const eventDate = new Date(item.startDateTime).toLocaleDateString();
     const selectedDate = date.toLocaleDateString();
     return eventDate === selectedDate;
   });
@@ -190,8 +196,13 @@ const Calendar = () => {
   const [unscheduledSearch, setUnscheduledSearch] = useState('');
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
   const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
+  const [isCreateJobModalOpen, setIsCreateJobModalOpen] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
-  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState<TCalendarEvents>({
+    events: [],
+    jobs: [],
+    leads: [],
+  });
   const [isCalendarEventModalOpen, setIsCalendarEventModalOpen] =
     useState<boolean>(false);
   const [
@@ -317,6 +328,15 @@ const Calendar = () => {
     setCurrentDate(new Date());
   };
 
+  const getEventType = (item, calendarEvents) => {
+    if (calendarEvents.events?.some((event) => event.id === item.id))
+      return 'event';
+    if (calendarEvents.jobs?.some((job) => job.id === item.id)) return 'job';
+    if (calendarEvents.leads?.some((lead) => lead.id === item.id))
+      return 'lead';
+    return 'event'; // fallback
+  };
+
   // Filter unscheduled jobs based on search
   const filteredUnscheduledJobs = unscheduledJobs.filter(
     (job) =>
@@ -327,23 +347,44 @@ const Calendar = () => {
 
   const fetchCalendarEvents = async () => {
     if (!user?.workspace) return;
-    const response = await GetEventsByWorkspace(user.workspace.id);
+
+    let startDate, endDate;
+
+    // Determine date range based on selected view
+    if (selectedView === 'Month') {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      startDate = new Date(year, month, 1);
+      endDate = new Date(year, month + 1, 0);
+    } else if (selectedView === 'Week') {
+      const weekDays = getDaysForWeek(currentDate);
+      startDate = weekDays[0];
+      endDate = weekDays[6];
+    } else if (selectedView === 'Day' || selectedView === 'Dispatch') {
+      startDate = new Date(currentDate);
+      endDate = new Date(currentDate);
+    }
+
+    const response = await GetCalendarEventsByWorkspaceAndDateRange(
+      user.workspace.id,
+      startDate,
+      endDate
+    );
     if (response.status === 200) {
+      console.log(response.data);
+
       setCalendarEvents(response.data);
     }
   };
 
   useEffect(() => {
     fetchCalendarEvents();
-  }, []);
+  }, [currentDate, selectedView]);
 
-  // Effect for Leaflet Map Initialization
   useEffect(() => {
-    let currentMapInstance = null; // Declare here so it's scoped to this effect run
+    let currentMapInstance = null;
 
     if (!isCalendarView) {
-      // The div with id 'map-container' will only exist in the DOM when !isCalendarView is true
-      // So it's safe to create a new map instance here without worrying about reuse
       currentMapInstance = L.map('map-container').setView(
         [44.20169, 17.90397],
         6
@@ -353,22 +394,17 @@ const Calendar = () => {
         currentMapInstance
       );
 
-      // Store the instance in state if needed for future interactions (e.g., adding markers later)
       setMapInstance(currentMapInstance);
     }
 
     return () => {
-      // This cleanup function runs when the component unmounts or
-      // before the effect re-runs (i.e., when isCalendarView changes).
       if (currentMapInstance) {
-        // Check if a map was actually created in this effect run
         currentMapInstance.remove();
-        setMapInstance(null); // Ensure state is cleared
+        setMapInstance(null);
       }
     };
-  }, [isCalendarView]); // Dependency array: re-run effect when isCalendarView changes
+  }, [isCalendarView]);
 
-  // Render logic for different views
   const renderCalendarView = () => {
     if (selectedView === 'Month') {
       return (
@@ -396,31 +432,42 @@ const Calendar = () => {
                 {calendarDays
                   .slice(weekIndex * 7, weekIndex * 7 + 7)
                   .map((day, index) => {
-                    const dayEvents = getEventsForDate(
+                    // Get events, jobs, and leads for this day
+                    const dayEvents = getCalendarEventsForDate(
                       day.date,
-                      calendarEvents
+                      calendarEvents.events || []
                     );
+                    const dayJobs = getCalendarEventsForDate(
+                      day.date,
+                      calendarEvents.jobs || []
+                    );
+                    const dayLeads = getCalendarEventsForDate(
+                      day.date,
+                      calendarEvents.leads || []
+                    );
+
+                    // Combine all items for this day
+                    const allDayItems = [...dayEvents, ...dayJobs, ...dayLeads];
 
                     return (
                       <div
                         key={index}
                         onClick={() => setSelectedDay(day.date)}
                         className={`px-2 pt-2 h-40 flex flex-col justify-between
-                          ${
-                            day.isCurrentMonth
-                              ? 'text-gray-900'
-                              : 'text-gray-400 bg-gray-50'
-                          }
-                          ${
-                            day.date.toDateString() ===
-                            new Date().toDateString()
-                              ? 'bg-blue-50'
-                              : +selectedDay == +day.date
-                              ? 'bg-bg-primary/20'
-                              : ''
-                          }
-                          ${+selectedDay == +day.date && 'bg-bg-primary/20'}
-                          `}
+                        ${
+                          day.isCurrentMonth
+                            ? 'text-gray-900'
+                            : 'text-gray-400 bg-gray-50'
+                        }
+                        ${
+                          day.date.toDateString() === new Date().toDateString()
+                            ? 'bg-blue-50'
+                            : +selectedDay == +day.date
+                            ? 'bg-bg-primary/20'
+                            : ''
+                        }
+                        ${+selectedDay == +day.date && 'bg-bg-primary/20'}
+                        `}
                       >
                         <div
                           className={`text-left text-sm font-semibold mb-1.5 ${
@@ -434,23 +481,21 @@ const Calendar = () => {
                         </div>
 
                         <div className='flex-grow text-xs overflow-hidden space-y-1'>
-                          {dayEvents.slice(0, 3).map((event) => (
+                          {allDayItems.slice(0, 3).map((item) => (
                             <CalendarEvent
-                              key={event.id}
-                              event={event}
-                              onClick={(
-                                e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-                                event
-                              ) => {
+                              key={item.id}
+                              event={item}
+                              eventType={getEventType(item, calendarEvents)}
+                              onClick={(e, event) => {
                                 e.stopPropagation();
-                                console.log('Event clicked:', event);
+                                console.log('Event clicked:', item);
                               }}
                             />
                           ))}
 
-                          {dayEvents.length > 3 && (
+                          {allDayItems.length > 3 && (
                             <div className='text-gray-500 text-xs px-1.5 py-1 cursor-pointer hover:text-gray-700'>
-                              +{dayEvents.length - 3} more
+                              +{allDayItems.length - 3} more
                             </div>
                           )}
                         </div>
@@ -467,6 +512,7 @@ const Calendar = () => {
                 createCalendarEventModalPosition
               }
               setIsCreateEventModalOpen={setIsCreateEventModalOpen}
+              setIsCreateJobModalOpen={setIsCreateJobModalOpen}
             />
           </div>
         </div>
@@ -911,6 +957,12 @@ const Calendar = () => {
           </div>
         </div>
       </div>
+      <NewJobModal
+        isOpen={isCreateJobModalOpen}
+        onClose={() => setIsCreateJobModalOpen(false)}
+        setJobs={() => {}}
+        selectedDay={selectedDay}
+      />
       <CreateEventModal
         isOpen={isCreateEventModalOpen}
         onClose={() => setIsCreateEventModalOpen(false)}

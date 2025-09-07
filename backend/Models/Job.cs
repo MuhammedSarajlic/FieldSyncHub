@@ -16,16 +16,15 @@ public class Job
     public Guid? PropertyId { get; set; }
     public Property? Property { get; set; }
     public JobType JobType { get; set; } = JobType.OneTime;
-    public string Repeats { get; set; } = string.Empty;
     public ICollection<LineItem> LineItems { get; set; } = [];
     public JobStatus Status { get; set; } = JobStatus.Scheduled;
     public ICollection<StatusChange> StatusHistory { get; set; } = [];
     public JobPriority Priority { get; set; } = JobPriority.Normal;
-    public DateTime StartDate { get; set; }
-    public DateTime StartTime { get; set; }
+    public DateTime StartDateTime { get; set; }
+    public DateTime EndDateTime { get; set; }
+    public Guid? RecurrenceRuleId { get; set; }
+    public RecurrenceRule? RecurrenceRule { get; set; }
     public int? ArrivalWindow { get; set; }
-    public int? Duration { get; set; }
-    public string TimeZone { get; set; } = "UTC";
     public int EstimatedDurationMinutes { get; set; }
     public List<Employee> AssignedTeamMembers { get; set; } = [];
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
@@ -53,7 +52,7 @@ public class Job
     public string JobNumber { get; set; } = string.Empty;
     public DateTime? CompletedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
-    public string? Source { get; set; } // "web", "phone", "email", "walk-in", etc.
+    public string? Source { get; set; }
     public List<string> Tags { get; set; } = [];
     public string? CustomerNotes { get; set; }
     public string? InternalNotes { get; set; }

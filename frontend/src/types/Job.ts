@@ -10,6 +10,11 @@ import {
 } from '../constants/Enumeration/JobEnum/JobEnum';
 import { TStatusChange } from './StatusHistory';
 import { DiscountType } from '../constants/Enumeration/CommonEnum/DiscountEnum';
+import {
+  TAddRecurrenceRule,
+  TRecurrenceRule,
+  TUpdateRecurrenceRule,
+} from './RecurrenceRule';
 
 export type TJob = {
   id: string;
@@ -21,16 +26,15 @@ export type TJob = {
   propertyId?: string;
   property?: TProperty;
   jobType: JobType;
-  repeats: string;
   lineItems: TLineItem[];
   status: JobStatus;
   statusHistory: TStatusChange[];
   priority: JobPriority;
-  startDate: string;
-  startTime: string;
+  startDateTime: string;
+  endDateTime: string;
+  recurrenceRuleId?: string;
+  recurrenceRule?: TRecurrenceRule;
   arrivalWindow?: number;
-  duration?: number;
-  timeZone: string;
   estimatedDurationMinutes: number;
   assignedTeamMembers: TEmployee[];
   paymentStatus: PaymentStatus;
@@ -66,16 +70,15 @@ export type TAddJob = {
   customerId: string;
   propertyId?: string;
   jobType: JobType;
-  repeats: string;
   lineItems: TAddLineItem[];
   status: JobStatus;
   statusHistory: TStatusChange[];
   priority: JobPriority;
-  startDate: string;
-  startTime: string;
+  startDateTime: string;
+  endDateTime: string;
+  recurrenceRuleId: string | null;
+  recurrenceRule?: TAddRecurrenceRule;
   arrivalWindow?: number;
-  duration?: number;
-  timeZone: string;
   estimatedDurationMinutes: number;
   assignedTeamMembers: TEmployee[];
   paymentStatus: PaymentStatus;
@@ -102,13 +105,12 @@ export type TUpdateJob = {
   description?: string;
   propertyId?: string;
   jobType?: JobType;
-  repeats?: string;
   lineItems?: TUpdateLineItem[];
   priority?: JobPriority;
-  startDate?: string;
-  startTime?: string;
+  startDateTime?: string;
+  endDateTime?: string;
+  recurrenceRule?: TUpdateRecurrenceRule;
   arrivalWindow?: number;
-  duration?: number;
   estimatedDurationMinutes?: number;
   assignedTeamMembers?: TEmployee[];
   depositAmount?: number;

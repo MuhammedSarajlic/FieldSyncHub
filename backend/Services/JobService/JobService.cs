@@ -138,14 +138,14 @@ public class JobService : IJobService
         if (filterDto.ScheduleDateMin.HasValue)
         {
             var minUtc = DateTime.SpecifyKind(filterDto.ScheduleDateMin.Value, DateTimeKind.Utc);
-            dbQuery = dbQuery.Where(j => j.StartDate >= minUtc);
+            dbQuery = dbQuery.Where(j => j.StartDateTime >= minUtc);
         }
 
         if (filterDto.ScheduleDateMax.HasValue)
         {
             var endOfDay = filterDto.ScheduleDateMax.Value.Date.AddDays(1).AddTicks(-1);
             var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
-            dbQuery = dbQuery.Where(j => j.StartDate <= maxUtc);
+            dbQuery = dbQuery.Where(j => j.StartDateTime <= maxUtc);
         }
 
         if (!string.IsNullOrWhiteSpace(filterDto.Priority) &&
@@ -171,10 +171,8 @@ public class JobService : IJobService
                 j.Property.City.ToLower().Contains(q));
         }
 
-        // 🐘 Load into memory
         var jobsList = await dbQuery.ToListAsync();
 
-        // ✅ Now apply Total filter in memory (just like Quotes)
         if (filterDto.TotalMin.HasValue)
         {
             jobsList = jobsList
@@ -189,7 +187,6 @@ public class JobService : IJobService
                 .ToList();
         }
 
-        // ✅ Sorting in memory (just like Quotes)
         jobsList = filterDto.SortBy?.ToLower() switch
         {
             "customer" => filterDto.Sort == "desc"
@@ -201,10 +198,10 @@ public class JobService : IJobService
                 : jobsList.OrderBy(j => j.TotalAmount).ToList(),
 
             "schedule" => filterDto.Sort == "desc"
-                ? jobsList.OrderByDescending(j => j.StartDate).ToList()
-                : jobsList.OrderBy(j => j.StartDate).ToList(),
+                ? jobsList.OrderByDescending(j => j.StartDateTime).ToList()
+                : jobsList.OrderBy(j => j.StartDateTime).ToList(),
 
-            _ => jobsList.OrderByDescending(j => j.StartDate).ToList()
+            _ => jobsList.OrderByDescending(j => j.StartDateTime).ToList()
         };
 
         var totalCount = jobsList.Count;
@@ -348,12 +345,8 @@ public class JobService : IJobService
         existingJob.Description = updatedJobDto.Description ?? existingJob.Description;
         existingJob.PropertyId = updatedJobDto.PropertyId ?? existingJob.PropertyId;
         existingJob.JobType = updatedJobDto.JobType ?? existingJob.JobType;
-        existingJob.Repeats = updatedJobDto.Repeats ?? existingJob.Repeats;
         existingJob.Priority = updatedJobDto.Priority ?? existingJob.Priority;
-        existingJob.StartDate = updatedJobDto.StartDate ?? existingJob.StartDate;
-        existingJob.StartTime = updatedJobDto.StartTime ?? existingJob.StartTime;
         existingJob.ArrivalWindow = updatedJobDto.ArrivalWindow ?? existingJob.ArrivalWindow;
-        existingJob.Duration = updatedJobDto.Duration ?? existingJob.Duration;
         existingJob.EstimatedDurationMinutes = updatedJobDto.EstimatedDurationMinutes ?? existingJob.EstimatedDurationMinutes;
         existingJob.DepositAmount = updatedJobDto.DepositAmount ?? existingJob.DepositAmount;
         existingJob.DiscountType = updatedJobDto.DiscountType ?? existingJob.DiscountType;
@@ -368,6 +361,10 @@ public class JobService : IJobService
         existingJob.Source = updatedJobDto.Source ?? existingJob.Source;
         existingJob.CustomerNotes = updatedJobDto.CustomerNotes ?? existingJob.CustomerNotes;
         existingJob.Tags = updatedJobDto.Tags ?? existingJob.Tags;
+
+        //Date can't be null check later if there is problem with dates
+        // if (updatedJobDto.StartDateTime != null) existingJob.StartDateTime = updatedJobDto.StartDateTime;
+        // if (updatedJobDto.EndDateTime != null) existingJob.EndDateTime = updatedJobDto.EndDateTime;
 
         if (updatedJobDto.AssignedTeamMembers != null)
         {
@@ -525,7 +522,7 @@ public class JobService : IJobService
 
         int totalJobs = jobs.Count;
         int completedJobs = jobs.Count(j => j.Status == JobStatus.Completed);
-        int scheduledJobs = jobs.Count(j => j.Status == JobStatus.Scheduled || j.StartDate > DateTime.UtcNow);
+        int scheduledJobs = jobs.Count(j => j.Status == JobStatus.Scheduled || j.StartDateTime > DateTime.UtcNow);
 
         decimal totalValue = 0;
 

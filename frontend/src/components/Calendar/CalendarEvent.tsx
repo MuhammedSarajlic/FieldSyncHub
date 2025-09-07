@@ -1,7 +1,19 @@
 import { EVENT_CATEGORIES } from '../../constants/CalendarConstants/EventCategories';
+import { TEvent } from '../../types/Event';
+import { TJob } from '../../types/Job';
+import { TLead } from '../../types/Lead';
 
-const CalendarEvent = ({ event, onClick }) => {
-  const category = EVENT_CATEGORIES['job'];
+interface ICalendarEvent {
+  event: TJob | TEvent | TLead;
+  eventType: 'job' | 'event' | 'lead';
+  onClick: (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    event: any
+  ) => void;
+}
+
+const CalendarEvent = ({ event, eventType, onClick }: ICalendarEvent) => {
+  const category = EVENT_CATEGORIES[eventType];
   return (
     <div
       className={`
