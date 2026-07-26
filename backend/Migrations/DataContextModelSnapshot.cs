@@ -678,9 +678,6 @@ namespace backend.Migrations
                     b.Property<Guid?>("QuoteId")
                         .HasColumnType("char(36)");
 
-                    b.Property<DateTime>("RequestedDate")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<DateTime?>("StartDateTime")
                         .HasColumnType("datetime(6)");
 

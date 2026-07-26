@@ -9,18 +9,8 @@ import {
 
 export type TLead = {
   id: string;
-  // customerId: string;
-  // customer?: TCustomer;
-  firstName: string;
-  lastName: string;
-  companyName: string;
-  phoneNumber: string;
-  email: string;
-  street: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
+  customerId?: string;
+  customer?: TCustomer;
   quoteId?: string;
   quote?: TQuote;
   workspaceId: string;
@@ -38,18 +28,8 @@ export type TLead = {
 };
 
 export type TAddLead = {
-  // customerId: string;
-  firstName: string;
-  lastName: string;
-  companyName: string;
-  phoneNumber: string;
-  email: string;
-  street: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  quoteId?: string;
+  customerId?: string;
+  // quoteId?: string;
   workspaceId: string;
   // requestedDate: string;
   description: string;
@@ -63,16 +43,6 @@ export type TAddLead = {
 export type TUpdateLead = {
   id: string;
   // requestedDate?: string;
-  firstName: string;
-  lastName: string;
-  companyName: string;
-  phoneNumber: string;
-  email: string;
-  street: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
   description?: string;
   startDateTime?: string;
   endDateTime?: string;

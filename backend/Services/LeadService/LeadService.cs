@@ -166,7 +166,7 @@ public class LeadService : ILeadService
             };
         }
 
-        if (updatedLeadDto.RequestedDate.HasValue) lead.RequestedDate = updatedLeadDto.RequestedDate.Value;
+        // if (updatedLeadDto.RequestedDate.HasValue) lead.RequestedDate = updatedLeadDto.RequestedDate.Value;
         if (updatedLeadDto.Description != null) lead.Description = updatedLeadDto.Description;
         if (updatedLeadDto.StartDateTime.HasValue) lead.StartDateTime = updatedLeadDto.StartDateTime.Value;
         if (updatedLeadDto.EndDateTime != null) lead.EndDateTime = updatedLeadDto.EndDateTime;

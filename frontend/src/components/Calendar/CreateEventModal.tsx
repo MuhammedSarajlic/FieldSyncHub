@@ -20,7 +20,7 @@ import { CreateEvent } from '../../services/Event';
 interface ICreateEventModal {
   isOpen: boolean;
   onClose: () => void;
-  selectedDay: string | null;
+  selectedDay: Date | null;
 }
 
 // ====== Recurrence Rule Builder ======

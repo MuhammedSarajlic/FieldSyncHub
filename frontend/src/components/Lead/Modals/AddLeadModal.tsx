@@ -12,16 +12,7 @@ interface IAddLeadModal {
 
 const AddLeadModal = ({ isOpen, onClose }: IAddLeadModal) => {
   const [lead, setLead] = useState<TAddLead>({
-    firstName: '',
-    lastName: '',
-    companyName: '',
-    phoneNumber: '',
-    email: '',
-    street: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: '',
+    customerId: '',
     workspaceId: '',
     description: '',
     startDateTime: '',
@@ -64,14 +55,14 @@ const AddLeadModal = ({ isOpen, onClose }: IAddLeadModal) => {
         <div className='px-8'>
           <div>
             <p className='font-semibold'>Contact Info</p>
-            <div className='mt-4 space-y-3'>
+            {/* <div className='mt-4 space-y-3'>
               <div className='w-full space-x-3 flex items-center'>
                 <InputField
                   labelText='First Name'
                   inputName='firstName'
                   inputType='text'
                   inputPlaceholder='First name'
-                  inputValue={lead.firstName}
+                  inputValue={lead.firstName || ''}
                   handleChange={handleChange}
                   isFullWidth={false}
                 />
@@ -80,7 +71,7 @@ const AddLeadModal = ({ isOpen, onClose }: IAddLeadModal) => {
                   inputName='lastName'
                   inputType='text'
                   inputPlaceholder='Last name'
-                  inputValue={lead.lastName}
+                  inputValue={lead.lastName || ''}
                   handleChange={handleChange}
                   isFullWidth={false}
                 />
@@ -90,11 +81,11 @@ const AddLeadModal = ({ isOpen, onClose }: IAddLeadModal) => {
                 inputName='companyName'
                 inputType='text'
                 inputPlaceholder='Company Name'
-                inputValue={lead.companyName}
+                inputValue={lead.companyName || ''}
                 handleChange={handleChange}
                 isFullWidth={true}
               />
-            </div>
+            </div> */}
           </div>
         </div>
 

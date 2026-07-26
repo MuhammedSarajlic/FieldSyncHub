@@ -51,7 +51,7 @@ interface INewJobModal {
   isOpen: boolean;
   onClose: () => void;
   setJobs: React.Dispatch<React.SetStateAction<TJob[]>>;
-  selectedDay?: string | null;
+  selectedDay?: Date | null;
 }
 
 const NewJobModal = ({
