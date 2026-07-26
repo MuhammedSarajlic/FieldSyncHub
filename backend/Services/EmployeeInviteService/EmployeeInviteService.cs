@@ -14,11 +14,13 @@ public class EmployeeInviteService : IEmployeeInviteService
     private readonly DataContext _context;
     private readonly IEmailService _emailService;
     private readonly ITokenService _tokenService;
-    public EmployeeInviteService(DataContext context, IEmailService emailService, ITokenService tokenService)
+    private readonly IConfiguration _configuration;
+    public EmployeeInviteService(DataContext context, IEmailService emailService, ITokenService tokenService, IConfiguration configuration)
     {
         _context = context;
         _emailService = emailService;
         _tokenService = tokenService;
+        _configuration = configuration;
     }
     public async Task<string?> AcceptInviteAsync(string token, UserRegisterDto user)
     {
@@ -90,15 +92,17 @@ public class EmployeeInviteService : IEmployeeInviteService
         _context.EmployeeInvites.Add(invite);
         await _context.SaveChangesAsync();
 
+        var frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
+        var inviteLink = $"{frontendUrl}/invite?token={token}";
         var subject = "You're Invited to Join a Workspace!";
-        var plainText = $"You have been invited to join the workspace with ID: {workspaceId}. Visit: http://localhost:5173/invite?token={token}";
+        var plainText = $"You have been invited to join the workspace with ID: {workspaceId}. Visit: {inviteLink}";
         var html = $@"
         <html>
         <body>
             <h1>Workspace Invitation</h1>
             <p>You have been invited to join the workspace with ID: <strong>{workspaceId}</strong>.</p>
             <p>Click here to accept the invitation:</p>
-            <a href='http://localhost:5173/invite?token={token}'>Accept Invitation</a>
+            <a href='{inviteLink}'>Accept Invitation</a>
         </body>
         </html>";
 

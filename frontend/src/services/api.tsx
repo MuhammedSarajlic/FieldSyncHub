@@ -1,4 +1,8 @@
 import axios from 'axios';
+import {
+  getStoredToken,
+  setStoredToken,
+} from '../utils/AuthHelpers/tokenStorage';
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
@@ -16,7 +20,11 @@ const refreshAccessToken = async () => {
     );
     const { accessToken } = response.data;
 
-    localStorage.setItem('accessToken', accessToken);
+    // Whichever storage already held a token for this session is the one
+    // that should keep holding it - a silent refresh shouldn't change
+    // whether the session persists across browser restarts.
+    const rememberMe = !!localStorage.getItem('accessToken');
+    setStoredToken(accessToken, rememberMe);
     return accessToken;
   } catch (error) {
     console.error('Failed to refresh access token:', error);
@@ -45,7 +53,7 @@ instance.interceptors.response.use(
 
 instance.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = getStoredToken();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }

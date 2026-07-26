@@ -39,17 +39,22 @@ public class NotesService : INotesService
 
     public async Task<ApiResponse<List<Note>>> GetNoteByCustomerId(Guid customerId)
     {
-        return null;
-        // var notes = await _context.Notes.Where(n => n.CustomerId == customerId)
-        //                                 .OrderByDescending(n => n.CreatedAt)
-        //                                 .ToListAsync();
+        // Customer <-> Note is many-to-many (CustomerNotes join table, see
+        // DataContext.OnModelCreating) rather than a direct FK on Note, so
+        // this goes through Customer.Notes instead of a Note.CustomerId that
+        // doesn't exist on the model.
+        var notes = await _context.Customers
+            .Where(c => c.Id == customerId)
+            .SelectMany(c => c.Notes!)
+            .OrderByDescending(n => n.CreatedAt)
+            .ToListAsync();
 
-        // return new ApiResponse<List<Note>>()
-        // {
-        //     Success = true,
-        //     Payload = notes,
-        //     ErrorMessage = null
-        // };
+        return new ApiResponse<List<Note>>()
+        {
+            Success = true,
+            Payload = notes,
+            ErrorMessage = null
+        };
     }
 
     public async Task<Note> CreateNote(CreateNoteDto createNoteDto)

@@ -30,9 +30,9 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = userDB.ErrorMessage });
         }
 
-        (string accessToken, string refreshToken) tokens = _tokenService.GenerateTokens(userDB.Payload);
+        (string accessToken, string refreshToken) tokens = _tokenService.GenerateTokens(userDB.Payload, userLogin.RememberMe);
 
-        _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
+        _tokenService.SetRefreshTokenCookie(tokens.refreshToken, userLogin.RememberMe);
 
         return Ok(new
         {
@@ -140,9 +140,10 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
         var userDto = userResult.Payload.Adapt<GetUserDto>();
-        (string accessToken, string newRefreshToken) tokens = _tokenService.GenerateTokens(userDto);
+        var rememberMe = _tokenService.GetRememberMeFromToken(refreshToken);
+        (string accessToken, string newRefreshToken) tokens = _tokenService.GenerateTokens(userDto, rememberMe);
 
-        _tokenService.SetRefreshTokenCookie(tokens.newRefreshToken);
+        _tokenService.SetRefreshTokenCookie(tokens.newRefreshToken, rememberMe);
 
         return Ok(new { accessToken = tokens.accessToken });
     }

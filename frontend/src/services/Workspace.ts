@@ -1,6 +1,11 @@
 import { TAddWorkspace, TUpdateWorkspace } from '../types/Workspace';
 import api from './api';
 
+export async function GetWorkspaceById(workspaceId: string) {
+  const response = await api.get(`/workspace/${workspaceId}`);
+  return response;
+}
+
 export async function CreateWorkspace(
   workspace: TAddWorkspace,
   createdById: string

@@ -1,1074 +1,580 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  User,
   Building2,
-  CreditCard,
-  Bell,
-  Shield,
-  Smartphone,
-  Globe,
+  User,
   Users,
-  Wrench,
-  FileText,
-  Calendar,
-  DollarSign,
-  Truck,
-  MapPin,
-  Clock,
-  Mail,
-  Phone,
-  Printer,
-  Database,
-  Zap,
-  BarChart3,
-  Settings as SettingsIcon,
-  ChevronRight,
+  Upload,
   Save,
   Eye,
   EyeOff,
+  Lock,
+  Globe,
+  Phone,
+  ArrowRight,
 } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar/Navbar';
 import Sidebar from '../components/Sidebar/Sidebar';
+import { useAuth } from '../context/AuthProvider';
+import { GetWorkspaceById, UpdateWorkspace } from '../services/Workspace';
+import { UpdateUser } from '../services/User';
+import { UpdatePassword } from '../services/Auth';
+import { uploadFile } from '../storage/uploadFile';
+import { CompanySize } from '../constants/Enumeration/WorkspaceEnum/WorkspaceEnum';
+import { serviceCategories } from '../constants/ServiceCategories';
+import { TUpdateWorkspace } from '../types/Workspace';
 
-const SettingsPage = () => {
+const settingSections = [
+  { id: 'company', name: 'Company Profile', icon: Building2 },
+  { id: 'account', name: 'My Account', icon: User },
+  { id: 'team', name: 'Team', icon: Users },
+];
+
+const companySizeLabels: Record<CompanySize, string> = {
+  [CompanySize.Solo]: 'Just Me',
+  [CompanySize.Small]: '2-5 People',
+  [CompanySize.Medium]: '6-10 People',
+  [CompanySize.Large]: '10+ People',
+};
+
+const inputClass =
+  'w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bg-primary focus:border-bg-primary text-sm';
+
+const Settings = () => {
+  const { user, refetchUser } = useAuth();
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('company');
-  const [showPassword, setShowPassword] = useState(false);
-  const [settings, setSettings] = useState({
-    // Company Settings
-    companyName: 'ABC Service Company',
-    businessType: 'plumbing',
-    address: '123 Main St, City, State 12345',
-    phone: '(555) 123-4567',
-    email: 'contact@abcservice.com',
-    website: 'www.abcservice.com',
-    taxId: '12-3456789',
 
-    // User Settings
-    firstName: 'John',
-    lastName: 'Smith',
-    userEmail: 'john@abcservice.com',
-    role: 'admin',
-    timezone: 'America/New_York',
+  // Company Profile
+  const [workspace, setWorkspace] = useState<TUpdateWorkspace | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true);
+  const [isSavingCompany, setIsSavingCompany] = useState(false);
 
-    // Billing Settings
-    billingAddress: '123 Billing St, City, State 12345',
-    paymentMethod: 'visa-1234',
-    billingCycle: 'monthly',
-
-    // Notifications
-    emailNotifications: true,
-    smsNotifications: true,
-    jobAlerts: true,
-    paymentAlerts: true,
-    scheduleChanges: true,
-
-    // Security
-    twoFactorAuth: false,
-    loginAlerts: true,
-    sessionTimeout: '30',
-
-    // Mobile Settings
-    gpsTracking: true,
-    offlineMode: true,
-    photoCompression: 'medium',
-
-    // Service Settings
-    businessHours: {
-      monday: { open: '08:00', close: '17:00', enabled: true },
-      tuesday: { open: '08:00', close: '17:00', enabled: true },
-      wednesday: { open: '08:00', close: '17:00', enabled: true },
-      thursday: { open: '08:00', close: '17:00', enabled: true },
-      friday: { open: '08:00', close: '17:00', enabled: true },
-      saturday: { open: '09:00', close: '15:00', enabled: true },
-      sunday: { open: '09:00', close: '15:00', enabled: false },
-    },
-    emergencyHours: true,
-    bookingLeadTime: '2',
-    maxJobsPerDay: '8',
-
-    // Pricing
-    taxRate: '8.5',
-    currency: 'USD',
-    defaultMarkup: '25',
-    laborRate: '85',
-
-    // Integrations
-    quickbooks: false,
-    googleCalendar: true,
-    mailchimp: false,
-    zapier: false,
-    stripe: true,
+  // My Account
+  const [accountForm, setAccountForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
   });
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
 
-  const settingSections = [
-    { id: 'company', name: 'Company Profile', icon: Building2 },
-    { id: 'user', name: 'User Account', icon: User },
-    { id: 'billing', name: 'Billing & Plans', icon: CreditCard },
-    { id: 'notifications', name: 'Notifications', icon: Bell },
-    { id: 'security', name: 'Security', icon: Shield },
-    { id: 'mobile', name: 'Mobile App', icon: Smartphone },
-    { id: 'service', name: 'Service Settings', icon: Wrench },
-    { id: 'scheduling', name: 'Scheduling', icon: Calendar },
-    { id: 'pricing', name: 'Pricing & Taxes', icon: DollarSign },
-    { id: 'field', name: 'Field Operations', icon: Truck },
-    { id: 'forms', name: 'Forms & Templates', icon: FileText },
-    { id: 'integrations', name: 'Integrations', icon: Zap },
-    { id: 'reports', name: 'Reports & Analytics', icon: BarChart3 },
-    { id: 'system', name: 'System Preferences', icon: SettingsIcon },
-  ];
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
 
-  const handleInputChange = (field, value) => {
-    setSettings((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  useEffect(() => {
+    const fetchWorkspace = async () => {
+      if (!user?.workspace?.id) return;
+      setIsLoadingWorkspace(true);
+      try {
+        const response = await GetWorkspaceById(user.workspace.id);
+        if (response.status === 200) {
+          const ws = response.data.payload;
+          setWorkspace({
+            id: ws.id,
+            name: ws.name,
+            companyName: ws.companyName,
+            companyUrl: ws.companyUrl,
+            phoneNumber: ws.phoneNumber,
+            size: ws.size,
+            category: ws.category,
+            logoUrl: ws.logoUrl,
+          });
+          setLogoPreview(ws.logoUrl ?? null);
+        }
+      } catch (error) {
+        console.error('Failed to load workspace', error);
+      } finally {
+        setIsLoadingWorkspace(false);
+      }
+    };
+    fetchWorkspace();
+  }, [user?.workspace?.id]);
+
+  useEffect(() => {
+    if (user) {
+      setAccountForm({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      });
+    }
+  }, [user]);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setLogoPreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
-  const handleBusinessHourChange = (day, field, value) => {
-    setSettings((prev) => ({
-      ...prev,
-      businessHours: {
-        ...prev.businessHours,
-        [day]: {
-          ...prev.businessHours[day],
-          [field]: value,
-        },
-      },
-    }));
+  const handleSaveCompany = async () => {
+    if (!workspace) return;
+    setIsSavingCompany(true);
+    try {
+      let logoUrl = workspace.logoUrl;
+      if (logoFile) {
+        logoUrl = await uploadFile(logoFile);
+      }
+      const response = await UpdateWorkspace({ ...workspace, logoUrl });
+      if (response.status === 200) {
+        toast.success('Company profile updated');
+        setLogoFile(null);
+        await refetchUser();
+      } else {
+        toast.error('Failed to update company profile');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update company profile');
+    } finally {
+      setIsSavingCompany(false);
+    }
   };
 
-  const renderCompanySettings = () => (
-    <div className='space-y-6'>
-      <h2 className='text-2xl font-bold text-gray-900 mb-6'>Company Profile</h2>
+  const handleSaveAccount = async () => {
+    if (!user) return;
+    setIsSavingAccount(true);
+    try {
+      const response = await UpdateUser({ id: user.id, ...accountForm });
+      if (response.status === 200) {
+        toast.success('Account updated');
+        await refetchUser();
+      } else {
+        toast.error('Failed to update account');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update account');
+    } finally {
+      setIsSavingAccount(false);
+    }
+  };
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Company Name
-          </label>
-          <input
-            type='text'
-            value={settings.companyName}
-            onChange={(e) => handleInputChange('companyName', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Business Type
-          </label>
-          <select
-            value={settings.businessType}
-            onChange={(e) => handleInputChange('businessType', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          >
-            <option value='plumbing'>Plumbing</option>
-            <option value='electrical'>Electrical</option>
-            <option value='hvac'>HVAC</option>
-            <option value='cleaning'>Cleaning</option>
-            <option value='landscaping'>Landscaping</option>
-            <option value='handyman'>Handyman</option>
-            <option value='pest-control'>Pest Control</option>
-            <option value='roofing'>Roofing</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className='block text-sm font-medium text-gray-700 mb-2'>
-          Business Address
-        </label>
-        <input
-          type='text'
-          value={settings.address}
-          onChange={(e) => handleInputChange('address', e.target.value)}
-          className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-        />
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Phone Number
-          </label>
-          <input
-            type='tel'
-            value={settings.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Email Address
-          </label>
-          <input
-            type='email'
-            value={settings.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Website
-          </label>
-          <input
-            type='url'
-            value={settings.website}
-            onChange={(e) => handleInputChange('website', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Tax ID / EIN
-          </label>
-          <input
-            type='text'
-            value={settings.taxId}
-            onChange={(e) => handleInputChange('taxId', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderUserSettings = () => (
-    <div className='space-y-6'>
-      <h2 className='text-2xl font-bold text-gray-900 mb-6'>User Account</h2>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            First Name
-          </label>
-          <input
-            type='text'
-            value={settings.firstName}
-            onChange={(e) => handleInputChange('firstName', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Last Name
-          </label>
-          <input
-            type='text'
-            value={settings.lastName}
-            onChange={(e) => handleInputChange('lastName', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className='block text-sm font-medium text-gray-700 mb-2'>
-          Email Address
-        </label>
-        <input
-          type='email'
-          value={settings.userEmail}
-          onChange={(e) => handleInputChange('userEmail', e.target.value)}
-          className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-        />
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Role
-          </label>
-          <select
-            value={settings.role}
-            onChange={(e) => handleInputChange('role', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          >
-            <option value='admin'>Administrator</option>
-            <option value='manager'>Manager</option>
-            <option value='technician'>Technician</option>
-            <option value='dispatcher'>Dispatcher</option>
-          </select>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Timezone
-          </label>
-          <select
-            value={settings.timezone}
-            onChange={(e) => handleInputChange('timezone', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          >
-            <option value='America/New_York'>Eastern Time</option>
-            <option value='America/Chicago'>Central Time</option>
-            <option value='America/Denver'>Mountain Time</option>
-            <option value='America/Los_Angeles'>Pacific Time</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className='block text-sm font-medium text-gray-700 mb-2'>
-          Change Password
-        </label>
-        <div className='relative'>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            placeholder='Enter new password'
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12'
-          />
-          <button
-            type='button'
-            onClick={() => setShowPassword(!showPassword)}
-            className='absolute right-3 top-3 text-gray-400 hover:text-gray-600'
-          >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderNotificationSettings = () => (
-    <div className='space-y-6'>
-      <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-        Notification Preferences
-      </h2>
-
-      <div className='space-y-4'>
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div>
-            <h3 className='font-medium text-gray-900'>Email Notifications</h3>
-            <p className='text-sm text-gray-500'>Receive updates via email</p>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.emailNotifications}
-              onChange={(e) =>
-                handleInputChange('emailNotifications', e.target.checked)
-              }
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div>
-            <h3 className='font-medium text-gray-900'>SMS Notifications</h3>
-            <p className='text-sm text-gray-500'>
-              Receive alerts via text message
-            </p>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.smsNotifications}
-              onChange={(e) =>
-                handleInputChange('smsNotifications', e.target.checked)
-              }
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div>
-            <h3 className='font-medium text-gray-900'>Job Alerts</h3>
-            <p className='text-sm text-gray-500'>
-              Get notified about new jobs and updates
-            </p>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.jobAlerts}
-              onChange={(e) => handleInputChange('jobAlerts', e.target.checked)}
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div>
-            <h3 className='font-medium text-gray-900'>Payment Alerts</h3>
-            <p className='text-sm text-gray-500'>
-              Notifications about payments and invoices
-            </p>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.paymentAlerts}
-              onChange={(e) =>
-                handleInputChange('paymentAlerts', e.target.checked)
-              }
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div>
-            <h3 className='font-medium text-gray-900'>Schedule Changes</h3>
-            <p className='text-sm text-gray-500'>
-              Alerts when appointments are modified
-            </p>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.scheduleChanges}
-              onChange={(e) =>
-                handleInputChange('scheduleChanges', e.target.checked)
-              }
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderServiceSettings = () => (
-    <div className='space-y-6'>
-      <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-        Service Settings
-      </h2>
-
-      <div>
-        <h3 className='text-lg font-medium text-gray-900 mb-4'>
-          Business Hours
-        </h3>
-        <div className='space-y-3'>
-          {Object.entries(settings.businessHours).map(([day, hours]) => (
-            <div
-              key={day}
-              className='flex items-center space-x-4 p-3 bg-gray-50 rounded-lg'
-            >
-              <div className='w-20'>
-                <label className='relative inline-flex items-center cursor-pointer'>
-                  <input
-                    type='checkbox'
-                    checked={hours.enabled}
-                    onChange={(e) =>
-                      handleBusinessHourChange(day, 'enabled', e.target.checked)
-                    }
-                    className='sr-only peer'
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-              <div className='w-24 capitalize font-medium text-gray-700'>
-                {day}
-              </div>
-              <div className='flex items-center space-x-2'>
-                <input
-                  type='time'
-                  value={hours.open}
-                  onChange={(e) =>
-                    handleBusinessHourChange(day, 'open', e.target.value)
-                  }
-                  disabled={!hours.enabled}
-                  className='p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400'
-                />
-                <span className='text-gray-500'>to</span>
-                <input
-                  type='time'
-                  value={hours.close}
-                  onChange={(e) =>
-                    handleBusinessHourChange(day, 'close', e.target.value)
-                  }
-                  disabled={!hours.enabled}
-                  className='p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400'
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Booking Lead Time (hours)
-          </label>
-          <input
-            type='number'
-            value={settings.bookingLeadTime}
-            onChange={(e) =>
-              handleInputChange('bookingLeadTime', e.target.value)
-            }
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Max Jobs Per Day
-          </label>
-          <input
-            type='number'
-            value={settings.maxJobsPerDay}
-            onChange={(e) => handleInputChange('maxJobsPerDay', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-      </div>
-
-      <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-        <div>
-          <h3 className='font-medium text-gray-900'>Emergency Hours</h3>
-          <p className='text-sm text-gray-500'>
-            Accept emergency calls outside business hours
-          </p>
-        </div>
-        <label className='relative inline-flex items-center cursor-pointer'>
-          <input
-            type='checkbox'
-            checked={settings.emergencyHours}
-            onChange={(e) =>
-              handleInputChange('emergencyHours', e.target.checked)
-            }
-            className='sr-only peer'
-          />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-        </label>
-      </div>
-    </div>
-  );
-
-  const renderPricingSettings = () => (
-    <div className='space-y-6'>
-      <h2 className='text-2xl font-bold text-gray-900 mb-6'>Pricing & Taxes</h2>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Currency
-          </label>
-          <select
-            value={settings.currency}
-            onChange={(e) => handleInputChange('currency', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          >
-            <option value='USD'>USD - US Dollar</option>
-            <option value='CAD'>CAD - Canadian Dollar</option>
-            <option value='EUR'>EUR - Euro</option>
-            <option value='GBP'>GBP - British Pound</option>
-          </select>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Tax Rate (%)
-          </label>
-          <input
-            type='number'
-            step='0.1'
-            value={settings.taxRate}
-            onChange={(e) => handleInputChange('taxRate', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Default Labor Rate (per hour)
-          </label>
-          <input
-            type='number'
-            value={settings.laborRate}
-            onChange={(e) => handleInputChange('laborRate', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Default Markup (%)
-          </label>
-          <input
-            type='number'
-            value={settings.defaultMarkup}
-            onChange={(e) => handleInputChange('defaultMarkup', e.target.value)}
-            className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderIntegrationsSettings = () => (
-    <div className='space-y-6'>
-      <h2 className='text-2xl font-bold text-gray-900 mb-6'>Integrations</h2>
-
-      <div className='space-y-4'>
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div className='flex items-center space-x-3'>
-            <div className='w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-              <Database className='w-5 h-5 text-blue-600' />
-            </div>
-            <div>
-              <h3 className='font-medium text-gray-900'>QuickBooks</h3>
-              <p className='text-sm text-gray-500'>
-                Sync invoices and payments
-              </p>
-            </div>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.quickbooks}
-              onChange={(e) =>
-                handleInputChange('quickbooks', e.target.checked)
-              }
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div className='flex items-center space-x-3'>
-            <div className='w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center'>
-              <Calendar className='w-5 h-5 text-green-600' />
-            </div>
-            <div>
-              <h3 className='font-medium text-gray-900'>Google Calendar</h3>
-              <p className='text-sm text-gray-500'>
-                Sync appointments and schedules
-              </p>
-            </div>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.googleCalendar}
-              onChange={(e) =>
-                handleInputChange('googleCalendar', e.target.checked)
-              }
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div className='flex items-center space-x-3'>
-            <div className='w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center'>
-              <CreditCard className='w-5 h-5 text-purple-600' />
-            </div>
-            <div>
-              <h3 className='font-medium text-gray-900'>Stripe</h3>
-              <p className='text-sm text-gray-500'>
-                Process payments and subscriptions
-              </p>
-            </div>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.stripe}
-              onChange={(e) => handleInputChange('stripe', e.target.checked)}
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div className='flex items-center space-x-3'>
-            <div className='w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center'>
-              <Zap className='w-5 h-5 text-orange-600' />
-            </div>
-            <div>
-              <h3 className='font-medium text-gray-900'>Zapier</h3>
-              <p className='text-sm text-gray-500'>
-                Automate workflows with 3000+ apps
-              </p>
-            </div>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.zapier}
-              onChange={(e) => handleInputChange('zapier', e.target.checked)}
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-          <div className='flex items-center space-x-3'>
-            <div className='w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center'>
-              <Mail className='w-5 h-5 text-yellow-600' />
-            </div>
-            <div>
-              <h3 className='font-medium text-gray-900'>Mailchimp</h3>
-              <p className='text-sm text-gray-500'>
-                Email marketing and customer communications
-              </p>
-            </div>
-          </div>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={settings.mailchimp}
-              onChange={(e) => handleInputChange('mailchimp', e.target.checked)}
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-      </div>
-    </div>
-  );
+  const handleChangePassword = async () => {
+    if (!user) return;
+    if (passwordForm.newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters.');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("Passwords don't match.");
+      return;
+    }
+    setIsSavingPassword(true);
+    try {
+      await UpdatePassword(
+        user.id,
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
+      toast.success('Password changed');
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data || 'Failed to change password. Check your current password.'
+      );
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
 
   const renderSectionContent = () => {
     switch (activeSection) {
       case 'company':
-        return renderCompanySettings();
-      case 'user':
-        return renderUserSettings();
-      case 'notifications':
-        return renderNotificationSettings();
-      case 'service':
-        return renderServiceSettings();
-      case 'pricing':
-        return renderPricingSettings();
-      case 'integrations':
-        return renderIntegrationsSettings();
-      case 'billing':
         return (
-          <div className='space-y-6'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-              Billing & Plans
+          <div className='space-y-6 max-w-2xl'>
+            <h2 className='text-2xl font-bold text-gray-900'>
+              Company Profile
             </h2>
-            <div className='bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200'>
-              <h3 className='text-lg font-semibold text-blue-900 mb-2'>
-                Professional Plan
-              </h3>
-              <p className='text-blue-700 mb-4'>
-                $89/month • Up to 10 users • Unlimited jobs
-              </p>
-              <button className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'>
-                Manage Subscription
+            {isLoadingWorkspace || !workspace ? (
+              <p className='text-sm text-gray-500'>Loading...</p>
+            ) : (
+              <>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-3'>
+                    Logo
+                  </label>
+                  <div className='flex items-center space-x-4'>
+                    <div className='w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0'>
+                      {logoPreview ? (
+                        <img
+                          src={logoPreview}
+                          alt='Logo preview'
+                          className='w-full h-full object-contain'
+                        />
+                      ) : (
+                        <Upload className='text-gray-400' size={28} />
+                      )}
+                    </div>
+                    <div>
+                      <label
+                        htmlFor='logo-upload'
+                        className='inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors'
+                      >
+                        <Upload className='mr-2' size={14} />
+                        Upload Logo
+                      </label>
+                      <input
+                        id='logo-upload'
+                        type='file'
+                        accept='image/*'
+                        onChange={handleLogoChange}
+                        className='hidden'
+                      />
+                      <p className='text-xs text-gray-500 mt-1.5'>
+                        PNG, JPG or SVG &bull; Max 5MB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                      Company Name
+                    </label>
+                    <input
+                      type='text'
+                      value={workspace.companyName ?? ''}
+                      onChange={(e) =>
+                        setWorkspace({
+                          ...workspace,
+                          companyName: e.target.value,
+                        })
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                      Workspace Name
+                    </label>
+                    <input
+                      type='text'
+                      value={workspace.name ?? ''}
+                      onChange={(e) =>
+                        setWorkspace({ ...workspace, name: e.target.value })
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                      Website
+                    </label>
+                    <div className='relative'>
+                      <Globe
+                        className='absolute left-3 top-3 text-gray-400'
+                        size={16}
+                      />
+                      <input
+                        type='url'
+                        value={workspace.companyUrl ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            companyUrl: e.target.value,
+                          })
+                        }
+                        placeholder='https://www.yourcompany.com'
+                        className={`${inputClass} pl-9`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                      Phone Number
+                    </label>
+                    <div className='relative'>
+                      <Phone
+                        className='absolute left-3 top-3 text-gray-400'
+                        size={16}
+                      />
+                      <input
+                        type='tel'
+                        value={workspace.phoneNumber ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            phoneNumber: e.target.value,
+                          })
+                        }
+                        placeholder='(555) 123-4567'
+                        className={`${inputClass} pl-9`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                      Company Size
+                    </label>
+                    <select
+                      value={workspace.size}
+                      onChange={(e) =>
+                        setWorkspace({
+                          ...workspace,
+                          size: Number(e.target.value) as CompanySize,
+                        })
+                      }
+                      className={inputClass}
+                    >
+                      {Object.values(CompanySize)
+                        .filter((v) => typeof v === 'number')
+                        .map((value) => (
+                          <option key={value} value={value}>
+                            {companySizeLabels[value as CompanySize]}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                      Service Category
+                    </label>
+                    <select
+                      value={workspace.category ?? ''}
+                      onChange={(e) =>
+                        setWorkspace({
+                          ...workspace,
+                          category: e.target.value,
+                        })
+                      }
+                      className={inputClass}
+                    >
+                      <option value=''>Select a category</option>
+                      {serviceCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className='pt-2'>
+                  <button
+                    onClick={handleSaveCompany}
+                    disabled={isSavingCompany}
+                    className='inline-flex items-center px-5 py-2.5 bg-bg-primary text-white rounded-lg font-medium hover:bg-bg-primary-hover transition-colors disabled:opacity-60'
+                  >
+                    <Save className='mr-2' size={16} />
+                    {isSavingCompany ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        );
+
+      case 'account':
+        return (
+          <div className='space-y-10 max-w-2xl'>
+            <div className='space-y-6'>
+              <h2 className='text-2xl font-bold text-gray-900'>My Account</h2>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    First Name
+                  </label>
+                  <input
+                    type='text'
+                    value={accountForm.firstName}
+                    onChange={(e) =>
+                      setAccountForm({
+                        ...accountForm,
+                        firstName: e.target.value,
+                      })
+                    }
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Last Name
+                  </label>
+                  <input
+                    type='text'
+                    value={accountForm.lastName}
+                    onChange={(e) =>
+                      setAccountForm({
+                        ...accountForm,
+                        lastName: e.target.value,
+                      })
+                    }
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                  Email
+                </label>
+                <input
+                  type='email'
+                  value={accountForm.email}
+                  onChange={(e) =>
+                    setAccountForm({ ...accountForm, email: e.target.value })
+                  }
+                  className={inputClass}
+                />
+              </div>
+              <button
+                onClick={handleSaveAccount}
+                disabled={isSavingAccount}
+                className='inline-flex items-center px-5 py-2.5 bg-bg-primary text-white rounded-lg font-medium hover:bg-bg-primary-hover transition-colors disabled:opacity-60'
+              >
+                <Save className='mr-2' size={16} />
+                {isSavingAccount ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
-                Billing Address
-              </label>
-              <input
-                type='text'
-                value={settings.billingAddress}
-                onChange={(e) =>
-                  handleInputChange('billingAddress', e.target.value)
-                }
-                className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-              />
-            </div>
-          </div>
-        );
-      case 'security':
-        return (
-          <div className='space-y-6'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-              Security Settings
-            </h2>
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-                <div>
-                  <h3 className='font-medium text-gray-900'>
-                    Two-Factor Authentication
-                  </h3>
-                  <p className='text-sm text-gray-500'>
-                    Add an extra layer of security
-                  </p>
-                </div>
-                <label className='relative inline-flex items-center cursor-pointer'>
+
+            <div className='space-y-4 pt-6 border-t border-gray-200'>
+              <h3 className='text-lg font-semibold text-gray-900'>
+                Change Password
+              </h3>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                  Current Password
+                </label>
+                <div className='relative'>
+                  <Lock
+                    className='absolute left-3 top-3 text-gray-400'
+                    size={16}
+                  />
                   <input
-                    type='checkbox'
-                    checked={settings.twoFactorAuth}
+                    type={showPasswords ? 'text' : 'password'}
+                    value={passwordForm.currentPassword}
                     onChange={(e) =>
-                      handleInputChange('twoFactorAuth', e.target.checked)
+                      setPasswordForm({
+                        ...passwordForm,
+                        currentPassword: e.target.value,
+                      })
                     }
-                    className='sr-only peer'
+                    className={`${inputClass} pl-9`}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Session Timeout (minutes)
-                </label>
-                <select
-                  value={settings.sessionTimeout}
-                  onChange={(e) =>
-                    handleInputChange('sessionTimeout', e.target.value)
-                  }
-                  className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                >
-                  <option value='15'>15 minutes</option>
-                  <option value='30'>30 minutes</option>
-                  <option value='60'>1 hour</option>
-                  <option value='120'>2 hours</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        );
-      case 'mobile':
-        return (
-          <div className='space-y-6'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-              Mobile App Settings
-            </h2>
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-                <div>
-                  <h3 className='font-medium text-gray-900'>GPS Tracking</h3>
-                  <p className='text-sm text-gray-500'>
-                    Track technician locations
-                  </p>
                 </div>
-                <label className='relative inline-flex items-center cursor-pointer'>
+              </div>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    New Password
+                  </label>
                   <input
-                    type='checkbox'
-                    checked={settings.gpsTracking}
+                    type={showPasswords ? 'text' : 'password'}
+                    value={passwordForm.newPassword}
                     onChange={(e) =>
-                      handleInputChange('gpsTracking', e.target.checked)
+                      setPasswordForm({
+                        ...passwordForm,
+                        newPassword: e.target.value,
+                      })
                     }
-                    className='sr-only peer'
+                    className={inputClass}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Photo Compression
-                </label>
-                <select
-                  value={settings.photoCompression}
-                  onChange={(e) =>
-                    handleInputChange('photoCompression', e.target.value)
-                  }
-                  className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                >
-                  <option value='low'>
-                    Low (Higher quality, more storage)
-                  </option>
-                  <option value='medium'>Medium (Balanced)</option>
-                  <option value='high'>
-                    High (Lower quality, less storage)
-                  </option>
-                </select>
-              </div>
-            </div>
-          </div>
-        );
-      case 'scheduling':
-        return (
-          <div className='space-y-6'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-              Scheduling Preferences
-            </h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Default Appointment Duration
-                </label>
-                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
-                  <option value='30'>30 minutes</option>
-                  <option value='60'>1 hour</option>
-                  <option value='90'>1.5 hours</option>
-                  <option value='120'>2 hours</option>
-                </select>
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Auto-assign Jobs
-                </label>
-                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
-                  <option value='proximity'>By Proximity</option>
-                  <option value='availability'>By Availability</option>
-                  <option value='skills'>By Skills</option>
-                  <option value='manual'>Manual Assignment</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        );
-      case 'field':
-        return (
-          <div className='space-y-6'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-              Field Operations
-            </h2>
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
-                <div>
-                  <h3 className='font-medium text-gray-900'>
-                    Require Job Photos
-                  </h3>
-                  <p className='text-sm text-gray-500'>
-                    Technicians must take before/after photos
-                  </p>
                 </div>
-                <label className='relative inline-flex items-center cursor-pointer'>
-                  <input type='checkbox' className='sr-only peer' />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-              <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
                 <div>
-                  <h3 className='font-medium text-gray-900'>
-                    Digital Signatures
-                  </h3>
-                  <p className='text-sm text-gray-500'>
-                    Require customer signatures for job completion
-                  </p>
-                </div>
-                <label className='relative inline-flex items-center cursor-pointer'>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Confirm New Password
+                  </label>
                   <input
-                    type='checkbox'
-                    defaultChecked
-                    className='sr-only peer'
+                    type={showPasswords ? 'text' : 'password'}
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    className={inputClass}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+                </div>
               </div>
-            </div>
-          </div>
-        );
-      case 'forms':
-        return (
-          <div className='space-y-6'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-              Forms & Templates
-            </h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div className='p-4 border border-gray-200 rounded-lg'>
-                <h3 className='font-medium text-gray-900 mb-2'>
-                  Service Agreement
-                </h3>
-                <p className='text-sm text-gray-500 mb-3'>
-                  Standard terms and conditions
-                </p>
-                <button className='text-blue-600 hover:text-blue-800 text-sm font-medium'>
-                  Edit Template
-                </button>
-              </div>
-              <div className='p-4 border border-gray-200 rounded-lg'>
-                <h3 className='font-medium text-gray-900 mb-2'>
-                  Customer Satisfaction Survey
-                </h3>
-                <p className='text-sm text-gray-500 mb-3'>
-                  Post-job feedback form
-                </p>
-                <button className='text-blue-600 hover:text-blue-800 text-sm font-medium'>
-                  Edit Template
+              <button
+                type='button'
+                onClick={() => setShowPasswords(!showPasswords)}
+                className='inline-flex items-center text-xs text-gray-500 hover:text-gray-700'
+              >
+                {showPasswords ? (
+                  <EyeOff className='mr-1.5' size={14} />
+                ) : (
+                  <Eye className='mr-1.5' size={14} />
+                )}
+                {showPasswords ? 'Hide' : 'Show'} passwords
+              </button>
+              <div>
+                <button
+                  onClick={handleChangePassword}
+                  disabled={isSavingPassword}
+                  className='inline-flex items-center px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-60'
+                >
+                  {isSavingPassword ? 'Updating...' : 'Update Password'}
                 </button>
               </div>
             </div>
           </div>
         );
-      case 'reports':
+
+      case 'team':
         return (
-          <div className='space-y-6'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-              Reports & Analytics
-            </h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div className='max-w-2xl'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-6'>Team</h2>
+            <div className='bg-gray-50 border border-gray-200 rounded-lg p-6 flex items-center justify-between'>
               <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Default Report Period
-                </label>
-                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
-                  <option value='week'>Last 7 days</option>
-                  <option value='month'>Last 30 days</option>
-                  <option value='quarter'>Last 90 days</option>
-                  <option value='year'>Last 365 days</option>
-                </select>
+                <h3 className='font-semibold text-gray-900'>
+                  Manage your team
+                </h3>
+                <p className='text-sm text-gray-600 mt-1'>
+                  Invite teammates, assign roles, and manage employee records
+                  from the Team page.
+                </p>
               </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Email Reports
-                </label>
-                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
-                  <option value='none'>Never</option>
-                  <option value='weekly'>Weekly</option>
-                  <option value='monthly'>Monthly</option>
-                  <option value='quarterly'>Quarterly</option>
-                </select>
-              </div>
+              <button
+                onClick={() => navigate('/employees')}
+                className='inline-flex items-center px-4 py-2 bg-bg-primary text-white rounded-lg font-medium hover:bg-bg-primary-hover transition-colors flex-shrink-0'
+              >
+                Go to Team
+                <ArrowRight className='ml-2' size={16} />
+              </button>
             </div>
           </div>
         );
-      case 'system':
-        return (
-          <div className='space-y-6'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-              System Preferences
-            </h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Date Format
-                </label>
-                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
-                  <option value='MM/DD/YYYY'>MM/DD/YYYY</option>
-                  <option value='DD/MM/YYYY'>DD/MM/YYYY</option>
-                  <option value='YYYY-MM-DD'>YYYY-MM-DD</option>
-                </select>
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Time Format
-                </label>
-                <select className='w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
-                  <option value='12'>12-hour (AM/PM)</option>
-                  <option value='24'>24-hour</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        );
+
       default:
-        return renderCompanySettings();
+        return null;
     }
   };
 
   return (
     <div className='flex h-screen'>
-      {/* Sidebar placeholder */}
       <Sidebar />
       <div className='flex-1 ml-64'>
-        {/* Navbar placeholder */}
         <Navbar />
 
-        <div className='flex h-full'>
-          {/* Settings Sidebar */}
-          <div className='w-80 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto'>
+        <div className='flex h-[calc(100vh-4rem)]'>
+          <div className='w-64 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto flex-shrink-0'>
             <div className='space-y-1'>
               {settingSections.map((section) => {
                 const Icon = section.icon;
@@ -1076,39 +582,24 @@ const SettingsPage = () => {
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                    className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-left transition-colors ${
                       activeSection === section.id
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                        ? 'bg-bg-primary/10 text-bg-primary'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <Icon className='w-5 h-5' />
-                    <span className='font-medium'>{section.name}</span>
-                    <ChevronRight className='w-4 h-4 ml-auto' />
+                    <Icon className='w-4 h-4' />
+                    <span className='text-sm font-medium'>
+                      {section.name}
+                    </span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Main Content */}
           <div className='flex-1 p-8 overflow-y-auto'>
-            <div className=''>
-              {renderSectionContent()}
-
-              {/* Save Button */}
-              <div className='mt-8 pt-6 border-t border-gray-200'>
-                <div className='flex items-center justify-end space-x-4'>
-                  <button className='px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'>
-                    Cancel
-                  </button>
-                  <button className='px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2'>
-                    <Save className='w-4 h-4' />
-                    <span>Save Changes</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            {renderSectionContent()}
           </div>
         </div>
       </div>
@@ -1116,4 +607,4 @@ const SettingsPage = () => {
   );
 };
 
-export default SettingsPage;
+export default Settings;

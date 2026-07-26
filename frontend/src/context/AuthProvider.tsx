@@ -9,20 +9,21 @@ import { GetLoggedInUser } from '../services/User';
 import { TContext } from '../types/Context';
 import { TUser } from '../types/User';
 import { Logout } from '../services/Auth';
+import { getStoredToken, clearStoredToken } from '../utils/AuthHelpers/tokenStorage';
 
 const AuthContext = createContext<TContext | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<TUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(
-    localStorage.getItem('accessToken')
+    getStoredToken()
   );
   const [loading, setLoading] = useState(true);
 
   const fetchCurrentUser = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = getStoredToken();
       if (!token) {
         setLoading(false);
         return;
@@ -47,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // used after mutations (e.g. workspace creation) that change data on the
   // user object but shouldn't re-trigger the initial full-page loading spinner.
   const refetchUser = async () => {
-    const token = localStorage.getItem('accessToken');
+    const token = getStoredToken();
     if (!token) return;
     try {
       const response = await GetLoggedInUser(token);
@@ -61,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await Logout();
-    localStorage.removeItem('accessToken');
+    clearStoredToken();
     setUser(null);
     setAccessToken(null);
   };

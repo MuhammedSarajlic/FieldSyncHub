@@ -30,15 +30,16 @@ export type TGetUser = {
 
 export type TUpdateUser = {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: UserRole;
 };
 
 export type TUserLogin = {
   email: string;
   password: string;
+  rememberMe: boolean;
 };
 
 export type TUserRegister = {

@@ -349,6 +349,7 @@ public class JobService : IJobService
         existingJob.ArrivalWindow = updatedJobDto.ArrivalWindow ?? existingJob.ArrivalWindow;
         existingJob.EstimatedDurationMinutes = updatedJobDto.EstimatedDurationMinutes ?? existingJob.EstimatedDurationMinutes;
         existingJob.DepositAmount = updatedJobDto.DepositAmount ?? existingJob.DepositAmount;
+        existingJob.PaymentStatus = updatedJobDto.PaymentStatus ?? existingJob.PaymentStatus;
         existingJob.DiscountType = updatedJobDto.DiscountType ?? existingJob.DiscountType;
         existingJob.DiscountValue = updatedJobDto.DiscountValue ?? existingJob.DiscountValue;
         existingJob.TaxRate = updatedJobDto.TaxRate ?? existingJob.TaxRate;
@@ -360,6 +361,7 @@ public class JobService : IJobService
         existingJob.InvoiceSent = updatedJobDto.InvoiceSent ?? existingJob.InvoiceSent;
         existingJob.Source = updatedJobDto.Source ?? existingJob.Source;
         existingJob.CustomerNotes = updatedJobDto.CustomerNotes ?? existingJob.CustomerNotes;
+        existingJob.InternalNotes = updatedJobDto.InternalNotes ?? existingJob.InternalNotes;
         existingJob.Tags = updatedJobDto.Tags ?? existingJob.Tags;
 
         //Date can't be null check later if there is problem with dates

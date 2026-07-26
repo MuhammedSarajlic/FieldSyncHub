@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TUserRegister } from '../../types/User';
 import GoogleAuthButton from '../../components/CustomElements/GoogleAuthButton';
+import { setStoredToken } from '../../utils/AuthHelpers/tokenStorage';
 
 // Slides for the left panel (can be shared with sign-in or customized)
 const slides = [
@@ -66,7 +67,7 @@ const Signup = () => {
     const response = await Register(userLoginData);
     if (response.status === 200) {
       const token = response.data.accessToken;
-      localStorage.setItem('accessToken', token);
+      setStoredToken(token, true);
       setAccessToken(token);
     }
   };
@@ -76,7 +77,7 @@ const Signup = () => {
       const response = await GoogleLogin(idToken);
       if (response.status === 200) {
         const token = response.data.accessToken;
-        localStorage.setItem('accessToken', token);
+        setStoredToken(token, true);
         setAccessToken(token);
       }
     } catch (error) {

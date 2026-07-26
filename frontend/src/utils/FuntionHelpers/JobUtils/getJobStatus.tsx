@@ -30,7 +30,7 @@ export const getJobStatus = (status: JobStatus) => {
         color: 'bg-green-100 text-green-800 border-green-200',
         icon: <CheckCircle2 className='w-4 h-4 mr-1.5' />,
       };
-    case JobStatus.Cancelled:
+    case JobStatus.Canceled:
       return {
         color: 'bg-red-100 text-red-800 border-red-200',
         icon: <XCircle className='w-4 h-4 mr-1.5' />,

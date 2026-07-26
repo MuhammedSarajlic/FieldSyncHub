@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TUserLogin } from '../../types/User';
 import GoogleAuthButton from '../../components/CustomElements/GoogleAuthButton';
+import { setStoredToken } from '../../utils/AuthHelpers/tokenStorage';
 
 const slides = [
   {
@@ -37,6 +38,7 @@ const Signin = () => {
   const [userLoginData, setUserLoginData] = useState<TUserLogin>({
     email: '',
     password: '',
+    rememberMe: true,
   });
   const [isFocused, setIsFocused] = useState({
     email: false,
@@ -60,7 +62,7 @@ const Signin = () => {
     const response = await Login(userLoginData);
     if (response.status === 200) {
       const token = response.data.accessToken;
-      localStorage.setItem('accessToken', token);
+      setStoredToken(token, userLoginData.rememberMe);
       setAccessToken(token);
     }
   };
@@ -70,7 +72,7 @@ const Signin = () => {
       const response = await GoogleLogin(idToken);
       if (response.status === 200) {
         const token = response.data.accessToken;
-        localStorage.setItem('accessToken', token);
+        setStoredToken(token, true);
         setAccessToken(token);
       }
     } catch (error) {
@@ -346,6 +348,13 @@ const Signin = () => {
                       id='remember-me'
                       name='remember-me'
                       type='checkbox'
+                      checked={userLoginData.rememberMe}
+                      onChange={(e) =>
+                        setUserLoginData({
+                          ...userLoginData,
+                          rememberMe: e.target.checked,
+                        })
+                      }
                       className='h-4 w-4 text-bg-primary focus:ring-bg-primary border-gray-300 rounded'
                     />
                     <label

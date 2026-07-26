@@ -16,8 +16,6 @@ public class Lead
     public Workspace? Workspace { get; set; }
     [Required]
     public string Description { get; set; } = string.Empty;
-    // public DateTime? PreferredDate { get; set; }
-    // public string? PreferredTime { get; set; }
     public DateTime? StartDateTime { get; set; }
     public DateTime? EndDateTime { get; set; }
     public LeadStatus Status { get; set; } = LeadStatus.Pending;

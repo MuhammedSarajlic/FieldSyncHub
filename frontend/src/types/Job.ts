@@ -114,6 +114,7 @@ export type TUpdateJob = {
   estimatedDurationMinutes?: number;
   assignedTeamMembers?: TEmployee[];
   depositAmount?: number;
+  paymentStatus?: PaymentStatus;
   discountType?: DiscountType;
   discountValue?: number;
   taxRate?: number;

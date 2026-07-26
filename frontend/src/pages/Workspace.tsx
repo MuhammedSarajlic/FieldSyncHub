@@ -22,6 +22,7 @@ import { TAddWorkspace } from '../types/Workspace';
 import { CreateWorkspace } from '../services/Workspace';
 import { useAuth } from '../context/AuthProvider';
 import { CompanySize } from '../constants/Enumeration/WorkspaceEnum/WorkspaceEnum';
+import { serviceCategories } from '../constants/ServiceCategories';
 import { uploadFile } from '../storage/uploadFile';
 
 // Enum for steps in our onboarding process. No standalone "Welcome" step -
@@ -120,31 +121,6 @@ const Workspace = () => {
       description: 'Established company',
       icon: Building2,
     },
-  ];
-
-  // Predefined service categories with better organization
-  const serviceCategories = [
-    'Plumbing Services',
-    'HVAC Services',
-    'Electrical Services',
-    'Landscaping & Gardening',
-    'Cleaning Services',
-    'Home Renovation',
-    'Appliance Repair',
-    'Pest Control',
-    'Roofing & Gutters',
-    'Carpentry & Woodwork',
-    'Painting Services',
-    'Flooring Installation',
-    'Security Systems',
-    'Pool Maintenance',
-    'Solar Panel Installation',
-    'Window Installation & Repair',
-    'Masonry & Concrete',
-    'Locksmith Services',
-    'Moving Services',
-    'General Contractor',
-    'Other',
   ];
 
   // Handle file selection for workspace logo

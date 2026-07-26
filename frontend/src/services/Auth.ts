@@ -20,6 +20,19 @@ export async function Logout() {
   return response;
 }
 
+export async function UpdatePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+) {
+  const response = await api.post(
+    `/auth/updatePassword/${userId}?currentPassword=${encodeURIComponent(
+      currentPassword
+    )}&newPassword=${encodeURIComponent(newPassword)}`
+  );
+  return response;
+}
+
 export async function ForgotPassword(email: string) {
   const response = await api.post('/auth/forgot-password', { email });
   return response;

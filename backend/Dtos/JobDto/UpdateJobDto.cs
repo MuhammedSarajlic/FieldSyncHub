@@ -21,6 +21,7 @@ public class UpdateJobDto
     public int? EstimatedDurationMinutes { get; set; }
     public List<Employee>? AssignedTeamMembers { get; set; }
     public decimal? DepositAmount { get; set; }
+    public PaymentStatus? PaymentStatus { get; set; }
     public DiscountType? DiscountType { get; set; }
     public decimal? DiscountValue { get; set; }
     public decimal? TaxRate { get; set; }
