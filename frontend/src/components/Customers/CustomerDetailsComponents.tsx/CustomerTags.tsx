@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Tag, Plus } from 'lucide-react';
 import { AddCustomerTag, RemoveCustomerTag } from '../../../services/Customer';
+import Button from '../../CustomElements/Button';
 
 interface ICustomerTags {
   tags: string[] | null;
@@ -43,13 +44,14 @@ const CustomerTags = ({ tags, customerId }: ICustomerTags) => {
         </h3>
 
         {!isAddingTag ? (
-          <button
+          <Button
+            variant='ghost'
             onClick={() => setIsAddingTag(true)}
-            className='text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 cursor-pointer'
+            customStyle='text-bg-primary hover:text-bg-primary-hover px-0'
+            leftIcon={<Plus className='w-4 h-4' />}
           >
-            <Plus className='w-4 h-4' />
             Add tag
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -60,15 +62,16 @@ const CustomerTags = ({ tags, customerId }: ICustomerTags) => {
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             placeholder='Enter tag name'
-            className='flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500'
+            className='flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-bg-primary focus:border-bg-primary'
             onKeyDown={(e) => e.key === 'Enter' && addCustomerTag()}
           />
-          <button
+          <Button
+            variant='primary'
             onClick={addCustomerTag}
-            className='cursor-pointer min-w-24 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700'
+            customStyle='min-w-24'
           >
             Add
-          </button>
+          </Button>
         </div>
       )}
 
@@ -77,7 +80,7 @@ const CustomerTags = ({ tags, customerId }: ICustomerTags) => {
           {localTags.map((tag, index) => (
             <span
               key={index}
-              className='group relative inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 hover:pr-8 transition-all duration-200'
+              className='group relative inline-flex items-center px-3 py-1 rounded-full text-sm bg-bg-primary/10 text-bg-primary hover:pr-8 transition-all duration-200'
             >
               {tag}
               <button
@@ -87,7 +90,7 @@ const CustomerTags = ({ tags, customerId }: ICustomerTags) => {
                 }}
                 className='absolute right-2 opacity-0 cursor-pointer group-hover:opacity-100 focus:opacity-100 transition-opacity duration-200'
               >
-                <X className='w-4 h-4 text-blue-400 hover:text-blue-700' />
+                <X className='w-4 h-4 text-bg-primary/60 hover:text-bg-primary' />
               </button>
             </span>
           ))}

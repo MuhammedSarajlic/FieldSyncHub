@@ -6,6 +6,7 @@ import { addNoteInitialState } from '../../../constants/States/states';
 import { CreateNote } from '../../../services/Notes';
 import { useAuth } from '../../../context/AuthProvider';
 import CustomButton from '../../CustomElements/CustomButton';
+import Button from '../../CustomElements/Button';
 import { uploadNoteFile } from '../../../storage/uploadNoteFile';
 
 interface ICustomerNotes {
@@ -86,12 +87,9 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
           <p className='font-semibold text-lg text-gray-800'>Notes</p>
         </div>
         {!isAddNote && notesList.length > 0 && (
-          <button
-            onClick={() => setIsAddNote(true)}
-            className='px-4 py-2 bg-bg-primary hover:bg-bg-primary-hover text-white text-sm font-medium rounded-lg cursor-pointer transition-colors duration-200'
-          >
+          <Button variant='primary' onClick={() => setIsAddNote(true)}>
             + Add Note
-          </button>
+          </Button>
         )}
       </div>
 
@@ -120,13 +118,13 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
           )}
 
           <div className='flex items-center justify-end space-x-3 pt-2'>
-            <button
+            <Button
+              variant='secondary'
               onClick={() => setIsAddNote(false)}
-              className='px-4 py-2 cursor-pointer text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200'
               disabled={isUploading}
             >
               Cancel
-            </button>
+            </Button>
             <CustomButton
               title='Add note'
               handleBtnClick={handleAddNote}
@@ -164,12 +162,13 @@ const CustomerNotes = ({ notes, customerId }: ICustomerNotes) => {
             <p className='mt-1 text-xs text-gray-500'>
               Add your first note to get started
             </p>
-            <button
+            <Button
+              variant='primary'
               onClick={() => setIsAddNote(true)}
-              className='mt-4 px-4 py-2 cursor-pointer bg-bg-primary hover:bg-bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors duration-200'
+              customStyle='mt-4'
             >
               + Add Note
-            </button>
+            </Button>
           </div>
         )
       )}

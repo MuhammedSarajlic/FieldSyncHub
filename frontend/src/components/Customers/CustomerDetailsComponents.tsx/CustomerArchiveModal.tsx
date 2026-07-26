@@ -1,5 +1,6 @@
 import { AlertTriangle, Archive } from 'lucide-react';
 import { useState } from 'react';
+import Button from '../../CustomElements/Button';
 
 interface ArchiveCustomerModalProps {
   isOpen: boolean;
@@ -58,29 +59,17 @@ const CustomerArchiveModal = ({
           </div>
 
           <div className='mt-6 flex justify-end space-x-3'>
-            <button
-              type='button'
-              onClick={onClose}
-              disabled={isArchiving}
-              className='px-4 py-2 text-sm font-medium cursor-pointer text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50'
-            >
+            <Button variant='secondary' onClick={onClose} disabled={isArchiving}>
               Cancel
-            </button>
-            <button
-              type='button'
+            </Button>
+            <Button
+              variant='danger'
               onClick={handleArchive}
               disabled={isArchiving}
-              className='px-4 py-2 text-sm font-medium cursor-pointer text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 flex items-center'
+              leftIcon={!isArchiving && <Archive className='w-4 h-4' />}
             >
-              {isArchiving ? (
-                'Archiving...'
-              ) : (
-                <>
-                  <Archive className='w-4 h-4 mr-2' />
-                  Archive Customer
-                </>
-              )}
-            </button>
+              {isArchiving ? 'Archiving...' : 'Archive Customer'}
+            </Button>
           </div>
         </div>
       </div>

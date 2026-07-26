@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar/Navbar';
 import Sidebar from '../components/Sidebar/Sidebar';
+import Button from '../components/CustomElements/Button';
 import { useAuth } from '../context/AuthProvider';
 import { GetWorkspaceById, UpdateWorkspace } from '../services/Workspace';
 import { UpdateUser } from '../services/User';
@@ -376,14 +377,14 @@ const Settings = () => {
                 </div>
 
                 <div className='pt-2'>
-                  <button
+                  <Button
+                    variant='primary'
                     onClick={handleSaveCompany}
                     disabled={isSavingCompany}
-                    className='inline-flex items-center px-5 py-2.5 bg-bg-primary text-white rounded-lg font-medium hover:bg-bg-primary-hover transition-colors disabled:opacity-60'
+                    leftIcon={<Save size={16} />}
                   >
-                    <Save className='mr-2' size={16} />
                     {isSavingCompany ? 'Saving...' : 'Save Changes'}
-                  </button>
+                  </Button>
                 </div>
               </>
             )}
@@ -442,14 +443,14 @@ const Settings = () => {
                   className={inputClass}
                 />
               </div>
-              <button
+              <Button
+                variant='primary'
                 onClick={handleSaveAccount}
                 disabled={isSavingAccount}
-                className='inline-flex items-center px-5 py-2.5 bg-bg-primary text-white rounded-lg font-medium hover:bg-bg-primary-hover transition-colors disabled:opacity-60'
+                leftIcon={<Save size={16} />}
               >
-                <Save className='mr-2' size={16} />
                 {isSavingAccount ? 'Saving...' : 'Save Changes'}
-              </button>
+              </Button>
             </div>
 
             <div className='space-y-4 pt-6 border-t border-gray-200'>
@@ -525,13 +526,13 @@ const Settings = () => {
                 {showPasswords ? 'Hide' : 'Show'} passwords
               </button>
               <div>
-                <button
+                <Button
+                  variant='secondary'
                   onClick={handleChangePassword}
                   disabled={isSavingPassword}
-                  className='inline-flex items-center px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-60'
                 >
                   {isSavingPassword ? 'Updating...' : 'Update Password'}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -551,13 +552,14 @@ const Settings = () => {
                   from the Team page.
                 </p>
               </div>
-              <button
+              <Button
+                variant='primary'
                 onClick={() => navigate('/employees')}
-                className='inline-flex items-center px-4 py-2 bg-bg-primary text-white rounded-lg font-medium hover:bg-bg-primary-hover transition-colors flex-shrink-0'
+                customStyle='flex-shrink-0'
+                rightIcon={<ArrowRight size={16} />}
               >
                 Go to Team
-                <ArrowRight className='ml-2' size={16} />
-              </button>
+              </Button>
             </div>
           </div>
         );

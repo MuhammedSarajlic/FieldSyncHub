@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { Mail, Pencil, Archive } from 'lucide-react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
+import Button from '../../components/CustomElements/Button';
 import {
   TCustomer,
   TCustomerDetailsStats,
@@ -12,7 +14,7 @@ import { formatDate } from '../../utils/FuntionHelpers/formatDate';
 import CustomerNotes from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerNotes';
 import CustomerTags from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerTags';
 import CustomerAddPropertyModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerProperties/Modals/CustomerAddPropertyModal';
-import { TAddProperty } from '../../types/Property';
+import { TAddProperty, TProperty } from '../../types/Property';
 import { CreateProperty, UpdateProperty } from '../../services/Property';
 import CustomerArchiveModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerArchiveModal';
 import CustomerEmailModal from '../../components/Customers/CustomerDetailsComponents.tsx/CustomerEmailModal';
@@ -51,6 +53,7 @@ const CustomerDetails = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddPropertyModalOpen, setIsAddPropertyModalOpen] = useState(false);
   const [isEditPropertyModalOpen, setIsEditPropertyModalOpen] = useState(false);
+  const [propertyToEdit, setPropertyToEdit] = useState<TProperty | null>(null);
 
   const [customerStats, setCustomerStats] = useState<TCustomerDetailsStats>(
     customerStatsInitialState
@@ -183,15 +186,10 @@ const CustomerDetails = () => {
     }
   };
 
-  // const handleEditProperty = async (propertyId: string) => {
-  //   if (!customer) return;
-  //   const selectedProperty = customer.properties.find(p => p.id == propertyId)
-  //   const response = await UpdateProperty(propertyData);
-  //   if (response.status === 200) {
-  //     await fetchCustomer();
-  //     setIsAddPropertyModalOpen(false);
-  //   }
-  // };
+  const handleEditProperty = (property: TProperty) => {
+    setPropertyToEdit(property);
+    setIsEditPropertyModalOpen(true);
+  };
 
   const renderCustomerTabContent = () => {
     const activeTab = tabs.find((t) => t.id === selectedTab);
@@ -305,51 +303,28 @@ const CustomerDetails = () => {
               </div>
 
               <div className='flex items-center space-x-3'>
-                <button
+                <Button
+                  variant='primary'
                   onClick={() => setIsEmailModalOpen(true)}
-                  className='px-4 py-2 cursor-pointer bg-bg-primary text-white rounded-lg hover:bg-bg-primary-hover transition-colors flex items-center space-x-2'
+                  leftIcon={<Mail className='w-4 h-4' />}
                 >
-                  <svg
-                    className='w-4 h-4'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path d='M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z' />
-                    <path d='M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z' />
-                  </svg>
-                  <span>Email</span>
-                </button>
-                <button
+                  Email
+                </Button>
+                <Button
+                  variant='secondary'
                   onClick={() => setIsEditModalOpen(true)}
-                  className='px-4 py-2 cursor-pointer border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2'
+                  leftIcon={<Pencil className='w-4 h-4' />}
                 >
-                  <svg
-                    className='w-4 h-4'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path d='M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z' />
-                  </svg>
-                  <span>Edit</span>
-                </button>
-                <button
+                  Edit
+                </Button>
+                <Button
+                  variant='outline'
                   onClick={() => setIsArchiveModalOpen(true)}
-                  className='px-4 py-2 border border-red-200 text-red-600 cursor-pointer rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2'
+                  customStyle='text-red-600 border-red-200 hover:bg-red-50'
+                  leftIcon={<Archive className='w-4 h-4' />}
                 >
-                  <svg
-                    className='w-4 h-4'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M4 3a2 2 0 100 4h12a2 2 0 100-4H4z'
-                      clipRule='evenodd'
-                    />
-                    <path d='M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z' />
-                  </svg>
-                  <span>Archive</span>
-                </button>
+                  Archive
+                </Button>
               </div>
             </div>
           </div>
@@ -401,7 +376,7 @@ const CustomerDetails = () => {
               <CustomerPropertyList
                 properties={customer.properties}
                 setIsAddPropertyModalOpen={setIsAddPropertyModalOpen}
-                setIsEditPropertyModalOpen={setIsEditPropertyModalOpen}
+                onEditProperty={handleEditProperty}
               />
 
               {/* Notes */}
@@ -435,11 +410,15 @@ const CustomerDetails = () => {
         onClose={() => setIsAddPropertyModalOpen(false)}
         onSave={handleAddProperty}
       />
-      {/* <CustomerEditPropertyModal
+      <CustomerEditPropertyModal
         isOpen={isEditPropertyModalOpen}
-        onClose={() => setIsEditPropertyModalOpen(false)}
-        propertyToEdit={}
-      /> */}
+        onClose={() => {
+          setIsEditPropertyModalOpen(false);
+          setPropertyToEdit(null);
+        }}
+        onUpdated={fetchCustomer}
+        propertyToEdit={propertyToEdit}
+      />
     </div>
   );
 };

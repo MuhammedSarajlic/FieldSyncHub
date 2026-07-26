@@ -1,17 +1,18 @@
 import React from 'react';
 import { TProperty } from '../../../../types/Property';
 import { MapPin } from 'lucide-react';
+import Button from '../../../CustomElements/Button';
 
 interface ICustomerProperties {
   properties: TProperty[];
   setIsAddPropertyModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsEditPropertyModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onEditProperty: (property: TProperty) => void;
 }
 
 const CustomerPropertyList = ({
   properties,
   setIsAddPropertyModalOpen,
-  setIsEditPropertyModalOpen,
+  onEditProperty,
 }: ICustomerProperties) => {
   return (
     <div className='bg-white rounded-lg border border-gray-100 shadow-sm p-6'>
@@ -20,12 +21,13 @@ const CustomerPropertyList = ({
           <MapPin className='w-5 h-5 text-gray-600' />
           Properties
         </h3>
-        <button
+        <Button
+          variant='ghost'
           onClick={() => setIsAddPropertyModalOpen(true)}
-          className='text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer'
+          customStyle='text-bg-primary hover:text-bg-primary-hover px-0'
         >
           + Add property
-        </button>
+        </Button>
       </div>
       {properties && properties.length > 0 ? (
         <div className='space-y-4'>
@@ -87,8 +89,8 @@ const CustomerPropertyList = ({
 
               <div className='mt-3 pt-3 border-t border-gray-100 flex space-x-3'>
                 <button
-                  onClick={() => setIsEditPropertyModalOpen(true)}
-                  className='text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline'
+                  onClick={() => onEditProperty(property)}
+                  className='text-xs font-medium text-bg-primary hover:text-bg-primary-hover hover:underline cursor-pointer'
                 >
                   Edit property
                 </button>
@@ -124,12 +126,13 @@ const CustomerPropertyList = ({
           <p className='mt-2 text-sm text-gray-500'>
             No properties listed for this customer
           </p>
-          <button
+          <Button
+            variant='secondary'
             onClick={() => setIsAddPropertyModalOpen(true)}
-            className='mt-3 inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none'
+            customStyle='mt-3'
           >
             Add Property
-          </button>
+          </Button>
         </div>
       )}
     </div>

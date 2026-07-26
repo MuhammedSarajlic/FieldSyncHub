@@ -2,16 +2,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TProperty, TUpdateProperty } from '../../../../../types/Property';
 import { UpdateProperty } from '../../../../../services/Property';
+import Button from '../../../../CustomElements/Button';
 
 interface ICustomerEditPropertyModal {
   isOpen: boolean;
   onClose: () => void;
+  onUpdated?: () => void;
   propertyToEdit: TProperty | null; // Full TProperty to pre-fill the form
 }
 
 const CustomerEditPropertyModal = ({
   isOpen,
   onClose,
+  onUpdated,
   propertyToEdit,
 }: ICustomerEditPropertyModal) => {
   const [formData, setFormData] = useState<TUpdateProperty>({
@@ -25,6 +28,7 @@ const CustomerEditPropertyModal = ({
   });
 
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null); // Ref for modal content to handle clicks outside
 
   // Populate form data when propertyToEdit changes or modal opens
@@ -123,8 +127,11 @@ const CustomerEditPropertyModal = ({
         updatedFields.isBillingAddress = formData.isBillingAddress;
       }
 
+      setIsLoading(true);
       const result = await UpdateProperty(updatedFields);
+      setIsLoading(false);
       if (result.status === 200) {
+        onUpdated?.();
         onClose();
       }
     }
@@ -196,7 +203,7 @@ const CustomerEditPropertyModal = ({
               onChange={handleChange}
               className={`mt-1 block w-full border ${
                 formErrors.street ? 'border-red-500' : 'border-gray-300'
-              } rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+              } rounded-md shadow-sm p-2 focus:ring-bg-primary focus:border-bg-primary sm:text-sm`}
               disabled={isLoading}
             />
             {formErrors.street && (
@@ -219,7 +226,7 @@ const CustomerEditPropertyModal = ({
               onChange={handleChange}
               className={`mt-1 block w-full border ${
                 formErrors.city ? 'border-red-500' : 'border-gray-300'
-              } rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+              } rounded-md shadow-sm p-2 focus:ring-bg-primary focus:border-bg-primary sm:text-sm`}
               disabled={isLoading}
             />
             {formErrors.city && (
@@ -242,7 +249,7 @@ const CustomerEditPropertyModal = ({
               onChange={handleChange}
               className={`mt-1 block w-full border ${
                 formErrors.state ? 'border-red-500' : 'border-gray-300'
-              } rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+              } rounded-md shadow-sm p-2 focus:ring-bg-primary focus:border-bg-primary sm:text-sm`}
               disabled={isLoading}
             />
             {formErrors.state && (
@@ -265,7 +272,7 @@ const CustomerEditPropertyModal = ({
               onChange={handleChange}
               className={`mt-1 block w-full border ${
                 formErrors.country ? 'border-red-500' : 'border-gray-300'
-              } rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+              } rounded-md shadow-sm p-2 focus:ring-bg-primary focus:border-bg-primary sm:text-sm`}
               disabled={isLoading}
             />
             {formErrors.country && (
@@ -288,7 +295,7 @@ const CustomerEditPropertyModal = ({
               onChange={handleChange}
               className={`mt-1 block w-full border ${
                 formErrors.postalCode ? 'border-red-500' : 'border-gray-300'
-              } rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+              } rounded-md shadow-sm p-2 focus:ring-bg-primary focus:border-bg-primary sm:text-sm`}
               disabled={isLoading}
             />
             {formErrors.postalCode && (
@@ -305,7 +312,7 @@ const CustomerEditPropertyModal = ({
               type='checkbox'
               checked={formData.isBillingAddress}
               onChange={handleChange}
-              className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+              className='h-4 w-4 text-bg-primary focus:ring-bg-primary border-gray-300 rounded'
               disabled={isLoading}
             />
             <label
@@ -318,44 +325,22 @@ const CustomerEditPropertyModal = ({
         </div>
 
         <div className='mt-6 flex justify-end space-x-3'>
-          <button
+          <Button
             type='button'
+            variant='secondary'
             onClick={onClose}
-            className='inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
             disabled={isLoading}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type='submit'
+            variant='primary'
             onClick={handleSubmit}
-            className='inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
             disabled={isLoading}
           >
-            {isLoading ? (
-              <svg
-                className='animate-spin -ml-1 mr-3 h-5 w-5 text-white'
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-              >
-                <circle
-                  className='opacity-25'
-                  cx='12'
-                  cy='12'
-                  r='10'
-                  stroke='currentColor'
-                  strokeWidth='4'
-                ></circle>
-                <path
-                  className='opacity-75'
-                  fill='currentColor'
-                  d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                ></path>
-              </svg>
-            ) : null}
             {isLoading ? 'Saving...' : 'Save Changes'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
