@@ -176,7 +176,7 @@ const EmployeeDetails = () => {
   if (!currentEmployee)
     return (
       <div className='flex items-center justify-center h-screen'>
-        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500'></div>
+        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-bg-primary'></div>
       </div>
     );
 
@@ -230,13 +230,13 @@ const EmployeeDetails = () => {
                 <div className='mt-4 flex flex-wrap gap-4'>
                   <a
                     href={`mailto:${currentEmployee.user.email}`}
-                    className='flex items-center text-gray-600 hover:text-blue-600 transition-colors'
+                    className='flex items-center text-gray-600 hover:text-bg-primary transition-colors'
                   >
                     <FiMail className='mr-2' /> {currentEmployee.user.email}
                   </a>
                   <a
                     href={`tel:${currentEmployee.phoneNumber || '#'}`}
-                    className='flex items-center text-gray-600 hover:text-blue-600 transition-colors'
+                    className='flex items-center text-gray-600 hover:text-bg-primary transition-colors'
                   >
                     <FiPhone className='mr-2' />{' '}
                     {currentEmployee.phoneNumber || 'No phone'}
@@ -266,7 +266,7 @@ const EmployeeDetails = () => {
               <button className='flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors shadow-sm'>
                 <FiFileText className='mr-2' /> Generate Report
               </button>
-              <button className='flex items-center px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700 transition-colors shadow-sm'>
+              <button className='flex items-center px-4 py-2 bg-bg-primary rounded-lg text-white hover:bg-bg-primary-hover transition-colors shadow-sm'>
                 <FiPhone className='mr-2' /> Contact
               </button>
             </div>
@@ -279,7 +279,7 @@ const EmployeeDetails = () => {
                 <h3 className='text-sm font-medium text-gray-500'>
                   Jobs Completed
                 </h3>
-                <div className='p-2 rounded-lg bg-blue-50 text-blue-600'>
+                <div className='p-2 rounded-lg bg-bg-primary/10 text-bg-primary'>
                   <FiBriefcase className='w-4 h-4' />
                 </div>
               </div>
@@ -377,7 +377,7 @@ const EmployeeDetails = () => {
                 onClick={() => setActiveTab('overview')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === 'overview'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-bg-primary text-bg-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -387,7 +387,7 @@ const EmployeeDetails = () => {
                 onClick={() => setActiveTab('jobs')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === 'jobs'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-bg-primary text-bg-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -397,7 +397,7 @@ const EmployeeDetails = () => {
                 onClick={() => setActiveTab('documents')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === 'documents'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-bg-primary text-bg-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -407,7 +407,7 @@ const EmployeeDetails = () => {
                 onClick={() => setActiveTab('activity')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === 'activity'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-bg-primary text-bg-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -417,7 +417,7 @@ const EmployeeDetails = () => {
                 onClick={() => setActiveTab('permissions')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === 'permissions'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-bg-primary text-bg-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -445,7 +445,7 @@ const EmployeeDetails = () => {
                           <div
                             className={`flex-shrink-0 mt-1 flex items-center justify-center w-8 h-8 rounded-full ${
                               activity.type === 'assignment'
-                                ? 'bg-blue-50 text-blue-600'
+                                ? 'bg-bg-primary/10 text-bg-primary'
                                 : activity.type === 'completion'
                                 ? 'bg-green-50 text-green-600'
                                 : 'bg-purple-50 text-purple-600'
@@ -535,7 +535,7 @@ const EmployeeDetails = () => {
                         <div className='mt-2 flex items-center'>
                           <div className='w-full bg-gray-200 rounded-full h-2.5'>
                             <div
-                              className='bg-blue-600 h-2.5 rounded-full'
+                              className='bg-bg-primary h-2.5 rounded-full'
                               style={{ width: '75%' }}
                             ></div>
                           </div>
@@ -602,13 +602,13 @@ const EmployeeDetails = () => {
                     Assigned Jobs
                   </h2>
                   <div className='flex gap-3 w-full sm:w-auto'>
-                    <select className='px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
+                    <select className='px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-bg-primary focus:border-bg-primary'>
                       <option>All Status</option>
                       <option>Scheduled</option>
                       <option>In Progress</option>
                       <option>Completed</option>
                     </select>
-                    <button className='flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors'>
+                    <button className='flex items-center justify-center gap-2 px-4 py-2 bg-bg-primary hover:bg-bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors'>
                       <FiPlus size={16} />
                       <span>Assign Job</span>
                     </button>
@@ -754,7 +754,7 @@ const EmployeeDetails = () => {
                   <h2 className='text-lg font-semibold text-gray-900'>
                     Documents & Certifications
                   </h2>
-                  <button className='flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors'>
+                  <button className='flex items-center px-3 py-2 bg-bg-primary hover:bg-bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors'>
                     <FiPlus className='mr-1.5' /> Upload Document
                   </button>
                 </div>
@@ -767,7 +767,7 @@ const EmployeeDetails = () => {
                     >
                       <div className='flex items-start justify-between'>
                         <div className='flex items-center'>
-                          <div className='p-2 bg-blue-50 rounded-lg text-blue-600 mr-3'>
+                          <div className='p-2 bg-blue-50 rounded-lg text-bg-primary mr-3'>
                             <FiFileText className='w-5 h-5' />
                           </div>
                           <div>
@@ -794,7 +794,7 @@ const EmployeeDetails = () => {
                           {doc.size} • {new Date(doc.date).toLocaleDateString()}
                         </span>
                         <div className='flex space-x-2'>
-                          <button className='p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'>
+                          <button className='p-1.5 text-gray-500 hover:text-bg-primary hover:bg-bg-primary/10 rounded transition-colors'>
                             <FiEye className='w-4 h-4' />
                           </button>
                           <button className='p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors'>
@@ -825,7 +825,7 @@ const EmployeeDetails = () => {
                         <div
                           className={`flex items-center justify-center w-10 h-10 rounded-full ${
                             activity.type === 'assignment'
-                              ? 'bg-blue-50 text-blue-600'
+                              ? 'bg-bg-primary/10 text-bg-primary'
                               : activity.type === 'completion'
                               ? 'bg-green-50 text-green-600'
                               : 'bg-purple-50 text-purple-600'
@@ -908,7 +908,7 @@ const EmployeeDetails = () => {
                             checked={permissions.canViewJobs}
                             readOnly
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-bg-primary"></div>
                         </label>
                       </div>
 
@@ -926,7 +926,7 @@ const EmployeeDetails = () => {
                             checked={permissions.canCreateInvoice}
                             readOnly
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-bg-primary"></div>
                         </label>
                       </div>
 
@@ -944,7 +944,7 @@ const EmployeeDetails = () => {
                             checked={permissions.canEditJobs}
                             readOnly
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-bg-primary"></div>
                         </label>
                       </div>
                     </div>

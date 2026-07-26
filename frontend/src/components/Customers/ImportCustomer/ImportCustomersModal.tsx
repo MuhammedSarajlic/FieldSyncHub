@@ -355,7 +355,7 @@ const ImportCustomersModal = ({
                       (['mapping', 'preview'].includes(currentStep) &&
                         step === 'upload') ||
                       (currentStep === 'preview' && step === 'mapping')
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-bg-primary text-white'
                         : 'bg-gray-200 text-gray-600'
                     }
                   `}
@@ -370,7 +370,7 @@ const ImportCustomersModal = ({
                         (['mapping', 'preview'].includes(currentStep) &&
                           index === 0) ||
                         (currentStep === 'preview' && index === 1)
-                          ? 'bg-blue-600'
+                          ? 'bg-bg-primary'
                           : 'bg-gray-200'
                       }
                     `}
@@ -453,7 +453,7 @@ const ImportCustomersModal = ({
                             onChange={(e) =>
                               handleMappingChange(index, e.target.value)
                             }
-                            className='block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                            className='block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-bg-primary focus:border-bg-primary'
                           >
                             <option value=''>-- Skip this column --</option>
                             {CUSTOMER_FIELDS.map((field) => {
@@ -620,7 +620,7 @@ const ImportCustomersModal = ({
                   </div>
                   <div className='w-full bg-blue-200 rounded-full h-2'>
                     <div
-                      className='bg-blue-600 h-2 rounded-full transition-all duration-300'
+                      className='bg-bg-primary h-2 rounded-full transition-all duration-300'
                       style={{ width: `${importProgress}%` }}
                     ></div>
                   </div>
@@ -639,7 +639,7 @@ const ImportCustomersModal = ({
                   type='button'
                   onClick={goBackToUpload}
                   disabled={isLoading}
-                  className='inline-flex items-center px-4 py-2 cursor-pointer border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50'
+                  className='inline-flex items-center px-4 py-2 cursor-pointer border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bg-primary disabled:opacity-50'
                 >
                   ← Back
                 </button>
@@ -649,7 +649,7 @@ const ImportCustomersModal = ({
                   type='button'
                   onClick={goBackToMapping}
                   disabled={isLoading}
-                  className='inline-flex items-center px-4 py-2 cursor-pointer border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50'
+                  className='inline-flex items-center px-4 py-2 cursor-pointer border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bg-primary disabled:opacity-50'
                 >
                   ← Back to Mapping
                 </button>
@@ -661,7 +661,7 @@ const ImportCustomersModal = ({
                 type='button'
                 onClick={() => setIsImportCustomerModalOpen(false)}
                 disabled={isLoading}
-                className='inline-flex items-center px-4 py-2 border border-gray-300 cursor-pointer shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50'
+                className='inline-flex items-center px-4 py-2 border border-gray-300 cursor-pointer shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bg-primary disabled:opacity-50'
               >
                 Cancel
               </button>
@@ -671,7 +671,7 @@ const ImportCustomersModal = ({
                   type='button'
                   onClick={proceedToPreview}
                   disabled={isLoading}
-                  className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium cursor-pointer rounded-md shadow-sm text-white bg-bg-primary hover:bg-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50'
+                  className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium cursor-pointer rounded-md shadow-sm text-white bg-bg-primary hover:bg-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bg-primary disabled:opacity-50'
                 >
                   {isLoading ? (
                     <>

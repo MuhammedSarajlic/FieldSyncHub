@@ -329,10 +329,10 @@ const Dispatch = () => {
                   {selectedJob.address}
                 </p>
                 <div className='flex space-x-2 mb-4'>
-                  <button className='flex items-center text-sm text-blue-600 hover:text-blue-800'>
+                  <button className='flex items-center text-sm text-bg-primary hover:text-bg-primary-hover'>
                     <PhoneCall size={14} className='mr-1' /> Call
                   </button>
-                  <button className='flex items-center text-sm text-blue-600 hover:text-blue-800'>
+                  <button className='flex items-center text-sm text-bg-primary hover:text-bg-primary-hover'>
                     <MessageCircle size={14} className='mr-1' /> Text
                   </button>
                 </div>
@@ -404,7 +404,7 @@ const Dispatch = () => {
             <div className='border-t mt-6 pt-4'>
               <h3 className='font-medium text-gray-700 mb-3'>Actions</h3>
               <div className='flex space-x-3'>
-                <button className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm'>
+                <button className='bg-bg-primary hover:bg-bg-primary-hover text-white px-4 py-2 rounded text-sm'>
                   Reassign Technician
                 </button>
                 <button className='bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm'>
@@ -442,7 +442,7 @@ const Dispatch = () => {
                 </p>
               </div>
               <div className='flex space-x-3'>
-                <button className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center'>
+                <button className='bg-bg-primary hover:bg-bg-primary-hover text-white py-2 px-4 rounded-lg flex items-center'>
                   <PlusCircle size={18} className='mr-2' />
                   Add New Job
                 </button>
@@ -476,7 +476,7 @@ const Dispatch = () => {
                 >
                   <ChevronRight size={20} />
                 </button>
-                <button className='ml-4 text-blue-600 hover:text-blue-800 text-sm font-medium'>
+                <button className='ml-4 text-bg-primary hover:text-bg-primary-hover text-sm font-medium'>
                   Today
                 </button>
               </div>
@@ -764,7 +764,7 @@ const Dispatch = () => {
                           <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
                             <button
                               onClick={() => handleJobClick(job)}
-                              className='text-blue-600 hover:text-blue-800'
+                              className='text-bg-primary hover:text-bg-primary-hover'
                             >
                               View
                             </button>
@@ -830,7 +830,7 @@ const Dispatch = () => {
                           {job.status.charAt(0).toUpperCase() +
                             job.status.slice(1)}
                         </span>
-                        <button className='text-blue-600 hover:text-blue-800 text-xs'>
+                        <button className='text-bg-primary hover:text-bg-primary-hover text-xs'>
                           Assign
                         </button>
                       </div>
@@ -843,12 +843,12 @@ const Dispatch = () => {
                     <span className='text-sm text-gray-500'>
                       Total: {unassignedJobs.length} unassigned jobs
                     </span>
-                    <button className='text-blue-600 hover:text-blue-800 text-sm'>
+                    <button className='text-bg-primary hover:text-bg-primary-hover text-sm'>
                       View All
                     </button>
                   </div>
                   <div className='mt-3'>
-                    <button className='w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm'>
+                    <button className='w-full bg-bg-primary hover:bg-bg-primary-hover text-white py-2 rounded-lg text-sm'>
                       Auto-Assign Jobs
                     </button>
                   </div>

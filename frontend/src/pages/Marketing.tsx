@@ -144,7 +144,7 @@ const Marketing = () => {
                   Create campaigns and grow your business
                 </p>
               </div>
-              <button className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center'>
+              <button className='bg-bg-primary hover:bg-bg-primary-hover text-white py-2 px-4 rounded-lg flex items-center'>
                 <PlusCircle size={18} className='mr-2' />
                 Create Campaign
               </button>
@@ -179,7 +179,7 @@ const Marketing = () => {
                 <button
                   className={`py-4 px-1 flex items-center border-b-2 font-medium text-sm ${
                     activeTab === 'campaigns'
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-bg-primary text-bg-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                   onClick={() => setActiveTab('campaigns')}
@@ -190,7 +190,7 @@ const Marketing = () => {
                 <button
                   className={`py-4 px-1 flex items-center border-b-2 font-medium text-sm ${
                     activeTab === 'templates'
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-bg-primary text-bg-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                   onClick={() => setActiveTab('templates')}
@@ -201,7 +201,7 @@ const Marketing = () => {
                 <button
                   className={`py-4 px-1 flex items-center border-b-2 font-medium text-sm ${
                     activeTab === 'audiences'
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-bg-primary text-bg-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                   onClick={() => setActiveTab('audiences')}
@@ -212,7 +212,7 @@ const Marketing = () => {
                 <button
                   className={`py-4 px-1 flex items-center border-b-2 font-medium text-sm ${
                     activeTab === 'automations'
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-bg-primary text-bg-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                   onClick={() => setActiveTab('automations')}
@@ -223,7 +223,7 @@ const Marketing = () => {
                 <button
                   className={`py-4 px-1 flex items-center border-b-2 font-medium text-sm ${
                     activeTab === 'integrations'
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-bg-primary text-bg-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                   onClick={() => setActiveTab('integrations')}
@@ -330,7 +330,7 @@ const Marketing = () => {
                             </span>
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                            <button className='text-blue-600 hover:text-blue-800'>
+                            <button className='text-bg-primary hover:text-bg-primary-hover'>
                               View
                             </button>
                             <span className='mx-2 text-gray-300'>|</span>
@@ -350,7 +350,7 @@ const Marketing = () => {
               <div className='bg-white p-6 rounded-lg shadow-sm'>
                 <div className='flex justify-between items-center mb-6'>
                   <h2 className='text-lg font-semibold'>Templates Library</h2>
-                  <button className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center text-sm'>
+                  <button className='bg-bg-primary hover:bg-bg-primary-hover text-white py-2 px-4 rounded-lg flex items-center text-sm'>
                     <PlusCircle size={16} className='mr-2' />
                     New Template
                   </button>
@@ -378,10 +378,10 @@ const Marketing = () => {
                         </p>
                       </div>
                       <div className='p-4 flex justify-between'>
-                        <button className='text-blue-600 hover:text-blue-800 text-sm'>
+                        <button className='text-bg-primary hover:text-bg-primary-hover text-sm'>
                           Preview
                         </button>
-                        <button className='text-blue-600 hover:text-blue-800 text-sm'>
+                        <button className='text-bg-primary hover:text-bg-primary-hover text-sm'>
                           Use Template
                         </button>
                       </div>
@@ -395,7 +395,7 @@ const Marketing = () => {
               <div className='bg-white p-6 rounded-lg shadow-sm'>
                 <div className='flex justify-between items-center mb-6'>
                   <h2 className='text-lg font-semibold'>Audience Segments</h2>
-                  <button className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center text-sm'>
+                  <button className='bg-bg-primary hover:bg-bg-primary-hover text-white py-2 px-4 rounded-lg flex items-center text-sm'>
                     <PlusCircle size={16} className='mr-2' />
                     Create Segment
                   </button>
@@ -421,10 +421,10 @@ const Marketing = () => {
                         </span>
                       </div>
                       <div className='mt-4 flex space-x-3'>
-                        <button className='text-blue-600 hover:text-blue-800 text-sm'>
+                        <button className='text-bg-primary hover:text-bg-primary-hover text-sm'>
                           Edit
                         </button>
-                        <button className='text-blue-600 hover:text-blue-800 text-sm'>
+                        <button className='text-bg-primary hover:text-bg-primary-hover text-sm'>
                           Send Campaign
                         </button>
                         <button className='text-gray-600 hover:text-gray-800 text-sm'>
@@ -449,7 +449,7 @@ const Marketing = () => {
                       triggers
                     </p>
                   </div>
-                  <button className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center text-sm'>
+                  <button className='bg-bg-primary hover:bg-bg-primary-hover text-white py-2 px-4 rounded-lg flex items-center text-sm'>
                     <PlusCircle size={16} className='mr-2' />
                     Create Automation
                   </button>
@@ -466,7 +466,7 @@ const Marketing = () => {
                     Create your first automation to send messages automatically
                     based on customer actions or time triggers.
                   </p>
-                  <button className='mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm'>
+                  <button className='mt-4 bg-bg-primary hover:bg-bg-primary-hover text-white py-2 px-4 rounded-lg text-sm'>
                     Get Started
                   </button>
                 </div>
@@ -477,7 +477,7 @@ const Marketing = () => {
                   </h3>
                   <ul className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                     <li className='flex'>
-                      <div className='flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600'>
+                      <div className='flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-bg-primary/10 text-bg-primary'>
                         <Calendar size={14} />
                       </div>
                       <div className='ml-3'>
@@ -490,7 +490,7 @@ const Marketing = () => {
                       </div>
                     </li>
                     <li className='flex'>
-                      <div className='flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600'>
+                      <div className='flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-bg-primary/10 text-bg-primary'>
                         <MessageSquare size={14} />
                       </div>
                       <div className='ml-3'>
@@ -503,7 +503,7 @@ const Marketing = () => {
                       </div>
                     </li>
                     <li className='flex'>
-                      <div className='flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600'>
+                      <div className='flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-bg-primary/10 text-bg-primary'>
                         <Mail size={14} />
                       </div>
                       <div className='ml-3'>
@@ -516,7 +516,7 @@ const Marketing = () => {
                       </div>
                     </li>
                     <li className='flex'>
-                      <div className='flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600'>
+                      <div className='flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-bg-primary/10 text-bg-primary'>
                         <BarChart2 size={14} />
                       </div>
                       <div className='ml-3'>
