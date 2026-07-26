@@ -25,11 +25,7 @@ import { customerSortOptions } from '../../constants/Options/SortOptions/Custome
 import { customerFilterOptions } from '../../constants/Options/FilterOptions/CustomerFilterOptions';
 import { downloadCSVFile } from '../../utils/FuntionHelpers/downloadCSVFile';
 import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
-
-export type TPaginationData = {
-  totalCount: number;
-  pageSize: number;
-};
+import { TPaginationData } from '../../types/Table';
 
 const Customers = () => {
   const { user } = useAuth();

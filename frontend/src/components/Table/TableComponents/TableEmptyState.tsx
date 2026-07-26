@@ -1,14 +1,14 @@
 import { Search, Plus } from 'lucide-react';
 
 interface ITableEmptyState {
-  title: string;
-  description: string;
-  showIcon: boolean;
-  showCreateButton: boolean;
-  onCreateClick: () => void;
-  createButtonText: string;
-  icon: any;
-  variant: string;
+  title?: string;
+  description?: string;
+  showIcon?: boolean;
+  showCreateButton?: boolean;
+  onCreateClick?: () => void;
+  createButtonText?: string;
+  icon?: any;
+  variant?: string;
 }
 
 const TableEmptyState = ({

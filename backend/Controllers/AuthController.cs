@@ -76,6 +76,47 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost]
+    [Route("google")]
+    public async Task<IActionResult> GoogleLogin(GoogleAuthDto googleAuthDto)
+    {
+        var userDB = await _authService.LoginWithGoogle(googleAuthDto.IdToken);
+        if (userDB.Success == false)
+        {
+            return BadRequest(new { message = userDB.ErrorMessage });
+        }
+
+        (string accessToken, string refreshToken) tokens = _tokenService.GenerateTokens(userDB.Payload);
+
+        _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
+
+        return Ok(new
+        {
+            user = userDB.Payload,
+            tokens.accessToken
+        });
+    }
+
+    [HttpPost]
+    [Route("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+    {
+        var result = await _authService.ForgotPassword(forgotPasswordDto.Email);
+        return Ok(new { message = result.Payload });
+    }
+
+    [HttpPost]
+    [Route("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
+    {
+        var result = await _authService.ResetPassword(resetPasswordDto.Token, resetPasswordDto.NewPassword);
+        if (!result.Success)
+        {
+            return BadRequest(new { message = result.ErrorMessage });
+        }
+        return Ok(new { message = result.Payload });
+    }
+
+    [HttpPost]
     [Route("logout")]
     public async Task<IActionResult> Logout()
     {

@@ -22,7 +22,7 @@ import Table from '../../components/Table/Table';
 import { pricebookColumns } from '../../constants/TableColumns/PricebookColumns';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import { useAuth } from '../../context/AuthProvider';
-import { TPaginationData } from '../customers/Customers';
+import { TPaginationData } from '../../types/Table';
 import { downloadCSVFile } from '../../utils/FuntionHelpers/downloadCSVFile';
 import CreateServiceItemModal from '../../components/Pricebook/PricebookModals/CreateServiceItemModal';
 import ServiceItemImportModal from '../../components/Pricebook/PricebookModals/ServiceItemImportModal';

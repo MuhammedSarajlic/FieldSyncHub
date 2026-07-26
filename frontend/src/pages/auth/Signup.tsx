@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import icons from '../../constants/AssetsConstants/icons';
 import images from '../../constants/AssetsConstants/images';
-import { Register } from '../../services/Auth';
+import { Register, GoogleLogin } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TUserRegister } from '../../types/User';
+import GoogleAuthButton from '../../components/CustomElements/GoogleAuthButton';
 
 // Slides for the left panel (can be shared with sign-in or customized)
 const slides = [
@@ -28,6 +28,8 @@ const slides = [
     cta: 'See how it works',
   },
 ];
+
+const isGoogleAuthEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -66,6 +68,19 @@ const Signup = () => {
       const token = response.data.accessToken;
       localStorage.setItem('accessToken', token);
       setAccessToken(token);
+    }
+  };
+
+  const handleGoogleCredential = async (idToken: string) => {
+    try {
+      const response = await GoogleLogin(idToken);
+      if (response.status === 200) {
+        const token = response.data.accessToken;
+        localStorage.setItem('accessToken', token);
+        setAccessToken(token);
+      }
+    } catch (error) {
+      console.error('Google sign-in failed', error);
     }
   };
 
@@ -463,20 +478,6 @@ const Signup = () => {
                 type='submit'
                 className='group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-bg-primary hover:bg-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bg-primary transition-all duration-200 shadow-lg shadow-bg-primary/20'
               >
-                <span className='absolute left-0 inset-y-0 flex items-center pl-3'>
-                  <svg
-                    className='h-5 w-5 text-white/80 group-hover:text-white transition-colors duration-200'
-                    xmlns='http://www.w3.org/2000/svg'
-                    viewBox='0 0 20 20'
-                    fill='currentColor'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                </span>
                 Get started
               </button>
             </motion.div>
@@ -488,32 +489,27 @@ const Signup = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            <div className='relative'>
-              <div className='absolute inset-0 flex items-center'>
-                <div className='w-full border-t border-gray-300'></div>
-              </div>
-              <div className='relative flex justify-center text-sm'>
-                <span className='px-2 bg-gray-50 text-gray-500'>
-                  Or sign up with
-                </span>
-              </div>
-            </div>
+            {isGoogleAuthEnabled && (
+              <>
+                <div className='relative'>
+                  <div className='absolute inset-0 flex items-center'>
+                    <div className='w-full border-t border-gray-300'></div>
+                  </div>
+                  <div className='relative flex justify-center text-sm'>
+                    <span className='px-2 bg-gray-50 text-gray-500'>
+                      Or sign up with
+                    </span>
+                  </div>
+                </div>
 
-            <div className='mt-6'>
-              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-                <button
-                  type='button'
-                  className='w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bg-primary/50 transition-all duration-200'
-                >
-                  <img
-                    src={icons.googleIcon}
-                    alt='google'
-                    className='h-5 w-5'
+                <div className='mt-6'>
+                  <GoogleAuthButton
+                    onCredential={handleGoogleCredential}
+                    text='signup_with'
                   />
-                  <span className='ml-3'>Google</span>
-                </button>
-              </motion.div>
-            </div>
+                </div>
+              </>
+            )}
 
             <div className='mt-4 text-center text-sm text-gray-600'>
               <p>

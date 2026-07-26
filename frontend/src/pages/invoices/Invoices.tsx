@@ -20,7 +20,7 @@ import { useAuth } from '../../context/AuthProvider';
 import Table from '../../components/Table/Table';
 import { invoiceColumns } from '../../constants/TableColumns/InvoiceColumns';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
-import { TPaginationData } from '../customers/Customers';
+import { TPaginationData } from '../../types/Table';
 import { DateTime } from 'luxon';
 
 const Invoices = () => {

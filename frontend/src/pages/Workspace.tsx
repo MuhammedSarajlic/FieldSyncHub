@@ -5,7 +5,6 @@ import {
   CheckCircle,
   Building2,
   Users,
-  Paintbrush,
   Wrench,
   Settings,
   Upload,
@@ -15,7 +14,7 @@ import {
   Phone,
   User,
   Check,
-  Sparkles,
+  Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import images from '../constants/AssetsConstants/images';
@@ -25,24 +24,19 @@ import { useAuth } from '../context/AuthProvider';
 import { CompanySize } from '../constants/Enumeration/WorkspaceEnum/WorkspaceEnum';
 import { uploadFile } from '../storage/uploadFile';
 
-// Enum for steps in our onboarding process (removed TEAM step)
+// Enum for steps in our onboarding process. No standalone "Welcome" step -
+// the user just came from Signup, so onboarding starts directly at the
+// first real question. Theme selection is hidden for now (dark mode isn't
+// ready yet) - it can come back as a step once that's built out.
 enum OnboardingStep {
-  WELCOME = 0,
-  COMPANY_INFO = 1,
-  WORKSPACE_DETAILS = 2,
-  THEME = 3,
-  CATEGORY = 4,
-  COMPLETE = 5,
+  COMPANY_INFO = 0,
+  WORKSPACE_DETAILS = 1,
+  CATEGORY = 2,
+  COMPLETE = 3,
 }
 
 // Left-panel narrative shown per step, mirroring the rotating slides on Signin/Signup
 const stepNarratives = [
-  {
-    icon: Sparkles,
-    title: 'Welcome to FieldSyncHub',
-    description:
-      "Let's set up your workspace so you can start managing jobs, quotes, and your team in minutes.",
-  },
   {
     icon: Building2,
     title: 'Tell us about your company',
@@ -54,12 +48,6 @@ const stepNarratives = [
     title: 'Name your workspace',
     description:
       'This is the home base your whole team will work from every day.',
-  },
-  {
-    icon: Paintbrush,
-    title: 'Make it feel like home',
-    description:
-      'Pick the look that fits how you and your team like to work.',
   },
   {
     icon: Wrench,
@@ -85,7 +73,7 @@ const Workspace = () => {
   const { user, refetchUser } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(
-    OnboardingStep.WELCOME
+    OnboardingStep.COMPANY_INFO
   );
   const [workspace, setWorkspace] = useState<TAddWorkspace>({
     name: '',
@@ -101,11 +89,9 @@ const Workspace = () => {
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark'>(
-    'light'
-  );
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [otherCategory, setOtherCategory] = useState<string>('');
+  const [categorySearch, setCategorySearch] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Company size options with descriptions
@@ -161,20 +147,6 @@ const Workspace = () => {
     'Other',
   ];
 
-  // Theme preview cards (brand color stays bg-bg-primary either way)
-  const themes = {
-    light: {
-      preview: 'bg-gray-100',
-      name: 'Light Theme',
-      description: 'Clean and bright interface',
-    },
-    dark: {
-      preview: 'bg-slate-800',
-      name: 'Dark Theme',
-      description: 'Elegant dark interface',
-    },
-  };
-
   // Handle file selection for workspace logo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -220,7 +192,6 @@ const Workspace = () => {
       const finalWorkspace = {
         ...workspace,
         createdByUserId: user.id,
-        theme: selectedTheme,
         logoUrl: uploadedUrl ?? undefined,
         category:
           selectedCategory === 'Other' ? otherCategory : selectedCategory,
@@ -269,7 +240,7 @@ const Workspace = () => {
   };
 
   const prevStep = () => {
-    if (currentStep > OnboardingStep.WELCOME) {
+    if (currentStep > OnboardingStep.COMPANY_INFO) {
       setCurrentStep(currentStep - 1);
     }
   };
@@ -298,30 +269,6 @@ const Workspace = () => {
   // Render the current step content
   const renderStepContent = () => {
     switch (currentStep) {
-      case OnboardingStep.WELCOME:
-        return (
-          <div className='text-center'>
-            <h2 className='text-3xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight'>
-              Let's get your workspace ready
-            </h2>
-            <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
-              It only takes a couple of minutes &mdash; you can always change
-              these details later in Settings.
-            </p>
-
-            <div className='mt-10'>
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={nextStep}
-                className={`${primaryButtonClass} w-full text-base py-3.5`}
-              >
-                Get Started <ArrowRight className='ml-2' size={18} />
-              </motion.button>
-            </div>
-          </div>
-        );
-
       case OnboardingStep.COMPANY_INFO:
         return (
           <div>
@@ -472,14 +419,7 @@ const Workspace = () => {
               </div>
             </div>
 
-            <div className='flex justify-between mt-8'>
-              <button
-                onClick={prevStep}
-                className='flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors duration-200'
-              >
-                <ArrowLeft className='mr-1.5' size={16} />
-                Back
-              </button>
+            <div className='flex justify-end mt-8'>
               <button
                 onClick={nextStep}
                 disabled={!isStepValid(OnboardingStep.COMPANY_INFO)}
@@ -592,84 +532,20 @@ const Workspace = () => {
           </div>
         );
 
-      case OnboardingStep.THEME:
-        return (
-          <div>
-            <div className='text-center'>
-              <h2 className='text-3xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight'>
-                Choose your theme
-              </h2>
-              <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
-                Dark mode is on its way &mdash; light theme it is for now.
-              </p>
-            </div>
+      case OnboardingStep.CATEGORY: {
+        const namedCategories = serviceCategories.filter((c) => c !== 'Other');
+        const filteredCategories = categorySearch.trim()
+          ? namedCategories.filter((c) =>
+              c.toLowerCase().includes(categorySearch.trim().toLowerCase())
+            )
+          : namedCategories;
+        const selectCategory = (category: string) => {
+          setSelectedCategory(category);
+          if (category !== 'Other') {
+            setOtherCategory('');
+          }
+        };
 
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8'>
-              {Object.entries(themes).map(([themeKey, themeColors]) => {
-                const isDisabled = themeKey === 'dark';
-                const isSelected = selectedTheme === themeKey;
-                return (
-                  <div
-                    key={themeKey}
-                    onClick={() => {
-                      if (isDisabled) return;
-                      setWorkspace({ ...workspace, theme: themeKey });
-                      setSelectedTheme(themeKey as 'light' | 'dark');
-                    }}
-                    className={`relative p-4 rounded-md border transition-all duration-200 ${
-                      isDisabled
-                        ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-800'
-                        : isSelected
-                        ? 'cursor-pointer border-bg-primary ring-1 ring-bg-primary bg-bg-primary/5'
-                        : 'cursor-pointer border-gray-300 dark:border-gray-700 hover:border-gray-400'
-                    }`}
-                  >
-                    {isDisabled && (
-                      <span className='absolute top-2 right-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500 bg-gray-100 dark:bg-gray-800 dark:text-gray-400 px-1.5 py-0.5 rounded'>
-                        Coming soon
-                      </span>
-                    )}
-                    <div className='relative'>
-                      <div
-                        className={`w-full h-20 rounded-md ${themeColors.preview} shadow-inner border border-black/5`}
-                      ></div>
-                      <div className='absolute top-2 left-2 w-5 h-5 bg-bg-primary rounded shadow-sm'></div>
-                      <div className='absolute top-2 right-2 w-14 h-2 bg-bg-primary rounded opacity-75'></div>
-                    </div>
-                    <div className='flex items-center justify-between mt-3'>
-                      <div>
-                        <h3 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-                          {themeColors.name}
-                        </h3>
-                        <p className='text-xs text-gray-500 dark:text-gray-400'>
-                          {themeColors.description}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <Check className='text-bg-primary flex-shrink-0' size={16} />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className='flex justify-between mt-8'>
-              <button
-                onClick={prevStep}
-                className='flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors duration-200'
-              >
-                <ArrowLeft className='mr-1.5' size={16} />
-                Back
-              </button>
-              <button onClick={nextStep} className={primaryButtonClass}>
-                Continue <ArrowRight className='ml-2' size={16} />
-              </button>
-            </div>
-          </div>
-        );
-
-      case OnboardingStep.CATEGORY:
         return (
           <div>
             <div className='text-center'>
@@ -682,18 +558,27 @@ const Workspace = () => {
               </p>
             </div>
 
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-8 max-h-72 overflow-y-auto pr-1'>
-              {serviceCategories.map((category) => {
+            <div className='relative mt-6'>
+              <Search
+                className='absolute left-3 top-3 text-gray-400'
+                size={16}
+              />
+              <input
+                type='text'
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                placeholder='Search for your trade...'
+                className='w-full pl-9 pr-3 py-2.5 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-md focus:outline-none focus:ring-bg-primary focus:border-bg-primary text-sm'
+              />
+            </div>
+
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4 max-h-64 overflow-y-auto pr-1'>
+              {filteredCategories.map((category) => {
                 const isSelected = selectedCategory === category;
                 return (
                   <button
                     key={category}
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      if (category !== 'Other') {
-                        setOtherCategory('');
-                      }
-                    }}
+                    onClick={() => selectCategory(category)}
                     className={`p-3 text-left border rounded-md transition-all duration-200 ${
                       isSelected
                         ? 'border-bg-primary ring-1 ring-bg-primary bg-bg-primary/5'
@@ -711,7 +596,31 @@ const Workspace = () => {
                   </button>
                 );
               })}
+              {filteredCategories.length === 0 && (
+                <p className='col-span-full text-sm text-gray-500 dark:text-gray-400 py-3'>
+                  No match for "{categorySearch}" &mdash; no worries, pick
+                  Other below and tell us what you do.
+                </p>
+              )}
             </div>
+
+            <button
+              onClick={() => selectCategory('Other')}
+              className={`w-full mt-2.5 p-3 text-left border rounded-md transition-all duration-200 ${
+                selectedCategory === 'Other'
+                  ? 'border-bg-primary ring-1 ring-bg-primary bg-bg-primary/5'
+                  : 'border-gray-300 dark:border-gray-700 hover:border-gray-400'
+              }`}
+            >
+              <div className='flex items-center justify-between'>
+                <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  Other
+                </span>
+                {selectedCategory === 'Other' && (
+                  <Check className='text-bg-primary flex-shrink-0' size={16} />
+                )}
+              </div>
+            </button>
 
             {selectedCategory === 'Other' && (
               <div className='mt-4'>
@@ -760,6 +669,7 @@ const Workspace = () => {
             </div>
           </div>
         );
+      }
 
       case OnboardingStep.COMPLETE:
         return (
@@ -801,9 +711,17 @@ const Workspace = () => {
   };
 
   return (
-    <div className='w-full h-screen flex bg-gray-50 dark:bg-gray-950 font-sans'>
-      {/* Left decorative panel, narrative changes per onboarding step */}
-      <div className='hidden lg:flex w-1/2 bg-bg-primary items-center justify-center relative overflow-hidden'>
+    <div className='w-full h-screen flex bg-gray-50 dark:bg-gray-950 font-sans overflow-hidden'>
+      {/* Left decorative panel, narrative changes per onboarding step. Slides
+          in from the left on arrival so coming from Signup/Signin (which
+          share this exact branded panel) reads as one continuous transition
+          rather than an abrupt page swap. */}
+      <motion.div
+        initial={{ x: '-100%' }}
+        animate={{ x: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className='hidden lg:flex w-1/2 bg-bg-primary items-center justify-center relative overflow-hidden'
+      >
         <div className='absolute inset-0 bg-gradient-to-br from-bg-primary/90 to-emerald-800/90'></div>
         <div className='relative z-10 px-20 w-full max-w-2xl'>
           <motion.div
@@ -873,10 +791,16 @@ const Workspace = () => {
             ease: 'easeInOut',
           }}
         />
-      </div>
+      </motion.div>
 
-      {/* Right form panel */}
-      <div className='w-full lg:w-1/2 flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 overflow-y-auto'>
+      {/* Right form panel - slides/fades in just after the left panel so the
+          two feel like one arriving scene rather than an instant page swap. */}
+      <motion.div
+        initial={{ x: 40, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className='w-full lg:w-1/2 flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 overflow-y-auto'
+      >
         <div className='text-center lg:hidden mb-8'>
           <img src={images.logo} alt='logo' className='mx-auto h-10 w-auto' />
         </div>
@@ -893,7 +817,7 @@ const Workspace = () => {
             {renderStepContent()}
           </motion.div>
         </AnimatePresence>
-      </div>
+      </motion.div>
     </div>
   );
 };

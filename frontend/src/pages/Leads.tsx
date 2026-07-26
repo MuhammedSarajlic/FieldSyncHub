@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 import IconButton from '../components/CustomElements/Buttons/IconButton';
 import Table from '../components/Table/Table';
 import { TLead } from '../types/Lead';
-import { TPaginationData } from './customers/Customers';
+import { TPaginationData } from '../types/Table';
 import { leadColumns } from '../constants/TableColumns/LeadColumns';
 import { GetAllLeads } from '../services/Lead';
 import AddLeadModal from '../components/Lead/Modals/AddLeadModal';

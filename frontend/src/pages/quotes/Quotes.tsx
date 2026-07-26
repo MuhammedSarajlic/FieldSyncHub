@@ -19,7 +19,7 @@ import {
 } from '../../services/Quote';
 import { useAuth } from '../../context/AuthProvider';
 import { quoteColumns } from '../../constants/TableColumns/QuoteColumns';
-import { TPaginationData } from '../customers/Customers';
+import { TPaginationData } from '../../types/Table';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
 import { DateTime } from 'luxon';

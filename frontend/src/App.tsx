@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router';
 import 'leaflet/dist/leaflet.css';
 import Signin from './pages/auth/Signin';
 import Signup from './pages/auth/Signup';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import Home from './pages/Home';
 import Calendar from './pages/calendar/Calendar';
 import Customers from './pages/customers/Customers';
@@ -45,6 +47,8 @@ function App() {
         <Route element={<PublicRoute />}>
           <Route path='signin' element={<Signin />} />
           <Route path='signup' element={<Signup />} />
+          <Route path='forgot-password' element={<ForgotPassword />} />
+          <Route path='reset-password' element={<ResetPassword />} />
           <Route path='invite' element={<InviteJoin />} />
         </Route>
 

@@ -12,7 +12,7 @@ import {
   GetJobStats,
 } from '../../services/Job';
 import Table from '../../components/Table/Table';
-import { TPaginationData } from '../customers/Customers';
+import { TPaginationData } from '../../types/Table';
 import { jobColumns } from '../../constants/TableColumns/JobColumns';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';

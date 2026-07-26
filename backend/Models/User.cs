@@ -21,6 +21,8 @@ public class User
     public Guid? WorkspaceId { get; set; }
     public Workspace? Workspace { get; set; }
     public UserRole? Role { get; set; } = UserRole.Employee;
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

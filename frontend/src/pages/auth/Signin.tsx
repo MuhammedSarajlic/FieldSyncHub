@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import icons from '../../constants/AssetsConstants/icons';
 import images from '../../constants/AssetsConstants/images';
-import { Login } from '../../services/Auth';
+import { Login, GoogleLogin } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TUserLogin } from '../../types/User';
+import GoogleAuthButton from '../../components/CustomElements/GoogleAuthButton';
 
 const slides = [
   {
@@ -27,6 +27,8 @@ const slides = [
     cta: 'Learn about security',
   },
 ];
+
+const isGoogleAuthEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
 const Signin = () => {
   const navigate = useNavigate();
@@ -60,6 +62,19 @@ const Signin = () => {
       const token = response.data.accessToken;
       localStorage.setItem('accessToken', token);
       setAccessToken(token);
+    }
+  };
+
+  const handleGoogleCredential = async (idToken: string) => {
+    try {
+      const response = await GoogleLogin(idToken);
+      if (response.status === 200) {
+        const token = response.data.accessToken;
+        localStorage.setItem('accessToken', token);
+        setAccessToken(token);
+      }
+    } catch (error) {
+      console.error('Google sign-in failed', error);
     }
   };
 
@@ -342,7 +357,7 @@ const Signin = () => {
                   </div>
                   <div className='text-right'>
                     <Link
-                      to='#'
+                      to='/forgot-password'
                       className='text-sm font-medium text-bg-primary hover:text-bg-primary-hover transition-colors'
                     >
                       Forgot password?
@@ -382,32 +397,27 @@ const Signin = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            <div className='relative'>
-              <div className='absolute inset-0 flex items-center'>
-                <div className='w-full border-t border-gray-300'></div>
-              </div>
-              <div className='relative flex justify-center text-sm'>
-                <span className='px-2 bg-gray-50 text-gray-500'>
-                  Or sign in with
-                </span>
-              </div>
-            </div>
+            {isGoogleAuthEnabled && (
+              <>
+                <div className='relative'>
+                  <div className='absolute inset-0 flex items-center'>
+                    <div className='w-full border-t border-gray-300'></div>
+                  </div>
+                  <div className='relative flex justify-center text-sm'>
+                    <span className='px-2 bg-gray-50 text-gray-500'>
+                      Or sign in with
+                    </span>
+                  </div>
+                </div>
 
-            <div className='mt-6'>
-              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-                <button
-                  type='button'
-                  className='w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bg-primary/50 transition-all duration-200'
-                >
-                  <img
-                    src={icons.googleIcon}
-                    alt='google'
-                    className='h-5 w-5'
+                <div className='mt-6'>
+                  <GoogleAuthButton
+                    onCredential={handleGoogleCredential}
+                    text='signin_with'
                   />
-                  <span className='ml-3'>Continue with Google</span>
-                </button>
-              </motion.div>
-            </div>
+                </div>
+              </>
+            )}
             <div className='pt-2 text-center'>
               <motion.p
                 className='mt-2 text-sm text-gray-600'

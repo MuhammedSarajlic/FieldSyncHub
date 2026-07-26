@@ -106,3 +106,8 @@ export type TTableColumn =
   | ColumnWithRender;
 
 export type TTableColumns = TTableColumn[];
+
+export type TPaginationData = {
+  totalCount: number;
+  pageSize: number;
+};
