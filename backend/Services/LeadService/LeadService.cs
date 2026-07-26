@@ -134,14 +134,20 @@ public class LeadService : ILeadService
                 lineItemsToProcess.Add(newLineItem);
             }
             lead.LineItems = lineItemsToProcess;
-
-            var customer = await _context.Customers.FindAsync(createLeadDto.CustomerId);
-            customer.LastActivity = DateTime.UtcNow;
-
-            await _context.Leads.AddAsync(lead);
-            await _context.SaveChangesAsync();
-
         }
+
+        if (createLeadDto.CustomerId.HasValue)
+        {
+            var customer = await _context.Customers.FindAsync(createLeadDto.CustomerId.Value);
+            if (customer != null)
+            {
+                customer.LastActivity = DateTime.UtcNow;
+            }
+        }
+
+        await _context.Leads.AddAsync(lead);
+        await _context.SaveChangesAsync();
+
         return new ApiResponse<Lead>
         {
             Success = true,
@@ -246,6 +252,7 @@ public class LeadService : ILeadService
     public async Task DeleteLead(Guid id)
     {
         var lead = await _context.Leads.FindAsync(id);
+        if (lead == null) return;
 
         _context.Leads.Remove(lead);
         await _context.SaveChangesAsync();

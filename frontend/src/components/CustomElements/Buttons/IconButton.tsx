@@ -1,10 +1,11 @@
 import { ReactNode, forwardRef } from 'react';
-import Button from '../Button';
+import Button, { ButtonVariant } from '../Button';
 
 interface IIconButton {
   children?: ReactNode;
   icon: ReactNode;
   iconPosition?: 'left' | 'right';
+  variant?: ButtonVariant;
   customStyle?: string;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
@@ -12,13 +13,21 @@ interface IIconButton {
 
 const IconButton = forwardRef<HTMLButtonElement, IIconButton>(
   (
-    { children, icon, iconPosition = 'left', customStyle = '', onClick, disabled },
+    {
+      children,
+      icon,
+      iconPosition = 'left',
+      variant = 'secondary',
+      customStyle = '',
+      onClick,
+      disabled,
+    },
     ref
   ) => {
     return (
       <Button
         ref={ref}
-        variant='secondary'
+        variant={variant}
         onClick={onClick}
         disabled={disabled}
         customStyle={customStyle}

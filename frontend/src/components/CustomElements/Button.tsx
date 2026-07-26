@@ -1,4 +1,5 @@
 import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -51,11 +52,14 @@ const Button = forwardRef<HTMLButtonElement, IButton>(
       <button
         ref={ref}
         disabled={disabled}
-        className={`inline-flex items-center justify-center rounded-lg font-medium whitespace-nowrap transition-colors duration-150 ${
-          variantClasses[variant]
-        } ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-        } ${customStyle}`}
+        className={twMerge(
+          'inline-flex items-center justify-center rounded-lg font-medium whitespace-nowrap transition-colors duration-150',
+          variantClasses[variant],
+          sizeClasses[size],
+          fullWidth && 'w-full',
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+          customStyle
+        )}
         {...rest}
       >
         {leftIcon}

@@ -1,8 +1,9 @@
 import { ReactNode } from 'react';
-import Button from '../Button';
+import Button, { ButtonVariant } from '../Button';
 
 interface ICustomButton {
   children: ReactNode;
+  variant?: ButtonVariant;
   customStyle?: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
@@ -10,13 +11,14 @@ interface ICustomButton {
 
 const CustomButton = ({
   children,
+  variant = 'secondary',
   customStyle,
   onClick,
   disabled,
 }: ICustomButton) => {
   return (
     <Button
-      variant='secondary'
+      variant={variant}
       onClick={onClick}
       disabled={disabled}
       customStyle={customStyle}

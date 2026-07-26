@@ -1,10 +1,11 @@
 import { ReactNode } from 'react';
-import Button from './Button';
+import Button, { ButtonVariant } from './Button';
 
 interface IButtonIcon {
   name?: string;
   icon?: string;
   customIcon?: ReactNode;
+  variant?: ButtonVariant;
   customStyle?: string;
   customTextStyle?: string;
   customImageStyle?: string;
@@ -16,6 +17,7 @@ const ButtonIcon = ({
   name,
   icon,
   customIcon,
+  variant = 'secondary',
   customStyle,
   customTextStyle,
   customImageStyle,
@@ -25,7 +27,7 @@ const ButtonIcon = ({
   return (
     <Button
       type={buttonType}
-      variant='secondary'
+      variant={variant}
       onClick={handleBtnClick}
       customStyle={customStyle}
       leftIcon={

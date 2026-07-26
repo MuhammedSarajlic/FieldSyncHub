@@ -1,7 +1,8 @@
-import Button from './Button';
+import Button, { ButtonVariant } from './Button';
 
 interface ICustomButton {
   title: string;
+  variant?: ButtonVariant;
   customStyle?: string;
   handleBtnClick?: () => void;
   isDisabled?: boolean;
@@ -9,13 +10,14 @@ interface ICustomButton {
 
 const CustomButton = ({
   title,
+  variant = 'primary',
   customStyle,
   handleBtnClick,
   isDisabled,
 }: ICustomButton) => {
   return (
     <Button
-      variant='primary'
+      variant={variant}
       onClick={handleBtnClick}
       disabled={isDisabled}
       customStyle={customStyle}

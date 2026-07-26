@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
-import Button from './Button';
+import Button, { ButtonVariant } from './Button';
 
 interface ICustomIconButton {
   icon: ReactNode;
   text: string;
+  variant?: ButtonVariant;
   handleClick?: () => void;
   customStyle?: string;
 }
@@ -11,12 +12,13 @@ interface ICustomIconButton {
 const CustomIconButton = ({
   icon,
   text,
+  variant = 'primary',
   handleClick,
   customStyle,
 }: ICustomIconButton) => {
   return (
     <Button
-      variant='primary'
+      variant={variant}
       onClick={handleClick}
       customStyle={customStyle}
       leftIcon={icon}
