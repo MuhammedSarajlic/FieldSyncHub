@@ -77,6 +77,7 @@ public class InvoiceService : IInvoiceService
 
         var totalCount = await query.CountAsync();
         var items = await query
+            .OrderByDescending(i => i.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

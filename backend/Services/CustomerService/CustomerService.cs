@@ -96,7 +96,8 @@ public class CustomerService : ICustomerService
 
         var totalCount = await query.CountAsync();
 
-        var items = await query.Skip((pageNumber - 1) * pageSize)
+        var items = await query.OrderByDescending(c => c.CreatedAt)
+                            .Skip((pageNumber - 1) * pageSize)
                             .Take(pageSize)
                             .ToListAsync();
 

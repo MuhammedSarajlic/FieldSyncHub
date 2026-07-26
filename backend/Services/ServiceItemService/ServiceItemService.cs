@@ -46,7 +46,8 @@ public class ServiceItemService : IServiceItemService
 
         var totalCount = await query.CountAsync();
 
-        var items = await query.Skip((pageNumber - 1) * pageSize)
+        var items = await query.OrderByDescending(s => s.CreatedAt)
+                               .Skip((pageNumber - 1) * pageSize)
                                .Take(pageSize)
                                .ToListAsync();
 

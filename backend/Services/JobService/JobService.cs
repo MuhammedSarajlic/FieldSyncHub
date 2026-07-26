@@ -103,6 +103,7 @@ public class JobService : IJobService
 
         var totalCount = await query.CountAsync();
         var items = await query
+            .OrderByDescending(j => j.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
