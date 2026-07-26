@@ -7,4 +7,5 @@ export type TContext = {
   setAccessToken: React.Dispatch<React.SetStateAction<string | null>>;
   logout: () => void;
   loading?: boolean;
+  refetchUser: () => Promise<void>;
 };

@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 @import 'tailwindcss';
 
+/* Dark mode is toggled by adding/removing a `dark` class on <html>
+   (see ThemeProvider), not by the OS color-scheme media query. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Inter', sans-serif;
   --color-primary: #4f4f57;
@@ -14,4 +18,14 @@
 
 .leaflet-container {
   z-index: 0 !important;
+}
+
+/* Base canvas so pages that don't yet have explicit dark: styling don't
+   flash pure white behind the (already dark-aware) sidebar/navbar shell. */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0f172a;
 }

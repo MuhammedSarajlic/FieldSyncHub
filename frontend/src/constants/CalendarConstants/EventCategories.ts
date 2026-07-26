@@ -17,6 +17,12 @@ export const EVENT_CATEGORIES = {
     hoverColors: 'hover:bg-amber-600',
     leftBorder: 'border-l-4 border-amber-700',
   },
+  lead: {
+    name: 'Lead',
+    colors: 'bg-emerald-500 text-white',
+    hoverColors: 'hover:bg-emerald-600',
+    leftBorder: 'border-l-4 border-emerald-700',
+  },
   // timeoff: {
   //   name: 'Time Off',
   //   colors: 'bg-rose-500 text-white',

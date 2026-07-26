@@ -27,13 +27,13 @@ const Sidebar = () => {
   return (
     <div className='fixed'>
       {/* Sidebar */}
-      <div className='w-64 h-screen bg-white border-r border-gray-100 flex flex-col'>
+      <div className='w-64 h-screen bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col'>
         {/* Header */}
-        <div className='p-4 border-b border-gray-100'>
+        <div className='p-4 border-b border-gray-100 dark:border-gray-800'>
           <img
             src={images.logo}
             alt='logo'
-            className={`max-w-[140px] transition-all duration-300`}
+            className={`max-w-[140px] transition-all duration-300 dark:brightness-0 dark:invert`}
           />
         </div>
 
@@ -41,7 +41,7 @@ const Sidebar = () => {
         <div className='flex-1'>
           {/* General Section */}
           <div className='p-4'>
-            <div className='text-xs font-medium text-gray-500 uppercase tracking-wider mb-3'>
+            <div className='text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3'>
               General
             </div>
             <nav className='space-y-1'>
@@ -53,7 +53,7 @@ const Sidebar = () => {
 
           {/* Business Section */}
           <div className='p-4'>
-            <div className='text-xs font-medium text-gray-500 uppercase tracking-wider mb-3'>
+            <div className='text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3'>
               Business Operations
             </div>
             <nav className='space-y-1'>
@@ -65,7 +65,7 @@ const Sidebar = () => {
 
           {/* System Section */}
           <div className='p-4'>
-            <div className='text-xs font-medium text-gray-500 uppercase tracking-wider mb-3'>
+            <div className='text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3'>
               System
             </div>
             <nav className='space-y-1'>
@@ -77,10 +77,10 @@ const Sidebar = () => {
         </div>
 
         {/* Profile Section */}
-        <div className='m-4 rounded-lg shadow-sm bg-white border border-gray-200 '>
+        <div className='m-4 rounded-lg shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'>
           <button
             onClick={() => setShowProfileModal(!showProfileModal)}
-            className='flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer'
+            className='flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer'
           >
             <img
               src={mockUser.avatar}
@@ -88,10 +88,12 @@ const Sidebar = () => {
               className='w-8 h-8 rounded-full'
             />
             <div className='text-left'>
-              <div className='text-sm font-medium text-gray-900'>
+              <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                 {user?.fullName}
               </div>
-              <p className='text-xs text-gray-500 truncate'>{user?.email}</p>
+              <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                {user?.email}
+              </p>
             </div>
             <ChevronDown className='w-4 h-4 text-gray-400' />
           </button>
@@ -108,47 +110,49 @@ const Sidebar = () => {
           />
 
           {/* Modal */}
-          <div className='absolute bottom-3 left-full w-56 bg-white rounded-xl shadow-lg border border-gray-200 z-50 py-2'>
+          <div className='absolute bottom-3 left-full w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-2'>
             {/* Profile Actions */}
             <div className='px-1'>
-              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'>
+              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
                 <User className='w-4 h-4' />
                 My profile @{mockUser.email.split('@')[0]}
               </button>
 
-              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'>
+              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
                 <Settings className='w-4 h-4' />
                 Account settings
               </button>
 
-              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'>
+              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
                 <Smartphone className='w-4 h-4' />
                 Device management
               </button>
 
               <button
                 onClick={logout}
-                className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'
+                className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
               >
                 <LogOut className='w-4 h-4' />
                 Sign out
               </button>
             </div>
 
-            <div className='border-t border-gray-100 my-2'></div>
+            <div className='border-t border-gray-100 dark:border-gray-700 my-2'></div>
 
             {/* Footer */}
             <div className='px-3 py-2'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  <div className='w-5 h-5 bg-blue-600 rounded flex items-center justify-center'>
+                  <div className='w-5 h-5 bg-bg-primary rounded flex items-center justify-center'>
                     <span className='text-white text-xs font-bold'>FS</span>
                   </div>
-                  <span className='text-sm font-medium text-gray-900'>
+                  <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                     FieldSyncHub
                   </span>
                 </div>
-                <span className='text-xs text-gray-500'>v4.0</span>
+                <span className='text-xs text-gray-500 dark:text-gray-400'>
+                  v4.0
+                </span>
               </div>
             </div>
           </div>

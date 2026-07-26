@@ -58,24 +58,27 @@ public class CalendarService : ICalendarService
     {
         var dto = new CalendarEventsDto
         {
+            // Overlap check (not full containment): an item belongs in the range
+            // if it starts before the range ends and ends after the range starts.
             Events = await _context.Events
                 .Where(e => e.WorkspaceId == workspaceId &&
-                            e.StartDateTime >= startDate &&
-                            e.EndDateTime <= endDate)
+                            e.StartDateTime <= endDate &&
+                            e.EndDateTime >= startDate)
                 .Include(e => e.AssignedTo)
                 .Include(e => e.RecurrenceRule)
                 .ToListAsync(),
 
             Jobs = await _context.Jobs
                 .Where(j => j.WorkspaceId == workspaceId &&
-                            j.StartDateTime >= startDate &&
-                            j.EndDateTime <= endDate)
+                            j.StartDateTime <= endDate &&
+                            j.EndDateTime >= startDate)
+                .Include(j => j.AssignedTeamMembers)
                 .ToListAsync(),
 
             Leads = await _context.Leads
                 .Where(r => r.WorkspaceId == workspaceId &&
-                            r.StartDateTime >= startDate &&
-                            r.EndDateTime <= endDate)
+                            r.StartDateTime <= endDate &&
+                            r.EndDateTime >= startDate)
                 .ToListAsync()
         };
 

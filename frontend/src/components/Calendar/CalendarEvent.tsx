@@ -12,8 +12,14 @@ interface ICalendarEvent {
   ) => void;
 }
 
+const getEventTitle = (event: TJob | TEvent | TLead, eventType: string) => {
+  if (eventType === 'lead') return (event as TLead).description || 'Lead';
+  return (event as TJob | TEvent).title;
+};
+
 const CalendarEvent = ({ event, eventType, onClick }: ICalendarEvent) => {
   const category = EVENT_CATEGORIES[eventType];
+  const title = getEventTitle(event, eventType);
   return (
     <div
       className={`
@@ -22,12 +28,10 @@ const CalendarEvent = ({ event, eventType, onClick }: ICalendarEvent) => {
         text-xs transition-all duration-200 shadow-sm rounded-md z-50
       `}
       onClick={(e) => onClick(e, event)}
-      title={`${event.title} ${
-        event.startDateTime ? `- ${event.startDateTime}` : ''
-      }`}
+      title={event.startDateTime ? `${title} - ${event.startDateTime}` : title}
     >
       <div className='flex items-center justify-between'>
-        <span className='font-semibold truncate flex-1'>{event.title}</span>
+        <span className='font-semibold truncate flex-1'>{title}</span>
         {event.startDateTime && (
           <span className='text-xs opacity-90 ml-1 flex-shrink-0'>
             {new Date(event.startDateTime).toLocaleTimeString([], {

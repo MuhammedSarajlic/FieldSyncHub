@@ -1,21 +1,20 @@
-# Start with the official .NET SDK image to build the application
+# Build context is the backend/ folder itself.
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /app
+WORKDIR /src
 
-# Copy the project files and restore dependencies
-COPY backend.csproj ./backend/
-WORKDIR /app/backend
+# Restore first for better layer caching
+COPY backend.csproj ./
 RUN dotnet restore
 
-# Copy all the remaining files and build the application
-WORKDIR /app
+# Copy the rest of the source and publish
 COPY . .
-RUN dotnet publish "backend/backend.csproj" -c Release -o /app/publish
+RUN dotnet publish backend.csproj -c Release -o /app/publish
 
 # Use a smaller runtime image to run the application
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+USER app
 
 # Expose the port your application listens on (default for ASP.NET is 8080)
 EXPOSE 8080

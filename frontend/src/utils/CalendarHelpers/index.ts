@@ -36,6 +36,20 @@ export const getCurrentGMTPlusOffset = () => {
   return formattedOffset;
 };
 
+// Start of the given day (00:00:00.000) in local time
+export const startOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+// End of the given day (23:59:59.999) in local time
+export const endOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+
 export const formatDateTime = (date: Date, hours: number, minutes: number) => {
   const d = new Date(date);
   d.setHours(hours, minutes, 0, 0);

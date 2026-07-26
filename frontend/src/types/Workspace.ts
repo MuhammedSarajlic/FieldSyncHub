@@ -48,14 +48,14 @@ export type TAddWorkspace = {
 
 export type TUpdateWorkspace = {
   id: string;
-  name: string;
+  name?: string;
   companyName?: string;
   companyUrl?: string;
   phoneNumber?: string;
-  size: CompanySize;
+  size?: CompanySize;
   logoUrl?: string;
-  theme: string;
-  category: string;
+  theme?: string;
+  category?: string;
 };
 
 export type TWorkspaceLookup = {

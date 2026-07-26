@@ -20,8 +20,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchCurrentUser = async () => {
-    console.log('This shit fetching again');
-
     setLoading(true);
     try {
       const token = localStorage.getItem('accessToken');
@@ -31,7 +29,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const response = await GetLoggedInUser(token);
-      console.log('Fetching...');
 
       if (response.status === 200) {
         setUser(response.data.payload);
@@ -43,6 +40,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Re-fetches the current user without touching loading/redirect state,
+  // used after mutations (e.g. workspace creation) that change data on the
+  // user object but shouldn't re-trigger the initial full-page loading spinner.
+  const refetchUser = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    try {
+      const response = await GetLoggedInUser(token);
+      if (response.status === 200) {
+        setUser(response.data.payload);
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -59,7 +72,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, accessToken, setAccessToken, logout, loading }}
+      value={{
+        user,
+        setUser,
+        accessToken,
+        setAccessToken,
+        logout,
+        loading,
+        refetchUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

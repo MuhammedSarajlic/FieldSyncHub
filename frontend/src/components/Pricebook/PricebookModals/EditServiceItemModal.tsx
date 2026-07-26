@@ -12,7 +12,7 @@ import {
 import toast from 'react-hot-toast'; // For toast notifications
 import { TServiceItem, TUpdateServiceItem } from '../../../types/ServiceItem';
 import { ServiceItemType } from '../../../constants/Enumeration/ServiceItem/ServiceItem';
-import { uploadFileWithProgress } from '../../../firebase/uploadFileWithProgress';
+import { uploadFileWithProgress } from '../../../storage/uploadFileWithProgress';
 import { UpdateServiceItem } from '../../../services/ServiceItem';
 import CustomButton from '../../CustomElements/CustomButton';
 

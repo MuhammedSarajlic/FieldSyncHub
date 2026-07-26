@@ -1,0 +1,8 @@
+# Docker Compose environment overrides
+.env
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea

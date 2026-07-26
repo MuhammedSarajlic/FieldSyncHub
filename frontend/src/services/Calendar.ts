@@ -6,7 +6,7 @@ export async function GetCalendarEventsByWorkspaceAndDateRange(
   endDate: string
 ) {
   const response = await api.get(
-    `/calendar/workspace/${workspaceId}?startDate=${startDate}&endDate=${endDate}`
+    `/calendar/workspace/${workspaceId}/range?startDate=${startDate}&endDate=${endDate}`
   );
   return response;
 }

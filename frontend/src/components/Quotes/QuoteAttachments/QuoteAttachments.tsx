@@ -15,9 +15,9 @@ import CustomButton from '../../CustomElements/Buttons/CustomButton';
 
 import { TAddQuoteAttachment, TQuoteAttachment } from '../../../types/Quote';
 import {
-  uploadFileToFirebase,
+  uploadFileToStorage,
   UploadStatus,
-} from '../../../firebase/firebaseUpload';
+} from '../../../storage/uploadToStorage';
 import { AddQuoteAttachment } from '../../../services/Quote';
 
 interface FileWithUploadStatus {
@@ -134,7 +134,7 @@ const QuoteAttachments = ({
           )
         );
       };
-      return uploadFileToFirebase(
+      return uploadFileToStorage(
         fileWrapper.file,
         `quotes/attachments`,
         onProgress

@@ -13,7 +13,7 @@ import CustomButton from '../../CustomElements/CustomButton';
 import { TAddServiceItem } from '../../../types/ServiceItem';
 import { ServiceItemType } from '../../../constants/Enumeration/ServiceItem/ServiceItem';
 import { CreateServiceItem } from '../../../services/ServiceItem';
-import { uploadFileWithProgress } from '../../../firebase/uploadFileWithProgress'; // Import the new function
+import { uploadFileWithProgress } from '../../../storage/uploadFileWithProgress';
 
 interface ICreateServiceItemModal {
   isOpen: boolean;

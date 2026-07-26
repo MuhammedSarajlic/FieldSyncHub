@@ -6,7 +6,7 @@ import { addNoteInitialState } from '../../../constants/States/states';
 import { CreateNote } from '../../../services/Notes';
 import { useAuth } from '../../../context/AuthProvider';
 import CustomButton from '../../CustomElements/CustomButton';
-import { uploadNoteFile } from '../../../firebase/uploadNoteFile';
+import { uploadNoteFile } from '../../../storage/uploadNoteFile';
 
 interface ICustomerNotes {
   notes: TNote[];
