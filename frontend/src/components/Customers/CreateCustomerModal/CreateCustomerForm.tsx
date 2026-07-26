@@ -1,6 +1,5 @@
 import { TAddCustomer } from '../../../types/Customer';
 import AdditionalCustomerDetails from './AdditionalCustomerDetails';
-import CustomerAutomatedNotificationsForm from './CustomerAutomatedNotificationsForm';
 import CustomerContactDetailsForm from './CustomerContactDetailsForm';
 import CustomerDetailsForm from './CustomerDetailsForm';
 import CustomerPropertyDetails from './CustomerPropertyDetails';
@@ -31,10 +30,6 @@ const CreateCustomerForm = ({
           isCompanyDisplayName={isCompanyDisplayName}
         />
         <CustomerContactDetailsForm
-          customer={customer}
-          setCustomer={setCustomer}
-        />
-        <CustomerAutomatedNotificationsForm
           customer={customer}
           setCustomer={setCustomer}
         />

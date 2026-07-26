@@ -58,7 +58,6 @@ const CreateCustomerModal = ({
         : `${customer.firstName.trim()} ${customer.lastName.trim()}`,
       workspaceId: user.workspace.id,
     };
-    console.log(updatedCustomer);
 
     const response = await CreateCustomer(updatedCustomer);
     if (response.status === 200) {
@@ -72,7 +71,7 @@ const CreateCustomerModal = ({
 
   return (
     <div className='fixed top-0 left-0 w-full h-screen bg-black/50 backdrop-blur-sm flex items-center justify-center'>
-      <div className='py-6 bg-white rounded-lg w-2/3 h-[95vh] flex flex-col'>
+      <div className='py-6 bg-white rounded-lg w-2/3 max-h-[90vh] flex flex-col'>
         <div className='px-6 pb-4 h-14 flex items-center justify-between'>
           <p className='text-2xl font-bold text-heading'>New Customer</p>
           <div
@@ -86,7 +85,7 @@ const CreateCustomerModal = ({
           </div>
         </div>
 
-        <div className='flex-grow overflow-y-auto'>
+        <div className='flex-grow min-h-0 overflow-y-auto'>
           <CreateCustomerForm
             customer={customer}
             setCustomer={setCustomer}
