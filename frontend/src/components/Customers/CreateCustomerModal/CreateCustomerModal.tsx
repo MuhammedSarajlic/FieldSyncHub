@@ -1,6 +1,6 @@
+import { X } from 'lucide-react';
 import ButtonIcon from '../../CustomElements/ButtonIcon';
 import CustomButton from '../../CustomElements/CustomButton';
-import icons from '../../../constants/AssetsConstants/icons';
 import CreateCustomerForm from './CreateCustomerForm';
 import { TAddCustomer } from '../../../types/Customer';
 import { addCustomerInitialState } from '../../../constants/States/states';
@@ -81,7 +81,7 @@ const CreateCustomerModal = ({
             }}
             className='p-3 cursor-pointer bg-[#ececec] rounded-md hover:bg-[#dddddd] transition-colors duration-200'
           >
-            <img src={icons.closeIcon} alt='close' className='w-3.5 h-3.5' />
+            <X className='w-3.5 h-3.5' />
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import { useRef, ChangeEvent } from 'react';
-import icons from '../../constants/AssetsConstants/icons';
+import { X } from 'lucide-react';
 import CustomSmallButton from '../CustomElements/CustomSmallButton';
 
 interface NoteFileUploadProps {
@@ -60,11 +60,7 @@ const NoteFileUpload = ({
               onClick={() => setSelectedFile(null)}
               className='cursor-pointer'
             >
-              <img
-                src={icons.closeIcon}
-                alt='Remove'
-                className='w-3 h-3 m-0.5'
-              />
+              <X className='w-3 h-3 m-0.5' />
             </button>
           </div>
         </div>

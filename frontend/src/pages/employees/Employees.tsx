@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Grid, List } from 'lucide-react';
+import { UserPlus, Grid, List, Upload } from 'lucide-react';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import InviteEmployeeModal from '../../components/Employee/EmployeeModals/InviteEmployeeModal';
@@ -17,7 +17,6 @@ import EmptyEmployeeTable from '../../components/Employee/EmployeeTable/EmptyEmp
 import { useNavigate, useSearchParams } from 'react-router';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import ButtonIcon from '../../components/CustomElements/ButtonIcon';
-import icons from '../../constants/AssetsConstants/icons';
 import Search from '../../components/CustomElements/Search';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
@@ -168,7 +167,7 @@ const Employees = () => {
             <div className='flex items-center gap-3'>
               <ButtonIcon
                 name='Export'
-                icon={icons.exportIcon}
+                customIcon={<Upload className='w-4 h-4' />}
                 handleBtnClick={handleExportEmployees}
               />
               <CustomIconButton

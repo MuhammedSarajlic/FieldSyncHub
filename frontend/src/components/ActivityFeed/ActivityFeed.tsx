@@ -1,4 +1,4 @@
-import icons from '../../constants/AssetsConstants/icons';
+import { X } from 'lucide-react';
 import ActivityItem from './ActivityItem';
 import EmptyFeed from './EmptyFeed';
 
@@ -16,7 +16,7 @@ const ActivityFeed = ({
           onClick={() => setIsActivityFeedOpen(false)}
           className='cursor-pointer'
         >
-          <img src={icons.closeIcon} alt='close' className='w-4 h-4' />
+          <X className='w-4 h-4' />
         </div>
       </div>
       <div>

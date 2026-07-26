@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { ArrowUpDown } from 'lucide-react';
 import ButtonIcon from '../../CustomElements/ButtonIcon';
-import icons from '../../../constants/AssetsConstants/icons';
 
 interface SortOption {
   id: string;
@@ -76,7 +76,7 @@ const JobsSortModal: React.FC<SortByProps> = ({ onApply }) => {
     <div className='relative'>
       <ButtonIcon
         name='Sort'
-        icon={icons.sortIcon}
+        customIcon={<ArrowUpDown className='w-4 h-4' />}
         handleBtnClick={() => setIsOpen(!isOpen)}
       />
 

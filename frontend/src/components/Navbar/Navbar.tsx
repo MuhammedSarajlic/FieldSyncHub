@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import icons from '../../constants/AssetsConstants/icons';
+import { Bell, HelpCircle, Settings } from 'lucide-react';
 import ActivityFeed from '../ActivityFeed/ActivityFeed';
 import { TCustomer } from '../../types/Customer';
 import { useAuth } from '../../context/AuthProvider';
@@ -30,27 +30,15 @@ const Navbar = ({ customer }: INavbar) => {
         <div className='flex items-center space-x-2'>
           <div
             onClick={() => setIsActivityFeedOpen(true)}
-            className='p-2 cursor-pointer rounded-lg hover:bg-[#f1f1f1] dark:hover:bg-gray-800'
+            className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'
           >
-            <img
-              src={icons.notificationIcon}
-              alt='notification'
-              className='w-6 h-6 dark:brightness-0 dark:invert dark:opacity-70'
-            />
+            <Bell className='w-5 h-5' />
           </div>
-          <div className='p-2 cursor-pointer rounded-lg hover:bg-[#f1f1f1] dark:hover:bg-gray-800'>
-            <img
-              src={icons.helpIcon}
-              alt='help'
-              className='w-6 h-6 dark:brightness-0 dark:invert dark:opacity-70'
-            />
+          <div className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'>
+            <HelpCircle className='w-5 h-5' />
           </div>
-          <div className='p-2 cursor-pointer rounded-lg hover:bg-[#f1f1f1] dark:hover:bg-gray-800'>
-            <img
-              src={icons.settingsIcon}
-              alt='settings'
-              className='w-6 h-6 dark:brightness-0 dark:invert dark:opacity-70'
-            />
+          <div className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'>
+            <Settings className='w-5 h-5' />
           </div>
         </div>
       </div>

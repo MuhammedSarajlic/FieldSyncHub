@@ -3,7 +3,6 @@ import ButtonIcon from '../../components/CustomElements/ButtonIcon';
 import Search from '../../components/CustomElements/Search';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
-import icons from '../../constants/AssetsConstants/icons';
 import CreateCustomerModal from '../../components/Customers/CreateCustomerModal/CreateCustomerModal';
 import { TCustomer, TCustomerStats } from '../../types/Customer';
 import ImportCustomersModal from '../../components/Customers/ImportCustomer/ImportCustomersModal';
@@ -14,7 +13,7 @@ import {
   GetCustomerStats,
 } from '../../services/Customer';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
-import { Plus } from 'lucide-react';
+import { Plus, Download, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
 import { useNavigate, useSearchParams } from 'react-router';
 import SortModal from '../../components/CustomElements/SortComponent/SortModal';
@@ -167,13 +166,13 @@ const Customers = () => {
                 <div className='flex items-center space-x-3'>
                   <ButtonIcon
                     name='Import'
-                    icon={icons.importIcon}
+                    customIcon={<Download className='w-4 h-4' />}
                     handleBtnClick={() => setIsImportCustomerModalOpen(true)}
                   />
 
                   <ButtonIcon
                     name='Export'
-                    icon={icons.exportIcon}
+                    customIcon={<Upload className='w-4 h-4' />}
                     handleBtnClick={handleExportCustomers}
                   />
                   <div className='w-[1px] h-[38px] bg-border-primary'></div>

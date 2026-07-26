@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import icons from '../../constants/AssetsConstants/icons';
+import { X } from 'lucide-react';
 import ButtonIcon from '../CustomElements/ButtonIcon';
 import CustomButton from '../CustomElements/CustomButton';
 import CustomFieldForm from './CustomFieldForm';
@@ -93,7 +93,7 @@ const NewCustomFieldModal = ({
             onClick={() => setIsCreateCustomFieldModalOpen(false)}
             className='p-3 cursor-pointer bg-[#ececec] rounded-md hover:bg-[#dddddd] transition-colors duration-200'
           >
-            <img src={icons.closeIcon} alt='close' className='w-3.5 h-3.5' />
+            <X className='w-3.5 h-3.5' />
           </div>
         </div>
 

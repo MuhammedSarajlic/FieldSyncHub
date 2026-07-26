@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
-import { Plus } from 'lucide-react';
+import { Plus, Download, Upload } from 'lucide-react';
 import ButtonIcon from '../../components/CustomElements/ButtonIcon';
-import icons from '../../constants/AssetsConstants/icons';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import Search from '../../components/CustomElements/Search';
 import {
@@ -155,13 +154,13 @@ const Pricebook = () => {
               <ButtonIcon
                 handleBtnClick={() => setIsImportServiceItemModalOpen(true)}
                 name='Import'
-                icon={icons.importIcon}
+                customIcon={<Download className='w-4 h-4' />}
               />
 
               <ButtonIcon
                 handleBtnClick={handleExportPricebook}
                 name='Export'
-                icon={icons.exportIcon}
+                customIcon={<Upload className='w-4 h-4' />}
               />
               <div className='w-[1px] h-[38px] bg-border-primary'></div>
               <CustomIconButton
