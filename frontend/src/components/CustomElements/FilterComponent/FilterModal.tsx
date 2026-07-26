@@ -160,56 +160,54 @@ const FilterModal = <T extends Record<string, any>>({
     <div ref={ref} className='relative'>
       <button
         onClick={() => setIsFilterModalOpen(!isFilterModalOpen)}
-        className='relative inline-flex items-center px-3 py-2 cursor-pointer border border-gray-300 rounded-lg text-sm font-semibold text-heading bg-white hover:bg-gray-50'
+        className='relative inline-flex items-center px-2.5 py-1.5 cursor-pointer border border-gray-300 rounded-lg text-sm font-medium text-heading bg-white hover:bg-gray-50 transition-colors'
       >
-        <Filter className='h-4 w-4 mr-2' />
+        <Filter className='h-3.5 w-3.5 mr-1.5' />
         Filter
         {activeFiltersCount > 0 && (
-          <span className='absolute -top-2 -right-2 h-5 w-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center'>
+          <span className='absolute -top-2 -right-2 h-5 w-5 rounded-full bg-bg-primary text-white text-xs flex items-center justify-center'>
             {activeFiltersCount}
           </span>
         )}
       </button>
 
       {isFilterModalOpen && (
-        <div className='absolute right-0 top-full mt-2 w-[400px] max-w-md z-50 mb-10 overflow-hidden rounded-lg shadow-md border border-gray-100'>
-          <div className='bg-white  w-full max-w-md max-h-[90vh]'>
-            {/* Header */}
-            <div className='sticky top-0 p-4 py-3 border-b border-gray-300 flex justify-between items-center'>
-              <h2 className='text-lg font-semibold text-gray-800'>Filters</h2>
-              <button
-                onClick={() => setIsFilterModalOpen(false)}
-                className='text-gray-500 hover:text-gray-700 focus:outline-none cursor-pointer'
-              >
-                <X className='h-5 w-5' />
-              </button>
-            </div>
+        <div className='absolute right-0 top-full mt-2 w-[400px] max-w-md z-50 flex flex-col max-h-[min(28rem,calc(100vh-6rem))] rounded-lg shadow-md border border-gray-100 bg-white'>
+          {/* Header */}
+          <div className='shrink-0 p-4 py-3 border-b border-gray-300 flex justify-between items-center'>
+            <h2 className='text-lg font-semibold text-gray-800'>Filters</h2>
+            <button
+              onClick={() => setIsFilterModalOpen(false)}
+              className='text-gray-500 hover:text-gray-700 focus:outline-none cursor-pointer'
+            >
+              <X className='h-5 w-5' />
+            </button>
+          </div>
 
-            {/* Filters */}
-            <div className='p-4 space-y-6'>
-              {filterOptions.map((option: TFilterOption) =>
-                renderFilterComponent({
-                  option,
-                  filters,
-                  handleFilterChange,
-                  handleRangeChange,
-                })
-              )}
-            </div>
+          {/* Filters */}
+          <div className='p-4 space-y-6 overflow-y-auto'>
+            {filterOptions.map((option: TFilterOption) =>
+              renderFilterComponent({
+                option,
+                filters,
+                handleFilterChange,
+                handleRangeChange,
+              })
+            )}
+          </div>
 
-            {/* Actions */}
-            <div className='p-4 border-t border-gray-300 flex justify-end space-x-2'>
-              <ButtonIcon
-                name='Reset Filters'
-                customStyle='shadow-sm'
-                handleBtnClick={handleReset}
-              />
-              <CustomIconButton
-                text='Apply filters'
-                icon={<Check className='h-4 w-4 mr-2' />}
-                handleClick={handleApply}
-              />
-            </div>
+          {/* Actions */}
+          <div className='shrink-0 p-4 border-t border-gray-300 flex justify-end space-x-2'>
+            <ButtonIcon
+              name='Reset Filters'
+              customStyle='shadow-sm'
+              handleBtnClick={handleReset}
+            />
+            <CustomIconButton
+              text='Apply filters'
+              icon={<Check className='h-4 w-4 mr-2' />}
+              handleClick={handleApply}
+            />
           </div>
         </div>
       )}

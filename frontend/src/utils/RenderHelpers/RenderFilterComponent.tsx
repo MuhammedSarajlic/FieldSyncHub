@@ -119,7 +119,7 @@ export const renderFilterComponent = ({
             value={filters[option.name]}
             onChange={(e) => handleFilterChange(option.name, e.target.value)}
             placeholder={option.placeholder ?? ''}
-            className='mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-bg-primary sm:text-sm'
+            className='mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-bg-primary focus:border-bg-primary sm:text-sm'
           />
         </div>
       );

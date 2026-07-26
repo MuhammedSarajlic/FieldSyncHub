@@ -62,9 +62,9 @@ const SortModal = ({
     <div ref={ref} className='relative'>
       <button
         onClick={() => setIsSortModalOpen(!isSortModalOpen)}
-        className='inline-flex items-center px-3 py-2 cursor-pointer border border-gray-300 rounded-lg text-sm font-semibold text-heading bg-white hover:bg-gray-50'
+        className='inline-flex items-center px-2.5 py-1.5 cursor-pointer border border-gray-300 rounded-lg text-sm font-medium text-heading bg-white hover:bg-gray-50 transition-colors'
       >
-        <ArrowUpDown className='h-4 w-4 mr-2' />
+        <ArrowUpDown className='h-3.5 w-3.5 mr-1.5' />
         Sort
       </button>
       {isSortModalOpen && (
@@ -96,7 +96,7 @@ const SortModal = ({
                   key={option.id}
                   className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-gray-100 focus:outline-none cursor-pointer ${
                     currentSort === option.id
-                      ? 'bg-blue-50 text-blue-600 font-medium'
+                      ? 'bg-bg-primary/10 text-bg-primary font-medium'
                       : 'text-gray-700'
                   } ${
                     index === sortOptions.length - 1
@@ -110,7 +110,7 @@ const SortModal = ({
                 >
                   <span>{option.label}</span>
                   {currentSort === option.id && (
-                    <Check className='h-4 w-4 text-blue-600' />
+                    <Check className='h-4 w-4 text-bg-primary' />
                   )}
                 </button>
               ))}

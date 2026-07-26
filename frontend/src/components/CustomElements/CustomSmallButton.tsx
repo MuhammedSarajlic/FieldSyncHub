@@ -1,3 +1,5 @@
+import Button from './Button';
+
 interface ICustomSmallButton {
   title: string;
   customStyle?: string;
@@ -12,16 +14,11 @@ const CustomSmallButton = ({
   handleClick,
 }: ICustomSmallButton) => {
   return (
-    <button
-      onClick={handleClick}
-      className={`bg-white border-[1px] border-border-primary rounded-lg py-1.5 px-2.5 cursor-pointer hover:bg-[#FAFAFA] hover:border-primary transition-colors duration-200 ${customStyle}`}
-    >
-      <p
-        className={`text-sm font-semibold text-text-secondary ${customTextStyle}`}
-      >
+    <Button variant='secondary' onClick={handleClick} customStyle={customStyle}>
+      <span className={`font-semibold text-text-secondary ${customTextStyle}`}>
         {title}
-      </p>
-    </button>
+      </span>
+    </Button>
   );
 };
 

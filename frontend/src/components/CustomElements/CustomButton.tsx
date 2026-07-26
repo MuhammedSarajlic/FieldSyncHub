@@ -1,3 +1,5 @@
+import Button from './Button';
+
 interface ICustomButton {
   title: string;
   customStyle?: string;
@@ -12,17 +14,14 @@ const CustomButton = ({
   isDisabled,
 }: ICustomButton) => {
   return (
-    <button
-      disabled={isDisabled}
+    <Button
+      variant='primary'
       onClick={handleBtnClick}
-      className={`rounded-lg py-2 px-6 text-white text-sm transition-colors duration-200 ${customStyle} ${
-        isDisabled
-          ? 'cursor-auto bg-bg-primary/90'
-          : 'cursor-pointer bg-bg-primary hover:bg-bg-primary-hover'
-      }`}
+      disabled={isDisabled}
+      customStyle={customStyle}
     >
       {title}
-    </button>
+    </Button>
   );
 };
 

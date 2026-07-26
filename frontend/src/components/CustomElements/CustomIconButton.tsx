@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import Button from './Button';
 
 interface ICustomIconButton {
   icon: ReactNode;
@@ -14,13 +15,14 @@ const CustomIconButton = ({
   customStyle,
 }: ICustomIconButton) => {
   return (
-    <button
+    <Button
+      variant='primary'
       onClick={handleClick}
-      className={`whitespace-nowrap bg-bg-primary hover:bg-bg-primary-hover border-[1px] border-bg-primary text-white px-4 py-2 rounded-lg flex items-center text-sm cursor-pointer transition-colors duration-200 ${customStyle}`}
+      customStyle={customStyle}
+      leftIcon={icon}
     >
-      {icon}
       {text}
-    </button>
+    </Button>
   );
 };
 

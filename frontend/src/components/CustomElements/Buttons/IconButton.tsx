@@ -1,4 +1,5 @@
 import { ReactNode, forwardRef } from 'react';
+import Button from '../Button';
 
 interface IIconButton {
   children?: ReactNode;
@@ -11,34 +12,21 @@ interface IIconButton {
 
 const IconButton = forwardRef<HTMLButtonElement, IIconButton>(
   (
-    {
-      children,
-      icon,
-      iconPosition = 'left',
-      customStyle = '',
-      onClick,
-      disabled,
-    },
+    { children, icon, iconPosition = 'left', customStyle = '', onClick, disabled },
     ref
   ) => {
-    const baseClasses = `
-      flex items-center justify-center
-      py-1 px-3 rounded-lg cursor-pointer
-      text-sm font-medium text-gray-700
-      border border-gray-200
-    `;
-
     return (
-      <button
+      <Button
         ref={ref}
-        disabled={disabled}
-        className={`${baseClasses} ${customStyle}`}
+        variant='secondary'
         onClick={onClick}
+        disabled={disabled}
+        customStyle={customStyle}
+        leftIcon={iconPosition === 'left' ? icon : undefined}
+        rightIcon={iconPosition === 'right' ? icon : undefined}
       >
-        {iconPosition === 'left' && icon && <span>{icon}</span>}
         {children}
-        {iconPosition === 'right' && icon && <span>{icon}</span>}
-      </button>
+      </Button>
     );
   }
 );
