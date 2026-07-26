@@ -68,7 +68,7 @@ const inputClass =
   'py-3 block w-full pl-10 pr-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-md focus:outline-none focus:ring-bg-primary focus:border-bg-primary sm:text-sm';
 
 const primaryButtonClass =
-  'flex items-center justify-center px-6 py-3 rounded-md font-medium text-white bg-bg-primary hover:bg-bg-primary-hover shadow-lg shadow-bg-primary/20 transition-all duration-200 disabled:bg-gray-300 disabled:dark:bg-gray-700 disabled:shadow-none disabled:cursor-not-allowed';
+  'flex items-center justify-center px-5 py-2.5 rounded-md font-medium text-sm text-white bg-bg-primary hover:bg-bg-primary-hover shadow-lg shadow-bg-primary/20 transition-all duration-200 disabled:bg-gray-300 disabled:dark:bg-gray-700 disabled:shadow-none disabled:cursor-not-allowed';
 
 const Workspace = () => {
   const { user, refetchUser } = useAuth();
@@ -665,14 +665,14 @@ const Workspace = () => {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => navigate('/home')}
-                className={`${primaryButtonClass} w-full text-base py-3.5`}
+                className={`${primaryButtonClass} w-full`}
               >
                 Go to Dashboard <ArrowRight className='ml-2' size={18} />
               </motion.button>
 
               <button
                 onClick={() => navigate('/settings')}
-                className='w-full flex items-center justify-center px-6 py-3 rounded-md font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200'
+                className='w-full flex items-center justify-center px-5 py-2.5 rounded-md font-medium text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200'
               >
                 <Settings className='mr-2' size={16} />
                 Workspace Settings
