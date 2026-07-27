@@ -244,6 +244,7 @@ public class QuoteService : IQuoteService
         quote.Id = Guid.NewGuid();
         quote.QuoteNumber = await GenerateQuoteNumber(createQuoteDto.WorkspaceId);
         quote.ExpiresAt = DateTime.UtcNow.AddDays(30);
+        quote.Source = createQuoteDto.Source ?? string.Empty;
 
         if (quote.LineItems == null)
         {
