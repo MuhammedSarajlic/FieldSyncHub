@@ -18,6 +18,7 @@ import LeadDetails from './pages/LeadDetails';
 import Quotes from './pages/quotes/Quotes';
 import Pricebook from './pages/pricebook/Pricebook';
 import Marketing from './pages/Marketing';
+import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import QuoteDetails from './pages/quotes/QuoteDetails';
 import Workspace from './pages/Workspace';
@@ -83,7 +84,7 @@ function App() {
               element={<ServiceItemDetails />}
             />
             <Route path='marketing' element={<Marketing />} />
-            <Route path='reports' element={<Marketing />} />
+            <Route path='reports' element={<Reports />} />
             <Route path='settings' element={<Settings />} />
             <Route path='support' element={<Settings />} />
           </Route>
