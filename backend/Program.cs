@@ -34,7 +34,15 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddService(builder.Configuration);
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        // EF Core's change-tracker fixup can link entities back to each other
+        // (e.g. a loaded User <-> its Workspace's Users collection) even when
+        // no query explicitly asked for both sides - ignore those cycles
+        // instead of failing serialization on whichever response hits them first.
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();

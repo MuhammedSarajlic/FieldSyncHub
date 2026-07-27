@@ -108,9 +108,9 @@ public class EmployeeInviteService : IEmployeeInviteService
 
         var emailSent = await _emailService.SendEmailAsync(email, subject, plainText, html);
 
-        if (!emailSent)
+        if (!emailSent.Success)
         {
-            throw new Exception("Failed to send invitation email.");
+            throw new Exception($"Failed to send invitation email: {emailSent.Error}");
         }
     }
 

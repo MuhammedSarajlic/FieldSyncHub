@@ -538,7 +538,7 @@ public class CustomerService : ICustomerService
 
         var emailResult = await _emailService.SendEmailAsync(to, subject, message, message);
 
-        if (emailResult)
+        if (emailResult.Success)
         {
             return new ApiResponse<object>
             {
@@ -552,7 +552,7 @@ public class CustomerService : ICustomerService
         return new ApiResponse<object>
         {
             Success = false,
-            Payload = "Failed to send email."
+            Payload = $"Failed to send email: {emailResult.Error}"
         };
     }
 

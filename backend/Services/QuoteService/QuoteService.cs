@@ -692,12 +692,12 @@ public class QuoteService : IQuoteService
             BuildQuoteEmailHtml(sendQuoteDto.Message, companyName),
             attachments);
 
-        if (!sent)
+        if (!sent.Success)
         {
             return new ApiResponse<Quote>
             {
                 Success = false,
-                ErrorMessage = "The email could not be delivered. Check the email settings and try again."
+                ErrorMessage = $"The email could not be delivered: {sent.Error}"
             };
         }
 

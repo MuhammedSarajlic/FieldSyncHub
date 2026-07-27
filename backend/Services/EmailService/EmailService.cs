@@ -17,10 +17,10 @@ public class EmailService : IEmailService
         !string.IsNullOrWhiteSpace(_configuration["AppSettings:Resend:ApiToken"]) &&
         !string.IsNullOrWhiteSpace(_configuration["AppSettings:Resend:SenderEmail"]);
 
-    public Task<bool> SendEmailAsync(string toEmail, string subject, string plainTextContent, string htmlContent)
+    public Task<EmailSendResult> SendEmailAsync(string toEmail, string subject, string plainTextContent, string htmlContent)
         => SendEmailAsync([toEmail], subject, plainTextContent, htmlContent, null);
 
-    public async Task<bool> SendEmailAsync(
+    public async Task<EmailSendResult> SendEmailAsync(
         IEnumerable<string> toEmails,
         string subject,
         string plainTextContent,
@@ -34,14 +34,12 @@ public class EmailService : IEmailService
 
         if (recipients.Count == 0)
         {
-            Console.WriteLine("Email not sent: no recipients supplied.");
-            return false;
+            return EmailSendResult.Failed("No recipients were supplied.");
         }
 
         if (!IsConfigured)
         {
-            Console.WriteLine("Email not sent: Resend is not configured.");
-            return false;
+            return EmailSendResult.Failed("Resend is not configured (missing API token or sender address).");
         }
 
         var senderEmail = _configuration["AppSettings:Resend:SenderEmail"];
@@ -76,10 +74,11 @@ public class EmailService : IEmailService
 
         if (!response.Success)
         {
-            Console.WriteLine($"Failed to send email via Resend: {response.Exception?.Message}");
-            return false;
+            var reason = response.Exception?.Message ?? "Unknown error";
+            Console.WriteLine($"Failed to send email via Resend: {reason}");
+            return EmailSendResult.Failed(reason);
         }
 
-        return true;
+        return EmailSendResult.Ok;
     }
 }
