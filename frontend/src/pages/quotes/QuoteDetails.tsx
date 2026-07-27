@@ -915,22 +915,28 @@ const QuoteDetails = () => {
           user={user}
         />
       )}
-      <EditQuoteModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        quoteToEdit={quote}
-        setQuotes={setQuote}
-      />
-      <ConvertQuoteToJobModal
-        isOpen={isConvertQuoteModalOpen}
-        onClose={() => setIsConvertQuoteModalOpen(false)}
-        quote={quote}
-      />
-      <DuplicateQuoteModal
-        isOpen={isDuplicateQuoteModalOpen}
-        onClose={() => setIsDuplicateQuoteModalOpen(false)}
-        quoteToDuplicate={quote}
-      />
+      {isEditModalOpen && (
+        <EditQuoteModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          quoteToEdit={quote}
+          setQuotes={setQuote}
+        />
+      )}
+      {isConvertQuoteModalOpen && (
+        <ConvertQuoteToJobModal
+          isOpen={isConvertQuoteModalOpen}
+          onClose={() => setIsConvertQuoteModalOpen(false)}
+          quote={quote}
+        />
+      )}
+      {isDuplicateQuoteModalOpen && (
+        <DuplicateQuoteModal
+          isOpen={isDuplicateQuoteModalOpen}
+          onClose={() => setIsDuplicateQuoteModalOpen(false)}
+          quoteToDuplicate={quote}
+        />
+      )}
     </div>
   );
 };

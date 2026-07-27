@@ -55,7 +55,7 @@ const EditQuoteModal = ({
   const [isAddDiscount, setIsAddDiscount] = useState<boolean>(false);
   const [isAddTax, setIsAddTax] = useState<boolean>(false);
   const [assignedUserName, setAssignedUserName] = useState(
-    quoteToEdit.assignedToUser.fullName
+    quoteToEdit.assignedToUser?.fullName ?? ''
   );
   const [isAssignedUserLoading, setIsAssignedUserLoading] =
     useState<boolean>(false);

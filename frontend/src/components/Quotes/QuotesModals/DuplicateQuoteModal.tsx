@@ -56,7 +56,7 @@ const DuplicateQuoteModal = ({
     TServiceItem[]
   >([]);
   const [assignedUserName, setAssignedUserName] = useState(
-    quoteToDuplicate.assignedToUser.fullName
+    quoteToDuplicate.assignedToUser?.fullName ?? ''
   );
   const [selectedCustomer, setSelectedCustomer] = useState(
     quoteToDuplicate.customerId
