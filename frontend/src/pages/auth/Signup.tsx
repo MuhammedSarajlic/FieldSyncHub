@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import toast from 'react-hot-toast';
 import images from '../../constants/AssetsConstants/images';
 import { Register, GoogleLogin } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
@@ -50,6 +49,7 @@ const Signup = () => {
     password: false,
   });
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   // Auto-rotate slides
   useEffect(() => {
@@ -65,8 +65,9 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
     if (userLoginData.password.length < 8) {
-      toast.error('Password must be at least 8 characters.');
+      setError('Password must be at least 8 characters.');
       return;
     }
     try {
@@ -74,10 +75,8 @@ const Signup = () => {
       const token = response.data.accessToken;
       setStoredToken(token, true);
       setAccessToken(token);
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || 'Could not create your account'
-      );
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Could not create your account');
     }
   };
 
@@ -482,6 +481,8 @@ const Signup = () => {
                 </label>
               </div>
             </div>
+
+            {error && <p className='text-sm text-red-600'>{error}</p>}
 
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
               <button

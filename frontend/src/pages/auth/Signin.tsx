@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import toast from 'react-hot-toast';
 import images from '../../constants/AssetsConstants/images';
 import { Login, GoogleLogin } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
@@ -46,6 +45,7 @@ const Signin = () => {
     password: false,
   });
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -60,15 +60,14 @@ const Signin = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
     try {
       const response = await Login(userLoginData);
       const token = response.data.accessToken;
       setStoredToken(token, userLoginData.rememberMe);
       setAccessToken(token);
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || 'Invalid email or password'
-      );
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Invalid email or password');
     }
   };
 
@@ -380,6 +379,8 @@ const Signin = () => {
                 </div>
               </div>
             </div>
+
+            {error && <p className='text-sm text-red-600'>{error}</p>}
 
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
               <button
