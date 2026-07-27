@@ -19,13 +19,22 @@ using backend.Services.WorkspaceService;
 using backend.Services.PdfService;
 using backend.Services.EventService;
 using backend.Services.CalendarService;
+using Resend;
 
 namespace backend.Extensions;
 
 public static class ServiceExtension
 {
-    public static void AddService(this IServiceCollection services)
+    public static void AddService(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddResend(options =>
+        {
+            options.ApiToken = configuration["AppSettings:Resend:ApiToken"] ?? string.Empty;
+            // A missing/empty token would otherwise throw on every request that
+            // sends email; EmailService.IsConfigured is what actually gates sending.
+            options.ThrowExceptions = false;
+        });
+
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICustomerUnitOfWork, CustomerUnitOfWork>();

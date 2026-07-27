@@ -573,9 +573,9 @@ const Marketing = () => {
                     <div className='h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center mb-4'>
                       <Mail size={24} className='text-green-600' />
                     </div>
-                    <h3 className='font-medium'>SendGrid</h3>
+                    <h3 className='font-medium'>Resend</h3>
                     <p className='text-sm text-gray-500 mt-1'>
-                      Connect to send emails through SendGrid
+                      Connect to send emails through Resend
                     </p>
                     <button className='mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded text-sm'>
                       Connect

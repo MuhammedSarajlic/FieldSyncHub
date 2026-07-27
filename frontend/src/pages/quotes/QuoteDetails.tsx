@@ -61,7 +61,7 @@ import {
   openPdfInNewTab,
 } from '../../utils/FuntionHelpers/downloadPdfFile';
 
-/** SendGrid takes attachments as base64, so encode in the browser before posting. */
+/** The send-quote endpoint takes attachments as base64, so encode in the browser before posting. */
 const fileToBase64 = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader();

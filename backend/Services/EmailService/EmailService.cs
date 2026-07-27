@@ -1,20 +1,21 @@
-using SendGrid;
-using SendGrid.Helpers.Mail;
+using Resend;
 
 namespace backend.Services.EmailService;
 
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
+    private readonly IResend _resend;
 
-    public EmailService(IConfiguration configuration)
+    public EmailService(IConfiguration configuration, IResend resend)
     {
         _configuration = configuration;
+        _resend = resend;
     }
 
     public bool IsConfigured =>
-        !string.IsNullOrWhiteSpace(_configuration["AppSettings:SendGrid:ApiKey"]) &&
-        !string.IsNullOrWhiteSpace(_configuration["AppSettings:SendGrid:SenderEmail"]);
+        !string.IsNullOrWhiteSpace(_configuration["AppSettings:Resend:ApiToken"]) &&
+        !string.IsNullOrWhiteSpace(_configuration["AppSettings:Resend:SenderEmail"]);
 
     public Task<bool> SendEmailAsync(string toEmail, string subject, string plainTextContent, string htmlContent)
         => SendEmailAsync([toEmail], subject, plainTextContent, htmlContent, null);
@@ -28,7 +29,7 @@ public class EmailService : IEmailService
     {
         var recipients = toEmails?
             .Where(e => !string.IsNullOrWhiteSpace(e))
-            .Select(e => new EmailAddress(e.Trim()))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList() ?? [];
 
         if (recipients.Count == 0)
@@ -37,42 +38,45 @@ public class EmailService : IEmailService
             return false;
         }
 
-        var apiKey = _configuration["AppSettings:SendGrid:ApiKey"];
-        var senderEmail = _configuration["AppSettings:SendGrid:SenderEmail"];
-        var senderName = _configuration["AppSettings:SendGrid:SenderName"];
-
-        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(senderEmail))
+        if (!IsConfigured)
         {
-            Console.WriteLine("Email not sent: SendGrid is not configured.");
+            Console.WriteLine("Email not sent: Resend is not configured.");
             return false;
         }
 
-        var client = new SendGridClient(apiKey);
-        var from = new EmailAddress(senderEmail, senderName);
+        var senderEmail = _configuration["AppSettings:Resend:SenderEmail"];
+        var senderName = _configuration["AppSettings:Resend:SenderName"];
 
-        // showAllRecipients: false gives each recipient their own copy so they
-        // cannot see the other addresses on the send.
-        var msg = MailHelper.CreateSingleEmailToMultipleRecipients(
-            from, recipients, subject, plainTextContent, htmlContent, showAllRecipients: false);
+        var message = new EmailMessage
+        {
+            From = new EmailAddress { Email = senderEmail!, DisplayName = senderName },
+            Subject = subject,
+            TextBody = plainTextContent,
+            HtmlBody = htmlContent,
+        };
+
+        foreach (var recipient in recipients)
+        {
+            message.To.Add(recipient);
+        }
 
         if (attachments != null)
         {
-            foreach (var attachment in attachments)
-            {
-                msg.AddAttachment(
-                    attachment.FileName,
-                    Convert.ToBase64String(attachment.Content),
-                    attachment.ContentType);
-            }
+            message.Attachments = attachments
+                .Select(a => new Resend.EmailAttachment
+                {
+                    Filename = a.FileName,
+                    Content = a.Content,
+                    ContentType = a.ContentType,
+                })
+                .ToList();
         }
 
-        var response = await client.SendEmailAsync(msg);
+        var response = await _resend.EmailSendAsync(message);
 
-        if (response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-            response.StatusCode != System.Net.HttpStatusCode.OK)
+        if (!response.Success)
         {
-            var errorBody = await response.Body.ReadAsStringAsync();
-            Console.WriteLine($"Failed to send email. Status: {response.StatusCode}, Body: {errorBody}");
+            Console.WriteLine($"Failed to send email via Resend: {response.Exception?.Message}");
             return false;
         }
 

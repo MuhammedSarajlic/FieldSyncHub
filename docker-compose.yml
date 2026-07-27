@@ -29,9 +29,9 @@ services:
       AppSettings__Token: ${JWT_TOKEN:-6niNItCw45h6QmxkFUvy9tTVRea17jDk5IDT6LbgIy9oTf5pA0Jj5ipgePKm6bLhnBMNxw4tJpyhvkfE}
       AppSettings__FrontendUrl: ${VITE_BASE_URL_ORIGIN:-http://localhost:5173}
       AppSettings__GoogleClientId: ${GOOGLE_CLIENT_ID:-}
-      AppSettings__SendGrid__ApiKey: ${SENDGRID_API_KEY:-}
-      AppSettings__SendGrid__SenderEmail: ${SENDGRID_SENDER_EMAIL:-invmansis@gmail.com}
-      AppSettings__SendGrid__SenderName: FieldSyncHub
+      AppSettings__Resend__ApiToken: ${RESEND_API_TOKEN:-}
+      AppSettings__Resend__SenderEmail: ${RESEND_SENDER_EMAIL:-onboarding@resend.dev}
+      AppSettings__Resend__SenderName: FieldSyncHub
     ports:
       - "5244:8080"
 

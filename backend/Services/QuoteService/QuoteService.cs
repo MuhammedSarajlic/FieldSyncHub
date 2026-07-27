@@ -634,7 +634,7 @@ public class QuoteService : IQuoteService
             return new ApiResponse<Quote>
             {
                 Success = false,
-                ErrorMessage = "Email sending isn't set up yet. Add your SendGrid API key and sender address to the server configuration."
+                ErrorMessage = "Email sending isn't set up yet. Add your Resend API token and sender address to the server configuration."
             };
         }
 

@@ -15,7 +15,7 @@ notes, re-prioritize.
 
 | Area | State | Notes |
 |---|---|---|
-| Auth | ✅ Working | JWT access token + HttpOnly refresh cookie, BCrypt, password reset via SendGrid, 8-char minimum enforced client + server |
+| Auth | ✅ Working | JWT access token + HttpOnly refresh cookie, BCrypt, password reset via Resend, 8-char minimum enforced client + server |
 | Workspaces & onboarding | ✅ Working | `/workspace` onboarding flow, employee invites by email |
 | Customers | ✅ Working | CRUD, multiple emails/phones, multiple properties, tags, notes, custom fields, CSV import |
 | Leads | ✅ Working | List + detail + status/priority + notes (detail page built recently) |
@@ -57,7 +57,9 @@ fields that already exist.**
   as a JWT claim, but nothing anywhere checks it. An employee can delete the
   workspace's invoices.
 - **Live secrets are committed to git.** [backend/appsettings.json](backend/appsettings.json)
-  is tracked and contains a real SendGrid API key and the JWT signing secret.
+  is tracked and contains the JWT signing secret (the SendGrid key that used to
+  sit alongside it is gone now that email moved to Resend, but treat it as
+  compromised too since it was committed).
 - **Zero automated tests.** No test project on either side.
 - **No background job runner.** No `IHostedService`, no Hangfire/Quartz. Every
   "send a reminder / generate the next recurring job / mark overdue" field in the
@@ -101,7 +103,7 @@ Ranked by how much a plumbing/HVAC/electrical owner would miss it.
 |---|---|
 | **Online booking widget** | Embeddable "request service" form that creates a Lead. Cheap to build, directly drives revenue, `Job.Source` already exists for attribution. |
 | **Review requests** | Auto-ask for a Google review after job completion. Housecall Pro sells this hard. |
-| **Real marketing** | Replace the mockup with email campaigns to customer segments, using the SendGrid integration that already exists. |
+| **Real marketing** | Replace the mockup with email campaigns to customer segments, using the Resend integration that already exists. |
 | **Deeper reporting** | Current Reports page is a good snapshot but has no time dimension. No revenue-over-time, no per-technician performance, no job profitability (`LineItem.Cost` is captured but never reported against). |
 | **Inventory / materials** | `ServiceItemType.Material` exists with no stock levels or usage tracking. |
 | **Accounting sync** | QuickBooks/Xero export or integration. Table stakes at the top end. |
@@ -117,7 +119,7 @@ Ranked by how much a plumbing/HVAC/electrical owner would miss it.
 
 Nothing else matters if the API is open. This phase is small and mostly mechanical.
 
-- [ ] Rotate the leaked SendGrid API key and JWT signing secret. Assume both are compromised.
+- [ ] Rotate the JWT signing secret (still committed in `appsettings.json`). The SendGrid key that was committed alongside it is gone now that email runs through Resend, but if that SendGrid account is still live, rotate/revoke that key too.
 - [ ] Remove `appsettings.json` / `appsettings.Development.json` from git tracking, add to `.gitignore`, ship an `appsettings.example.json`.
 - [ ] Add `[Authorize]` to every controller. Make it the default via a global filter so new controllers are secure by default, then opt specific endpoints out with `[AllowAnonymous]` (auth, invite-accept, future public portal).
 - [ ] Add a `ICurrentUser` service reading `WorkspaceId` / `UserId` / `Role` from JWT claims. Stop taking `workspaceId` from the URL — derive it. Where the route shape must stay, validate the URL value against the claim and 403 on mismatch.
@@ -139,9 +141,9 @@ This is the phase that turns the app from a record-keeper into something a
 business owner pays for.
 
 **1.1 Send quotes and invoices for real**
-- [ ] `POST /api/quote/{id}/send` — renders the existing QuestPDF output, emails it via SendGrid, sets `SentAt`, flips status to `Sent`, writes `ActivityHistory`.
-- [ ] `POST /api/invoice/{id}/send` — same, plus sets `Status = Sent`.
-- [ ] Branded HTML email templates using `Workspace.LogoUrl`, `CompanyName`, `PhoneNumber`.
+- [x] `POST /api/quote/{id}/send` — renders the existing QuestPDF output, emails it via Resend, sets `SentAt`, flips status to `Sent`, writes `ActivityHistory`. Done.
+- [ ] `POST /api/invoice/{id}/send` — same idea for invoices; doesn't exist yet.
+- [ ] Branded HTML email templates using `Workspace.LogoUrl`, `CompanyName`, `PhoneNumber` (the quote send email is plain-text-with-a-`<br>`s right now, not on-brand).
 - [ ] Track opens/views: `Quote.Viewed` / `ViewedAt` already exist — set them from the portal.
 
 **1.2 Public customer portal (no login, signed magic links)**
