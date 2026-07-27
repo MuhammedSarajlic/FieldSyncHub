@@ -140,6 +140,17 @@ public class QuoteController : ControllerBase
         return Ok(quote);
     }
 
+    [HttpPost("{id:guid}/send")]
+    public async Task<ActionResult<ApiResponse<Quote>>> SendQuote(Guid id, [FromBody] SendQuoteDto sendQuoteDto)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+        var userName = User.Identity?.Name ?? "System";
+
+        var result = await _quoteService.SendQuote(id, sendQuoteDto, userId, userName);
+
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpGet("{id}/pdf")]
     public async Task<IActionResult> GetQuotePdf(Guid id)
     {

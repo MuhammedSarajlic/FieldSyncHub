@@ -1,6 +1,11 @@
 import { QuoteStatus } from '../constants/Enumeration/QuoteEnum/QuoteEnum';
 import { TAddNote } from '../types/Note';
-import { TAddQuote, TAddQuoteAttachment, TUpdateQuote } from '../types/Quote';
+import {
+  TAddQuote,
+  TAddQuoteAttachment,
+  TSendQuote,
+  TUpdateQuote,
+} from '../types/Quote';
 import api from './api';
 
 export async function GetQuotesByWorkspace(
@@ -83,6 +88,11 @@ export async function DeleteQuote(quoteId: string) {
 
 export async function ArchiveQuote(quoteId: string) {
   const response = await api.patch(`/quote/${quoteId}/archive`);
+  return response;
+}
+
+export async function SendQuote(quoteId: string, payload: TSendQuote) {
+  const response = await api.post(`/quote/${quoteId}/send`, payload);
   return response;
 }
 

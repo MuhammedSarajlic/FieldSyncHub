@@ -5,6 +5,8 @@ using backend.Dtos.QuoteDto;
 using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Response;
+using backend.Services.EmailService;
+using backend.Services.PdfService;
 using backend.Services.ServiceItemService;
 using backend.Wrappers;
 using Mapster;
@@ -19,11 +21,19 @@ public class QuoteService : IQuoteService
 {
     private readonly DataContext _context;
     private readonly IServiceItemService _serviceItemService;
+    private readonly IEmailService _emailService;
+    private readonly QuotePdfService _quotePdfService;
 
-    public QuoteService(DataContext context, IServiceItemService serviceItemService)
+    public QuoteService(
+        DataContext context,
+        IServiceItemService serviceItemService,
+        IEmailService emailService,
+        QuotePdfService quotePdfService)
     {
         _context = context;
         _serviceItemService = serviceItemService;
+        _emailService = emailService;
+        _quotePdfService = quotePdfService;
     }
 
     public async Task<List<Quote>> GetAllAsync()
@@ -533,34 +543,37 @@ public class QuoteService : IQuoteService
                                         .FirstOrDefaultAsync()
             ?? throw new KeyNotFoundException($"Quote with ID {id} not found.");
 
-        if (quote.Status == status) return null;
-
-        quote.Status = status;
-        quote.UpdatedAt = DateTime.UtcNow;
-
-        if (status == QuoteStatus.Sent)
+        // Re-applying the status the quote already has is a no-op rather than an
+        // error - but the caller still gets the quote back so the UI can refresh.
+        if (quote.Status != status)
         {
-            quote.SentAt = DateTime.UtcNow;
-            quote.Viewed = false;
-            quote.ViewedAt = null;
-            AddActivity(quote, QuoteActivityType.QuoteSent, $"marked quote as sent.", userId, userName);
-        }
-        else if (status == QuoteStatus.Approved)
-        {
-            quote.SentAt = DateTime.UtcNow;
-            quote.Viewed = true;
-            quote.ViewedAt = DateTime.UtcNow;
-            AddActivity(quote, QuoteActivityType.MarkedAccepted, $"marked quote as approved.", userId, userName);
-        }
-        else if (status == QuoteStatus.Declined)
-        {
-            quote.SentAt = DateTime.UtcNow;
-            quote.Viewed = true;
-            quote.ViewedAt = DateTime.UtcNow;
-            AddActivity(quote, QuoteActivityType.MarkedRejected, $"marked quote as rejected.", userId, userName);
-        }
+            quote.Status = status;
+            quote.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+            if (status == QuoteStatus.Sent)
+            {
+                quote.SentAt = DateTime.UtcNow;
+                quote.Viewed = false;
+                quote.ViewedAt = null;
+                AddActivity(quote, QuoteActivityType.QuoteSent, $"marked quote as sent.", userId, userName);
+            }
+            else if (status == QuoteStatus.Approved)
+            {
+                quote.SentAt = DateTime.UtcNow;
+                quote.Viewed = true;
+                quote.ViewedAt = DateTime.UtcNow;
+                AddActivity(quote, QuoteActivityType.MarkedAccepted, $"marked quote as approved.", userId, userName);
+            }
+            else if (status == QuoteStatus.Declined)
+            {
+                quote.SentAt = DateTime.UtcNow;
+                quote.Viewed = true;
+                quote.ViewedAt = DateTime.UtcNow;
+                AddActivity(quote, QuoteActivityType.MarkedRejected, $"marked quote as rejected.", userId, userName);
+            }
+
+            await _context.SaveChangesAsync();
+        }
 
         quote = await _context.Quotes
             .Where(q => q.Id == id)
@@ -572,6 +585,171 @@ public class QuoteService : IQuoteService
             .ToList();
 
         return quote;
+    }
+
+    public async Task<ApiResponse<Quote>> SendQuote(Guid id, SendQuoteDto sendQuoteDto, string userId, string userName)
+    {
+        var quote = await _context.Quotes.Where(q => q.Id == id)
+                                        .Include(q => q.ActivityHistory)
+                                        .Include(q => q.Customer)
+                                        .Include(q => q.CreatedByUser)
+                                            .ThenInclude(u => u.Workspace)
+                                        .FirstOrDefaultAsync();
+
+        if (quote == null)
+        {
+            return new ApiResponse<Quote>
+            {
+                Success = false,
+                ErrorMessage = $"Quote with ID {id} not found."
+            };
+        }
+
+        var recipients = (sendQuoteDto.Recipients ?? [])
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Select(r => r.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (recipients.Count == 0)
+        {
+            return new ApiResponse<Quote>
+            {
+                Success = false,
+                ErrorMessage = "Add at least one recipient before sending."
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(sendQuoteDto.Subject))
+        {
+            return new ApiResponse<Quote>
+            {
+                Success = false,
+                ErrorMessage = "A subject is required."
+            };
+        }
+
+        if (!_emailService.IsConfigured)
+        {
+            return new ApiResponse<Quote>
+            {
+                Success = false,
+                ErrorMessage = "Email sending isn't set up yet. Add your SendGrid API key and sender address to the server configuration."
+            };
+        }
+
+        var attachments = new List<EmailAttachment>();
+
+        if (sendQuoteDto.AttachPdf)
+        {
+            try
+            {
+                var pdfBytes = await _quotePdfService.GenerateQuotePdf(id);
+                var fileName = string.IsNullOrWhiteSpace(quote.QuoteNumber)
+                    ? "Quote.pdf"
+                    : $"Quote-{quote.QuoteNumber}.pdf";
+                attachments.Add(new EmailAttachment(fileName, "application/pdf", pdfBytes));
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<Quote>
+                {
+                    Success = false,
+                    ErrorMessage = $"Could not generate the quote PDF: {ex.Message}"
+                };
+            }
+        }
+
+        foreach (var file in sendQuoteDto.Attachments ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(file.Content)) continue;
+
+            try
+            {
+                attachments.Add(new EmailAttachment(
+                    string.IsNullOrWhiteSpace(file.FileName) ? "attachment" : file.FileName,
+                    string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                    Convert.FromBase64String(file.Content)));
+            }
+            catch (FormatException)
+            {
+                return new ApiResponse<Quote>
+                {
+                    Success = false,
+                    ErrorMessage = $"Attachment '{file.FileName}' could not be read."
+                };
+            }
+        }
+
+        var companyName = quote.CreatedByUser?.Workspace?.CompanyName
+                          ?? quote.CreatedByUser?.Workspace?.Name
+                          ?? "FieldSyncHub";
+
+        var sent = await _emailService.SendEmailAsync(
+            recipients,
+            sendQuoteDto.Subject,
+            sendQuoteDto.Message,
+            BuildQuoteEmailHtml(sendQuoteDto.Message, companyName),
+            attachments);
+
+        if (!sent)
+        {
+            return new ApiResponse<Quote>
+            {
+                Success = false,
+                ErrorMessage = "The email could not be delivered. Check the email settings and try again."
+            };
+        }
+
+        quote.SentAt = DateTime.UtcNow;
+        quote.Viewed = false;
+        quote.ViewedAt = null;
+        quote.UpdatedAt = DateTime.UtcNow;
+
+        // Sending shouldn't walk a quote backwards once the customer has already
+        // responded to it or it has become a job.
+        if (quote.Status is QuoteStatus.Draft or QuoteStatus.Sent or QuoteStatus.AwaitingResponse)
+        {
+            quote.Status = QuoteStatus.Sent;
+        }
+
+        AddActivity(
+            quote,
+            QuoteActivityType.QuoteSent,
+            $"emailed the quote to {string.Join(", ", recipients)}.",
+            userId,
+            userName);
+
+        await _context.SaveChangesAsync();
+
+        var updated = await _context.Quotes
+            .Where(q => q.Id == id)
+            .Include(q => q.ActivityHistory)
+            .FirstOrDefaultAsync();
+
+        updated!.ActivityHistory = updated.ActivityHistory
+            .OrderByDescending(a => a.CreatedAt)
+            .ToList();
+
+        return new ApiResponse<Quote>
+        {
+            Success = true,
+            Payload = updated
+        };
+    }
+
+    private static string BuildQuoteEmailHtml(string message, string companyName)
+    {
+        var body = System.Net.WebUtility.HtmlEncode(message ?? string.Empty)
+            .Replace("\r\n", "\n")
+            .Replace("\n", "<br />");
+
+        return $@"
+<div style=""font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #1a2e35; max-width: 640px;"">
+  <div>{body}</div>
+  <hr style=""border: none; border-top: 1px solid #e5e7eb; margin: 28px 0 12px;"" />
+  <p style=""font-size: 12px; color: #6b7280; margin: 0;"">Sent by {System.Net.WebUtility.HtmlEncode(companyName)}</p>
+</div>";
     }
 
     public byte[] GenerateQuotePdf(Quote quote)

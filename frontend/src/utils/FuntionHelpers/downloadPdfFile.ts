@@ -18,6 +18,25 @@ export const downloadPdfFile = (blobData: Blob, filename: string) => {
   window.URL.revokeObjectURL(url);
 };
 
+export const openPdfInNewTab = (blobData: Blob) => {
+  if (!blobData) {
+    console.error('No data to open for PDF');
+    return;
+  }
+
+  const blob = new Blob([blobData], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const newTab = window.open(url, '_blank');
+
+  if (!newTab) {
+    window.URL.revokeObjectURL(url);
+    throw new Error('Please allow popups to preview the PDF.');
+  }
+
+  // The tab needs the object URL to stay alive while it loads.
+  setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+};
+
 export const openPdfAndPrint = (blobData: Blob) => {
   if (!blobData) {
     console.error('No data to open for PDF');

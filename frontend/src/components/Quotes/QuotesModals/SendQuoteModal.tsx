@@ -224,7 +224,11 @@ ${companyName}`
       }, 2000);
     } catch (error) {
       console.error('Failed to send quote:', error);
-      setSendError('Failed to send quote. Please try again.');
+      setSendError(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to send quote. Please try again.'
+      );
     } finally {
       setIsSending(false);
     }

@@ -38,7 +38,9 @@ import {
   DeleteQuote,
   GetQuoteById,
   GetQuotePdf,
+  SendQuote,
 } from '../../services/Quote';
+import toast from 'react-hot-toast';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import {
   QuoteActivityType,
@@ -56,29 +58,22 @@ import EditQuoteModal from '../../components/Quotes/QuotesModals/EditQuoteModal'
 import {
   downloadPdfFile,
   openPdfAndPrint,
+  openPdfInNewTab,
 } from '../../utils/FuntionHelpers/downloadPdfFile';
+
+/** SendGrid takes attachments as base64, so encode in the browser before posting. */
+const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.slice(result.indexOf(',') + 1));
+    };
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.readAsDataURL(file);
+  });
 import ConvertQuoteToJobModal from '../../components/Quotes/QuotesModals/ConvertQuoteToJobModal';
 import DuplicateQuoteModal from '../../components/Quotes/QuotesModals/DuplicateQuoteModal';
-
-const mockSendQuoteApi = async (data: {
-  recipientEmail: string;
-  subject: string;
-  message: string;
-  attachPdf: boolean;
-  quoteId: string;
-}) => {
-  return new Promise<void>((resolve, reject) => {
-    setTimeout(() => {
-      if (Math.random() > 0.1) {
-        // Simulate 90% success rate
-        console.log('Sending quote:', data);
-        resolve();
-      } else {
-        reject(new Error('Network error or server issue'));
-      }
-    }, 1500); // Simulate API call delay
-  });
-};
 
 const QuoteDetails = () => {
   const { user } = useAuth();
@@ -173,32 +168,92 @@ const QuoteDetails = () => {
   };
 
   const handleArchiveQuote = async () => {
-    await ArchiveQuote(quoteId as string);
+    const response = await ArchiveQuote(quoteId as string);
+    if (response.status === 200) {
+      setIsArchiveQuote(false);
+      toast.success('Quote archived');
+      navigate('/quotes');
+    } else {
+      toast.error('Could not archive this quote');
+    }
   };
 
-  const handleChangeQuoteStatus = async (status: QuoteStatus) => {
-    const response = await ChangeQuoteStatus(quoteId as string, status);
-    if (response.status === 200) {
+  const handleChangeQuoteStatus = async (newStatus: QuoteStatus) => {
+    setIsShowMoreDropdownOpen(false);
+    try {
+      const response = await ChangeQuoteStatus(quoteId as string, newStatus);
       const { status, activityHistory } = response.data;
       setQuote((prev) => {
         if (!prev) return null;
         return { ...prev, status, activityHistory };
       });
+      toast.success(`Quote marked as ${QuoteStatus[newStatus]}`);
+    } catch {
+      toast.error('Could not update the quote status');
     }
   };
 
   const handleSendQuote = async (data: {
-    recipientEmail: string;
+    recipients: string[];
     subject: string;
     message: string;
-    attachPdf: boolean;
+    attachments: {
+      quotePdf: boolean;
+      additionalFiles: File[];
+    };
     quoteId: string;
   }) => {
-    // In a real application, you would call your actual API here
-    // e.g., const response = await yourApi.sendQuote(data);
-    // Handle success/failure based on response
-    console.log('Attempting to send quote with data:', data);
-    await mockSendQuoteApi(data); // Using mock API for demonstration
+    const encodedFiles = await Promise.all(
+      data.attachments.additionalFiles.map(async (file) => ({
+        fileName: file.name,
+        contentType: file.type || 'application/octet-stream',
+        content: await fileToBase64(file),
+      }))
+    );
+
+    let response;
+    try {
+      response = await SendQuote(data.quoteId, {
+        recipients: data.recipients,
+        subject: data.subject,
+        message: data.message,
+        attachPdf: data.attachments.quotePdf,
+        attachments: encodedFiles,
+      });
+    } catch (err) {
+      // The modal surfaces the thrown message, so make it the server's.
+      const axiosError = err as {
+        response?: { data?: { errorMessage?: string } };
+      };
+      throw new Error(
+        axiosError?.response?.data?.errorMessage ??
+          'Could not send the quote. Please try again.'
+      );
+    }
+
+    const updated = response.data.payload;
+    setQuote((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: updated.status,
+            sentAt: updated.sentAt,
+            activityHistory: updated.activityHistory,
+          }
+        : prev
+    );
+  };
+
+  const handlePreviewQuotePdf = async () => {
+    setIsShowMoreDropdownOpen(false);
+    if (!quoteId) return;
+    try {
+      const response = await GetQuotePdf(quoteId);
+      openPdfInNewTab(response.data);
+    } catch (error) {
+      console.error('Error opening PDF preview:', error);
+      toast.error('Could not open the quote preview');
+    }
   };
 
   const handleDownloadQuotePdf = async () => {
@@ -229,15 +284,6 @@ const QuoteDetails = () => {
       console.error('Error preparing PDF for printing:', error);
       alert('Failed to open PDF for printing. Please try again.');
     }
-  };
-
-  const mockQuote = {
-    customer: {
-      name: 'John Smith',
-    },
-    paymentTerms: 'Net 30',
-    customerMessage:
-      'Thank you for the detailed quote. I will review it with my partner and get back to you soon.',
   };
 
   const showMoreRef = useClickOutside<HTMLDivElement>(() =>
@@ -328,22 +374,28 @@ const QuoteDetails = () => {
                         <div className='px-3 py-1 text-xs font-medium text-gray-500'>
                           View
                         </div>
-                        <a
-                          href='#'
-                          className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                        <button
+                          onClick={handlePreviewQuotePdf}
+                          className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <Eye className='w-4 h-4 mr-2' />
                           Preview
-                        </a>
+                        </button>
                         <button
-                          onClick={() => setIsDuplicateQuoteModalOpen(true)}
+                          onClick={() => {
+                            setIsShowMoreDropdownOpen(false);
+                            setIsDuplicateQuoteModalOpen(true);
+                          }}
                           className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <CopyIcon className='w-4 h-4 mr-2' />
                           Duplicate
                         </button>
                         <button
-                          onClick={() => setIsConvertQuoteModalOpen(true)}
+                          onClick={() => {
+                            setIsShowMoreDropdownOpen(false);
+                            setIsConvertQuoteModalOpen(true);
+                          }}
                           className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <HardHat className='w-4 h-4 mr-2' />
@@ -390,28 +442,40 @@ const QuoteDetails = () => {
                         </div>
 
                         <button
-                          onClick={handlePrintQuotePdf}
+                          onClick={() => {
+                            setIsShowMoreDropdownOpen(false);
+                            handlePrintQuotePdf();
+                          }}
                           className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <Printer className='w-4 h-4 mr-2' />
                           Print
                         </button>
                         <button
-                          onClick={handleDownloadQuotePdf}
+                          onClick={() => {
+                            setIsShowMoreDropdownOpen(false);
+                            handleDownloadQuotePdf();
+                          }}
                           className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <Download className='w-4 h-4 mr-2' />
                           Download
                         </button>
                         <button
-                          onClick={() => setIsArchiveQuote(true)}
+                          onClick={() => {
+                            setIsShowMoreDropdownOpen(false);
+                            setIsArchiveQuote(true);
+                          }}
                           className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <Archive className='w-4 h-4 mr-2' />
                           Archive
                         </button>
                         <button
-                          onClick={() => setIsDeleteQuote(true)}
+                          onClick={() => {
+                            setIsShowMoreDropdownOpen(false);
+                            setIsDeleteQuote(true);
+                          }}
                           className='w-full cursor-pointer flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100'
                         >
                           <Trash2 className='w-4 h-4 mr-2 text-red-600' />
@@ -855,25 +919,27 @@ const QuoteDetails = () => {
                   )}
                 </div>
 
-                {mockQuote.customerMessage && (
+                {(quote.customerMessages?.length ?? 0) > 0 && (
                   <div className='mt-6 pt-6 border-t border-gray-200'>
                     <h4 className='text-sm font-medium text-gray-900 mb-3'>
-                      Customer Message
+                      Customer Messages
                     </h4>
-                    <div className='flex items-start space-x-3'>
-                      <div className='flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-medium'>
-                        {mockQuote.customer.name.charAt(0)}
-                      </div>
-                      <div className='flex-1 min-w-0'>
-                        <p className='text-sm text-gray-700'>
-                          {mockQuote.customerMessage}
-                        </p>
-                        <div className='flex items-center space-x-2 text-xs text-gray-500 mt-1'>
-                          <span>{mockQuote.customer.name}</span>
-                          <span>•</span>
-                          <span>{new Date().toLocaleString()}</span>
+                    <div className='space-y-3'>
+                      {quote.customerMessages?.map((customerMessage, index) => (
+                        <div key={index} className='flex items-start space-x-3'>
+                          <div className='shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-medium'>
+                            {quote.customer?.fullName?.charAt(0) ?? '?'}
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <p className='text-sm text-gray-700'>
+                              {customerMessage}
+                            </p>
+                            <p className='text-xs text-gray-500 mt-1'>
+                              {quote.customer?.fullName}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 )}

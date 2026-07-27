@@ -105,3 +105,18 @@ export type TQuoteStats = {
   approvedValue: number;
   conversionRate: number;
 };
+
+export type TSendQuoteAttachment = {
+  fileName: string;
+  contentType: string;
+  /** Raw base64 payload, without the data: URI prefix. */
+  content: string;
+};
+
+export type TSendQuote = {
+  recipients: string[];
+  subject: string;
+  message: string;
+  attachPdf: boolean;
+  attachments: TSendQuoteAttachment[];
+};
