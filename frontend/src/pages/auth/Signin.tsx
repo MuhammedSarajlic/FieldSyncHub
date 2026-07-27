@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
 import images from '../../constants/AssetsConstants/images';
 import { Login, GoogleLogin } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
@@ -59,11 +60,15 @@ const Signin = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const response = await Login(userLoginData);
-    if (response.status === 200) {
+    try {
+      const response = await Login(userLoginData);
       const token = response.data.accessToken;
       setStoredToken(token, userLoginData.rememberMe);
       setAccessToken(token);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || 'Invalid email or password'
+      );
     }
   };
 

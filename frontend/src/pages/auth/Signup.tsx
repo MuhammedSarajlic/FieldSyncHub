@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
 import images from '../../constants/AssetsConstants/images';
 import { Register, GoogleLogin } from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
@@ -64,11 +65,19 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const response = await Register(userLoginData);
-    if (response.status === 200) {
+    if (userLoginData.password.length < 8) {
+      toast.error('Password must be at least 8 characters.');
+      return;
+    }
+    try {
+      const response = await Register(userLoginData);
       const token = response.data.accessToken;
       setStoredToken(token, true);
       setAccessToken(token);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || 'Could not create your account'
+      );
     }
   };
 
@@ -383,6 +392,7 @@ const Signup = () => {
                     type={isPasswordHidden ? 'text' : 'password'}
                     autoComplete='new-password'
                     required
+                    minLength={8}
                     value={userLoginData.password}
                     onChange={(e) =>
                       setUserLoginData({
@@ -437,10 +447,9 @@ const Signup = () => {
                     </button>
                   </div>
                 </div>
-                {/* <div className='mt-1 text-xs text-gray-500'>
-                  Use 8 or more characters with a mix of letters, numbers &
-                  symbols
-                </div> */}
+                <div className='mt-1 text-xs text-gray-500'>
+                  Use 8 or more characters
+                </div>
               </div>
             </div>
 

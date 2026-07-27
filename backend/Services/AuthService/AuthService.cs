@@ -92,6 +92,35 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<GetUserDto>> Register(UserRegisterDto userRegister)
     {
+        if (string.IsNullOrWhiteSpace(userRegister.FirstName) || string.IsNullOrWhiteSpace(userRegister.LastName))
+        {
+            return new ApiResponse<GetUserDto>()
+            {
+                Success = false,
+                ErrorMessage = "First and last name are required",
+                Payload = null
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(userRegister.Email))
+        {
+            return new ApiResponse<GetUserDto>()
+            {
+                Success = false,
+                ErrorMessage = "Email is required",
+                Payload = null
+            };
+        }
+
+        if (string.IsNullOrEmpty(userRegister.Password) || userRegister.Password.Length < 8)
+        {
+            return new ApiResponse<GetUserDto>()
+            {
+                Success = false,
+                ErrorMessage = "Password must be at least 8 characters",
+                Payload = null
+            };
+        }
 
         var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userRegister.Email);
         if (dbUser != null)
@@ -104,10 +133,7 @@ public class AuthService : IAuthService
             };
         }
 
-        if (!string.IsNullOrEmpty(userRegister.Password))
-        {
-            userRegister.Password = HashPassword(userRegister.Password);
-        }
+        userRegister.Password = HashPassword(userRegister.Password);
 
         User user = new()
         {
@@ -227,6 +253,16 @@ public class AuthService : IAuthService
             };
         }
 
+        if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 8)
+        {
+            return new ApiResponse<string>
+            {
+                Success = false,
+                ErrorMessage = "Password must be at least 8 characters",
+                Payload = null
+            };
+        }
+
         user.PasswordHash = HashPassword(newPassword);
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
@@ -293,6 +329,16 @@ public class AuthService : IAuthService
             {
                 Success = false,
                 ErrorMessage = "This password reset link is invalid or has expired.",
+                Payload = null
+            };
+        }
+
+        if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 8)
+        {
+            return new ApiResponse<string>
+            {
+                Success = false,
+                ErrorMessage = "Password must be at least 8 characters",
                 Payload = null
             };
         }
