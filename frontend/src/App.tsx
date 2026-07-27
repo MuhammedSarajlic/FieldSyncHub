@@ -14,6 +14,7 @@ import JobDetails from './pages/jobs/JobsDetails';
 import Employees from './pages/employees/Employees';
 import Dispatch from './pages/Dispatch';
 import Leads from './pages/Leads';
+import LeadDetails from './pages/LeadDetails';
 import Quotes from './pages/quotes/Quotes';
 import Pricebook from './pages/pricebook/Pricebook';
 import Marketing from './pages/Marketing';
@@ -73,6 +74,7 @@ function App() {
             <Route path='employees/:employeeId' element={<EmployeeDetails />} />
             <Route path='dispatch' element={<Dispatch />} />
             <Route path='leads' element={<Leads />} />
+            <Route path='leads/:leadId' element={<LeadDetails />} />
             <Route path='quotes' element={<Quotes />} />
             <Route path='quotes/:quoteId' element={<QuoteDetails />} />
             <Route path='pricebook' element={<Pricebook />} />

@@ -1,4 +1,4 @@
-import { TAddLead } from '../types/Lead';
+import { TAddLead, TUpdateLead } from '../types/Lead';
 import api from './api';
 
 export async function CreateLead(lead: TAddLead) {
@@ -8,6 +8,21 @@ export async function CreateLead(lead: TAddLead) {
 
 export async function GetAllLeads() {
   const response = await api.get(`/lead`);
+  return response;
+}
+
+export async function GetLeadById(id: string) {
+  const response = await api.get(`/lead/${id}`);
+  return response;
+}
+
+export async function UpdateLead(lead: TUpdateLead) {
+  const response = await api.put('/lead', lead);
+  return response;
+}
+
+export async function DeleteLead(id: string) {
+  const response = await api.delete(`/lead/${id}`);
   return response;
 }
 
