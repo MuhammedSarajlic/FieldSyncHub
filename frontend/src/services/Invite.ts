@@ -1,17 +1,16 @@
 import { TUserLogin } from '../types/User';
 import api from './api';
 
-export async function SendInvite(email: string, workspaceId: string) {
+export async function SendInvite(email: string) {
   const response = await api.post(
-    `/invite/send-invite?email=${email}&workspaceId=${workspaceId}`
+    `/invite/send-invite?email=${email}`
   );
   return response;
 }
 
-export async function SendInviteBulk(emails: string[], workspaceId: string) {
+export async function SendInviteBulk(emails: string[]) {
   const response = await api.post(`/invite/send-invite/bulk`, {
     emails,
-    workspaceId,
   });
   return response;
 }

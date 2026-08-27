@@ -14,6 +14,8 @@ using backend.Models;
 using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using backend.Filters;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +56,25 @@ builder.Services.AddControllersWithViews(options =>
         // instead of failing serialization on whichever response hits them first.
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // Invite-sending is scoped per caller (not per IP) so one busy workspace can't
+    // exhaust the limit for another, and capped low since it's an anyone-in-workspace
+    // action that can otherwise be used to spam arbitrary email addresses.
+    options.AddPolicy("invite", httpContext =>
+    {
+        var callerId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? httpContext.Connection.RemoteIpAddress?.ToString()
+            ?? "anonymous";
+        return RateLimitPartition.GetFixedWindowLimiter(callerId, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+});
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
@@ -120,6 +141,7 @@ app.UseCors("AllowSpecificOrigin");
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
 {

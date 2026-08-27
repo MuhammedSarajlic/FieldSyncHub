@@ -45,7 +45,7 @@ public class EmployeeInviteService : IEmployeeInviteService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Role = UserRole.Employee,
+            Role = invite.Role,
             WorkspaceId = invite.WorkspaceId
         };
         _context.Users.Add(newUser);
@@ -77,7 +77,7 @@ public class EmployeeInviteService : IEmployeeInviteService
         return accessToken;
     }
 
-    public async Task SendInvite(string email, Guid workspaceId)
+    public async Task SendInvite(string email, Guid workspaceId, UserRole role = UserRole.Employee)
     {
         var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         var invite = new EmployeeInvite
@@ -86,6 +86,7 @@ public class EmployeeInviteService : IEmployeeInviteService
             Email = email,
             WorkspaceId = workspaceId,
             Token = token,
+            Role = role,
             ExpiresAt = DateTime.UtcNow.AddHours(48)
         };
 

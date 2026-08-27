@@ -1,44 +1,73 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using backend.Services.EmployeeInviteService;
+using backend.Services.CurrentUserService;
 using backend.Dtos.UserDto;
 using backend.Dtos.EmployeeInviteDto;
+using backend.Models;
 
 namespace backend.Controllers;
 
 [Route("api/invite")]
 [ApiController]
+[Authorize(Roles = "Owner,Admin")]
 public class EmployeeInviteController : ControllerBase
 {
     private readonly IEmployeeInviteService _employeeInviteService;
+    private readonly ICurrentUser _currentUser;
 
-    public EmployeeInviteController(IEmployeeInviteService employeeInviteService)
+    public EmployeeInviteController(IEmployeeInviteService employeeInviteService, ICurrentUser currentUser)
     {
         _employeeInviteService = employeeInviteService;
+        _currentUser = currentUser;
     }
 
     [HttpPost("send-invite")]
-    public async Task<IActionResult> SendInvite([FromQuery] string email, [FromQuery] Guid workspaceId)
+    [EnableRateLimiting("invite")]
+    public async Task<IActionResult> SendInvite([FromQuery] string email, [FromQuery] UserRole role = UserRole.Employee)
     {
-        if (string.IsNullOrEmpty(email) || workspaceId == Guid.Empty)
+        if (string.IsNullOrEmpty(email))
         {
-            return BadRequest("Email and workspace ID are required.");
+            return BadRequest("Email is required.");
         }
-        await _employeeInviteService.SendInvite(email, workspaceId);
+
+        if (_currentUser.WorkspaceId is not Guid workspaceId)
+        {
+            return Forbid();
+        }
+
+        if (role == UserRole.Owner && _currentUser.Role != UserRole.Owner)
+        {
+            return Forbid();
+        }
+
+        await _employeeInviteService.SendInvite(email, workspaceId, role);
         return Ok($"Invitation sent to {email}");
     }
 
     [HttpPost("send-invite/bulk")]
+    [EnableRateLimiting("invite")]
     public async Task<IActionResult> SendBulkInvite([FromBody] EmployeeInviteRequest request)
     {
-        if (request.Emails == null || request.Emails.Count == 0 || request.WorkspaceId == Guid.Empty)
+        if (request.Emails == null || request.Emails.Count == 0)
         {
-            return BadRequest("At least one email and a valid workspace ID are required.");
+            return BadRequest("At least one email is required.");
+        }
+
+        if (_currentUser.WorkspaceId is not Guid workspaceId)
+        {
+            return Forbid();
+        }
+
+        if (request.Role == UserRole.Owner && _currentUser.Role != UserRole.Owner)
+        {
+            return Forbid();
         }
 
         foreach (var email in request.Emails)
         {
-            await _employeeInviteService.SendInvite(email, request.WorkspaceId);
+            await _employeeInviteService.SendInvite(email, workspaceId, request.Role);
         }
 
         return Ok("Invitations sent.");

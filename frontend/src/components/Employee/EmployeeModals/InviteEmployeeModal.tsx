@@ -33,7 +33,7 @@ const InviteEmployeeModal = ({
 
       setSending(true);
       setSuccess(null);
-      const response = await SendInviteBulk(validEmails, user.workspace.id);
+      const response = await SendInviteBulk(validEmails);
       setSending(false);
 
       if (response?.status === 200) {
