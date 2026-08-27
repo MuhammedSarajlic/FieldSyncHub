@@ -8,6 +8,7 @@ using backend.Services.EmployeeService;
 using backend.Services.InvoiceService;
 using backend.Services.JobService;
 using backend.Services.NotesService;
+using backend.Services.CurrentUserService;
 using backend.Services.CustomerPhoneService;
 using backend.Services.PropertyService;
 using backend.Services.QuoteService;
@@ -35,6 +36,7 @@ public static class ServiceExtension
             options.ThrowExceptions = false;
         });
 
+        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICustomerUnitOfWork, CustomerUnitOfWork>();

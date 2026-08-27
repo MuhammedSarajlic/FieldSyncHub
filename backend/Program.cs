@@ -13,6 +13,7 @@ using backend.Dtos.LineItemDto;
 using backend.Models;
 using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using backend.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,10 @@ builder.Services.AddControllersWithViews(options =>
         // Secure by default: every controller/action requires an authenticated
         // user unless explicitly opted out with [AllowAnonymous].
         options.Filters.Add(new AuthorizeFilter());
+        // Any {workspaceId} route segment must match the caller's own workspace
+        // claim - otherwise [Authorize] alone still lets one workspace read another's
+        // data by changing the GUID in the URL.
+        options.Filters.Add(typeof(WorkspaceAccessFilter));
     })
     .AddJsonOptions(options =>
     {

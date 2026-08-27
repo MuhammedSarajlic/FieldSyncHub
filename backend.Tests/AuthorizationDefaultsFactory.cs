@@ -14,11 +14,17 @@ public class AuthorizationDefaultsFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<DataContext>));
-            if (descriptor != null)
+            // AddDbContext registers more than just DbContextOptions<DataContext> (e.g.
+            // IDbContextOptionsConfiguration<DataContext>) - removing only the options
+            // descriptor leaves the MySQL configuration action registered alongside the
+            // InMemory one added below, which EF Core rejects as two providers on one context.
+            var dataContextDescriptors = services
+                .Where(d => d.ServiceType.IsGenericType
+                    && d.ServiceType.GetGenericArguments().Contains(typeof(DataContext)))
+                .ToList();
+            foreach (var d in dataContextDescriptors)
             {
-                services.Remove(descriptor);
+                services.Remove(d);
             }
 
             services.AddDbContext<DataContext>(options =>
