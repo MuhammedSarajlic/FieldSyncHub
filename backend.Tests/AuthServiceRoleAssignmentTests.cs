@@ -27,7 +27,8 @@ public class AuthServiceRoleAssignmentTests
             })
             .Build();
 
-        return new AuthService(context, new UserService(context), configuration, new NoopEmailService());
+        var emailService = new NoopEmailService();
+        return new AuthService(context, new UserService(context, emailService, configuration), configuration, emailService);
     }
 
     private static DataContext CreateContext()

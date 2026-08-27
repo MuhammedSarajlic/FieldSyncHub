@@ -4,6 +4,7 @@ import Signin from './pages/auth/Signin';
 import Signup from './pages/auth/Signup';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import ConfirmEmailChange from './pages/auth/ConfirmEmailChange';
 import Home from './pages/Home';
 import Calendar from './pages/calendar/Calendar';
 import Customers from './pages/customers/Customers';
@@ -45,6 +46,7 @@ function App() {
       <Toaster />
       <Routes>
         <Route path='/' element={<Navigate to='/home' replace />} />
+        <Route path='confirm-email-change' element={<ConfirmEmailChange />} />
 
         <Route element={<PublicRoute />}>
           <Route path='signin' element={<Signin />} />

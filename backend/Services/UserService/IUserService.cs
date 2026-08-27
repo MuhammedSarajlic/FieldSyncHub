@@ -9,6 +9,7 @@ public interface IUserService
     Task<ApiResponse<GetUserDto>> GetLoggedInUser(Guid userId);
     Task<ApiResponse<GetUserDto>> GetUserById(Guid userId);
     Task<ApiResponse<GetUserDto>> GetUserByEmail(string email);
-    Task<ApiResponse<GetUserDto>> UpdateUser(UpdateUserDto updatedUser);
-    Task DeleteUser(Guid userId);
+    Task<ApiResponse<GetUserDto>> UpdateUser(Guid callerId, UpdateUserDto updatedUser);
+    Task<ApiResponse<string>> ConfirmEmailChangeAsync(string token);
+    Task DeleteUser(Guid userId, Guid callerWorkspaceId);
 }

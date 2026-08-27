@@ -151,11 +151,11 @@ const Settings = () => {
     setIsSavingAccount(true);
     try {
       const response = await UpdateUser({ id: user.id, ...accountForm });
-      if (response.status === 200) {
-        toast.success('Account updated');
+      if (response.status === 200 && response.data.success) {
+        toast.success(response.data.errorMessage || 'Account updated');
         await refetchUser();
       } else {
-        toast.error('Failed to update account');
+        toast.error(response.data?.errorMessage || 'Failed to update account');
       }
     } catch (error) {
       console.error(error);

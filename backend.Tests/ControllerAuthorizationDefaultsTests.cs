@@ -24,6 +24,7 @@ public class ControllerAuthorizationDefaultsTests : IClassFixture<AuthorizationD
         ("POST", "api/auth/refresh"),
         ("POST", "api/invite/accept-invite"),
         ("GET", "api/invite/validate-token"),
+        ("POST", "api/user/confirm-email-change"),
     };
 
     private readonly AuthorizationDefaultsFactory _factory;

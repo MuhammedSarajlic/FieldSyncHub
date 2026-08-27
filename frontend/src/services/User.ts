@@ -14,3 +14,10 @@ export async function UpdateUser(user: TUpdateUser) {
   const response = await api.put('/user', user);
   return response;
 }
+
+export async function ConfirmEmailChange(token: string) {
+  const response = await api.post(
+    `/user/confirm-email-change?token=${token}`
+  );
+  return response;
+}
