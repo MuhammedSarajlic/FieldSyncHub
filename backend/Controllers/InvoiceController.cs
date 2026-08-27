@@ -1,6 +1,7 @@
 using backend.Dtos.InvoiceDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.CurrentUserService;
 using backend.Services.InvoiceService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
@@ -12,23 +13,35 @@ namespace backend.Controllers;
 public class InvoiceController : ControllerBase
 {
     private readonly IInvoiceService _invoiceService;
+    private readonly ICurrentUser _currentUser;
 
-    public InvoiceController(IInvoiceService invoiceService)
+    public InvoiceController(IInvoiceService invoiceService, ICurrentUser currentUser)
     {
         _invoiceService = invoiceService;
+        _currentUser = currentUser;
     }
 
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Invoice>> GetInvoiceById(Guid id)
     {
-        var invoice = await _invoiceService.GetInvoiceById(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var invoice = await _invoiceService.GetInvoiceById(id, callerWorkspaceId);
         return Ok(invoice);
     }
 
     [HttpGet("invoice-number/{invoiceNumber}")]
-    public async Task<ActionResult<Invoice>> GetByInvoiceNumber([FromQuery] Guid workspaceId, string invoiceNumber)
+    public async Task<ActionResult<Invoice>> GetByInvoiceNumber(string invoiceNumber)
     {
+        if (_currentUser.WorkspaceId is not Guid workspaceId)
+        {
+            return Forbid();
+        }
+
         var invoice = await _invoiceService.GetInvoiceByInvoiceNumber(workspaceId, invoiceNumber);
         return Ok(invoice);
     }
@@ -66,7 +79,12 @@ public class InvoiceController : ControllerBase
     [HttpGet("customer/{customerId}")]
     public async Task<ActionResult<ApiResponse<List<Invoice>>>> GetInvoicesByCustomerId(Guid customerId)
     {
-        return await _invoiceService.GetInvoicesByCustomerId(customerId);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        return await _invoiceService.GetInvoicesByCustomerId(customerId, callerWorkspaceId);
     }
 
     [HttpPost]
@@ -79,21 +97,36 @@ public class InvoiceController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<Invoice>> UpdateInvoice([FromBody] UpdateInvoiceDto updatedInvoiceDto)
     {
-        var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto, callerWorkspaceId);
         return Ok(updatedInvoice);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _invoiceService.DeleteInvoice(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        await _invoiceService.DeleteInvoice(id, callerWorkspaceId);
         return Ok();
     }
 
     [HttpGet("invoice/{id}/pdf")]
     public async Task<IActionResult> GetInvoicePdf(Guid id)
     {
-        var invoice = await _invoiceService.GetInvoiceById(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var invoice = await _invoiceService.GetInvoiceById(id, callerWorkspaceId);
         var document = _invoiceService.GenerateDocument(invoice);
 
         return File(document, "application/pdf", $"invoice-{id}.pdf");

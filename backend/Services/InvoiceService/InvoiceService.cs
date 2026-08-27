@@ -22,7 +22,7 @@ public class InvoiceService : IInvoiceService
         _context = context;
     }
 
-    public async Task<Invoice?> GetInvoiceById(Guid id)
+    public async Task<Invoice?> GetInvoiceById(Guid id, Guid callerWorkspaceId)
     {
         var invoice = await _context.Invoices
             .Where(i => i.Id == id)
@@ -34,7 +34,14 @@ public class InvoiceService : IInvoiceService
             .Include(i => i.Property)
             .FirstOrDefaultAsync();
 
-        return invoice ?? throw new KeyNotFoundException($"Invoice with ID {id} not found.");
+        // Same exception whether it doesn't exist or belongs to another tenant, so
+        // this can't be used to probe for other workspaces' invoice ids.
+        if (invoice == null || invoice.WorkspaceId != callerWorkspaceId)
+        {
+            throw new KeyNotFoundException($"Invoice with ID {id} not found.");
+        }
+
+        return invoice;
     }
 
     public async Task<Invoice> GetInvoiceByInvoiceNumber(Guid workspaceId, string invoiceNumber)
@@ -196,10 +203,10 @@ public class InvoiceService : IInvoiceService
     }
 
 
-    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId)
+    public async Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId, Guid callerWorkspaceId)
     {
         var invoices = await _context.Invoices
-            .Where(i => i.CustomerId == customerId)
+            .Where(i => i.CustomerId == customerId && i.WorkspaceId == callerWorkspaceId)
             .AsNoTracking()
             .Include(i => i.Customer)
             .ThenInclude(c => c.Properties)
@@ -234,13 +241,13 @@ public class InvoiceService : IInvoiceService
     }
 
     //TODO: Later refactor and make update like on customer to use other repositories to update child elements
-    public async Task<Invoice> UpdateInvoice(UpdateInvoiceDto updatedInvoiceDto)
+    public async Task<Invoice> UpdateInvoice(UpdateInvoiceDto updatedInvoiceDto, Guid callerWorkspaceId)
     {
         var invoice = await _context.Invoices
             .Include(i => i.LineItems)
             .FirstOrDefaultAsync(i => i.Id == updatedInvoiceDto.Id);
 
-        if (invoice == null)
+        if (invoice == null || invoice.WorkspaceId != callerWorkspaceId)
         {
             throw new KeyNotFoundException($"Invoice with ID {updatedInvoiceDto.Id} not found.");
         }
@@ -319,9 +326,14 @@ public class InvoiceService : IInvoiceService
         return invoice;
     }
 
-    public async Task DeleteInvoice(Guid id)
+    public async Task DeleteInvoice(Guid id, Guid callerWorkspaceId)
     {
         var invoiceToDelete = await _context.Invoices.FindAsync(id);
+
+        if (invoiceToDelete == null || invoiceToDelete.WorkspaceId != callerWorkspaceId)
+        {
+            throw new KeyNotFoundException($"Invoice with ID {id} not found.");
+        }
 
         _context.Invoices.Remove(invoiceToDelete);
         await _context.SaveChangesAsync();

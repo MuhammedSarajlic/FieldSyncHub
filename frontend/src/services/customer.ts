@@ -22,14 +22,8 @@ export async function GetCustomerByWorkspace(
   return response;
 }
 
-export async function ImportCustomers(
-  customers: TImportCustomer[],
-  workspaceId: string
-) {
-  const response = await api.post(
-    `/customer/import?workspaceId=${workspaceId}`,
-    customers
-  );
+export async function ImportCustomers(customers: TImportCustomer[]) {
+  const response = await api.post('/customer/import', customers);
   return response;
 }
 

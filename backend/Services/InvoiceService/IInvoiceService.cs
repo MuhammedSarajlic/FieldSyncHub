@@ -7,14 +7,14 @@ namespace backend.Services.InvoiceService;
 
 public interface IInvoiceService
 {
-    Task<Invoice> GetInvoiceById(Guid id);
+    Task<Invoice> GetInvoiceById(Guid id, Guid callerWorkspaceId);
     Task<Invoice> GetInvoiceByInvoiceNumber(Guid workspaceId, string invoiceNumber);
     Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByWorkspaceId(Guid workspaceId, int pageNumber, int pageSize);
     Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByFilter(InvoiceFilterDto filterDto, Guid workspaceId, int pageNumber, int pageSize);
-    Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId);
+    Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId, Guid callerWorkspaceId);
     Task<Invoice> CreateInvoice(CreateInvoiceDto createInvoiceDto);
-    Task<Invoice> UpdateInvoice(UpdateInvoiceDto updatedInvoiceDto);
-    Task DeleteInvoice(Guid id);
+    Task<Invoice> UpdateInvoice(UpdateInvoiceDto updatedInvoiceDto, Guid callerWorkspaceId);
+    Task DeleteInvoice(Guid id, Guid callerWorkspaceId);
     byte[] GenerateDocument(Invoice invoice);
     Task<InvoiceStatsDto> GetInvoiceStats(Guid workspaceId);
 }

@@ -56,6 +56,11 @@ public class EmployeeInviteService : IEmployeeInviteService
             return null;
         }
         workspace.Users.Add(newUser);
+        // Set explicitly rather than relying on EF's relationship fixup from the
+        // Add above - the token below is generated from this object, and its
+        // workspaceId claim must never end up empty because that link didn't happen
+        // to run before Adapt<GetUserDto>() is called.
+        newUser.Workspace = workspace;
 
         invite.IsAccepted = true;
 
@@ -79,7 +84,10 @@ public class EmployeeInviteService : IEmployeeInviteService
 
     public async Task SendInvite(string email, Guid workspaceId, UserRole role = UserRole.Employee)
     {
-        var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64))
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .Replace("=", "");
         var invite = new EmployeeInvite
         {
             Id = Guid.NewGuid(),

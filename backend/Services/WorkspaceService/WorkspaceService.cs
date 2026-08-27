@@ -15,10 +15,13 @@ public class WorkspaceService : IWorkspaceService
         _context = context;
     }
 
-    public async Task<ApiResponse<GetWorkspaceDto>> GetWorkspaceById(Guid id)
+    public async Task<ApiResponse<GetWorkspaceDto>> GetWorkspaceById(Guid id, Guid callerWorkspaceId)
     {
         var workspace = await _context.Workspaces.Include(w => w.Users).FirstOrDefaultAsync(w => w.Id == id);
-        if (workspace == null)
+
+        // Same "not found" message whether it doesn't exist or belongs to another
+        // tenant, so this can't be used to probe for other workspaces' ids.
+        if (workspace == null || workspace.Id != callerWorkspaceId)
         {
             return new ApiResponse<GetWorkspaceDto>()
             {
@@ -87,12 +90,13 @@ public class WorkspaceService : IWorkspaceService
         };
     }
 
-    public async Task<ApiResponse<GetWorkspaceDto>> UpdateWorkspace(UpdateWorkspaceDto updatedWorkspaceDto)
+    public async Task<ApiResponse<GetWorkspaceDto>> UpdateWorkspace(UpdateWorkspaceDto updatedWorkspaceDto, Guid callerWorkspaceId)
     {
+        // The id in the body is ignored - callers may only edit their own workspace.
         var existingWorkspace = await _context.Workspaces
                                         .Include(w => w.CreatedByUser)
                                         .Include(w => w.Users)
-                                        .FirstOrDefaultAsync(w => w.Id == updatedWorkspaceDto.Id);
+                                        .FirstOrDefaultAsync(w => w.Id == callerWorkspaceId);
 
         if (existingWorkspace == null)
         {
@@ -100,7 +104,7 @@ public class WorkspaceService : IWorkspaceService
             {
                 Success = false,
                 Payload = null,
-                ErrorMessage = $"Workspace with ID {updatedWorkspaceDto.Id} not found."
+                ErrorMessage = $"Workspace with ID {callerWorkspaceId} not found."
             };
         }
 
@@ -128,8 +132,13 @@ public class WorkspaceService : IWorkspaceService
         };
     }
 
-    public async Task DeleteWorkspace(Guid id)
+    public async Task DeleteWorkspace(Guid id, Guid callerWorkspaceId)
     {
+        if (id != callerWorkspaceId)
+        {
+            throw new UnauthorizedAccessException("That workspace is not yours.");
+        }
+
         // Get the workspace with related users
         var workspace = await _context.Workspaces
             .Include(w => w.Users)

@@ -6,9 +6,9 @@ namespace backend.Services.NotesService;
 
 public interface INotesService
 {
-    Task<ApiResponse<Note>> GetNoteById(Guid id);
-    Task<ApiResponse<List<Note>>> GetNoteByCustomerId(Guid customerId);
-    Task<Note> CreateNote(CreateNoteDto createNoteDto);
-    Task<Note> UpdateNote(UpdateNoteDto updatedNoteDto);
-    Task DeleteNote(Guid id);
+    Task<ApiResponse<Note>> GetNoteById(Guid id, Guid callerWorkspaceId);
+    Task<ApiResponse<List<Note>>> GetNoteByCustomerId(Guid customerId, Guid callerWorkspaceId);
+    Task<Note> CreateNote(CreateNoteDto createNoteDto, Guid callerWorkspaceId);
+    Task<Note> UpdateNote(UpdateNoteDto updatedNoteDto, Guid callerWorkspaceId);
+    Task DeleteNote(Guid id, Guid callerWorkspaceId);
 }

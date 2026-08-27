@@ -112,6 +112,47 @@ public class UserServiceTests
     }
 
     [Fact]
+    public async Task ConfirmEmailChange_rejects_an_address_taken_since_the_change_was_requested()
+    {
+        // Uniqueness was only checked when the change was requested, not when it's
+        // confirmed - two users could both start a change to the same address and
+        // both confirm. Simulate the second confirmer losing the race.
+        await using var context = CreateContext();
+        var first = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "first@acme.test",
+            FirstName = "A",
+            LastName = "B",
+            PendingEmail = "shared@acme.test",
+            EmailChangeToken = "token-first",
+            EmailChangeTokenExpiresAt = DateTime.UtcNow.AddHours(1)
+        };
+        var second = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "second@acme.test",
+            FirstName = "C",
+            LastName = "D",
+            PendingEmail = "shared@acme.test",
+            EmailChangeToken = "token-second",
+            EmailChangeTokenExpiresAt = DateTime.UtcNow.AddHours(1)
+        };
+        context.Users.AddRange(first, second);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var firstResult = await service.ConfirmEmailChangeAsync("token-first");
+        var secondResult = await service.ConfirmEmailChangeAsync("token-second");
+
+        Assert.True(firstResult.Success);
+        Assert.False(secondResult.Success);
+
+        var reloadedSecond = await context.Users.SingleAsync(u => u.Id == second.Id);
+        Assert.Equal("second@acme.test", reloadedSecond.Email);
+    }
+
+    [Fact]
     public async Task ConfirmEmailChange_rejects_an_expired_token()
     {
         await using var context = CreateContext();
@@ -166,6 +207,38 @@ public class UserServiceTests
         await service.DeleteUser(target.Id, workspaceId);
 
         Assert.False(await context.Users.AnyAsync(u => u.Id == target.Id));
+    }
+
+    [Fact]
+    public async Task DeleteUser_throws_when_deleting_the_only_owner_of_a_workspace()
+    {
+        await using var context = CreateContext();
+        var workspaceId = Guid.NewGuid();
+        var onlyOwner = new User { Id = Guid.NewGuid(), Email = "owner@acme.test", FirstName = "A", LastName = "B", WorkspaceId = workspaceId, Role = UserRole.Owner };
+        context.Users.Add(onlyOwner);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.DeleteUser(onlyOwner.Id, workspaceId));
+
+        Assert.True(await context.Users.AnyAsync(u => u.Id == onlyOwner.Id));
+    }
+
+    [Fact]
+    public async Task DeleteUser_allows_deleting_an_owner_when_another_owner_remains()
+    {
+        await using var context = CreateContext();
+        var workspaceId = Guid.NewGuid();
+        var owner1 = new User { Id = Guid.NewGuid(), Email = "owner1@acme.test", FirstName = "A", LastName = "B", WorkspaceId = workspaceId, Role = UserRole.Owner };
+        var owner2 = new User { Id = Guid.NewGuid(), Email = "owner2@acme.test", FirstName = "C", LastName = "D", WorkspaceId = workspaceId, Role = UserRole.Owner };
+        context.Users.AddRange(owner1, owner2);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        await service.DeleteUser(owner1.Id, workspaceId);
+
+        Assert.False(await context.Users.AnyAsync(u => u.Id == owner1.Id));
     }
 
     private sealed class NoopEmailService : IEmailService

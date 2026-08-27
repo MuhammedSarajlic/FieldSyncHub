@@ -67,7 +67,7 @@ public class TokenService : ITokenService
             new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim("workspaceId", user.Workspace?.Id.ToString() ?? ""),
-            new Claim(ClaimTypes.Role, user.Role.ToString() ?? UserRole.Employee.ToString())
+            new Claim(ClaimTypes.Role, (user.Role ?? UserRole.Employee).ToString())
         };
 
         if (rememberMe.HasValue)

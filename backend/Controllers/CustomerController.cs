@@ -25,9 +25,14 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ApiResponse<object>> GetCustomerById(Guid id)
+    public async Task<ActionResult<ApiResponse<object>>> GetCustomerById(Guid id)
     {
-        return await _customerService.GetCustomerById(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        return Ok(await _customerService.GetCustomerById(id, callerWorkspaceId));
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
@@ -64,22 +69,43 @@ public class CustomerController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<ApiResponse<Customer>>> UpdateCustomer([FromBody] UpdateCustomerDto updatedCustomerDto)
     {
-        var customer = await _customerUnitOfWork.UpdateCustomerWithDependenciesAsync(updatedCustomerDto);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var customer = await _customerUnitOfWork.UpdateCustomerWithDependenciesAsync(updatedCustomerDto, callerWorkspaceId);
         return Ok(customer);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteCustomer(Guid id)
     {
-        await _customerService.DeleteCustomer(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await _customerService.DeleteCustomer(id, callerWorkspaceId);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
         return Ok();
     }
 
     [HttpPost("import")]
     public async Task<ActionResult<ApiResponse<List<Customer>>>> ImportCustomers(
-        [FromBody] List<ImportedCustomerDto> customers,
-        Guid workspaceId)
+        [FromBody] List<ImportedCustomerDto> customers)
     {
+        if (_currentUser.WorkspaceId is not Guid workspaceId)
+        {
+            return Forbid();
+        }
+
         var result = await _customerService.ImportCustomers(customers, workspaceId);
         return Ok(result);
     }
@@ -93,21 +119,36 @@ public class CustomerController : ControllerBase
     [HttpPatch("{id}/tags")]
     public async Task<IActionResult> UpdateCustomerTags(Guid id, [FromBody] string tag)
     {
-        await _customerService.UpdateCustomerTags(id, tag);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        await _customerService.UpdateCustomerTags(id, tag, callerWorkspaceId);
         return Ok();
     }
 
     [HttpPatch("{id}/tags/remove")]
     public async Task<IActionResult> RemoveCustomerTag(Guid id, [FromBody] string tag)
     {
-        await _customerService.RemoveCustomerTag(id, tag);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        await _customerService.RemoveCustomerTag(id, tag, callerWorkspaceId);
         return Ok();
     }
 
     [HttpPatch("{id}/archive")]
     public async Task<IActionResult> ArchiveCustomer(Guid id)
     {
-        await _customerService.ArchiveCustomer(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        await _customerService.ArchiveCustomer(id, callerWorkspaceId);
         return Ok();
     }
 

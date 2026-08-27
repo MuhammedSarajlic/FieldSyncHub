@@ -46,6 +46,8 @@ public class EmployeeInviteController : ControllerBase
         return Ok($"Invitation sent to {email}");
     }
 
+    private const int MaxBulkInviteEmails = 10;
+
     [HttpPost("send-invite/bulk")]
     [EnableRateLimiting("invite")]
     public async Task<IActionResult> SendBulkInvite([FromBody] EmployeeInviteRequest request)
@@ -53,6 +55,14 @@ public class EmployeeInviteController : ControllerBase
         if (request.Emails == null || request.Emails.Count == 0)
         {
             return BadRequest("At least one email is required.");
+        }
+
+        // The "invite" rate-limit policy permits 10 requests/min per caller - a
+        // single bulk call must stay within that budget instead of fanning out an
+        // unbounded number of sends for the cost of one permit.
+        if (request.Emails.Count > MaxBulkInviteEmails)
+        {
+            return BadRequest($"You can invite at most {MaxBulkInviteEmails} people at a time.");
         }
 
         if (_currentUser.WorkspaceId is not Guid workspaceId)

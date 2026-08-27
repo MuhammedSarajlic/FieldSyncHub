@@ -3,7 +3,6 @@ using backend.Dtos.UserDto;
 using backend.Models;
 using backend.Services.AuthService;
 using backend.Services.EmailService;
-using backend.Services.UserService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -28,7 +27,7 @@ public class AuthServiceRoleAssignmentTests
             .Build();
 
         var emailService = new NoopEmailService();
-        return new AuthService(context, new UserService(context, emailService, configuration), configuration, emailService);
+        return new AuthService(context, configuration, emailService);
     }
 
     private static DataContext CreateContext()

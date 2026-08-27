@@ -6,7 +6,6 @@ using backend.Dtos.UserDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.EmailService;
-using backend.Services.UserService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,13 +15,11 @@ namespace backend.Services.AuthService;
 public class AuthService : IAuthService
 {
     private readonly DataContext _context;
-    private readonly IUserService _userService;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
-    public AuthService(DataContext context, IUserService userService, IConfiguration configuration, IEmailService emailService)
+    public AuthService(DataContext context, IConfiguration configuration, IEmailService emailService)
     {
         _context = context;
-        _userService = userService;
         _configuration = configuration;
         _emailService = emailService;
     }
@@ -37,14 +34,17 @@ public class AuthService : IAuthService
             if (emailClaim == null) return new ApiResponse<User> { Success = false, ErrorMessage = "Invalid refresh token (email claim missing)." };
 
             var email = emailClaim.Value;
-            var userEmailResult = await _userService.GetUserByEmail(email);
+            // Establishing the caller's own identity from their refresh token, not a
+            // caller-driven lookup of someone else - go straight to the DB rather than
+            // through UserService.GetUserByEmail, which requires an already-known
+            // workspace to scope by (there isn't one yet at this point in the flow).
+            var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Email == email);
 
-            if (!userEmailResult.Success)
+            if (user == null)
             {
                 return new ApiResponse<User> { Success = false, ErrorMessage = "User not found for the provided email." };
             }
 
-            var user = userEmailResult.Payload.Adapt<User>();
             return new ApiResponse<User>()
             {
                 Success = true,
@@ -171,10 +171,26 @@ public class AuthService : IAuthService
             };
         }
 
-        var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.GoogleId == payload.Subject || u.Email == payload.Email);
+        var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.GoogleId == payload.Subject);
 
         if (user == null)
         {
+            // A plain email match against an existing password account is not proof
+            // of ownership - our own registration never verifies the email address,
+            // so anyone could have pre-registered the victim's email and would
+            // otherwise inherit their account the first time they used "Sign in with
+            // Google". Require signing in with the password instead to link accounts.
+            var emailInUse = await _context.Users.AnyAsync(u => u.Email == payload.Email);
+            if (emailInUse)
+            {
+                return new ApiResponse<GetUserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "An account with this email already exists. Sign in with your password instead.",
+                    Payload = null
+                };
+            }
+
             user = new User
             {
                 Id = Guid.NewGuid(),
@@ -185,14 +201,6 @@ public class AuthService : IAuthService
                 Role = UserRole.Owner
             };
             await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
-        }
-        else if (user.GoogleId == null)
-        {
-            // Existing email/password account signing in with Google for the
-            // first time - link the two rather than creating a duplicate user.
-            user.GoogleId = payload.Subject;
-            _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
 

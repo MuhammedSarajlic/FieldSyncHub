@@ -48,12 +48,23 @@ public class ControllerAuthorizationDefaultsTests : IClassFixture<AuthorizationD
                 continue;
             }
 
-            var method = action.ActionConstraints?
+            var methods = action.ActionConstraints?
                 .OfType<Microsoft.AspNetCore.Mvc.ActionConstraints.HttpMethodActionConstraint>()
                 .SelectMany(c => c.HttpMethods)
-                .FirstOrDefault() ?? "GET";
+                .Distinct()
+                .ToList();
 
-            yield return new object[] { method, template };
+            // An action with no explicit [Http*] constraint (rare in this codebase)
+            // defaults to GET, matching ASP.NET Core's own routing behavior.
+            if (methods == null || methods.Count == 0)
+            {
+                methods = ["GET"];
+            }
+
+            foreach (var method in methods)
+            {
+                yield return new object[] { method, template };
+            }
         }
     }
 

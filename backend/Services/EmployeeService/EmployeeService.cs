@@ -17,9 +17,9 @@ public class EmployeeService : IEmployeeService
         _context = context;
     }
 
-    public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
+    public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id, Guid callerWorkspaceId)
     {
-        var employee = await _context.Employees.Where(e => e.Id == id).Include(e => e.User).FirstOrDefaultAsync();
+        var employee = await _context.Employees.Where(e => e.Id == id && e.WorkspaceId == callerWorkspaceId).Include(e => e.User).FirstOrDefaultAsync();
         return new ApiResponse<Employee>()
         {
             Success = true,
@@ -135,11 +135,11 @@ public class EmployeeService : IEmployeeService
     }
 
     //Fix update mothod
-    public async Task<Employee> UpdateEmployee(UpdateEmployeeDto updateEmployeeDto)
+    public async Task<Employee> UpdateEmployee(UpdateEmployeeDto updateEmployeeDto, Guid callerWorkspaceId)
     {
         var existingEmployee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == updateEmployeeDto.Id);
 
-        if (existingEmployee == null)
+        if (existingEmployee == null || existingEmployee.WorkspaceId != callerWorkspaceId)
         {
             throw new KeyNotFoundException($"Employee with ID {updateEmployeeDto.Id} not found.");
         }
@@ -171,9 +171,13 @@ public class EmployeeService : IEmployeeService
         return existingEmployee;
     }
 
-    public async Task DeleteEmployee(Guid id)
+    public async Task DeleteEmployee(Guid id, Guid callerWorkspaceId)
     {
         var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
+        if (employee == null || employee.WorkspaceId != callerWorkspaceId)
+        {
+            throw new UnauthorizedAccessException("That employee is not in your workspace.");
+        }
         _context.Remove(employee);
         await _context.SaveChangesAsync();
     }

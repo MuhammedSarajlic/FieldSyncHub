@@ -9,6 +9,7 @@ export type TNote = {
 };
 
 export type TAddNote = {
+  customerId?: string;
   createdBy: string;
   createdByName: string;
   noteText?: string;

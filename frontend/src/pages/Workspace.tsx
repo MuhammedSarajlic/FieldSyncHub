@@ -173,7 +173,7 @@ const Workspace = () => {
           selectedCategory === 'Other' ? otherCategory : selectedCategory,
       };
 
-      const response = await CreateWorkspace(finalWorkspace, user.id);
+      const response = await CreateWorkspace(finalWorkspace);
       if (response.status === 200) {
         // The workspace was just created server-side, but the in-memory
         // `user` from AuthProvider still reflects the pre-workspace state

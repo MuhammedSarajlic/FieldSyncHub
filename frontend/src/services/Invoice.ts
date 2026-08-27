@@ -17,13 +17,8 @@ export async function GetInvoiceById(invoiceId: string) {
   return response;
 }
 
-export async function GetInvoiceByInvoiceNumber(
-  workspaceId: string,
-  invoiceNumber: string
-) {
-  const response = await api.get(
-    `/invoice/invoice-number/${invoiceNumber}?workspaceId=${workspaceId}`
-  );
+export async function GetInvoiceByInvoiceNumber(invoiceNumber: string) {
+  const response = await api.get(`/invoice/invoice-number/${invoiceNumber}`);
   return response;
 }
 

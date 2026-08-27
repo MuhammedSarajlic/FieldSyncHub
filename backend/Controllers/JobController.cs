@@ -1,6 +1,7 @@
 using backend.Dtos.JobDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.CurrentUserService;
 using backend.Services.JobService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
@@ -12,27 +13,44 @@ namespace backend.Controllers;
 public class JobController : ControllerBase
 {
     private readonly IJobService _jobService;
-    public JobController(IJobService jobService)
+    private readonly ICurrentUser _currentUser;
+    public JobController(IJobService jobService, ICurrentUser currentUser)
     {
         _jobService = jobService;
+        _currentUser = currentUser;
     }
 
     [HttpGet("{jobId:guid}")]
-    public async Task<ApiResponse<Job>> GetJobById(Guid jobId)
+    public async Task<ActionResult<ApiResponse<Job>>> GetJobById(Guid jobId)
     {
-        return await _jobService.GetJobById(jobId);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        return Ok(await _jobService.GetJobById(jobId, callerWorkspaceId));
     }
 
     [HttpGet("customer/{customerId:guid}")]
-    public async Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId)
+    public async Task<ActionResult<ApiResponse<List<Job>>>> GetJobsByCustomerId(Guid customerId)
     {
-        return await _jobService.GetJobsByCustomerId(customerId);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        return Ok(await _jobService.GetJobsByCustomerId(customerId, callerWorkspaceId));
     }
 
     [HttpGet("employee/{employeeId:guid}")]
-    public async Task<ApiResponse<List<Job>>> GetJobsByEmployeeId(Guid employeeId)
+    public async Task<ActionResult<ApiResponse<List<Job>>>> GetJobsByEmployeeId(Guid employeeId)
     {
-        return await _jobService.GetAllJobsByEmployeeId(employeeId);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        return Ok(await _jobService.GetAllJobsByEmployeeId(employeeId, callerWorkspaceId));
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
@@ -57,7 +75,12 @@ public class JobController : ControllerBase
     [HttpGet("job-number/{jobNumber}")]
     public async Task<ActionResult<Job>> GetJobByJobNumber(string jobNumber)
     {
-        var job = await _jobService.GetJobByJobNumber(jobNumber);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var job = await _jobService.GetJobByJobNumber(jobNumber, callerWorkspaceId);
         return Ok(job);
     }
 
@@ -72,14 +95,31 @@ public class JobController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<ApiResponse<Job>>> UpdateJob([FromBody] UpdateJobDto updatedJobDto)
     {
-        var job = await _jobService.UpdateJob(updatedJobDto);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var job = await _jobService.UpdateJob(updatedJobDto, callerWorkspaceId);
         return Ok(job);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteJob(Guid id)
     {
-        await _jobService.DeleteJob(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await _jobService.DeleteJob(id, callerWorkspaceId);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
         return Ok();
     }
 
@@ -89,7 +129,12 @@ public class JobController : ControllerBase
         [FromBody] List<string> tags,
         [FromQuery] bool replace = false)
     {
-        await _jobService.UpdateJobTags(jobId, tags, replace);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        await _jobService.UpdateJobTags(jobId, tags, replace, callerWorkspaceId);
         return Ok();
     }
 

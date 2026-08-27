@@ -16,9 +16,9 @@ public class JobService : IJobService
         _context = context;
     }
 
-    public async Task<ApiResponse<Job>> GetJobById(Guid jobId)
+    public async Task<ApiResponse<Job>> GetJobById(Guid jobId, Guid callerWorkspaceId)
     {
-        var job = await _context.Jobs.Where(j => j.Id == jobId)
+        var job = await _context.Jobs.Where(j => j.Id == jobId && j.WorkspaceId == callerWorkspaceId)
                                     .Include(j => j.LineItems)
                                         .ThenInclude(l => l.ServiceItem)
                                     .Include(j => j.Customer)
@@ -36,9 +36,9 @@ public class JobService : IJobService
         };
     }
 
-    public async Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId)
+    public async Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId, Guid callerWorkspaceId)
     {
-        var jobs = await _context.Jobs.Where(j => j.CustomerId == customerId)
+        var jobs = await _context.Jobs.Where(j => j.CustomerId == customerId && j.WorkspaceId == callerWorkspaceId)
                                     .Include(j => j.LineItems)
                                         .ThenInclude(li => li.ServiceItem)
                                     .Include(j => j.Property)
@@ -47,10 +47,10 @@ public class JobService : IJobService
         return new ApiResponse<List<Job>> { Success = true, Payload = jobs };
     }
 
-    public async Task<ApiResponse<List<Job>>> GetAllJobsByEmployeeId(Guid employeeId)
+    public async Task<ApiResponse<List<Job>>> GetAllJobsByEmployeeId(Guid employeeId, Guid callerWorkspaceId)
     {
         var filteredJobs = await _context.Jobs.Include(j => j.AssignedTeamMembers)
-                                            .Where(j => j.AssignedTeamMembers.Any(e => e.Id == employeeId))
+                                            .Where(j => j.WorkspaceId == callerWorkspaceId && j.AssignedTeamMembers.Any(e => e.Id == employeeId))
                                             .Include(j => j.LineItems)
                                             .Include(j => j.Property)
                                             .Include(j => j.Customer)
@@ -59,9 +59,9 @@ public class JobService : IJobService
         return new ApiResponse<List<Job>> { Success = true, Payload = filteredJobs };
     }
 
-    public async Task<Job> GetJobByJobNumber(string jobNumber)
+    public async Task<Job> GetJobByJobNumber(string jobNumber, Guid callerWorkspaceId)
     {
-        var job = await _context.Jobs.Where(j => j.JobNumber == jobNumber)
+        var job = await _context.Jobs.Where(j => j.JobNumber == jobNumber && j.WorkspaceId == callerWorkspaceId)
                             .Include(j => j.LineItems)
                                 .ThenInclude(l => l.ServiceItem)
                             .Include(j => j.Customer)
@@ -312,7 +312,7 @@ public class JobService : IJobService
     }
 
 
-    public async Task<ApiResponse<Job>> UpdateJob(UpdateJobDto updatedJobDto)
+    public async Task<ApiResponse<Job>> UpdateJob(UpdateJobDto updatedJobDto, Guid callerWorkspaceId)
     {
         var existingJob = await _context.Jobs
                                         .Include(j => j.LineItems)
@@ -320,7 +320,7 @@ public class JobService : IJobService
                                             .ThenInclude(e => e.User)
                                         .FirstOrDefaultAsync(j => j.Id == updatedJobDto.Id);
 
-        if (existingJob == null)
+        if (existingJob == null || existingJob.WorkspaceId != callerWorkspaceId)
         {
             return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
         }
@@ -441,18 +441,22 @@ public class JobService : IJobService
     }
 
 
-    public async Task DeleteJob(Guid id)
+    public async Task DeleteJob(Guid id, Guid callerWorkspaceId)
     {
         var job = await _context.Jobs.FindAsync(id) ?? throw new Exception("Job not found");
+        if (job.WorkspaceId != callerWorkspaceId)
+        {
+            throw new UnauthorizedAccessException("That job is not in your workspace.");
+        }
         _context.Jobs.Remove(job);
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace)
+    public async Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace, Guid callerWorkspaceId)
     {
         var job = await _context.Jobs.FirstOrDefaultAsync(j => j.Id == jobId);
 
-        if (job == null)
+        if (job == null || job.WorkspaceId != callerWorkspaceId)
             return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
 
         if (replace)

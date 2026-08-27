@@ -6,5 +6,5 @@ namespace backend.Services.CustomerService;
 
 public interface ICustomerUnitOfWork
 {
-    Task<ApiResponse<Customer>> UpdateCustomerWithDependenciesAsync(UpdateCustomerDto updatedCustomerDto);
+    Task<ApiResponse<Customer>> UpdateCustomerWithDependenciesAsync(UpdateCustomerDto updatedCustomerDto, Guid callerWorkspaceId);
 }

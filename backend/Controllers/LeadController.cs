@@ -1,6 +1,7 @@
 using backend.Dtos.LeadDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.CurrentUserService;
 using backend.Services.LeadService;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,17 +12,24 @@ namespace backend.Controllers;
 public class LeadController : ControllerBase
 {
     private readonly ILeadService _leadService;
+    private readonly ICurrentUser _currentUser;
 
-    public LeadController(ILeadService leadService)
+    public LeadController(ILeadService leadService, ICurrentUser currentUser)
     {
         _leadService = leadService;
+        _currentUser = currentUser;
     }
 
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<Lead>>> GetLeadById(Guid id)
     {
-        var leads = await _leadService.GetLeadById(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var leads = await _leadService.GetLeadById(id, callerWorkspaceId);
         return Ok(leads);
     }
 
@@ -35,7 +43,12 @@ public class LeadController : ControllerBase
     [HttpGet("customer/{customerId}")]
     public async Task<ActionResult<ApiResponse<List<Lead>>>> GetLeadsByCustomerId(Guid customerId)
     {
-        var leads = await _leadService.GetLeadsByCustomerId(customerId);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var leads = await _leadService.GetLeadsByCustomerId(customerId, callerWorkspaceId);
         return Ok(leads);
     }
 
@@ -49,14 +62,31 @@ public class LeadController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<ApiResponse<Lead>>> UpdateLead([FromBody] UpdateLeadDto updatedLeadDto)
     {
-        var result = await _leadService.UpdateLead(updatedLeadDto);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var result = await _leadService.UpdateLead(updatedLeadDto, callerWorkspaceId);
         return Ok(result);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteLead(Guid id)
     {
-        await _leadService.DeleteLead(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await _leadService.DeleteLead(id, callerWorkspaceId);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
         return Ok();
     }
 }

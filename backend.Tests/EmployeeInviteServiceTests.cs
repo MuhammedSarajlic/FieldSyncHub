@@ -101,6 +101,59 @@ public class EmployeeInviteServiceTests
         Assert.Equal(UserRole.Employee, createdUser.Role);
     }
 
+    [Fact]
+    public async Task SendInvite_generates_a_url_safe_token()
+    {
+        // Convert.ToBase64String emits '+', '/', and '=' - dropped unencoded into a
+        // query string, '+' decodes back as a space and corrupts the link for a large
+        // share of tokens. The token must only contain URL-safe characters.
+        await using var context = CreateContext();
+        var service = CreateService(context);
+
+        await service.SendInvite("newhire@acme.test", Guid.NewGuid());
+
+        var invite = await context.EmployeeInvites.SingleAsync(i => i.Email == "newhire@acme.test");
+        Assert.DoesNotContain('+', invite.Token);
+        Assert.DoesNotContain('/', invite.Token);
+        Assert.DoesNotContain('=', invite.Token);
+    }
+
+    [Fact]
+    public async Task AcceptInvite_sets_the_workspace_navigation_explicitly()
+    {
+        // The token returned depends on newUser.Workspace being populated when
+        // Adapt<GetUserDto>() runs; this must not depend on EF's relationship fixup
+        // from workspace.Users.Add(newUser) having already run.
+        await using var context = CreateContext();
+        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Acme" };
+        var invite = new EmployeeInvite
+        {
+            Id = Guid.NewGuid(),
+            Email = "newhire@acme.test",
+            WorkspaceId = workspace.Id,
+            Token = "test-token-3",
+            ExpiresAt = DateTime.UtcNow.AddHours(1)
+        };
+        context.Workspaces.Add(workspace);
+        context.EmployeeInvites.Add(invite);
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+        var accessToken = await service.AcceptInviteAsync(invite.Token, new UserRegisterDto
+        {
+            FirstName = "New",
+            LastName = "Hire",
+            Email = invite.Email,
+            Password = "Password1"
+        });
+
+        Assert.NotNull(accessToken);
+
+        var claims = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+        var workspaceIdClaim = claims.Claims.First(c => c.Type == "workspaceId").Value;
+        Assert.Equal(workspace.Id.ToString(), workspaceIdClaim);
+    }
+
     private sealed class NoopEmailService : IEmailService
     {
         public bool IsConfigured => false;

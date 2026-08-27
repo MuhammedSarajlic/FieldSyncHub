@@ -1,6 +1,7 @@
 using backend.Dtos.EmployeeDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.CurrentUserService;
 using backend.Services.EmployeeService;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,16 +12,23 @@ namespace backend.Controllers;
 public class EmployeeController : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
+    private readonly ICurrentUser _currentUser;
 
-    public EmployeeController(IEmployeeService employeeService)
+    public EmployeeController(IEmployeeService employeeService, ICurrentUser currentUser)
     {
         _employeeService = employeeService;
+        _currentUser = currentUser;
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
+    public async Task<ActionResult<ApiResponse<Employee>>> GetEmployeesById(Guid id)
     {
-        return await _employeeService.GetEmployeesById(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        return Ok(await _employeeService.GetEmployeesById(id, callerWorkspaceId));
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
@@ -52,14 +60,31 @@ public class EmployeeController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<Employee>> UpdateEmployee([FromBody] UpdateEmployeeDto updateEmployeeDto)
     {
-        var updatedEmployee = await _employeeService.UpdateEmployee(updateEmployeeDto);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var updatedEmployee = await _employeeService.UpdateEmployee(updateEmployeeDto, callerWorkspaceId);
         return Ok(updatedEmployee);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteEmployee(Guid id)
     {
-        await _employeeService.DeleteEmployee(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await _employeeService.DeleteEmployee(id, callerWorkspaceId);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
         return Ok();
     }
 

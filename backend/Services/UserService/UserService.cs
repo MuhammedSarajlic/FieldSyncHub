@@ -45,10 +45,10 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ApiResponse<GetUserDto>> GetUserById(Guid userId)
+    public async Task<ApiResponse<GetUserDto>> GetUserById(Guid userId, Guid callerWorkspaceId)
     {
         var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(id => id.Id == userId);
-        if (user == null)
+        if (user == null || user.WorkspaceId != callerWorkspaceId)
         {
             return new ApiResponse<GetUserDto>()
             {
@@ -66,10 +66,10 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ApiResponse<GetUserDto>> GetUserByEmail(string email)
+    public async Task<ApiResponse<GetUserDto>> GetUserByEmail(string email, Guid callerWorkspaceId)
     {
         var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(e => e.Email == email);
-        if (user == null)
+        if (user == null || user.WorkspaceId != callerWorkspaceId)
         {
             return new ApiResponse<GetUserDto>()
             {
@@ -106,6 +106,7 @@ public class UserService : IUserService
         existingUser.LastName = updatedUser.LastName ?? existingUser.LastName;
 
         var emailChangePending = false;
+        var emailChangeConfirmationSent = false;
         if (!string.IsNullOrWhiteSpace(updatedUser.Email) &&
             !string.Equals(updatedUser.Email, existingUser.Email, StringComparison.OrdinalIgnoreCase))
         {
@@ -122,7 +123,7 @@ public class UserService : IUserService
 
             // The address itself isn't changed here - it only takes effect once the
             // confirmation link (sent to both the old and new address) is clicked.
-            await BeginEmailChangeAsync(existingUser, updatedUser.Email);
+            emailChangeConfirmationSent = await BeginEmailChangeAsync(existingUser, updatedUser.Email);
             emailChangePending = true;
         }
 
@@ -134,13 +135,19 @@ public class UserService : IUserService
 
         var user = existingUser.Adapt<GetUserDto>();
 
+        string? emailChangeMessage = null;
+        if (emailChangePending)
+        {
+            emailChangeMessage = emailChangeConfirmationSent
+                ? "Check your new email address for a link to confirm the change."
+                : "Your name was updated, but the confirmation email couldn't be sent - try changing your email again shortly.";
+        }
+
         return new ApiResponse<GetUserDto>()
         {
             Success = true,
             Payload = user,
-            ErrorMessage = emailChangePending
-                ? "Check your new email address for a link to confirm the change."
-                : null
+            ErrorMessage = emailChangeMessage
         };
     }
 
@@ -159,12 +166,43 @@ public class UserService : IUserService
             };
         }
 
+        // Re-check uniqueness here, not just when the change was requested - another
+        // user could have started (and confirmed) a change to the same address in the
+        // meantime.
+        var emailTakenSinceRequested = await _context.Users
+            .AnyAsync(u => u.Id != user.Id && u.Email == user.PendingEmail);
+        if (emailTakenSinceRequested)
+        {
+            return new ApiResponse<string>
+            {
+                Success = false,
+                ErrorMessage = "That email is already in use.",
+                Payload = null
+            };
+        }
+
         user.Email = user.PendingEmail;
         user.PendingEmail = null;
         user.EmailChangeToken = null;
         user.EmailChangeTokenExpiresAt = null;
         user.UpdatedAt = DateTime.Now;
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // The AnyAsync check above can't close a true race between two concurrent
+            // confirmations - the unique index on Users.Email is the actual guarantee,
+            // and violating it lands here.
+            return new ApiResponse<string>
+            {
+                Success = false,
+                ErrorMessage = "That email is already in use.",
+                Payload = null
+            };
+        }
 
         return new ApiResponse<string>
         {
@@ -185,11 +223,22 @@ public class UserService : IUserService
         {
             throw new UnauthorizedAccessException("That user is not in your workspace.");
         }
+
+        if (dbUser.Role == UserRole.Owner)
+        {
+            var otherOwnerExists = await _context.Users
+                .AnyAsync(u => u.WorkspaceId == callerWorkspaceId && u.Id != dbUser.Id && u.Role == UserRole.Owner);
+            if (!otherOwnerExists)
+            {
+                throw new InvalidOperationException("Cannot delete the only Owner of a workspace.");
+            }
+        }
+
         _context.Users.Remove(dbUser);
         await _context.SaveChangesAsync();
     }
 
-    private async Task BeginEmailChangeAsync(User user, string newEmail)
+    private async Task<bool> BeginEmailChangeAsync(User user, string newEmail)
     {
         var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
             .Replace("+", "-")
@@ -215,12 +264,26 @@ public class UserService : IUserService
 
         try
         {
-            await _emailService.SendEmailAsync(newEmail, "Confirm your new FieldSyncHub email", newAddressText, newAddressHtml);
-            await _emailService.SendEmailAsync(oldEmail, "Your FieldSyncHub email is changing", oldAddressText, oldAddressHtml);
+            var newAddressResult = await _emailService.SendEmailAsync(newEmail, "Confirm your new FieldSyncHub email", newAddressText, newAddressHtml);
+            var oldAddressResult = await _emailService.SendEmailAsync(oldEmail, "Your FieldSyncHub email is changing", oldAddressText, oldAddressHtml);
+
+            if (!newAddressResult.Success)
+            {
+                Console.WriteLine($"Failed to send email-change confirmation to {newEmail}: {newAddressResult.Error}");
+            }
+            if (!oldAddressResult.Success)
+            {
+                Console.WriteLine($"Failed to send email-change notice to {oldEmail}: {oldAddressResult.Error}");
+            }
+
+            // The old-address notice is best-effort - what matters for the caller is
+            // whether the link they need to click actually went out.
+            return newAddressResult.Success;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Failed to send email-change confirmation for {oldEmail}: {ex.Message}");
+            return false;
         }
     }
 

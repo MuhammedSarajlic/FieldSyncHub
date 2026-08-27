@@ -8,7 +8,7 @@ namespace backend.Services.CustomerService;
 
 public interface ICustomerService
 {
-    Task<ApiResponse<object>> GetCustomerById(Guid id);
+    Task<ApiResponse<object>> GetCustomerById(Guid id, Guid callerWorkspaceId);
     Task<ApiResponse<PagedResult<Customer>>> GetCustomersByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
     Task<CustomerStatsDto> GetCustomerStats(Guid workspaceId);
     Task<ApiResponse<PagedResult<Customer>>> GetCustomersByFilter(
@@ -19,12 +19,12 @@ public interface ICustomerService
     );
     Task<ApiResponse<Customer>> CreateCustomer(CreateCustomerDto createCustomerDto);
     Task<ApiResponse<Customer>> UpdateCustomer(UpdateCustomerDto updatedCustomerDto);
-    Task DeleteCustomer(Guid id);
+    Task DeleteCustomer(Guid id, Guid callerWorkspaceId);
     Task<ApiResponse<List<Customer>>> ImportCustomers(List<ImportedCustomerDto> customers, Guid workspaceId);
     Task<IActionResult> ExportCustomers(Guid workspaceId);
-    Task UpdateCustomerTags(Guid id, string tag);
-    Task RemoveCustomerTag(Guid id, string tag);
-    Task ArchiveCustomer(Guid id);
+    Task UpdateCustomerTags(Guid id, string tag, Guid callerWorkspaceId);
+    Task RemoveCustomerTag(Guid id, string tag, Guid callerWorkspaceId);
+    Task ArchiveCustomer(Guid id, Guid callerWorkspaceId);
     Task<ApiResponse<object>> SendCustomerMail(Guid customerId, string to, string subject, string message, Guid callerWorkspaceId);
 
 }

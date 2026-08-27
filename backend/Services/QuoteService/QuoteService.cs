@@ -36,7 +36,7 @@ public class QuoteService : IQuoteService
         _quotePdfService = quotePdfService;
     }
 
-    public async Task<Quote> GetByIdAsync(Guid id)
+    public async Task<Quote> GetByIdAsync(Guid id, Guid callerWorkspaceId)
     {
         var quote = await _context.Quotes.Include(q => q.LineItems)
                                         .Include(q => q.Property)
@@ -50,7 +50,7 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.Attachments)
                                         .Include(q => q.ActivityHistory.OrderByDescending(a => a.ChangedAt))
                                         .Include(q => q.AssignedToUser)
-                                        .FirstOrDefaultAsync(q => q.Id == id);
+                                        .FirstOrDefaultAsync(q => q.Id == id && q.WorkspaceId == callerWorkspaceId);
         return quote;
     }
 
@@ -83,9 +83,9 @@ public class QuoteService : IQuoteService
         };
     }
 
-    public async Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId)
+    public async Task<ApiResponse<List<Quote>>> GetQuotesByCustomerId(Guid customerId, Guid callerWorkspaceId)
     {
-        var quotes = await _context.Quotes.Where(q => q.CustomerId == customerId)
+        var quotes = await _context.Quotes.Where(q => q.CustomerId == customerId && q.WorkspaceId == callerWorkspaceId)
                                         .Include(q => q.LineItems)
                                         .Include(q => q.Customer)
                                         .ThenInclude(c => c.Properties)
@@ -411,15 +411,19 @@ public class QuoteService : IQuoteService
     }
 
 
-    public async Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto, string userId, string userName)
+    public async Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto, string userId, string userName, Guid callerWorkspaceId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             var quote = await _context.Quotes
                 .Include(q => q.LineItems)
-                .FirstOrDefaultAsync(q => q.Id == updatedQuoteDto.Id)
-                ?? throw new KeyNotFoundException($"Quote with ID {updatedQuoteDto.Id} not found.");
+                .FirstOrDefaultAsync(q => q.Id == updatedQuoteDto.Id);
+
+            if (quote == null || quote.WorkspaceId != callerWorkspaceId)
+            {
+                throw new KeyNotFoundException($"Quote with ID {updatedQuoteDto.Id} not found.");
+            }
 
             if (updatedQuoteDto.DiscountType.HasValue) quote.DiscountType = updatedQuoteDto.DiscountType.Value;
             if (updatedQuoteDto.DiscountValue.HasValue) quote.DiscountValue = updatedQuoteDto.DiscountValue.Value;
@@ -498,7 +502,7 @@ public class QuoteService : IQuoteService
         }
     }
 
-    public async Task<bool> DeleteQuote(Guid id)
+    public async Task<bool> DeleteQuote(Guid id, Guid callerWorkspaceId)
     {
         var quote = await _context.Quotes
             .Include(q => q.ActivityHistory)
@@ -506,7 +510,7 @@ public class QuoteService : IQuoteService
             .Include(q => q.CustomerNotes)
             .FirstOrDefaultAsync(q => q.Id == id);
 
-        if (quote == null) return false;
+        if (quote == null || quote.WorkspaceId != callerWorkspaceId) return false;
 
         var notesToDelete = new List<Note>();
         notesToDelete.AddRange(quote.InternalNotes);

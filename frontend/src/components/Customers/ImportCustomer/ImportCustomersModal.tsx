@@ -262,10 +262,7 @@ const ImportCustomersModal = ({
         'Importing customers:',
         validRows.map((r) => r.data)
       );
-      const response = await ImportCustomers(
-        customersToSend,
-        user?.workspace.id
-      );
+      const response = await ImportCustomers(customersToSend);
       if (response.status === 200) {
         // Success - close modal
         setIsImportCustomerModalOpen(false);

@@ -31,7 +31,12 @@ public class QuoteController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Quote>> GetQuoteById(Guid id)
     {
-        var result = await _quoteService.GetByIdAsync(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var result = await _quoteService.GetByIdAsync(id, callerWorkspaceId);
         return result == null ? NotFound() : Ok(result);
     }
 
@@ -47,7 +52,12 @@ public class QuoteController : ControllerBase
     [HttpGet("customer/{customerId}")]
     public async Task<ActionResult<List<Quote>>> GetQuotesByCustomerId(Guid customerId)
     {
-        var result = await _quoteService.GetQuotesByCustomerId(customerId);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var result = await _quoteService.GetQuotesByCustomerId(customerId, callerWorkspaceId);
         return result == null ? NotFound() : Ok(result);
     }
 
@@ -108,17 +118,27 @@ public class QuoteController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<Quote>> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
     {
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
         var userName = User.Identity?.Name ?? "System";
 
-        var result = await _quoteService.UpdateQuote(updatedQuoteDto, userId, userName);
+        var result = await _quoteService.UpdateQuote(updatedQuoteDto, userId, userName, callerWorkspaceId);
         return Ok(result);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteQuote(Guid id)
     {
-        var success = await _quoteService.DeleteQuote(id);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        var success = await _quoteService.DeleteQuote(id, callerWorkspaceId);
         return success ? NoContent() : NotFound();
     }
 

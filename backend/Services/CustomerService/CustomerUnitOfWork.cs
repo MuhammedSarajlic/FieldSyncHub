@@ -32,7 +32,7 @@ public class CustomerUnitOfWork : ICustomerUnitOfWork
         _logger = logger;
     }
 
-    public async Task<ApiResponse<Customer>> UpdateCustomerWithDependenciesAsync(UpdateCustomerDto updatedCustomerDto)
+    public async Task<ApiResponse<Customer>> UpdateCustomerWithDependenciesAsync(UpdateCustomerDto updatedCustomerDto, Guid callerWorkspaceId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -43,7 +43,7 @@ public class CustomerUnitOfWork : ICustomerUnitOfWork
                                                  .Include(c => c.CustomerPhones)
                                                  .FirstOrDefaultAsync();
 
-            if (customer == null)
+            if (customer == null || customer.WorkspaceId != callerWorkspaceId)
             {
                 return new ApiResponse<Customer>
                 {

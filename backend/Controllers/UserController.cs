@@ -42,15 +42,25 @@ public class UserController : ControllerBase
 
     [HttpGet]
     [Route("{userId:guid}")]
-    public async Task<ApiResponse<GetUserDto>> GetUserById(Guid userId)
+    public async Task<ActionResult<ApiResponse<GetUserDto>>> GetUserById(Guid userId)
     {
-        return await _userService.GetUserById(userId);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        return Ok(await _userService.GetUserById(userId, callerWorkspaceId));
     }
 
     [HttpGet("{email}")]
-    public async Task<ApiResponse<GetUserDto>> GetUserByEmail(string email)
+    public async Task<ActionResult<ApiResponse<GetUserDto>>> GetUserByEmail(string email)
     {
-        return await _userService.GetUserByEmail(email);
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        return Ok(await _userService.GetUserByEmail(email, callerWorkspaceId));
     }
 
     [HttpPut]
@@ -98,6 +108,10 @@ public class UserController : ControllerBase
         catch (UnauthorizedAccessException)
         {
             return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
 
         return Ok();

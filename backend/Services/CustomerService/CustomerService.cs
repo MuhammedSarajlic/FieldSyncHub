@@ -21,7 +21,7 @@ public class CustomerService : ICustomerService
         _emailService = emailService;
     }
 
-    public async Task<ApiResponse<object>> GetCustomerById(Guid id)
+    public async Task<ApiResponse<object>> GetCustomerById(Guid id, Guid callerWorkspaceId)
     {
         var customer = await _context.Customers.Where(c => c.Id == id)
                                             .Include(c => c.Properties)
@@ -30,7 +30,7 @@ public class CustomerService : ICustomerService
                                                 .OrderByDescending(n => n.CreatedAt)
                                             )
                                             .FirstOrDefaultAsync();
-        if (customer == null)
+        if (customer == null || customer.WorkspaceId != callerWorkspaceId)
         {
             return new ApiResponse<object>
             {
@@ -367,9 +367,14 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task DeleteCustomer(Guid id)
+    public async Task DeleteCustomer(Guid id, Guid callerWorkspaceId)
     {
         var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == id);
+
+        if (customer == null || customer.WorkspaceId != callerWorkspaceId)
+        {
+            throw new UnauthorizedAccessException("That customer is not in your workspace.");
+        }
 
         _context.Remove(customer);
         await _context.SaveChangesAsync();
@@ -460,11 +465,11 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task UpdateCustomerTags(Guid id, string tag)
+    public async Task UpdateCustomerTags(Guid id, string tag, Guid callerWorkspaceId)
     {
         var customer = await _context.Customers.FindAsync(id);
 
-        if (customer == null)
+        if (customer == null || customer.WorkspaceId != callerWorkspaceId)
             throw new Exception("Customer not found");
 
         if (customer.Tags == null)
@@ -478,11 +483,11 @@ public class CustomerService : ICustomerService
         await _context.SaveChangesAsync();
     }
 
-    public async Task RemoveCustomerTag(Guid id, string tag)
+    public async Task RemoveCustomerTag(Guid id, string tag, Guid callerWorkspaceId)
     {
         var customer = await _context.Customers.FindAsync(id);
 
-        if (customer == null)
+        if (customer == null || customer.WorkspaceId != callerWorkspaceId)
             throw new Exception("Customer not found");
 
         if (customer.Tags != null && customer.Tags.Contains(tag))
@@ -493,11 +498,11 @@ public class CustomerService : ICustomerService
         }
     }
 
-    public async Task ArchiveCustomer(Guid id)
+    public async Task ArchiveCustomer(Guid id, Guid callerWorkspaceId)
     {
         var customer = await _context.Customers.FindAsync(id);
 
-        if (customer == null)
+        if (customer == null || customer.WorkspaceId != callerWorkspaceId)
             throw new Exception("Customer not found");
 
         customer.IsArchived = true;

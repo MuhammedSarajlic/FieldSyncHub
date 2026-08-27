@@ -70,6 +70,19 @@ public class InviteAuthorizationTests : IClassFixture<AuthorizationDefaultsFacto
     }
 
     [Fact]
+    public async Task SendInvite_bulk_over_the_cap_is_rejected()
+    {
+        // Each bulk request costs one rate-limit permit but used to loop an unbounded
+        // Emails list - 10 req/min x N emails. The list itself must be capped.
+        var client = AuthenticatedClient("Owner", Guid.NewGuid());
+        var emails = Enumerable.Range(0, 11).Select(i => $"person{i}@example.com").ToArray();
+
+        var response = await client.PostAsJsonEmails("/api/invite/send-invite/bulk", emails);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Admin_inviting_as_owner_is_forbidden()
     {
         var client = AuthenticatedClient("Admin", Guid.NewGuid());

@@ -7,6 +7,7 @@ public class Note
 {
     [Key]
     public Guid Id { get; set; }
+    public Guid? WorkspaceId { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public string CreatedByName { get; set; } = string.Empty;
     public string? NoteText { get; set; }

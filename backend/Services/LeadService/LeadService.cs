@@ -16,9 +16,9 @@ public class LeadService : ILeadService
         _context = context;
     }
 
-    public async Task<ApiResponse<Lead>> GetLeadById(Guid id)
+    public async Task<ApiResponse<Lead>> GetLeadById(Guid id, Guid callerWorkspaceId)
     {
-        var lead = await _context.Leads.Where(r => r.Id == id)
+        var lead = await _context.Leads.Where(r => r.Id == id && r.WorkspaceId == callerWorkspaceId)
                                     .Include(r => r.Customer).ThenInclude(c => c.CustomerPhones)
                                     .Include(r => r.Customer).ThenInclude(c => c.Properties)
                                     .Include(r => r.LineItems)
@@ -48,9 +48,9 @@ public class LeadService : ILeadService
         };
     }
 
-    public async Task<ApiResponse<List<Lead>>> GetLeadsByCustomerId(Guid customerId)
+    public async Task<ApiResponse<List<Lead>>> GetLeadsByCustomerId(Guid customerId, Guid callerWorkspaceId)
     {
-        var leads = await _context.Leads.Where(r => r.CustomerId == customerId)
+        var leads = await _context.Leads.Where(r => r.CustomerId == customerId && r.WorkspaceId == callerWorkspaceId)
                                             .Include(r => r.Customer)
                                             .Include(r => r.LineItems)
                                             .ToListAsync();
@@ -142,13 +142,13 @@ public class LeadService : ILeadService
         };
     }
 
-    public async Task<ApiResponse<Lead>> UpdateLead(UpdateLeadDto updatedLeadDto)
+    public async Task<ApiResponse<Lead>> UpdateLead(UpdateLeadDto updatedLeadDto, Guid callerWorkspaceId)
     {
         var lead = await _context.Leads
             .Include(r => r.LineItems)
             .FirstOrDefaultAsync(r => r.Id == updatedLeadDto.Id);
 
-        if (lead == null)
+        if (lead == null || lead.WorkspaceId != callerWorkspaceId)
         {
             return new ApiResponse<Lead>
             {
@@ -235,10 +235,14 @@ public class LeadService : ILeadService
         };
     }
 
-    public async Task DeleteLead(Guid id)
+    public async Task DeleteLead(Guid id, Guid callerWorkspaceId)
     {
         var lead = await _context.Leads.FindAsync(id);
         if (lead == null) return;
+        if (lead.WorkspaceId != callerWorkspaceId)
+        {
+            throw new UnauthorizedAccessException("That lead is not in your workspace.");
+        }
 
         _context.Leads.Remove(lead);
         await _context.SaveChangesAsync();

@@ -6,11 +6,8 @@ export async function GetWorkspaceById(workspaceId: string) {
   return response;
 }
 
-export async function CreateWorkspace(
-  workspace: TAddWorkspace,
-  createdById: string
-) {
-  const response = await api.post(`/workspace/${createdById}`, workspace);
+export async function CreateWorkspace(workspace: TAddWorkspace) {
+  const response = await api.post('/workspace', workspace);
   return response;
 }
 
