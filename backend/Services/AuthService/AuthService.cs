@@ -60,7 +60,7 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<GetUserDto>> Login(UserLoginDto userLogin)
     {
-        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userLogin.Email);
+        var dbUser = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Email == userLogin.Email);
 
         if (dbUser == null || !VerifyPassword(userLogin.Password, dbUser.PasswordHash))
         {
@@ -72,15 +72,7 @@ public class AuthService : IAuthService
             };
         }
 
-        GetUserDto userDto = new()
-        {
-            Id = dbUser.Id,
-            FirstName = dbUser.FirstName,
-            LastName = dbUser.LastName,
-            Email = dbUser.Email,
-            CreatedAt = dbUser.CreatedAt,
-            UpdatedAt = dbUser.UpdatedAt
-        };
+        var userDto = dbUser.Adapt<GetUserDto>();
 
         return new ApiResponse<GetUserDto>()
         {
@@ -148,15 +140,7 @@ public class AuthService : IAuthService
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
-        GetUserDto userDto = new()
-        {
-            Id = user.Id,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Email = user.Email,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        };
+        var userDto = user.Adapt<GetUserDto>();
 
         return new ApiResponse<GetUserDto>()
         {
@@ -187,7 +171,7 @@ public class AuthService : IAuthService
             };
         }
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.GoogleId == payload.Subject || u.Email == payload.Email);
+        var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.GoogleId == payload.Subject || u.Email == payload.Email);
 
         if (user == null)
         {
@@ -212,15 +196,7 @@ public class AuthService : IAuthService
             await _context.SaveChangesAsync();
         }
 
-        GetUserDto userDto = new()
-        {
-            Id = user.Id,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Email = user.Email,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        };
+        var userDto = user.Adapt<GetUserDto>();
 
         return new ApiResponse<GetUserDto>()
         {
