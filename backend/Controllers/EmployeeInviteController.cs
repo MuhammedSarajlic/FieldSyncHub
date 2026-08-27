@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.Services.EmployeeInviteService;
 using backend.Dtos.UserDto;
@@ -44,6 +45,7 @@ public class EmployeeInviteController : ControllerBase
     }
 
     [HttpPost("accept-invite")]
+    [AllowAnonymous]
     public async Task<IActionResult> AcceptInvite(string token, [FromBody] UserRegisterDto user)
     {
         var accessToken = await _employeeInviteService.AcceptInviteAsync(token, user);
@@ -55,6 +57,7 @@ public class EmployeeInviteController : ControllerBase
 
 
     [HttpGet("validate-token")]
+    [AllowAnonymous]
     public async Task<IActionResult> ValidateInviteToken([FromQuery] string token)
     {
         if (string.IsNullOrEmpty(token))

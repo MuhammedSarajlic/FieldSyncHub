@@ -12,6 +12,7 @@ using Mapster;
 using backend.Dtos.LineItemDto;
 using backend.Models;
 using QuestPDF.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +35,12 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddService(builder.Configuration);
-builder.Services.AddControllersWithViews()
+builder.Services.AddControllersWithViews(options =>
+    {
+        // Secure by default: every controller/action requires an authenticated
+        // user unless explicitly opted out with [AllowAnonymous].
+        options.Filters.Add(new AuthorizeFilter());
+    })
     .AddJsonOptions(options =>
     {
         // EF Core's change-tracker fixup can link entities back to each other
@@ -92,8 +98,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<DataContext>();
     await db.Database.MigrateAsync();
 }
@@ -123,3 +130,5 @@ app.MapStaticAssets();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
