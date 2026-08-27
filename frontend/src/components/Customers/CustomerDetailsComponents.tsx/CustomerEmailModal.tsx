@@ -4,6 +4,7 @@ import { SendCustomerEmail } from '../../../services/Customer';
 
 interface ICustomerEmailModal {
   isOpen: boolean;
+  customerId: string;
   customerEmail: string;
   onClose: () => void;
   // onSend: (emailData: {
@@ -16,6 +17,7 @@ interface ICustomerEmailModal {
 
 const CustomerEmailModal = ({
   isOpen,
+  customerId,
   customerEmail,
   onClose,
 }: // onSend,
@@ -31,7 +33,12 @@ ICustomerEmailModal) => {
       return;
     }
 
-    const response = await SendCustomerEmail(customerEmail, subject, message);
+    const response = await SendCustomerEmail(
+      customerId,
+      customerEmail,
+      subject,
+      message
+    );
     if (response.status !== 200) {
       setError('Failed to send email. Please try again later.');
       return;

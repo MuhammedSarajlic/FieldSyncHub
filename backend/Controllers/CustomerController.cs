@@ -1,9 +1,11 @@
 using backend.Dtos.CustomerDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.CurrentUserService;
 using backend.Services.CustomerService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
@@ -13,11 +15,13 @@ public class CustomerController : ControllerBase
 {
     private readonly ICustomerService _customerService;
     private readonly ICustomerUnitOfWork _customerUnitOfWork;
+    private readonly ICurrentUser _currentUser;
 
-    public CustomerController(ICustomerService customerService, ICustomerUnitOfWork customerUnitOfWork)
+    public CustomerController(ICustomerService customerService, ICustomerUnitOfWork customerUnitOfWork, ICurrentUser currentUser)
     {
         _customerService = customerService;
         _customerUnitOfWork = customerUnitOfWork;
+        _currentUser = currentUser;
     }
 
     [HttpGet("{id:guid}")]
@@ -108,9 +112,19 @@ public class CustomerController : ControllerBase
     }
 
     [HttpPost("send-mail")]
-    public async Task<IActionResult> SendCustomerMail([FromQuery] string to, [FromQuery] string message, [FromQuery] string subject)
+    [EnableRateLimiting("email-relay")]
+    public async Task<IActionResult> SendCustomerMail(
+        [FromQuery] Guid customerId,
+        [FromQuery] string to,
+        [FromQuery] string message,
+        [FromQuery] string subject)
     {
-        var result = await _customerService.SendCustomerMail(to, subject, message);
+        if (_currentUser.WorkspaceId is not Guid workspaceId)
+        {
+            return Forbid();
+        }
+
+        var result = await _customerService.SendCustomerMail(customerId, to, subject, message, workspaceId);
         return Ok(result);
     }
 }

@@ -394,6 +394,7 @@ const CustomerDetails = () => {
 
       <CustomerEmailModal
         isOpen={isEmailModalOpen}
+        customerId={customer.id}
         customerEmail={customer.emails[0]}
         onClose={() => setIsEmailModalOpen(false)}
         // onSend={() => {}}

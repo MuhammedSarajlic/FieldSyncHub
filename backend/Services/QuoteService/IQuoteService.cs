@@ -22,6 +22,6 @@ public interface IQuoteService
     Task<bool> DeleteQuote(Guid id);
     Task ArchiveQuote(Guid id);
     Task<Quote> ChangeQuoteStatus(Guid id, QuoteStatus status, string userId, string userName);
-    Task<ApiResponse<Quote>> SendQuote(Guid id, SendQuoteDto sendQuoteDto, string userId, string userName);
+    Task<ApiResponse<Quote>> SendQuote(Guid id, SendQuoteDto sendQuoteDto, string userId, string userName, Guid callerWorkspaceId);
     byte[] GenerateQuotePdf(Quote quote);
 }

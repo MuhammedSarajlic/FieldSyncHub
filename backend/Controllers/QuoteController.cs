@@ -3,10 +3,12 @@ using backend.Dtos.NotesDto;
 using backend.Dtos.QuoteDto;
 using backend.Models.QuoteModels;
 using backend.Response;
+using backend.Services.CurrentUserService;
 using backend.Services.PdfService;
 using backend.Services.QuoteService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
@@ -16,11 +18,13 @@ public class QuoteController : ControllerBase
 {
     private readonly IQuoteService _quoteService;
     private readonly QuotePdfService _quotePdfService;
+    private readonly ICurrentUser _currentUser;
 
-    public QuoteController(IQuoteService quoteService, QuotePdfService quotePdfService)
+    public QuoteController(IQuoteService quoteService, QuotePdfService quotePdfService, ICurrentUser currentUser)
     {
         _quoteService = quoteService;
         _quotePdfService = quotePdfService;
+        _currentUser = currentUser;
     }
 
 
@@ -136,12 +140,18 @@ public class QuoteController : ControllerBase
     }
 
     [HttpPost("{id:guid}/send")]
+    [EnableRateLimiting("email-relay")]
     public async Task<ActionResult<ApiResponse<Quote>>> SendQuote(Guid id, [FromBody] SendQuoteDto sendQuoteDto)
     {
+        if (_currentUser.WorkspaceId is not Guid workspaceId)
+        {
+            return Forbid();
+        }
+
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
         var userName = User.Identity?.Name ?? "System";
 
-        var result = await _quoteService.SendQuote(id, sendQuoteDto, userId, userName);
+        var result = await _quoteService.SendQuote(id, sendQuoteDto, userId, userName, workspaceId);
 
         return result.Success ? Ok(result) : BadRequest(result);
     }

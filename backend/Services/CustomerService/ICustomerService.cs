@@ -25,6 +25,6 @@ public interface ICustomerService
     Task UpdateCustomerTags(Guid id, string tag);
     Task RemoveCustomerTag(Guid id, string tag);
     Task ArchiveCustomer(Guid id);
-    Task<ApiResponse<object>> SendCustomerMail(string to, string subject, string message);
+    Task<ApiResponse<object>> SendCustomerMail(Guid customerId, string to, string subject, string message, Guid callerWorkspaceId);
 
 }

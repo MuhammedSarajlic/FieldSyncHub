@@ -581,7 +581,7 @@ public class QuoteService : IQuoteService
         return quote;
     }
 
-    public async Task<ApiResponse<Quote>> SendQuote(Guid id, SendQuoteDto sendQuoteDto, string userId, string userName)
+    public async Task<ApiResponse<Quote>> SendQuote(Guid id, SendQuoteDto sendQuoteDto, string userId, string userName, Guid callerWorkspaceId)
     {
         var quote = await _context.Quotes.Where(q => q.Id == id)
                                         .Include(q => q.ActivityHistory)
@@ -590,7 +590,9 @@ public class QuoteService : IQuoteService
                                             .ThenInclude(u => u.Workspace)
                                         .FirstOrDefaultAsync();
 
-        if (quote == null)
+        // Same "not found" message whether the quote doesn't exist or belongs to
+        // another workspace, so this can't be used to probe for other tenants' ids.
+        if (quote == null || quote.WorkspaceId != callerWorkspaceId)
         {
             return new ApiResponse<Quote>
             {
@@ -611,6 +613,22 @@ public class QuoteService : IQuoteService
             {
                 Success = false,
                 ErrorMessage = "Add at least one recipient before sending."
+            };
+        }
+
+        var customerEmails = quote.Customer?.Emails ?? [];
+        var unknownRecipients = recipients
+            .Where(r => !customerEmails.Any(e => e.Equals(r, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        if (unknownRecipients.Count > 0)
+        {
+            // The sending domain isn't an open relay - every recipient has to be an
+            // address already on file for this quote's customer.
+            return new ApiResponse<Quote>
+            {
+                Success = false,
+                ErrorMessage = $"These addresses aren't on file for this quote's customer: {string.Join(", ", unknownRecipients)}."
             };
         }
 

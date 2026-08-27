@@ -506,7 +506,7 @@ public class CustomerService : ICustomerService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ApiResponse<object>> SendCustomerMail(string to, string subject, string message)
+    public async Task<ApiResponse<object>> SendCustomerMail(Guid customerId, string to, string subject, string message, Guid callerWorkspaceId)
     {
         if (!IsValidEmail(to))
         {
@@ -517,11 +517,34 @@ public class CustomerService : ICustomerService
             };
         }
 
-        var customer = await _context.Customers
-                                     .Where(c => c.Emails.Any(e => e.Equals(to, StringComparison.CurrentCultureIgnoreCase)))
-                                     .FirstOrDefaultAsync();
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == customerId);
+
+        // Same "not found" message whether the customer doesn't exist or belongs to
+        // another workspace, so this can't be used to probe for other tenants' ids.
+        if (customer == null || customer.WorkspaceId != callerWorkspaceId)
+        {
+            return new ApiResponse<object>
+            {
+                Success = false,
+                Payload = "Customer not found."
+            };
+        }
+
+        // The recipient must be an address already on file for this customer - the
+        // sending domain doesn't get used as an open relay to arbitrary addresses.
+        if (!customer.Emails.Any(e => e.Equals(to, StringComparison.OrdinalIgnoreCase)))
+        {
+            return new ApiResponse<object>
+            {
+                Success = false,
+                Payload = "That address isn't on file for this customer."
+            };
+        }
 
         var emailResult = await _emailService.SendEmailAsync(to, subject, message, message);
+
+        customer.LastActivity = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
 
         if (emailResult.Success)
         {
@@ -531,8 +554,6 @@ public class CustomerService : ICustomerService
                 Payload = "Email sent successfully."
             };
         }
-
-        customer.LastActivity = DateTime.UtcNow;
 
         return new ApiResponse<object>
         {

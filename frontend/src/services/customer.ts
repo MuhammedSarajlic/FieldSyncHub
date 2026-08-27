@@ -89,12 +89,13 @@ export async function UpdateCustomer(customer: TCustomer) {
 }
 
 export async function SendCustomerEmail(
+  customerId: string,
   email: string,
   subject: string,
   message: string
 ) {
   const response = await api.post(
-    `/customer/send-mail?to=${email}&subject=${subject}&message=${message}`
+    `/customer/send-mail?customerId=${customerId}&to=${email}&subject=${subject}&message=${message}`
   );
   return response;
 }

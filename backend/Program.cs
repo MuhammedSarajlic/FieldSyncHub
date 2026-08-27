@@ -74,6 +74,21 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0
         });
     });
+    // Customer/quote emails go out from the workspace's verified sending domain -
+    // partition by workspace (not caller) so the cap holds regardless of which
+    // teammate is sending, and can't be bypassed by spreading requests across users.
+    options.AddPolicy("email-relay", httpContext =>
+    {
+        var workspaceId = httpContext.User.FindFirst("workspaceId")?.Value
+            ?? httpContext.Connection.RemoteIpAddress?.ToString()
+            ?? "anonymous";
+        return RateLimitPartition.GetFixedWindowLimiter(workspaceId, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
 });
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
