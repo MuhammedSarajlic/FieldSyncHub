@@ -17,12 +17,6 @@ public class JobController : ControllerBase
         _jobService = jobService;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<Job>>> GetJobs()
-    {
-        return await _jobService.GetJobs();
-    }
-
     [HttpGet("{jobId:guid}")]
     public async Task<ApiResponse<Job>> GetJobById(Guid jobId)
     {

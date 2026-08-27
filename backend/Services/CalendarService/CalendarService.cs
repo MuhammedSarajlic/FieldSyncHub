@@ -13,25 +13,6 @@ public class CalendarService : ICalendarService
         _context = context;
     }
 
-    public async Task<CalendarEventsDto> GetAllCalendarEvents()
-    {
-        var dto = new CalendarEventsDto
-        {
-            Events = await _context.Events
-                .Include(e => e.AssignedTo)
-                .Include(e => e.RecurrenceRule)
-                .ToListAsync(),
-
-            Jobs = await _context.Jobs
-                .ToListAsync(),
-
-            Leads = await _context.Leads
-                .ToListAsync()
-        };
-
-        return dto;
-    }
-
     public async Task<CalendarEventsDto> GetAllCalendarEventsByWorkspace(Guid workspaceId)
     {
         var dto = new CalendarEventsDto

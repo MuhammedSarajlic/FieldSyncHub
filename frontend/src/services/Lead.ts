@@ -6,11 +6,6 @@ export async function CreateLead(lead: TAddLead) {
   return response;
 }
 
-export async function GetAllLeads() {
-  const response = await api.get(`/lead`);
-  return response;
-}
-
 export async function GetLeadById(id: string) {
   const response = await api.get(`/lead/${id}`);
   return response;

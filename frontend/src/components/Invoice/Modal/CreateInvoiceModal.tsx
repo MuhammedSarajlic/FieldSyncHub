@@ -12,7 +12,7 @@ import {
   Trash2,
   Info,
 } from 'lucide-react';
-import { GetAllCustomers } from '../../../services/Customer';
+import { GetCustomerByWorkspace } from '../../../services/Customer';
 import { TCustomer } from '../../../types/Customer';
 import { TServiceItem } from '../../../types/ServiceItem';
 import { GetServiceItemsByFilter } from '../../../services/ServiceItem';
@@ -288,10 +288,11 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
   };
 
   const fetchCustomers = async () => {
+    if (!user || !user.workspace) return;
     try {
-      const response = await GetAllCustomers();
+      const response = await GetCustomerByWorkspace(user.workspace.id, 1, 1000);
       if (response.status === 200) {
-        setCustomers(response.data.payload);
+        setCustomers(response.data.payload.items);
       } else {
         console.error(
           'Failed to fetch customers:',

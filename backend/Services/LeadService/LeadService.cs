@@ -16,21 +16,6 @@ public class LeadService : ILeadService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<Lead>>> GetAllLeads()
-    {
-        var leads = await _context.Leads.Include(r => r.Customer)
-                                    .Include(r => r.LineItems)
-                                        .ThenInclude(l => l.ServiceItem)
-                                    .ToListAsync();
-
-        return new ApiResponse<List<Lead>>
-        {
-            Success = true,
-            Payload = leads,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<Lead>> GetLeadById(Guid id)
     {
         var lead = await _context.Leads.Where(r => r.Id == id)

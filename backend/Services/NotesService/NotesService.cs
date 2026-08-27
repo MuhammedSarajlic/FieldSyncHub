@@ -15,17 +15,6 @@ public class NotesService : INotesService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<Note>>> GetNotes()
-    {
-        var notes = await _context.Notes.ToListAsync();
-        return new ApiResponse<List<Note>>()
-        {
-            Success = true,
-            Payload = notes,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<Note>> GetNoteById(Guid id)
     {
         var note = await _context.Notes.FirstOrDefaultAsync(n => n.Id == id);

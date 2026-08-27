@@ -8,7 +8,6 @@ namespace backend.Services.ServiceItemService;
 
 public interface IServiceItemService
 {
-    Task<ApiResponse<List<ServiceItem>>> GetServiceItems();
     Task<ServiceItem> GetServiceItemById(Guid id);
     Task<ApiResponse<PagedResult<ServiceItem>>> GetServiceItemsByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
     Task<ApiResponse<PagedResult<ServiceItem>>> GetServiceItemsByFilter(

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { TAddJob } from '../../../../types/Job';
-import { GetServiceItems } from '../../../../services/ServiceItem';
+import { GetServiceItemsByWorkspace } from '../../../../services/ServiceItem';
 import { TServiceItem } from '../../../../types/ServiceItem';
 import { TModalLineItem } from '../../../../types/LineItem';
 import { X } from 'lucide-react';
+import { useAuth } from '../../../../context/AuthProvider';
 
 interface IPricebookModal {
   setNewJob: React.Dispatch<React.SetStateAction<TAddJob>>;
@@ -15,12 +16,18 @@ const PricebookModal = ({
   setIsPricebookModalOpen,
   setSelectedLineItems,
 }: IPricebookModal) => {
+  const { user } = useAuth();
   const [pricebookItems, setPricebookItems] = useState<TServiceItem[]>([]);
 
   const fetchPricebookItems = async () => {
-    const response = await GetServiceItems();
+    if (!user || !user.workspace) return;
+    const response = await GetServiceItemsByWorkspace(
+      user.workspace.id,
+      1,
+      1000
+    );
     if (response.status === 200) {
-      setPricebookItems(response.data.payload);
+      setPricebookItems(response.data.payload.items);
     }
   };
 

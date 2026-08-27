@@ -16,19 +16,6 @@ public class UserService : IUserService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<GetUserDto>>> GetAllUsers()
-    {
-        var dbUsers = await _context.Users.Include(u => u.Workspace).ToListAsync();
-        var userDto = dbUsers.Select(u => u.Adapt<GetUserDto>()).ToList();
-
-        return new ApiResponse<List<GetUserDto>>()
-        {
-            Success = true,
-            Payload = userDto,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<GetUserDto>> GetLoggedInUser(Guid userId)
     {
         var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Id == userId);

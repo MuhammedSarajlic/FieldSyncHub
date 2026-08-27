@@ -1,11 +1,6 @@
 import { TAddInvoice, TUpdateInvoice } from '../types/Invoice';
 import api from './api';
 
-export async function GetAllInvoices() {
-  const response = await api.get('/invoice');
-  return response;
-}
-
 export async function GetAllInvoicesByWorkspaceId(
   workspaceId: string,
   pageNumber: number,

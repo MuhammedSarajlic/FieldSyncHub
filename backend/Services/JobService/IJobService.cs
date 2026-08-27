@@ -7,7 +7,6 @@ namespace backend.Services.JobService;
 
 public interface IJobService
 {
-    Task<ApiResponse<List<Job>>> GetJobs();
     Task<ApiResponse<Job>> GetJobById(Guid jobId);
     Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId);
     Task<ApiResponse<List<Job>>> GetAllJobsByEmployeeId(Guid employeeId);

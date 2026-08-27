@@ -15,14 +15,6 @@ public class EventService : IEventService
         _context = context;
     }
 
-    public async Task<List<Event>> GetAllEventsAsync()
-    {
-        return await _context.Events
-            .Include(e => e.AssignedTo)
-            .Include(e => e.RecurrenceRule)
-            .ToListAsync();
-    }
-
     public async Task<Event?> GetEventByIdAsync(Guid id)
     {
         return await _context.Events

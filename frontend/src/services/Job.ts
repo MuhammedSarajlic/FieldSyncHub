@@ -1,11 +1,6 @@
 import { TAddJob, TUpdateJob } from '../types/Job';
 import api from './api';
 
-export async function GetJobs() {
-  const response = await api.get('/job');
-  return response;
-}
-
 export async function GetJobById(jobId: string) {
   const response = await api.get(`/job/${jobId}`);
   return response;

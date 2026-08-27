@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { X, Calendar, Clock, Plus, Save } from 'lucide-react';
 import ButtonIcon from '../../CustomElements/ButtonIcon';
 import CustomIconButton from '../../CustomElements/CustomIconButton';
-import { GetAllCustomers } from '../../../services/Customer';
+import { GetCustomerByWorkspace } from '../../../services/Customer';
 import { TCustomer } from '../../../types/Customer';
 import { TServiceItem } from '../../../types/ServiceItem';
 import { GetServiceItemsByFilter } from '../../../services/ServiceItem';
@@ -167,9 +167,10 @@ const UpdateInvoiceModal = ({
   };
 
   const fetchAllCustomers = async () => {
-    const response = await GetAllCustomers();
+    if (!user || !user.workspace) return;
+    const response = await GetCustomerByWorkspace(user.workspace.id, 1, 1000);
     if (response.status === 200) {
-      setCustomers(response.data.payload);
+      setCustomers(response.data.payload.items);
     }
   };
 

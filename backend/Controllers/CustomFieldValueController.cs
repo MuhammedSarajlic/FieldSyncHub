@@ -17,11 +17,6 @@ public class CustomFieldValueController : ControllerBase
         _customFieldServiceValue = customFieldServiceValue;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<CustomFieldValue>>> GetCustomFieldValues()
-    {
-        return await _customFieldServiceValue.GetCustomFieldValues();
-    }
 
     [HttpGet("{id:guid}")]
     public async Task<ApiResponse<CustomFieldValue>> GetCustomFieldValueById(Guid id)

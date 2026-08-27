@@ -23,11 +23,6 @@ public class QuoteController : ControllerBase
         _quotePdfService = quotePdfService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<Quote>>> GetAllQuotes()
-    {
-        return Ok(await _quoteService.GetAllAsync());
-    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Quote>> GetQuoteById(Guid id)

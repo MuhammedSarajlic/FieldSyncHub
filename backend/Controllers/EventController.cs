@@ -16,12 +16,6 @@ public class EventController : ControllerBase
         _eventService = eventService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<Event>>> GetAllEvents()
-    {
-        return Ok(await _eventService.GetAllEventsAsync());
-    }
-
     [HttpGet("{id}")]
     public async Task<ActionResult<Event>> GetEventById(Guid id)
     {

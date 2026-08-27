@@ -18,12 +18,6 @@ public class InvoiceController : ControllerBase
         _invoiceService = invoiceService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<Invoice>>> GetAllInvoices()
-    {
-        var invoices = await _invoiceService.GetAllInvoices();
-        return Ok(invoices);
-    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Invoice>> GetInvoiceById(Guid id)

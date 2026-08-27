@@ -21,21 +21,6 @@ public class CustomerService : ICustomerService
         _emailService = emailService;
     }
 
-    public async Task<ApiResponse<List<Customer>>> GetCustomers()
-    {
-        var customers = await _context.Customers.Where(c => !c.IsArchived)
-                                                .Include(c => c.Properties)
-                                                .Include(c => c.CustomerPhones)
-                                                .Include(c => c.Notes)
-                                                .ToListAsync();
-        return new ApiResponse<List<Customer>>()
-        {
-            Success = true,
-            Payload = customers,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<object>> GetCustomerById(Guid id)
     {
         var customer = await _context.Customers.Where(c => c.Id == id)

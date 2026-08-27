@@ -18,12 +18,6 @@ public class ServiceItemController : ControllerBase
         _serviceItemService = serviceItemService;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<ServiceItem>>> GetAllServiceItems()
-    {
-        return await _serviceItemService.GetServiceItems();
-    }
-
     [HttpGet("{id}")]
     public async Task<ActionResult<ServiceItem>> GetServiceItemById(Guid id)
     {

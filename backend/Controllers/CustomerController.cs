@@ -20,13 +20,6 @@ public class CustomerController : ControllerBase
         _customerUnitOfWork = customerUnitOfWork;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<Customer>>> GetCustomers()
-    {
-        var customers = await _customerService.GetCustomers();
-        return customers;
-    }
-
     [HttpGet("{id:guid}")]
     public async Task<ApiResponse<object>> GetCustomerById(Guid id)
     {

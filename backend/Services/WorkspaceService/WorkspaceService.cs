@@ -15,18 +15,6 @@ public class WorkspaceService : IWorkspaceService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<GetWorkspaceDto>>> GetWorkspaces()
-    {
-        var workspaces = await _context.Workspaces.Include(w => w.Users).ToListAsync();
-        var workspacesDto = workspaces.Adapt<List<GetWorkspaceDto>>();
-        return new ApiResponse<List<GetWorkspaceDto>>()
-        {
-            Success = true,
-            Payload = workspacesDto,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<GetWorkspaceDto>> GetWorkspaceById(Guid id)
     {
         var workspace = await _context.Workspaces.Include(w => w.Users).FirstOrDefaultAsync(w => w.Id == id);

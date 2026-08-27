@@ -17,11 +17,6 @@ public class PropertyController : ControllerBase
         _propertyService = propertyService;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<Property>>> GetProperties()
-    {
-        return await _propertyService.GetProperties();
-    }
 
     [HttpGet("{id:guid}")]
     public async Task<ApiResponse<Property>> GetPropertyById(Guid id)

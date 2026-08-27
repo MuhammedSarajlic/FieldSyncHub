@@ -1,11 +1,6 @@
 import { TAddServiceItem, TUpdateServiceItem } from '../types/ServiceItem';
 import api from './api';
 
-export async function GetServiceItems() {
-  const response = await api.get('/service-item');
-  return response;
-}
-
 export async function GetServiceItemById(serviceItemId: string) {
   const response = await api.get(`/service-item/${serviceItemId}`);
   return response;

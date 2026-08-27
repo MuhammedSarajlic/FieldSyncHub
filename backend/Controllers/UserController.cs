@@ -18,12 +18,6 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<GetUserDto>>> GetAllUsers()
-    {
-        return await _userService.GetAllUsers();
-    }
-
     [HttpGet("me")]
     [Authorize]
     public async Task<ApiResponse<GetUserDto>> GetLoggedInUser()

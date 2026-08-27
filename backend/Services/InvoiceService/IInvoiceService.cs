@@ -7,7 +7,6 @@ namespace backend.Services.InvoiceService;
 
 public interface IInvoiceService
 {
-    Task<List<Invoice>> GetAllInvoices();
     Task<Invoice> GetInvoiceById(Guid id);
     Task<Invoice> GetInvoiceByInvoiceNumber(Guid workspaceId, string invoiceNumber);
     Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByWorkspaceId(Guid workspaceId, int pageNumber, int pageSize);

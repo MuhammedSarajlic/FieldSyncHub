@@ -15,17 +15,6 @@ public class CustomFieldService : ICustomFieldService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<CustomField>>> GetCustomFields()
-    {
-        var customFields = await _context.CustomFields.ToListAsync();
-        return new ApiResponse<List<CustomField>>()
-        {
-            Success = true,
-            Payload = customFields,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<CustomField>> GetCustomFieldsById(Guid id)
     {
         var customFields = await _context.CustomFields.FirstOrDefaultAsync(c => c.Id == id);

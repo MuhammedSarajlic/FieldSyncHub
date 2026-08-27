@@ -16,23 +16,6 @@ public class JobService : IJobService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<Job>>> GetJobs()
-    {
-        var jobs = await _context.Jobs.Include(j => j.Customer)
-                                    .Include(j => j.Property)
-                                    .Include(j => j.AssignedTeamMembers)
-                                    .Include(j => j.LineItems)
-                                        .ThenInclude(li => li.ServiceItem)
-                                    .ToListAsync();
-
-        return new ApiResponse<List<Job>>()
-        {
-            Success = true,
-            Payload = jobs,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<Job>> GetJobById(Guid jobId)
     {
         var job = await _context.Jobs.Where(j => j.Id == jobId)

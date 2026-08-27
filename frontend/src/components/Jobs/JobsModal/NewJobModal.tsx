@@ -15,10 +15,10 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
 import { TAddJob, TJob } from '../../../types/Job';
-import { GetAllCustomers } from '../../../services/Customer';
+import { GetCustomerByWorkspace } from '../../../services/Customer';
 import { TCustomer } from '../../../types/Customer';
 import {
-  GetServiceItems,
+  GetServiceItemsByWorkspace,
   GetServiceItemsByFilter,
 } from '../../../services/ServiceItem';
 import { TServiceItem } from '../../../types/ServiceItem';
@@ -485,10 +485,11 @@ const NewJobModal = ({
   };
 
   const fetchCustomers = async () => {
+    if (!user || !user.workspace) return;
     try {
-      const response = await GetAllCustomers();
+      const response = await GetCustomerByWorkspace(user.workspace.id, 1, 1000);
       if (response.status === 200) {
-        setCustomers(response.data.payload);
+        setCustomers(response.data.payload.items);
       } else {
         console.error(
           'Failed to fetch customers:',
@@ -509,10 +510,15 @@ const NewJobModal = ({
   };
 
   const fetchAllServiceItems = async () => {
+    if (!user || !user.workspace) return;
     try {
-      const response = await GetServiceItems();
+      const response = await GetServiceItemsByWorkspace(
+        user.workspace.id,
+        1,
+        1000
+      );
       if (response.status === 200) {
-        setServiceItems(response.data.payload);
+        setServiceItems(response.data.payload.items);
       } else {
         console.error(
           'Failed to fetch service items:',

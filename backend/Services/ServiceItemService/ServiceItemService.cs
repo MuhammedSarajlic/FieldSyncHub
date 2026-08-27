@@ -18,17 +18,6 @@ public class ServiceItemService : IServiceItemService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<ServiceItem>>> GetServiceItems()
-    {
-        var serviceItems = await _context.ServiceItems.ToListAsync();
-        return new ApiResponse<List<ServiceItem>>()
-        {
-            Success = true,
-            Payload = serviceItems,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ServiceItem> GetServiceItemById(Guid id)
     {
         var serviceItem = await _context.ServiceItems.FindAsync(id);

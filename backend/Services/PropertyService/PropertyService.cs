@@ -15,17 +15,6 @@ public class PropertyService : IPropertyService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<Property>>> GetProperties()
-    {
-        var properties = await _context.Properties.ToListAsync();
-        return new ApiResponse<List<Property>>()
-        {
-            Success = true,
-            Payload = properties,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<Property>> GetPropertyById(Guid id)
     {
         var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);

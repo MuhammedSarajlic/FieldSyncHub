@@ -17,11 +17,6 @@ public class NoteController : ControllerBase
         _notesService = notesService;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<Note>>> GetNotes()
-    {
-        return await _notesService.GetNotes();
-    }
 
     [HttpGet("{id:guid}")]
     public async Task<ApiResponse<Note>> GetNoteById(Guid id)

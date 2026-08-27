@@ -15,17 +15,6 @@ public class CustomFieldServiceValue : ICustomFieldServiceValue
         _context = context;
     }
 
-    public async Task<ApiResponse<List<CustomFieldValue>>> GetCustomFieldValues()
-    {
-        var customFieldValues = await _context.CustomFieldValues.Include(c => c.CustomField).ToListAsync();
-        return new ApiResponse<List<CustomFieldValue>>()
-        {
-            Success = true,
-            Payload = customFieldValues,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<CustomFieldValue>> GetCustomFieldValuesById(Guid id)
     {
         var customFieldValue = await _context.CustomFieldValues.Include(c => c.CustomField).FirstOrDefaultAsync(c => c.Id == id);

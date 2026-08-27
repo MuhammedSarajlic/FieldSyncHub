@@ -22,17 +22,6 @@ public class InvoiceService : IInvoiceService
         _context = context;
     }
 
-    public async Task<List<Invoice>> GetAllInvoices()
-    {
-        return await _context.Invoices
-            .AsNoTracking()
-            .Include(i => i.Customer)
-            .Include(i => i.Job)
-            .Include(i => i.LineItems)
-            .ThenInclude(item => item.ServiceItem)
-            .ToListAsync();
-    }
-
     public async Task<Invoice?> GetInvoiceById(Guid id)
     {
         var invoice = await _context.Invoices

@@ -6,7 +6,6 @@ namespace backend.Services.CustomFieldService;
 
 public interface ICustomFieldService
 {
-    Task<ApiResponse<List<CustomField>>> GetCustomFields();
     Task<ApiResponse<CustomField>> GetCustomFieldsById(Guid id);
     Task<ApiResponse<List<CustomField>>> GetCustomFieldsByWorkspaceId(Guid workspaceId);
     Task<CustomField> CreateCustomField(CreateCustomFieldDto createCustomFieldDto);

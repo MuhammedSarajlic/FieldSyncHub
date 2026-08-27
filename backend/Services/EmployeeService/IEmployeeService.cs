@@ -7,7 +7,6 @@ namespace backend.Services.EmployeeService
 {
     public interface IEmployeeService
     {
-        Task<ApiResponse<List<Employee>>> GetEmployees();
         Task<ApiResponse<Employee>> GetEmployeesById(Guid id);
         Task<ApiResponse<List<Employee>>> GetEmployeesByWorkspaceId(Guid workspaceId);
         Task<ApiResponse<List<Employee>>> GetEmployeesByFilter(EmployeeFilterDto employeeFilterDto, Guid workspaceId);

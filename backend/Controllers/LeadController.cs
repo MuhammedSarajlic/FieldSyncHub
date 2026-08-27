@@ -17,12 +17,6 @@ public class LeadController : ControllerBase
         _leadService = leadService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<Lead>>>> GetAllLeads()
-    {
-        var leads = await _leadService.GetAllLeads();
-        return Ok(leads);
-    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<Lead>>> GetLeadById(Guid id)

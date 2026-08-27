@@ -17,12 +17,6 @@ public class EmployeeController : ControllerBase
         _employeeService = employeeService;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<Employee>>> GetEmployees()
-    {
-        return await _employeeService.GetEmployees();
-    }
-
     [HttpGet("{id:guid}")]
     public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
     {

@@ -16,12 +16,6 @@ public class WorkspaceController : ControllerBase
         _workspaceService = workspaceService;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<GetWorkspaceDto>>> GetWorkspaces()
-    {
-        return await _workspaceService.GetWorkspaces();
-    }
-
     [HttpGet("{id:guid}")]
     public async Task<ApiResponse<GetWorkspaceDto>> GetWorkspaceById(Guid id)
     {

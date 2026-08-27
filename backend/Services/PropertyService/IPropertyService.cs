@@ -6,7 +6,6 @@ namespace backend.Services.PropertyService;
 
 public interface IPropertyService
 {
-    Task<ApiResponse<List<Property>>> GetProperties();
     Task<ApiResponse<Property>> GetPropertyById(Guid id);
     Task<ApiResponse<Property>> CreateProperty(CreatePropertyDto createPropertyDto);
     Task<ApiResponse<Property>> UpdateProperty(UpdatePropertyDto updatePropertyDto);

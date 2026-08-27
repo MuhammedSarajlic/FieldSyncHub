@@ -21,12 +21,9 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
 import { TAddJob } from '../../../types/Job';
-import { GetAllCustomers } from '../../../services/Customer';
+import { GetCustomerByWorkspace } from '../../../services/Customer';
 import { TCustomer } from '../../../types/Customer';
-import {
-  GetServiceItems,
-  GetServiceItemsByFilter,
-} from '../../../services/ServiceItem';
+import { GetServiceItemsByFilter } from '../../../services/ServiceItem';
 import { TServiceItem } from '../../../types/ServiceItem';
 import { useAuth } from '../../../context/AuthProvider';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -355,10 +352,11 @@ const ConvertQuoteToJobModal = ({ isOpen, onClose, quote }: INewJobModal) => {
   };
 
   const fetchCustomers = async () => {
+    if (!user || !user.workspace) return;
     try {
-      const response = await GetAllCustomers();
+      const response = await GetCustomerByWorkspace(user.workspace.id, 1, 1000);
       if (response.status === 200) {
-        setCustomers(response.data.payload);
+        setCustomers(response.data.payload.items);
       } else {
         console.error(
           'Failed to fetch customers:',

@@ -17,11 +17,6 @@ public class CustomerPhoneController : ControllerBase
         _customerPhoneService = customerPhoneService;
     }
 
-    [HttpGet]
-    public async Task<ApiResponse<List<CustomerPhone>>> GetCustomerPhone()
-    {
-        return await _customerPhoneService.GetCustomerPhones();
-    }
 
     [HttpGet("{id:guid}")]
     public async Task<ApiResponse<CustomerPhone>> GetCustomerPhoneById(Guid id)

@@ -6,7 +6,6 @@ namespace backend.Services.LeadService;
 
 public interface ILeadService
 {
-    Task<ApiResponse<List<Lead>>> GetAllLeads();
     Task<ApiResponse<Lead>> GetLeadById(Guid id);
     Task<ApiResponse<List<Lead>>> GetLeadsByWorkspaceId(Guid workspaceId);
     Task<ApiResponse<List<Lead>>> GetLeadsByCustomerId(Guid customerId);

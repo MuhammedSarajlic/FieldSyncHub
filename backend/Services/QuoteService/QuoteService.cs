@@ -36,12 +36,6 @@ public class QuoteService : IQuoteService
         _quotePdfService = quotePdfService;
     }
 
-    public async Task<List<Quote>> GetAllAsync()
-    {
-        var quotes = await _context.Quotes.Include(q => q.LineItems).ToListAsync();
-        return quotes;
-    }
-
     public async Task<Quote> GetByIdAsync(Guid id)
     {
         var quote = await _context.Quotes.Include(q => q.LineItems)

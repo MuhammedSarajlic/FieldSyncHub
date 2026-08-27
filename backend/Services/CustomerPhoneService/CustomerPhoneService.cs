@@ -15,17 +15,6 @@ public class CustomerPhoneService : ICustomerPhoneService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<CustomerPhone>>> GetCustomerPhones()
-    {
-        var customerPhones = await _context.CustomerPhones.ToListAsync();
-        return new ApiResponse<List<CustomerPhone>>()
-        {
-            Success = true,
-            Payload = customerPhones,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<CustomerPhone>> GetCustomerPhoneById(Guid id)
     {
         var customerPhone = await _context.CustomerPhones.FirstOrDefaultAsync(p => p.Id == id);

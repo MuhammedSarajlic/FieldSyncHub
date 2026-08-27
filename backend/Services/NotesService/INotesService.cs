@@ -6,7 +6,6 @@ namespace backend.Services.NotesService;
 
 public interface INotesService
 {
-    Task<ApiResponse<List<Note>>> GetNotes();
     Task<ApiResponse<Note>> GetNoteById(Guid id);
     Task<ApiResponse<List<Note>>> GetNoteByCustomerId(Guid customerId);
     Task<Note> CreateNote(CreateNoteDto createNoteDto);

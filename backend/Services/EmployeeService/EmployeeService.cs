@@ -17,17 +17,6 @@ public class EmployeeService : IEmployeeService
         _context = context;
     }
 
-    public async Task<ApiResponse<List<Employee>>> GetEmployees()
-    {
-        var employees = await _context.Employees.Include(e => e.User).ToListAsync();
-        return new ApiResponse<List<Employee>>()
-        {
-            Success = true,
-            Payload = employees,
-            ErrorMessage = null
-        };
-    }
-
     public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id)
     {
         var employee = await _context.Employees.Where(e => e.Id == id).Include(e => e.User).FirstOrDefaultAsync();

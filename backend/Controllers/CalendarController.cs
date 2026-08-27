@@ -15,12 +15,6 @@ public class CalendarController : ControllerBase
         _calendarService = calendarService;
     }
 
-    [HttpGet]
-    public async Task<CalendarEventsDto> GetAllCalendarEvents()
-    {
-        return await _calendarService.GetAllCalendarEvents();
-    }
-
     [HttpGet("workspace/{workspaceId:guid}")]
     public async Task<CalendarEventsDto> GetAllCalendarEventsByWorkspace(Guid workspaceId)
     {
