@@ -1,7 +1,7 @@
 using backend.Dtos.UserDto;
 using backend.Services.AuthService;
 using backend.Services.TokenService;
-using Mapster;
+using backend.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,11 +14,13 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly IAuthService _authService;
     private readonly ITokenService _tokenService;
-    public AuthController(IAuthService authService, IConfiguration configuration, ITokenService tokenService)
+    private readonly IUserService _userService;
+    public AuthController(IAuthService authService, IConfiguration configuration, ITokenService tokenService, IUserService userService)
     {
         _authService = authService;
         _configuration = configuration;
         _tokenService = tokenService;
+        _userService = userService;
     }
 
     [HttpPost]
@@ -32,7 +34,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = userDB.ErrorMessage });
         }
 
-        (string accessToken, string refreshToken) tokens = _tokenService.GenerateTokens(userDB.Payload, userLogin.RememberMe);
+        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload, userLogin.RememberMe);
 
         _tokenService.SetRefreshTokenCookie(tokens.refreshToken, userLogin.RememberMe);
 
@@ -55,7 +57,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = userDB.ErrorMessage });
         }
 
-        (string accessToken, string refreshToken) tokens = _tokenService.GenerateTokens(userDB.Payload);
+        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload);
 
         _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
 
@@ -89,7 +91,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = userDB.ErrorMessage });
         }
 
-        (string accessToken, string refreshToken) tokens = _tokenService.GenerateTokens(userDB.Payload);
+        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload);
 
         _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
 
@@ -136,19 +138,33 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RefreshToken()
     {
         var refreshToken = Request.Cookies["refreshToken"];
-        if (string.IsNullOrEmpty(refreshToken) || !_authService.ValidateRefreshToken(refreshToken))
+        if (string.IsNullOrEmpty(refreshToken))
         {
             return Unauthorized();
         }
 
-        var userResult = await _authService.GetUserByRefreshToken(refreshToken);
+        // Checks signature, expiry, the "refresh" token_type claim, and that the
+        // jti is a known, unrevoked row - an access token replayed here fails on
+        // the type claim alone.
+        var userId = await _tokenService.ValidateRefreshTokenAsync(refreshToken);
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var userResult = await _userService.GetLoggedInUser(userId.Value);
         if (!userResult.Success || userResult.Payload == null)
         {
             return Unauthorized();
         }
-        var userDto = userResult.Payload.Adapt<GetUserDto>();
+
+        // The presented refresh token is single-use - rotate it so a copy an
+        // attacker captured in transit stops working the moment the real client
+        // refreshes.
+        await _tokenService.RevokeRefreshTokenAsync(refreshToken);
+
         var rememberMe = _tokenService.GetRememberMeFromToken(refreshToken);
-        (string accessToken, string newRefreshToken) tokens = _tokenService.GenerateTokens(userDto, rememberMe);
+        (string accessToken, string newRefreshToken) tokens = await _tokenService.GenerateTokensAsync(userResult.Payload, rememberMe);
 
         _tokenService.SetRefreshTokenCookie(tokens.newRefreshToken, rememberMe);
 

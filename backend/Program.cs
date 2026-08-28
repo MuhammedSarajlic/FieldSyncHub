@@ -128,6 +128,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new JwtBearerEvents
+        {
+            // Access and refresh tokens share a signing key and claim shape, so
+            // signature/expiry validation alone can't tell them apart - a stolen
+            // refresh cookie would otherwise work as a bearer token for up to 30
+            // days. Every token minted by TokenService carries a token_type claim;
+            // only "access" may authenticate an API request.
+            OnTokenValidated = context =>
+            {
+                var tokenType = context.Principal?.FindFirst("token_type")?.Value;
+                if (tokenType != "access")
+                {
+                    context.Fail("This token cannot be used to authenticate API requests.");
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 

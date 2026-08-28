@@ -3,6 +3,8 @@ using backend.Dtos.UserDto;
 using backend.Models;
 using backend.Services.AuthService;
 using backend.Services.EmailService;
+using backend.Services.TokenService;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -21,13 +23,14 @@ public class AuthServiceRoleAssignmentTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["AppSettings:Token"] = "test-signing-key-test-signing-key-1234",
+                ["AppSettings:Token"] = "test-signing-key-test-signing-key-test-signing-key-test-signing-key-1234",
                 ["AppSettings:GoogleClientId"] = "test-client-id",
             })
             .Build();
 
         var emailService = new NoopEmailService();
-        return new AuthService(context, configuration, emailService);
+        var tokenService = new TokenService(configuration, new HttpContextAccessor { HttpContext = new DefaultHttpContext() }, context);
+        return new AuthService(context, configuration, emailService, tokenService);
     }
 
     private static DataContext CreateContext()

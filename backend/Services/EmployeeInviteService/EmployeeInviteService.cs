@@ -76,7 +76,7 @@ public class EmployeeInviteService : IEmployeeInviteService
         await _context.SaveChangesAsync();
 
         var newuser = newUser.Adapt<GetUserDto>();
-        var (accessToken, refreshToken) = _tokenService.GenerateTokens(newuser);
+        var (accessToken, refreshToken) = await _tokenService.GenerateTokensAsync(newuser);
         _tokenService.SetRefreshTokenCookie(refreshToken);
 
         return accessToken;

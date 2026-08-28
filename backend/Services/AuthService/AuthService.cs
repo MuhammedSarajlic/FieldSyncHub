@@ -1,14 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using backend.Data;
 using backend.Dtos.UserDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.EmailService;
+using backend.Services.TokenService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Services.AuthService;
 
@@ -17,45 +14,13 @@ public class AuthService : IAuthService
     private readonly DataContext _context;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
-    public AuthService(DataContext context, IConfiguration configuration, IEmailService emailService)
+    private readonly ITokenService _tokenService;
+    public AuthService(DataContext context, IConfiguration configuration, IEmailService emailService, ITokenService tokenService)
     {
         _context = context;
         _configuration = configuration;
         _emailService = emailService;
-    }
-    public async Task<ApiResponse<User>> GetUserByRefreshToken(string refreshToken)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        try
-        {
-            var jwtToken = tokenHandler.ReadJwtToken(refreshToken);
-
-            var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
-            if (emailClaim == null) return new ApiResponse<User> { Success = false, ErrorMessage = "Invalid refresh token (email claim missing)." };
-
-            var email = emailClaim.Value;
-            // Establishing the caller's own identity from their refresh token, not a
-            // caller-driven lookup of someone else - go straight to the DB rather than
-            // through UserService.GetUserByEmail, which requires an already-known
-            // workspace to scope by (there isn't one yet at this point in the flow).
-            var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Email == email);
-
-            if (user == null)
-            {
-                return new ApiResponse<User> { Success = false, ErrorMessage = "User not found for the provided email." };
-            }
-
-            return new ApiResponse<User>()
-            {
-                Success = true,
-                ErrorMessage = "",
-                Payload = user,
-            };
-        }
-        catch (Exception)
-        {
-            return new ApiResponse<User> { Success = false, ErrorMessage = "Invalid refresh token." };
-        }
+        _tokenService = tokenService;
     }
 
     public async Task<ApiResponse<GetUserDto>> Login(UserLoginDto userLogin)
@@ -251,6 +216,10 @@ public class AuthService : IAuthService
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
+        // A password change should end every other session - otherwise a stolen
+        // refresh token survives the very action meant to lock the attacker out.
+        await _tokenService.RevokeAllRefreshTokensForUserAsync(user.Id);
+
         return new ApiResponse<string>
         {
             Success = true,
@@ -333,6 +302,10 @@ public class AuthService : IAuthService
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
 
+        // Same reasoning as UpdatePassword: whoever reset it should be the only one
+        // left signed in, regardless of who was holding a refresh token before.
+        await _tokenService.RevokeAllRefreshTokensForUserAsync(user.Id);
+
         return new ApiResponse<string>
         {
             Success = true,
@@ -352,6 +325,15 @@ public class AuthService : IAuthService
 
     public async Task Logout(HttpContext httpContext)
     {
+        // Clearing the cookie only stops this browser from presenting the token
+        // again - the JWT itself is still valid for up to 30 days if someone
+        // captured it beforehand. Revoke its server-side record too.
+        var refreshToken = httpContext.Request.Cookies["refreshToken"];
+        if (!string.IsNullOrEmpty(refreshToken))
+        {
+            await _tokenService.RevokeRefreshTokenAsync(refreshToken);
+        }
+
         httpContext.Response.Cookies.Delete("refreshToken", new CookieOptions
         {
             HttpOnly = true,
@@ -359,32 +341,6 @@ public class AuthService : IAuthService
             Path = "/",
             Secure = false
         });
-        await Task.CompletedTask;
-    }
-
-    public bool ValidateRefreshToken(string refreshToken)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_configuration["AppSettings:Token"]);
-
-        try
-        {
-            tokenHandler.ValidateToken(refreshToken, new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ClockSkew = TimeSpan.Zero
-            }, out SecurityToken validatedToken);
-
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-
     }
 
     private static string HashPassword(string password)

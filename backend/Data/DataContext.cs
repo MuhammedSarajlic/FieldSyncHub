@@ -30,6 +30,7 @@ public class DataContext : DbContext
     public DbSet<ActivityHistory> ActivityHistorys => Set<ActivityHistory>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<RecurrenceRule> RecurrenceRules => Set<RecurrenceRule>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -168,6 +169,9 @@ public class DataContext : DbContext
         // Login and the email-change flow both assume at most one account per
         // address - enforce it at the database level too, not just in application code.
         modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+
+        // Revoking every refresh token for a user (password change) queries by UserId.
+        modelBuilder.Entity<RefreshToken>().HasIndex(r => r.UserId);
     }
 
 }

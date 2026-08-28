@@ -27,7 +27,7 @@ public class EmployeeInviteServiceTests
             })
             .Build();
 
-        var tokenService = new TokenService(configuration, new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
+        var tokenService = new TokenService(configuration, new HttpContextAccessor { HttpContext = new DefaultHttpContext() }, context);
         return new EmployeeInviteService(context, new NoopEmailService(), tokenService, configuration);
     }
 

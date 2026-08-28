@@ -17,9 +17,19 @@ public class AuthorizationDefaultsFactory : WebApplicationFactory<Program>
     /// Signs a test JWT with the same key the test host itself is configured with -
     /// read from the (gitignored, per-environment) appsettings.json/environment
     /// rather than a hardcoded value, since a secret committed in test source is
-    /// exactly as leaked as one in appsettings.json.
+    /// exactly as leaked as one in appsettings.json. Carries token_type=access (and a
+    /// jti) like every real access token, since that's what these tests are
+    /// simulating - a caller presenting a bearer token to an API endpoint.
     /// </summary>
     public string CreateTestToken(IEnumerable<Claim> claims)
+        => SignToken(claims.Append(new Claim("token_type", "access")));
+
+    /// <summary>Same as <see cref="CreateTestToken"/> but stamped token_type=refresh - for
+    /// tests that need to prove a refresh token is rejected where an access token belongs.</summary>
+    public string CreateTestRefreshToken(IEnumerable<Claim> claims)
+        => SignToken(claims.Append(new Claim("token_type", "refresh")));
+
+    private string SignToken(IEnumerable<Claim> claims)
     {
         using var scope = Services.CreateScope();
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
@@ -28,7 +38,8 @@ public class AuthorizationDefaultsFactory : WebApplicationFactory<Program>
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-        var token = new JwtSecurityToken(claims: claims, expires: DateTime.UtcNow.AddMinutes(5), signingCredentials: creds);
+        var allClaims = claims.Append(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+        var token = new JwtSecurityToken(claims: allClaims, expires: DateTime.UtcNow.AddMinutes(5), signingCredentials: creds);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
