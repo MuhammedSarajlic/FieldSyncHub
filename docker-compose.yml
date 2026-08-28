@@ -26,7 +26,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__WebApiDatabase: "server=mysql;database=fieldsync;user=root;password=${DB_PASSWORD:-root};"
-      AppSettings__Token: ${JWT_TOKEN:-6niNItCw45h6QmxkFUvy9tTVRea17jDk5IDT6LbgIy9oTf5pA0Jj5ipgePKm6bLhnBMNxw4tJpyhvkfE}
+      # Required - no default. Set JWT_TOKEN in .env (see .env.example); the
+      # backend fails to start if it's missing or too short.
+      AppSettings__Token: ${JWT_TOKEN:?JWT_TOKEN must be set in .env - see .env.example}
       AppSettings__FrontendUrl: ${VITE_BASE_URL_ORIGIN:-http://localhost:5173}
       AppSettings__GoogleClientId: ${GOOGLE_CLIENT_ID:-}
       AppSettings__Resend__ApiToken: ${RESEND_API_TOKEN:-}

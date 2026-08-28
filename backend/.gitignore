@@ -6,6 +6,13 @@
 # dotenv files
 .env
 
+# Contains the JWT signing key and other secrets - copy appsettings.example.json
+# to get started locally.
+appsettings.json
+appsettings.Development.json
+appsettings.*.json
+!appsettings.example.json
+
 # User-specific files
 *.rsuser
 *.suo

@@ -1,9 +1,7 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Tests;
 
@@ -15,9 +13,6 @@ namespace backend.Tests;
 /// </summary>
 public class InviteAuthorizationTests : IClassFixture<AuthorizationDefaultsFactory>
 {
-    // Matches AppSettings:Token in backend/appsettings.json, which the test host loads as-is.
-    private const string SigningKey = "6niNItCw45h6QmxkFUvy9tTVRea17jDk5IDT6LbgIy9oTf5pA0Jj5ipgePKm6bLhnBMNxw4tJpyhvkfE";
-
     private readonly AuthorizationDefaultsFactory _factory;
 
     public InviteAuthorizationTests(AuthorizationDefaultsFactory factory)
@@ -100,7 +95,7 @@ public class InviteAuthorizationTests : IClassFixture<AuthorizationDefaultsFacto
         return client;
     }
 
-    private static string CreateToken(string role, Guid workspaceId)
+    private string CreateToken(string role, Guid workspaceId)
     {
         var claims = new List<Claim>
         {
@@ -111,10 +106,7 @@ public class InviteAuthorizationTests : IClassFixture<AuthorizationDefaultsFacto
             new(ClaimTypes.Role, role)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-        var token = new JwtSecurityToken(claims: claims, expires: DateTime.UtcNow.AddMinutes(5), signingCredentials: creds);
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return _factory.CreateTestToken(claims);
     }
 }
 

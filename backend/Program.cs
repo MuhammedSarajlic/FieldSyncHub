@@ -102,24 +102,19 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
 });
 
-// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//     .AddJwtBearer(options =>
-//     {
-//         options.TokenValidationParameters = new TokenValidationParameters
-//         {
-//             ValidateIssuer = false,
-//             ValidateAudience = false,
-//             ValidateLifetime = true,
-//             ValidateIssuerSigningKey = true,
-//             IssuerSigningKey = new SymmetricSecurityKey(
-//                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "your_super_secret_key_here")
-//             ),
-
-//             // This is what makes `ClaimTypes.NameIdentifier` work!
-//             NameClaimType = ClaimTypes.NameIdentifier,
-//             RoleClaimType = ClaimTypes.Role
-//         };
-//     });
+// The JWT signing key must come from configuration (environment variable
+// AppSettings__Token in production/docker, appsettings.json - gitignored, see
+// appsettings.example.json - locally) and be long enough for HMAC-SHA512. Never
+// fall back to a default: a missing key must fail startup loudly, not silently
+// sign tokens with a guessable value.
+var jwtSigningKey = builder.Configuration["AppSettings:Token"];
+if (string.IsNullOrWhiteSpace(jwtSigningKey) || Encoding.UTF8.GetByteCount(jwtSigningKey) < 64)
+{
+    throw new InvalidOperationException(
+        "AppSettings:Token (JWT signing key) is missing or shorter than the 64 bytes " +
+        "HMAC-SHA512 requires. Set it via the AppSettings__Token environment variable, " +
+        "or in a local (gitignored) backend/appsettings.json - see appsettings.example.json.");
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -127,8 +122,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
-                .GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value ?? "Error")),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey)),
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
