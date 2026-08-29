@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using backend.Data;
+using backend.Services.TokenService;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -39,7 +40,12 @@ public class AuthorizationDefaultsFactory : WebApplicationFactory<Program>
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
         var allClaims = claims.Append(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
-        var token = new JwtSecurityToken(claims: allClaims, expires: DateTime.UtcNow.AddMinutes(5), signingCredentials: creds);
+        var token = new JwtSecurityToken(
+            issuer: JwtSettings.Issuer,
+            audience: JwtSettings.Audience,
+            claims: allClaims,
+            expires: DateTime.UtcNow.AddMinutes(5),
+            signingCredentials: creds);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 

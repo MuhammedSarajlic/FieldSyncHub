@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using backend.Filters;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using backend.Services.TokenService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -162,8 +163,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
+            // A token signed with the same key but minted by some other system (or
+            // under a stale/reused key) is rejected on the issuer/audience mismatch
+            // alone, even before anything else about it is inspected.
+            ValidateIssuer = true,
+            ValidIssuer = JwtSettings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = JwtSettings.Audience,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };

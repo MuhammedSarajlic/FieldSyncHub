@@ -159,8 +159,10 @@ public class TokenService : ITokenService
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false,
-                ValidateAudience = false,
+                ValidateIssuer = true,
+                ValidIssuer = JwtSettings.Issuer,
+                ValidateAudience = true,
+                ValidAudience = JwtSettings.Audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out _);
@@ -195,6 +197,8 @@ public class TokenService : ITokenService
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
         var token = new JwtSecurityToken(
+            issuer: JwtSettings.Issuer,
+            audience: JwtSettings.Audience,
             claims: claims,
             expires: expiresAt,
             signingCredentials: creds
