@@ -91,6 +91,7 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
 TypeAdapterConfig<UpdateQuoteDto, Quote>.NewConfig()

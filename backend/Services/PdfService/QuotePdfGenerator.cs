@@ -1,7 +1,10 @@
 
+using System.Net;
+using System.Net.Sockets;
 using backend.Data;
 using backend.Models.QuoteModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -231,9 +234,18 @@ public class QuotePdfGenerator
     }
 }
 
-public class QuotePdfService(DataContext context)
+public class QuotePdfService(DataContext context, IMemoryCache cache)
 {
     private readonly DataContext _context = context;
+    private readonly IMemoryCache _cache = cache;
+
+    // A workspace-controlled LogoUrl fetched with no scheme allow-list, no
+    // private-IP block, no timeout, and no size cap is a straight line to SSRF -
+    // pointing it at 169.254.169.254 (or any RFC1918 address) makes this server
+    // fetch cloud metadata or reach internal-only services on the caller's behalf.
+    private const long MaxLogoBytes = 2 * 1024 * 1024;
+    private static readonly TimeSpan FetchTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
 
     public async Task<byte[]> GenerateQuotePdf(Guid id)
     {
@@ -264,10 +276,81 @@ public class QuotePdfService(DataContext context)
 
     private async Task<byte[]?> FetchLogoAsync(string logoUrl)
     {
-        using var httpClient = new HttpClient();
+        if (!Uri.TryCreate(logoUrl, UriKind.Absolute, out var uri)
+            || !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var cacheKey = $"quote-logo:{uri.AbsoluteUri}";
+        if (_cache.TryGetValue(cacheKey, out byte[]? cached))
+        {
+            return cached;
+        }
+
+        IPAddress[] resolvedAddresses;
         try
         {
-            return await httpClient.GetByteArrayAsync(logoUrl);
+            resolvedAddresses = await Dns.GetHostAddressesAsync(uri.Host);
+        }
+        catch
+        {
+            return null;
+        }
+
+        if (resolvedAddresses.Length == 0 || Array.Exists(resolvedAddresses, IsDisallowedAddress))
+        {
+            return null;
+        }
+
+        // Pin the connection to the address we just validated instead of letting the
+        // OS resolve the hostname again for the actual connect - otherwise a
+        // DNS-rebinding attacker could pass validation with a public IP and then
+        // redirect the real connection to an internal one.
+        using var handler = new SocketsHttpHandler
+        {
+            ConnectTimeout = FetchTimeout,
+            ConnectCallback = async (context, cancellationToken) =>
+            {
+                var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                try
+                {
+                    await socket.ConnectAsync(resolvedAddresses[0], context.DnsEndPoint.Port, cancellationToken);
+                    return new NetworkStream(socket, ownsSocket: true);
+                }
+                catch
+                {
+                    socket.Dispose();
+                    throw;
+                }
+            }
+        };
+        using var httpClient = new HttpClient(handler) { Timeout = FetchTimeout };
+
+        try
+        {
+            using var response = await httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode || response.Content.Headers.ContentLength > MaxLogoBytes)
+            {
+                return null;
+            }
+
+            await using var responseStream = await response.Content.ReadAsStreamAsync();
+            using var buffer = new MemoryStream();
+            var chunk = new byte[8192];
+            int read;
+            while ((read = await responseStream.ReadAsync(chunk)) > 0)
+            {
+                if (buffer.Length + read > MaxLogoBytes)
+                {
+                    return null;
+                }
+                await buffer.WriteAsync(chunk.AsMemory(0, read));
+            }
+
+            var bytes = buffer.ToArray();
+            _cache.Set(cacheKey, bytes, CacheDuration);
+            return bytes;
         }
         catch
         {
@@ -275,4 +358,33 @@ public class QuotePdfService(DataContext context)
         }
     }
 
+    private static bool IsDisallowedAddress(IPAddress address)
+    {
+        if (address.IsIPv4MappedToIPv6)
+        {
+            address = address.MapToIPv4();
+        }
+
+        if (IPAddress.IsLoopback(address) || address.IsIPv6LinkLocal || address.IsIPv6SiteLocal
+            || address.IsIPv6Multicast || address.IsIPv6UniqueLocal)
+        {
+            return true;
+        }
+
+        if (address.AddressFamily != AddressFamily.InterNetwork)
+        {
+            // Anything else exotic (unmapped IPv6, etc.) - fail closed rather than
+            // risk missing an internal-only range.
+            return true;
+        }
+
+        var b = address.GetAddressBytes();
+        return b[0] == 0                                   // 0.0.0.0/8
+            || b[0] == 10                                   // 10.0.0.0/8
+            || b[0] == 127                                  // 127.0.0.0/8
+            || (b[0] == 169 && b[1] == 254)                 // 169.254.0.0/16 - covers the cloud metadata IP
+            || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)     // 172.16.0.0/12
+            || (b[0] == 192 && b[1] == 168)                 // 192.168.0.0/16
+            || b[0] >= 224;                                 // multicast/reserved (224.0.0.0+)
+    }
 }
