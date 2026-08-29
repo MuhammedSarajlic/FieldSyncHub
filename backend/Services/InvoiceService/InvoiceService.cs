@@ -331,6 +331,13 @@ public class InvoiceService : IInvoiceService
     public byte[] GenerateDocument(Invoice invoice)
     {
         QuestPDF.Settings.License = LicenseType.Community;
+        var totals = TotalsCalculator.Calculate(invoice.LineItems, invoice.DiscountType, invoice.Discount, invoice.TaxRate);
+        var workspace = _context.Workspaces
+            .AsNoTracking()
+            .FirstOrDefault(w => w.Id == invoice.WorkspaceId);
+        var senderName = GetWorkspaceDisplayName(workspace);
+        var senderLines = BuildWorkspaceIdentityLines(workspace);
+        var billToLines = BuildBillToLines(invoice);
 
         var pdf = Document.Create(container =>
         {
@@ -350,17 +357,38 @@ public class InvoiceService : IInvoiceService
                         row.RelativeItem().Column(c =>
                         {
                             c.Item().Text($"Invoice #: {invoice.InvoiceNumber}");
-                            // c.Item().Text($"Service Date: {invoice.ServiceDate:MMMM dd, yyyy}");
+                            c.Item().Text($"Issue Date: {invoice.IssueDate:MMMM dd, yyyy}");
                             c.Item().Text($"Payment Terms: {invoice.PaymentTerms}");
                             c.Item().Text($"Due Date: {invoice.DueDate:MMMM dd, yyyy}");
                         });
 
                         row.ConstantItem(200).Column(c =>
                         {
-                            c.Item().Text("Inat Digital").Bold();
-                            c.Item().Text("Muhamed Sarajlic");
-                            c.Item().Text("(387) 624-0991");
-                            c.Item().Text("lordmest.lm@gmail.com");
+                            for (var index = 0; index < senderLines.Count; index++)
+                            {
+                                var line = senderLines[index];
+                                if (index == 0)
+                                {
+                                    c.Item().Text(line).Bold();
+                                }
+                                else
+                                {
+                                    c.Item().Text(line);
+                                }
+                            }
+                        });
+                    });
+
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("Bill To").Bold();
+
+                            foreach (var line in billToLines)
+                            {
+                                c.Item().Text(line);
+                            }
                         });
                     });
 
@@ -391,22 +419,143 @@ public class InvoiceService : IInvoiceService
                         }
                     });
 
-                    col.Item().AlignRight().Column(totals =>
+                    col.Item().AlignRight().Column(summary =>
                     {
-                        totals.Item().Text($"Subtotal: ${invoice.Subtotal:0.00}");
-                        totals.Item().Text($"Tax: ${invoice.TaxRate:0.00}");
-                        totals.Item().Text($"Total: ${invoice.Total:0.00}").Bold();
+                        summary.Item().Text($"Subtotal: ${invoice.Subtotal:0.00}");
+
+                        if (invoice.Discount > 0)
+                        {
+                            var discountLabel = invoice.DiscountType == DiscountType.Percentage
+                                ? $"Discount ({invoice.Discount:0.##}%)"
+                                : "Discount";
+                            summary.Item().Text($"{discountLabel}: -${totals.Discount:0.00}");
+                        }
+
+                        summary.Item().Text($"Tax: ${totals.TaxAmount:0.00}");
+                        summary.Item().Text($"Total: ${totals.Total:0.00}").Bold();
                     });
 
                     col.Item().Text("See our Terms & Conditions").Italic().FontSize(10);
                     // col.Item().Text(invoice.TermsUrl).FontSize(10).Underline().Color(Colors.Blue.Medium);
                 });
 
-                page.Footer().AlignCenter().Text("Inat Digital 1 of 1").FontSize(10);
+                page.Footer().AlignCenter().DefaultTextStyle(x => x.FontSize(10)).Text(text =>
+                {
+                    text.Span(senderName);
+                    text.Span(" ");
+                    text.CurrentPageNumber();
+                    text.Span(" of ");
+                    text.TotalPages();
+                });
             });
         });
 
         return pdf.GeneratePdf();
+    }
+
+    internal static string GetWorkspaceDisplayName(Workspace? workspace)
+        => string.IsNullOrWhiteSpace(workspace?.CompanyName)
+            ? (string.IsNullOrWhiteSpace(workspace?.Name) ? "FieldSyncHub" : workspace.Name)
+            : workspace.CompanyName;
+
+    internal static List<string> BuildWorkspaceIdentityLines(Workspace? workspace)
+    {
+        var lines = new List<string> { GetWorkspaceDisplayName(workspace) };
+
+        if (!string.IsNullOrWhiteSpace(workspace?.PhoneNumber))
+        {
+            lines.Add(workspace.PhoneNumber);
+        }
+
+        if (!string.IsNullOrWhiteSpace(workspace?.CompanyUrl))
+        {
+            lines.Add(workspace.CompanyUrl);
+        }
+
+        return lines;
+    }
+
+    internal static List<string> BuildBillToLines(Invoice invoice)
+    {
+        var lines = new List<string>();
+        var customer = invoice.Customer;
+
+        if (customer != null)
+        {
+            if (!string.IsNullOrWhiteSpace(customer.CompanyName))
+            {
+                lines.Add(customer.CompanyName);
+            }
+
+            var customerName = customer.FullName.Trim();
+            if (!string.IsNullOrWhiteSpace(customerName))
+            {
+                lines.Add(customerName);
+            }
+
+            var billingAddress = FormatAddress(
+                customer.BillingStreet,
+                customer.BillingCity,
+                customer.BillingState,
+                customer.BillingPostalCode,
+                customer.BillingCountry);
+
+            if (!string.IsNullOrWhiteSpace(billingAddress))
+            {
+                lines.Add(billingAddress);
+            }
+
+            var phone = customer.CustomerPhones?
+                .Select(p => p.PhoneNumber?.Trim())
+                .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p));
+            if (!string.IsNullOrWhiteSpace(phone))
+            {
+                lines.Add(phone);
+            }
+
+            var email = customer.Emails
+                .Select(e => e?.Trim())
+                .FirstOrDefault(e => !string.IsNullOrWhiteSpace(e));
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                lines.Add(email);
+            }
+        }
+
+        var propertyAddress = FormatAddress(
+            invoice.Property?.Street,
+            invoice.Property?.City,
+            invoice.Property?.State,
+            invoice.Property?.PostalCode,
+            invoice.Property?.Country);
+
+        if (!string.IsNullOrWhiteSpace(propertyAddress) && !lines.Contains(propertyAddress, StringComparer.OrdinalIgnoreCase))
+        {
+            lines.Add(propertyAddress);
+        }
+
+        if (lines.Count == 0)
+        {
+            lines.Add("Customer");
+        }
+
+        return lines;
+    }
+
+    private static string? FormatAddress(string? street, string? city, string? state, string? postalCode, string? country)
+    {
+        var locality = string.Join(" ", new[] { state?.Trim(), postalCode?.Trim() }.Where(part => !string.IsNullOrWhiteSpace(part)));
+
+        var parts = new[]
+        {
+            street?.Trim(),
+            city?.Trim(),
+            locality,
+            country?.Trim()
+        }.Where(part => !string.IsNullOrWhiteSpace(part));
+
+        var address = string.Join(", ", parts);
+        return string.IsNullOrWhiteSpace(address) ? null : address;
     }
 
     private DateTime CalculateDueDate(DateTime issueDate, string paymentTerms, DateTime? dueDate)
