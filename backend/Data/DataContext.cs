@@ -1,13 +1,37 @@
 using backend.Models;
 using backend.Models.QuoteModels;
+using backend.Services.CurrentUserService;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data;
 
 public class DataContext : DbContext
 {
-    public DataContext(DbContextOptions<DataContext> options) : base(options)
+    // Bound per-request by DI (see AddScoped<ICurrentUser, CurrentUser> in
+    // ServiceExtension) so the query filters below can be scoped to the caller's own
+    // workspace. HasQueryFilter builds an expression tree, which can't contain a
+    // null-propagating operator (CS8072), so _currentUser must never actually be null -
+    // a DataContext built without going through DI (migrations via
+    // DataContextFactory, background/seed code, most unit tests) gets a null-object
+    // stand-in instead, whose WorkspaceId is always null. Every filter below treats a
+    // null WorkspaceId as "don't restrict" rather than "restrict to nothing", so those
+    // callers keep working exactly as before.
+    private readonly ICurrentUser _currentUser;
+
+    private sealed class NoAmbientWorkspace : ICurrentUser
     {
+        public Guid? UserId => null;
+        public Guid? WorkspaceId => null;
+        public UserRole? Role => null;
+    }
+
+    public DataContext(DbContextOptions<DataContext> options) : this(options, new NoAmbientWorkspace())
+    {
+    }
+
+    public DataContext(DbContextOptions<DataContext> options, ICurrentUser currentUser) : base(options)
+    {
+        _currentUser = currentUser;
     }
     public DbSet<User> Users => Set<User>();
     public DbSet<Customer> Customers => Set<Customer>();
@@ -158,6 +182,27 @@ public class DataContext : DbContext
             .HasMany(e => e.AssignedTo)
             .WithMany() // if Employee doesn’t have backref
             .UsingEntity(j => j.ToTable("EventEmployees")); // join table name
+
+        // Defence in depth behind the application-level workspace checks every
+        // service already does: a forgotten .Where(WorkspaceId == ...) in a new query
+        // can no longer leak another tenant's rows, because every query against these
+        // DbSets gets this filter appended automatically. Guarded on _currentUser (and
+        // its WorkspaceId) being null so it's a no-op - not "restrict to nothing" -
+        // for migrations, seed/background code, and unit tests that build a
+        // DataContext directly; code that legitimately needs cross-tenant access
+        // (an eventual admin portal, a background worker) must call
+        // .IgnoreQueryFilters() explicitly rather than this silently opening up.
+        modelBuilder.Entity<Customer>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Invoice>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Job>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Quote>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<ServiceItem>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Employee>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Lead>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<CustomField>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<EmployeeInvite>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Event>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Note>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
