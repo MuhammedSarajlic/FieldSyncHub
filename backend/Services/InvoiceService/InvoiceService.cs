@@ -263,12 +263,15 @@ public class InvoiceService : IInvoiceService
     {
         var invoice = await _context.Invoices
             .Include(i => i.LineItems)
+            .Include(i => i.Payments)
             .FirstOrDefaultAsync(i => i.Id == updatedInvoiceDto.Id);
 
         if (invoice == null || invoice.WorkspaceId != callerWorkspaceId)
         {
             throw new KeyNotFoundException($"Invoice with ID {updatedInvoiceDto.Id} not found.");
         }
+
+        EnsureInvoiceIsEditable(invoice);
 
         if (updatedInvoiceDto.TaxRate.HasValue) invoice.TaxRate = updatedInvoiceDto.TaxRate.Value;
         if (updatedInvoiceDto.Discount.HasValue) invoice.Discount = updatedInvoiceDto.Discount.Value;
@@ -871,6 +874,17 @@ public class InvoiceService : IInvoiceService
             "net30" => issueDate.AddDays(30),
             _ => issueDate
         };
+    }
+
+    private static void EnsureInvoiceIsEditable(Invoice invoice)
+    {
+        if (invoice.WorkflowStatus == InvoiceStatus.Draft && invoice.AmountPaid <= 0m)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "This invoice is locked because it has already been sent or paid. Revise and resend by creating a new invoice version.");
     }
 
     private async Task<string> GenerateInvoiceNumber(Guid workspaceId)

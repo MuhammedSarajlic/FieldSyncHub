@@ -463,6 +463,8 @@ public class QuoteService : IQuoteService
                 throw new KeyNotFoundException($"Quote with ID {updatedQuoteDto.Id} not found.");
             }
 
+            EnsureQuoteIsEditable(quote);
+
             if (updatedQuoteDto.DiscountType.HasValue) quote.DiscountType = updatedQuoteDto.DiscountType.Value;
             if (updatedQuoteDto.DiscountValue.HasValue) quote.DiscountValue = updatedQuoteDto.DiscountValue.Value;
             if (updatedQuoteDto.TaxRate.HasValue) quote.TaxRate = updatedQuoteDto.TaxRate.Value;
@@ -981,5 +983,16 @@ public class QuoteService : IQuoteService
 
         quote.ActivityHistory.Add(activity);
         _context.ActivityHistorys.Add(activity);
+    }
+
+    private static void EnsureQuoteIsEditable(Quote quote)
+    {
+        if (quote.Status == QuoteStatus.Draft)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "This quote is locked because it has already been sent or responded to. Revise and resend by creating a new quote version.");
     }
 }

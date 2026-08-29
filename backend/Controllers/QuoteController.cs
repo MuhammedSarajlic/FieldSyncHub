@@ -141,8 +141,19 @@ public class QuoteController : ControllerBase
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
         var userName = User.Identity?.Name ?? "System";
 
-        var result = await _quoteService.UpdateQuote(updatedQuoteDto, userId, userName, callerWorkspaceId);
-        return Ok(result);
+        try
+        {
+            var result = await _quoteService.UpdateQuote(updatedQuoteDto, userId, userName, callerWorkspaceId);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]

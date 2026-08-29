@@ -105,8 +105,19 @@ public class InvoiceController : ControllerBase
             return Forbid();
         }
 
-        var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto, callerWorkspaceId);
-        return Ok(updatedInvoice);
+        try
+        {
+            var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto, callerWorkspaceId);
+            return Ok(updatedInvoice);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("{id:guid}/send")]
