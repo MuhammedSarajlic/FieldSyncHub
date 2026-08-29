@@ -305,7 +305,10 @@ public class AuthService : IAuthService
             if (user != null)
             {
                 var token = GenerateSecureToken();
-                user.PasswordResetToken = token;
+                // A database read (backup, leaked snapshot, SQLi) must not hand over
+                // a live reset link - only the hash is ever persisted. The raw token
+                // exists only in this request and the email it's about to go out in.
+                user.PasswordResetToken = HashToken(token);
                 user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddHours(1);
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
@@ -342,7 +345,16 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<string>> ResetPassword(string token, string newPassword)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+        // Only PasswordResetToken is ever a hash - the query below filters on
+        // non-secret criteria (does a token exist, is it still live) so the actual
+        // secret comparison happens exactly once, in FixedTimeEquals, rather than
+        // via a SQL equality that would otherwise compare the token itself.
+        var candidates = await _context.Users
+            .Where(u => u.PasswordResetToken != null && u.PasswordResetTokenExpiresAt > DateTime.UtcNow)
+            .ToListAsync();
+
+        var tokenHash = HashToken(token);
+        var user = candidates.FirstOrDefault(u => FixedTimeEquals(u.PasswordResetToken!, tokenHash));
 
         if (user == null || user.PasswordResetTokenExpiresAt == null || user.PasswordResetTokenExpiresAt < DateTime.UtcNow)
         {
@@ -389,6 +401,22 @@ public class AuthService : IAuthService
             .Replace("+", "-")
             .Replace("/", "_")
             .Replace("=", "");
+    }
+
+    private static string HashToken(string token)
+    {
+        var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(hash);
+    }
+
+    // Both inputs are fixed-length SHA-256 hex digests, so the length check below
+    // doesn't leak anything about the token itself - only FixedTimeEquals ever
+    // compares a value derived from the caller-supplied secret.
+    private static bool FixedTimeEquals(string a, string b)
+    {
+        var aBytes = System.Text.Encoding.UTF8.GetBytes(a);
+        var bBytes = System.Text.Encoding.UTF8.GetBytes(b);
+        return aBytes.Length == bBytes.Length && System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
     }
 
     public async Task Logout(HttpContext httpContext)
