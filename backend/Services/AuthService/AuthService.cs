@@ -197,11 +197,28 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
+            // Nothing below this point may trust payload.Email unless Google itself
+            // vouches for it - an unverified address (e.g. a Workspace account whose
+            // admin added an alias no one has proven they control) would otherwise
+            // let someone claim a victim's real email, either by matching it against
+            // an existing account below or by registering a brand new one with it.
+            if (!payload.EmailVerified)
+            {
+                return new ApiResponse<GetUserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Your Google account's email address is not verified.",
+                    Payload = null
+                };
+            }
+
             // A plain email match against an existing password account is not proof
             // of ownership - our own registration never verifies the email address,
             // so anyone could have pre-registered the victim's email and would
             // otherwise inherit their account the first time they used "Sign in with
-            // Google". Require signing in with the password instead to link accounts.
+            // Google". Require signing in with the password instead to link accounts -
+            // there is no automatic linking here at all, which is stricter than merely
+            // requiring the account holder to confirm it.
             var emailInUse = await _context.Users.AnyAsync(u => u.Email == payload.Email);
             if (emailInUse)
             {
