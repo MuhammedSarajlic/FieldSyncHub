@@ -20,12 +20,14 @@ public class QuoteController : ControllerBase
     private readonly IQuoteService _quoteService;
     private readonly QuotePdfService _quotePdfService;
     private readonly ICurrentUser _currentUser;
+    private readonly ILogger<QuoteController> _logger;
 
-    public QuoteController(IQuoteService quoteService, QuotePdfService quotePdfService, ICurrentUser currentUser)
+    public QuoteController(IQuoteService quoteService, QuotePdfService quotePdfService, ICurrentUser currentUser, ILogger<QuoteController> logger)
     {
         _quoteService = quoteService;
         _quotePdfService = quotePdfService;
         _currentUser = currentUser;
+        _logger = logger;
     }
 
 
@@ -207,7 +209,11 @@ public class QuoteController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest($"Error generating PDF: {ex.Message}");
+            // The exception's own message can carry internal detail (a raw EF/SQL
+            // error, a file path, a null-reference source) that has no business
+            // reaching the client - log it server-side and return a generic message.
+            _logger.LogError(ex, "Failed to generate PDF for quote {QuoteId}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Could not generate the quote PDF. Please try again." });
         }
     }
 }

@@ -312,8 +312,6 @@ const ConvertQuoteToJobModal = ({ isOpen, onClose, quote }: INewJobModal) => {
       createdBy: user.id,
       taxRate: job.taxRate / 100,
     };
-    console.log(updatedJob);
-
     try {
       const response = await CreateJob(updatedJob);
       if (response.status === 200) {

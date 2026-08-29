@@ -267,8 +267,6 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     try {
       const response = await CreateQuote(updatedQuote);
       if (response.status === 200) {
-        console.log(response);
-
         setQuotes((prev) => [response.data, ...prev]);
         onClose();
       } else {

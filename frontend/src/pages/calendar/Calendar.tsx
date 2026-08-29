@@ -303,8 +303,6 @@ const Calendar = () => {
       formattedEndDate
     );
     if (response.status === 200) {
-      console.log(response.data);
-
       setCalendarEvents(response.data);
     }
   };
@@ -435,7 +433,6 @@ const Calendar = () => {
                               eventType={getEventType(item, calendarEvents)}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('Event clicked:', item);
                               }}
                             />
                           ))}
@@ -530,7 +527,6 @@ const Calendar = () => {
                             eventType={getEventType(item, calendarEvents)}
                             onClick={(e) => {
                               e.stopPropagation();
-                              console.log('Event clicked:', item);
                             }}
                           />
                         ))}
@@ -603,7 +599,6 @@ const Calendar = () => {
                         eventType={getEventType(item, calendarEvents)}
                         onClick={(e) => {
                           e.stopPropagation();
-                          console.log('Event clicked:', item);
                         }}
                       />
                     ))}
@@ -678,7 +673,6 @@ const Calendar = () => {
                               eventType={getEventType(item, calendarEvents)}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('Event clicked:', item);
                               }}
                             />
                           ))}
@@ -859,7 +853,6 @@ const Calendar = () => {
                       key={job.id}
                       job={job}
                       onClick={(job: TJob) => {
-                        console.log('Unscheduled job clicked:', job);
                       }}
                     />
                   ))}

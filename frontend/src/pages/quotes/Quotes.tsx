@@ -93,7 +93,6 @@ const Quotes = () => {
         paginationData.pageSize,
         queryString
       );
-      console.log(queryString);
     } else {
       response = await GetQuotesByWorkspace(
         user.workspace.id,

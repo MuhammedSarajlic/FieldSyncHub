@@ -378,7 +378,6 @@ const ServiceItemImportModal: React.FC<IServiceItemImportModalProps> = ({
     } else if (step === 2) {
       applyMapping();
     } else if (step === 3) {
-      console.log('Final Data for Import:', previewData);
       onClose();
     }
   };

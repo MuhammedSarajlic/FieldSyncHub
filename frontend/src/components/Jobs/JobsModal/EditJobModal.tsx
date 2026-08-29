@@ -278,12 +278,9 @@ const EditJobModal = ({
       assignedTeamMembers: selectedEmployees,
       startTime: `${job.startDate}T${job.startTime}`,
     };
-    console.log(updatedJob);
     try {
       const response = await UpdateJob(updatedJob);
       if (response.status === 200) {
-        console.log(response);
-
         setJobDetails(response.data.payload);
         onClose();
       } else {

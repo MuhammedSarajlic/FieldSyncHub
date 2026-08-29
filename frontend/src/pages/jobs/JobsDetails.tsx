@@ -128,12 +128,10 @@ const JobDetails = () => {
   };
 
   const handlePrintJobDetails = () => {
-    console.log('Print Job Details');
     // Implement print logic here, similar to QuoteDetails
   };
 
   const handleDownloadJobDetails = () => {
-    console.log('Download Job Details');
     // Implement download logic here, similar to QuoteDetails
   };
 
@@ -142,7 +140,6 @@ const JobDetails = () => {
 
   const getPropertyPosition = async () => {
     if (!jobDetails?.property?.address) {
-      console.log('Address not loaded yet');
       return;
     }
 
@@ -156,11 +153,6 @@ const JobDetails = () => {
     if (data.length > 0) {
       setLat(parseFloat(data[0].lat));
       setLon(parseFloat(data[0].lon));
-    } else {
-      console.log(
-        'No location found for address:',
-        jobDetails.property.address
-      );
     }
   };
 

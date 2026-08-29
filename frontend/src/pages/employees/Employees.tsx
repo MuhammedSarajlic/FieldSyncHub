@@ -125,7 +125,6 @@ const Employees = () => {
     try {
       const response = await ExportEmployees(user.workspace.id as string);
       if (response.status !== 200) {
-        console.log('Error exporting employees');
         return;
       }
       downloadCSVFile(

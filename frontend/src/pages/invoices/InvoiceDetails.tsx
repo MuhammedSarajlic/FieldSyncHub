@@ -63,7 +63,6 @@ const InvoiceDetails = () => {
     const response = await DeleteInvoice(invoiceId);
     if (response.status === 200) {
       navigate('/invoices');
-      console.log(response);
     }
   };
 
@@ -94,7 +93,6 @@ const InvoiceDetails = () => {
   }, [invoiceId]);
 
   const handleSendEmail = () => {
-    console.log('Send by email');
     // Implement actual email sending logic here
   };
 

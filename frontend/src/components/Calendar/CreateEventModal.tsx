@@ -213,13 +213,7 @@ const CreateEventModal = ({
       recurrenceRuleId: null,
     };
 
-    const response = await CreateEvent(payload);
-    if (response.status === 200) {
-      console.log('yes');
-    }
-    console.log(response);
-
-    console.log(payload);
+    await CreateEvent(payload);
   };
 
   useEffect(() => {

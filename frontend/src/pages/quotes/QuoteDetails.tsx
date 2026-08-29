@@ -259,7 +259,6 @@ const QuoteDetails = () => {
   const handleDownloadQuotePdf = async () => {
     if (!quoteId) return;
     const response = await GetQuotePdf(quoteId);
-    console.log(response);
 
     if (response.status === 200) {
       downloadPdfFile(response.data, `Quote-${quote?.quoteNumber}`);

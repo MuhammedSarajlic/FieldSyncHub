@@ -477,8 +477,6 @@ const NewJobModal = ({
           response.data?.message ?? 'Unknown error'
         );
       }
-
-      console.log(updatedJob);
     } catch (error) {
       console.error('Error creating job:', error);
     }

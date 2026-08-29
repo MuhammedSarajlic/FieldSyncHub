@@ -42,8 +42,7 @@ const InviteEmployeeModal = ({
       } else {
         setSuccess(false);
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
       setSuccess(false);
       setSending(false);
     }

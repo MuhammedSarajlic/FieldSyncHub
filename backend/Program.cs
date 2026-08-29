@@ -204,7 +204,28 @@ if (!app.Environment.IsEnvironment("Testing"))
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    // "/Home/Error" pointed at a controller action that doesn't exist in this
+    // API-only project - an unhandled exception fell through to a bare 404
+    // instead of a real response. This returns a generic JSON body (no
+    // exception message, no stack trace) and logs the actual exception
+    // server-side, where it belongs.
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/json";
+
+            var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+            if (feature?.Error != null)
+            {
+                var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalExceptionHandler");
+                logger.LogError(feature.Error, "Unhandled exception for {Path}", feature.Path);
+            }
+
+            await context.Response.WriteAsJsonAsync(new { message = "An unexpected error occurred." });
+        });
+    });
     app.UseHsts();
 }
 app.UseSecurityHeaders(app.Environment);

@@ -36,12 +36,10 @@ const PricebookItemModal = ({ onClose }: IPricebookItemModal) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(serviceItem);
     const response = await CreateServiceItem(serviceItem);
     if (response.status === 200) {
       onClose();
     }
-    console.log(response);
   };
 
   return (

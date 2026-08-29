@@ -38,10 +38,8 @@ const InviteJoin = () => {
         const response = await ValidateInviteToken(
           encodeURIComponent(token as string)
         );
-        console.log(response);
         setInvite(response.data);
-      } catch (err) {
-        console.log(err);
+      } catch {
         setError('This invite is invalid or has expired.');
       } finally {
         setLoadingToken(false);
@@ -58,7 +56,6 @@ const InviteJoin = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(userData);
 
     if (userData.password !== userData.confirmPassword) {
       return setError("Passwords don't match");
@@ -79,11 +76,9 @@ const InviteJoin = () => {
         localStorage.setItem('accessToken', token);
         setAccessToken(token);
       }
-      console.log(response);
 
       // navigate('/login');
     } catch (err) {
-      console.log(err);
       setError(err.response?.data || 'Something went wrong.');
     }
   };

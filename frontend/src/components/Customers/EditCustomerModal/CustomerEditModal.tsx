@@ -56,13 +56,11 @@ const CustomerEditModal = ({
       setError(msg);
       return;
     }
-    console.log(form);
     const response = await UpdateCustomer(form);
     if (response.status !== 200) {
       setError('Failed to update customer. Please try again.');
       return;
     }
-    console.log(response);
 
     setError('');
     setCustomer(response.data.payload);

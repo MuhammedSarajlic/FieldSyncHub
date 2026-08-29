@@ -110,10 +110,8 @@ const Customers = () => {
     if (!user?.workspace) return;
     try {
       const response = await ExportCustomers(user.workspace.id as string);
-      console.log(response);
 
       if (response.status !== 200) {
-        console.log('Error exporting customers');
         return;
       }
       downloadCSVFile(

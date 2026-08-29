@@ -610,9 +610,7 @@ const UpdateInvoiceModal = ({
             <ButtonIcon name='Cancel' handleBtnClick={onClose} />
             <div className='flex space-x-3'>
               <button
-                onClick={() => {
-                  console.log(updatedInvoice);
-                }}
+                onClick={() => {}}
                 className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center'
               >
                 <Save className='w-4 h-4 mr-2' />

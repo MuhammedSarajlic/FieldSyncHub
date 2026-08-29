@@ -250,7 +250,6 @@ const ImportCustomersModal = ({
     try {
       // Filter out rows with errors
       const customersToSend = transformToImportCustomers(previewData);
-      const validRows = previewData.filter((row) => !row.hasErrors);
 
       // Simulate import progress
       for (let i = 0; i <= 100; i += 10) {
@@ -258,16 +257,11 @@ const ImportCustomersModal = ({
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      console.log(
-        'Importing customers:',
-        validRows.map((r) => r.data)
-      );
       const response = await ImportCustomers(customersToSend);
       if (response.status === 200) {
         // Success - close modal
         setIsImportCustomerModalOpen(false);
       }
-      console.log(response);
     } catch (error) {
       setError('Failed to import customers. Please try again.');
     } finally {

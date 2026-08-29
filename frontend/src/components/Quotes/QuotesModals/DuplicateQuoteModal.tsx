@@ -270,7 +270,6 @@ const DuplicateQuoteModal = ({
     try {
       const response = await CreateQuote(updatedQuote);
       if (response.status === 200) {
-        console.log(response);
         onClose();
         navigate(`/quotes/${response.data.id}`);
       } else {

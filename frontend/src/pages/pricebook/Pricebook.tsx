@@ -108,7 +108,6 @@ const Pricebook = () => {
     try {
       const response = await ExportServiceItems(user.workspace.id);
       if (response.status !== 200) {
-        console.log('Error exporting service items');
         return;
       }
       downloadCSVFile(
