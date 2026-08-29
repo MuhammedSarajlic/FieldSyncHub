@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.QuoteModels;
+using backend.Services.Billing;
 
 namespace backend.Models;
 
@@ -29,20 +30,18 @@ public class Job
     public List<Employee> AssignedTeamMembers { get; set; } = [];
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     public decimal DepositAmount { get; set; }
-    public DiscountType DiscountType { get; set; }
+    public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
     public decimal DiscountValue { get; set; }
+    private TotalsBreakdown Totals => TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate);
     [NotMapped]
-    public decimal Subtotal => LineItems.Sum(li => li.Total);
+    public decimal Subtotal => Totals.Subtotal;
     [NotMapped]
-    public decimal Discount =>
-        DiscountType == DiscountType.Percentage
-            ? Math.Round(Subtotal * DiscountValue / 100, 2)
-            : Math.Round(DiscountValue, 2);
+    public decimal Discount => Totals.Discount;
     public decimal TaxRate { get; set; }
     [NotMapped]
-    public decimal TaxAmount => Math.Round((Subtotal - Discount) * TaxRate, 2);
+    public decimal TaxAmount => Totals.TaxAmount;
     [NotMapped]
-    public decimal TotalAmount => Math.Round(Subtotal + TaxAmount - Discount, 2);
+    public decimal TotalAmount => Totals.Total;
     public bool SendInvoice { get; set; }
     public bool SendReminder { get; set; }
     public int ReminderDaysBefore { get; set; } = 1;

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using backend.Services.Billing;
 
 namespace backend.Models.QuoteModels;
 
@@ -38,18 +39,19 @@ public class Quote
     public decimal DiscountValue { get; set; }
     public decimal TaxRate { get; set; }
 
-    [NotMapped]
-    public decimal Subtotal => LineItems.Sum(li => li.Total);
+    private TotalsBreakdown Totals => TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate);
 
     [NotMapped]
-    public decimal Discount =>
-        DiscountType == DiscountType.Percentage ? Subtotal * DiscountValue / 100 : DiscountValue;
+    public decimal Subtotal => Totals.Subtotal;
 
     [NotMapped]
-    public decimal TaxAmount => (Subtotal - Discount) * TaxRate;
+    public decimal Discount => Totals.Discount;
 
     [NotMapped]
-    public decimal Total => Subtotal - Discount + TaxAmount;
+    public decimal TaxAmount => Totals.TaxAmount;
+
+    [NotMapped]
+    public decimal Total => Totals.Total;
 
     public List<Note> CustomerNotes { get; set; } = [];
     public List<Note> InternalNotes { get; set; } = [];

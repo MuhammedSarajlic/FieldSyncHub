@@ -26,7 +26,7 @@ public class CreateJobDto
     public List<Employee> AssignedTeamMembers { get; set; } = [];
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     public decimal DepositAmount { get; set; }
-    public DiscountType DiscountType { get; set; }
+    public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
     public decimal DiscountValue { get; set; }
     public decimal TaxRate { get; set; }
     public bool SendInvoice { get; set; }

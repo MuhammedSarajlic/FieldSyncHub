@@ -17,7 +17,7 @@ public class CreateInvoiceDto
     public List<CreateLineItemDto> LineItems { get; set; } = [];
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }
-    public DiscountType DiscountType { get; set; } = DiscountType.Percentage;
+    public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
 
     public DateTime IssueDate { get; set; } = DateTime.UtcNow;
     public DateTime? DueDate { get; set; }

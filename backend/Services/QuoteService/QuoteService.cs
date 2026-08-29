@@ -222,15 +222,7 @@ public class QuoteService : IQuoteService
 
         foreach (var quote in quotes)
         {
-            decimal subtotal = quote.LineItems.Sum(li => li.UnitPrice * li.Quantity);
-
-            decimal discount = quote.DiscountType == DiscountType.Percentage
-                ? subtotal * quote.DiscountValue / 100
-                : quote.DiscountValue;
-
-            decimal subtotalAfterDiscount = subtotal - discount;
-            decimal taxAmount = subtotalAfterDiscount * quote.TaxRate;
-            decimal total = subtotalAfterDiscount + taxAmount;
+            decimal total = quote.Total;
 
             totalValue += total;
 

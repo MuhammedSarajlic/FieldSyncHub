@@ -526,8 +526,7 @@ public class JobService : IJobService
 
         foreach (var job in jobs)
         {
-            decimal jobTotal = job.LineItems.Sum(li => li.UnitPrice * li.Quantity);
-            totalValue += jobTotal;
+            totalValue += job.TotalAmount;
         }
 
         return new JobStatsDto

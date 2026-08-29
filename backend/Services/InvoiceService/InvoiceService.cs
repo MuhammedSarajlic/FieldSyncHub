@@ -4,6 +4,7 @@ using backend.Dtos.InvoiceDto;
 using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Response;
+using backend.Services.Billing;
 using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -144,9 +145,7 @@ public class InvoiceService : IInvoiceService
 
         resultList = resultList.Where(i =>
         {
-            var subtotal = i.LineItems.Sum(li => li.UnitPrice * li.Quantity);
-            var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
-            var total = subtotal - discount + ((subtotal - discount) * i.TaxRate);
+            var total = TotalsCalculator.Calculate(i.LineItems, i.DiscountType, i.Discount, i.TaxRate).Total;
 
             return (!filterDto.TotalMin.HasValue || total >= filterDto.TotalMin.Value)
                 && (!filterDto.TotalMax.HasValue || total <= filterDto.TotalMax.Value);
@@ -167,18 +166,8 @@ public class InvoiceService : IInvoiceService
                 : resultList.OrderBy(i => i.DueDate).ToList(),
 
             "total" => filterDto.Sort == "desc"
-                ? resultList.OrderByDescending(i =>
-                {
-                    var subtotal = i.LineItems.Sum(li => li.UnitPrice * li.Quantity);
-                    var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
-                    return subtotal - discount + ((subtotal - discount) * i.TaxRate);
-                }).ToList()
-                : resultList.OrderBy(i =>
-                {
-                    var subtotal = i.LineItems.Sum(li => li.UnitPrice * li.Quantity);
-                    var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
-                    return subtotal - discount + ((subtotal - discount) * i.TaxRate);
-                }).ToList(),
+                ? resultList.OrderByDescending(i => i.Total).ToList()
+                : resultList.OrderBy(i => i.Total).ToList(),
 
             _ => resultList.OrderByDescending(i => i.IssueDate).ToList()
         };
@@ -480,13 +469,7 @@ public class InvoiceService : IInvoiceService
 
         foreach (var invoice in invoices)
         {
-            var subtotal = invoice.LineItems.Sum(li => li.UnitPrice * li.Quantity);
-
-            var discount = invoice.DiscountType == DiscountType.Percentage
-                ? subtotal * invoice.Discount / 100
-                : invoice.Discount;
-
-            var total = subtotal - discount + ((subtotal - discount) * invoice.TaxRate);
+            var total = invoice.Total;
 
             totalInvoiceSum += total;
 

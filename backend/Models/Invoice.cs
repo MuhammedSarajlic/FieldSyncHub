@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.QuoteModels;
+using backend.Services.Billing;
 
 namespace backend.Models;
 
@@ -23,27 +24,12 @@ public class Invoice
     public List<LineItem> LineItems { get; set; } = [];
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }
-    public DiscountType DiscountType { get; set; } = DiscountType.Percentage;
+    public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
+    private TotalsBreakdown Totals => TotalsCalculator.Calculate(LineItems, DiscountType, Discount, TaxRate);
     [NotMapped]
-    public decimal Subtotal => LineItems.Sum(li => (li?.UnitPrice ?? 0) * li.Quantity);
+    public decimal Subtotal => Totals.Subtotal;
     [NotMapped]
-    public decimal Total
-    {
-        get
-        {
-            decimal discountedSubtotal = Subtotal;
-            if (DiscountType == DiscountType.Percentage && Discount > 0)
-            {
-                discountedSubtotal -= Subtotal * (Discount / 100);
-            }
-            else if (DiscountType == DiscountType.FixedAmount && Discount > 0)
-            {
-                discountedSubtotal -= Discount;
-            }
-
-            return discountedSubtotal + (discountedSubtotal * TaxRate);
-        }
-    }
+    public decimal Total => Totals.Total;
 
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public DateTime IssueDate { get; set; } = DateTime.UtcNow;
