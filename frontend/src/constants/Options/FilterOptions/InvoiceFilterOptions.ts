@@ -22,6 +22,7 @@ export const invoiceFilterOptions: TFilterOption[] = [
     dropdownOptions: [
       { value: 'draft', label: 'Draft' },
       { value: 'sent', label: 'Sent' },
+      { value: 'partial', label: 'Partial' },
       { value: 'paid', label: 'Paid' },
       { value: 'overdue', label: 'Overdue' },
     ],

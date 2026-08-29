@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, FileText, Wallet } from 'lucide-react';
 import { InvoiceStatus } from '../../constants/Enumeration/InvoiceEnum/InvoiceEnum';
 
 export const getInvoiceStatus = (status: InvoiceStatus) => {
@@ -17,6 +17,11 @@ export const getInvoiceStatus = (status: InvoiceStatus) => {
       return {
         color: 'bg-red-50 text-red-700 border-red-100',
         icon: <AlertCircle className='w-4 h-4 mr-1.5 text-red-500' />,
+      };
+    case InvoiceStatus.Partial:
+      return {
+        color: 'bg-amber-50 text-amber-700 border-amber-100',
+        icon: <Wallet className='w-4 h-4 mr-1.5 text-amber-500' />,
       };
     case InvoiceStatus.Draft:
       return {

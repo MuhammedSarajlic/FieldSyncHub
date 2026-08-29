@@ -65,7 +65,7 @@ public class BillingSnapshotPriceTests
             CustomerId = Guid.NewGuid(),
             PropertyId = Guid.NewGuid(),
             Title = "Invoice",
-            Status = InvoiceStatus.Paid,
+            WorkflowStatus = InvoiceStatus.Sent,
             UpdatedAt = DateTime.UtcNow,
             LineItems =
             [
@@ -75,6 +75,16 @@ public class BillingSnapshotPriceTests
                     ServiceItemId = serviceItem.Id,
                     UnitPrice = 120m,
                     Quantity = 2
+                }
+            ],
+            Payments =
+            [
+                new Payment
+                {
+                    Id = Guid.NewGuid(),
+                    Amount = 240m,
+                    Status = PaymentRecordStatus.Succeeded,
+                    PaidAt = DateTime.UtcNow
                 }
             ]
         });

@@ -465,19 +465,14 @@ const InvoiceDetails = () => {
                             </span>
                           </div>
                         ))}
-                      {invoice.isPaid && (
+                      {invoice.amountPaid > 0 && (
                         <div className='border-t border-gray-200 pt-4 mt-4'>
                           <div className='flex justify-between items-center py-2'>
                             <span className='text-gray-600 text-sm'>
-                              Payment on{' '}
-                              {DateTime.fromISO(invoice.updatedAt, {
-                                zone: 'utc',
-                              })
-                                .toLocal()
-                                .toFormat('MMM dd, yyyy')}
+                              Amount Paid
                             </span>
                             <span className='font-medium text-gray-600'>
-                              {formatCurrency(invoice.total)}
+                              {formatCurrency(invoice.amountPaid)}
                             </span>
                           </div>
                           <div className='flex justify-between items-center'>
@@ -485,7 +480,7 @@ const InvoiceDetails = () => {
                               Balance Due
                             </span>
                             <span className='text-lg font-bold text-gray-800'>
-                              {formatCurrency(0)}
+                              {formatCurrency(invoice.balanceDue)}
                             </span>
                           </div>
                         </div>

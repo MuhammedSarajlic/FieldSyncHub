@@ -3,4 +3,5 @@ export enum InvoiceStatus {
   Sent,
   Paid,
   Overdue,
+  Partial,
 }

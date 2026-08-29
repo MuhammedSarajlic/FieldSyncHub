@@ -32,6 +32,7 @@ public class InvoiceService : IInvoiceService
             .Include(i => i.Job)
             .Include(i => i.LineItems)
                 .ThenInclude(item => item.ServiceItem)
+            .Include(i => i.Payments)
             .Include(i => i.Property)
             .FirstOrDefaultAsync();
 
@@ -57,6 +58,7 @@ public class InvoiceService : IInvoiceService
             .Include(i => i.Job)
             .Include(i => i.LineItems)
             .ThenInclude(item => item.ServiceItem)
+            .Include(i => i.Payments)
             .FirstOrDefaultAsync();
 
         return invoice ?? throw new KeyNotFoundException($"Invoice with number {invoiceNumber} not found in workspace {workspaceId}");
@@ -70,6 +72,7 @@ public class InvoiceService : IInvoiceService
             .Include(i => i.Job)
             .Include(i => i.LineItems)
                 .ThenInclude(item => item.ServiceItem)
+            .Include(i => i.Payments)
             .AsNoTracking();
 
         var totalCount = await query.CountAsync();
@@ -114,11 +117,9 @@ public class InvoiceService : IInvoiceService
             .Include(i => i.Customer)
             .Include(i => i.LineItems)
                 .ThenInclude(li => li.ServiceItem)
+            .Include(i => i.Payments)
             .AsNoTracking()
             .AsQueryable();
-
-        if (Enum.TryParse<InvoiceStatus>(filterDto.Status, true, out var parsedStatus))
-            query = query.Where(i => i.Status == parsedStatus);
 
         if (filterDto.DueDateMin.HasValue)
         {
@@ -143,11 +144,14 @@ public class InvoiceService : IInvoiceService
 
         var resultList = await query.ToListAsync();
 
+        var hasStatusFilter = Enum.TryParse<InvoiceStatus>(filterDto.Status, true, out var parsedStatus);
+
         resultList = resultList.Where(i =>
         {
             var total = TotalsCalculator.Calculate(i.LineItems, i.DiscountType, i.Discount, i.TaxRate).Total;
 
-            return (!filterDto.TotalMin.HasValue || total >= filterDto.TotalMin.Value)
+            return (!hasStatusFilter || i.Status == parsedStatus)
+                && (!filterDto.TotalMin.HasValue || total >= filterDto.TotalMin.Value)
                 && (!filterDto.TotalMax.HasValue || total <= filterDto.TotalMax.Value);
         }).ToList();
 
@@ -204,6 +208,7 @@ public class InvoiceService : IInvoiceService
             .Include(i => i.Job)
             .Include(i => i.LineItems)
             .ThenInclude(item => item.ServiceItem)
+            .Include(i => i.Payments)
             .ToListAsync();
 
         return new ApiResponse<List<Invoice>>
@@ -247,8 +252,10 @@ public class InvoiceService : IInvoiceService
         if (updatedInvoiceDto.IssueDate.HasValue) invoice.IssueDate = updatedInvoiceDto.IssueDate.Value;
         if (updatedInvoiceDto.Notes != null) invoice.Notes = updatedInvoiceDto.Notes;
         if (updatedInvoiceDto.InternalNotes != null) invoice.InternalNotes = updatedInvoiceDto.InternalNotes;
-        if (updatedInvoiceDto.Status.HasValue) invoice.Status = updatedInvoiceDto.Status.Value;
-        if (updatedInvoiceDto.IsPaid.HasValue) invoice.IsPaid = updatedInvoiceDto.IsPaid.Value;
+        if (updatedInvoiceDto.Status.HasValue)
+        {
+            invoice.WorkflowStatus = PaymentLedgerCalculator.NormalizeWorkflowStatus(updatedInvoiceDto.Status.Value);
+        }
 
         if (updatedInvoiceDto.PaymentTerms != null || updatedInvoiceDto.IssueDate.HasValue || updatedInvoiceDto.DueDate.HasValue)
         {
@@ -609,6 +616,7 @@ public class InvoiceService : IInvoiceService
             .Where(i => i.WorkspaceId == workspaceId)
             .Include(i => i.LineItems)
                 .ThenInclude(li => li.ServiceItem)
+            .Include(i => i.Payments)
             .ToListAsync();
 
         decimal totalOutstanding = 0;

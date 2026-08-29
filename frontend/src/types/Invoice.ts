@@ -5,6 +5,37 @@ import { TJob } from './Job';
 import { TAddLineItem, TLineItem, TUpdateLineItem } from './LineItem';
 import { TProperty } from './Property';
 
+export enum PaymentMethod {
+  Cash,
+  Check,
+  CardOnSite,
+  Card,
+  BankTransfer,
+  Other,
+}
+
+export enum PaymentRecordStatus {
+  Pending,
+  Succeeded,
+  Failed,
+  Voided,
+  Refunded,
+}
+
+export type TPayment = {
+  id: string;
+  invoiceId: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentRecordStatus;
+  processorReference?: string | null;
+  paidAt?: string | null;
+  recordedByUserId?: string | null;
+  note?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type TInvoice = {
   id: string;
   customerId: string;
@@ -22,6 +53,8 @@ export type TInvoice = {
   discountType: DiscountType;
   subtotal: number;
   total: number;
+  amountPaid: number;
+  balanceDue: number;
   status: InvoiceStatus;
   issueDate: string;
   dueDate: string;
@@ -29,6 +62,7 @@ export type TInvoice = {
   notes: string;
   internalNotes: string;
   isPaid: boolean;
+  payments: TPayment[];
   createdAt: string;
   updatedAt: string;
 };
@@ -63,7 +97,6 @@ export type TUpdateInvoice = {
   paymentTerms?: string;
   notes?: string;
   internalNotes?: string;
-  isPaid?: boolean;
 };
 
 export type TInvoiceFilter = {

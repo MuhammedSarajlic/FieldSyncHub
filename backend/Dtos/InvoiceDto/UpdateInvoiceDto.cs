@@ -19,5 +19,4 @@ public class UpdateInvoiceDto
     public string? PaymentTerms { get; set; }
     public string? Notes { get; set; }
     public string? InternalNotes { get; set; }
-    public bool? IsPaid { get; set; } = false;
 }

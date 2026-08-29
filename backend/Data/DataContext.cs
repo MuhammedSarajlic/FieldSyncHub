@@ -48,6 +48,7 @@ public class DataContext : DbContext
     public DbSet<EmployeeInvite> EmployeeInvites => Set<EmployeeInvite>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Quote> Quotes => Set<Quote>();
     public DbSet<Lead> Leads => Set<Lead>();
     public DbSet<QuoteAttachment> QuoteAttachments => Set<QuoteAttachment>();
@@ -156,6 +157,12 @@ public class DataContext : DbContext
             .HasForeignKey(li => li.InvoiceId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<Invoice>()
+            .HasMany(i => i.Payments)
+            .WithOne(p => p.Invoice)
+            .HasForeignKey(p => p.InvoiceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Job → LineItems
         modelBuilder.Entity<Job>()
             .HasMany(j => j.LineItems)
@@ -238,6 +245,7 @@ public class DataContext : DbContext
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
         modelBuilder.Entity<Invoice>().HasIndex(i => i.WorkspaceId);
+        modelBuilder.Entity<Payment>().HasIndex(p => new { p.InvoiceId, p.Status, p.PaidAt });
         modelBuilder.Entity<Job>().HasIndex(j => j.WorkspaceId);
         modelBuilder.Entity<Quote>().HasIndex(q => q.WorkspaceId);
         modelBuilder.Entity<ServiceItem>().HasIndex(s => s.WorkspaceId);
@@ -273,6 +281,7 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<Invoice>().Property(i => i.Discount).HasPrecision(19, 4);
         modelBuilder.Entity<Invoice>().Property(i => i.TaxRate).HasPrecision(9, 6);
+        modelBuilder.Entity<Payment>().Property(p => p.Amount).HasPrecision(19, 4);
 
         modelBuilder.Entity<Quote>().Property(q => q.DiscountValue).HasPrecision(19, 4);
         modelBuilder.Entity<Quote>().Property(q => q.TaxRate).HasPrecision(9, 6);
