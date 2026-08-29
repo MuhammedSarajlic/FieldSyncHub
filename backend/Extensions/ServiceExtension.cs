@@ -20,6 +20,7 @@ using backend.Services.WorkspaceService;
 using backend.Services.PdfService;
 using backend.Services.EventService;
 using backend.Services.CalendarService;
+using backend.Services.ActivityHistoryService;
 using backend.Services.StorageService;
 using backend.Services.TwoFactorService;
 using Resend;
@@ -64,5 +65,6 @@ public static class ServiceExtension
         services.AddScoped<IStorageService, SupabaseStorageService>();
         services.AddSingleton<TotpSecretProtector>();
         services.AddScoped<ITwoFactorService, TwoFactorService>();
+        services.AddScoped<IActivityHistoryService, ActivityHistoryService>();
     }
 }

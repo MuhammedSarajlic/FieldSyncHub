@@ -962,6 +962,9 @@ public class QuoteService : IQuoteService
             ChangedByName = userName,
             Type = activityType,
             Action = action,
+            EntityType = nameof(Quote),
+            EntityId = quote.Id,
+            WorkspaceId = quote.WorkspaceId,
             CreatedAt = DateTime.UtcNow
         };
 

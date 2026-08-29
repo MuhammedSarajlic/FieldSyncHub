@@ -47,6 +47,7 @@ public class RoleAuthorizationTests : IClassFixture<AuthorizationDefaultsFactory
         yield return new object[] { HttpMethod.Delete, $"/api/customfield/{id}" };
         yield return new object[] { HttpMethod.Delete, $"/api/customfieldvalue/{id}" };
         yield return new object[] { HttpMethod.Put, "/api/workspace" };
+        yield return new object[] { HttpMethod.Get, $"/api/activity/workspace/{id}" };
     }
 
     [Theory]

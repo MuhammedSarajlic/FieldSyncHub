@@ -57,6 +57,33 @@ public class DataContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<RecoveryCode> RecoveryCodes => Set<RecoveryCode>();
 
+    /// <summary>
+    /// Audit rows are collected from the change tracker before the save and added to
+    /// the same transaction, so the log can't end up describing a mutation that was
+    /// then rolled back - or miss one that succeeded.
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var auditEntries = AuditWriter.Collect(ChangeTracker, _currentUser);
+        if (auditEntries.Count > 0)
+        {
+            await ActivityHistorys.AddRangeAsync(auditEntries, cancellationToken);
+        }
+
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override int SaveChanges()
+    {
+        var auditEntries = AuditWriter.Collect(ChangeTracker, _currentUser);
+        if (auditEntries.Count > 0)
+        {
+            ActivityHistorys.AddRange(auditEntries);
+        }
+
+        return base.SaveChanges();
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -204,6 +231,7 @@ public class DataContext : DbContext
         modelBuilder.Entity<EmployeeInvite>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<Event>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<Note>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<ActivityHistory>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
@@ -221,6 +249,12 @@ public class DataContext : DbContext
 
         // Validating a recovery code queries all of a user's unused codes.
         modelBuilder.Entity<RecoveryCode>().HasIndex(r => r.UserId);
+
+        // The audit log is read two ways: "everything for this workspace" and
+        // "the history of this one record" - both need to be fast even once the
+        // table has years of rows in it.
+        modelBuilder.Entity<ActivityHistory>().HasIndex(a => new { a.WorkspaceId, a.ChangedAt });
+        modelBuilder.Entity<ActivityHistory>().HasIndex(a => new { a.EntityType, a.EntityId });
     }
 
 }
