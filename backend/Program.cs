@@ -89,6 +89,37 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0
         });
     });
+    // Login/register/google/refresh/reset-password/accept-invite are all anonymous,
+    // so the caller has no account or workspace claim yet to partition by - IP is
+    // the only thing available at this layer. AuthService.Login separately tracks
+    // failures per account (see LoginFailureState) to cover the case this can't:
+    // one attacker spraying guesses at a single account from many source IPs.
+    options.AddPolicy("auth", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetSlidingWindowLimiter(ip, _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = 15,
+            Window = TimeSpan.FromMinutes(1),
+            SegmentsPerWindow = 3,
+            QueueLimit = 0
+        });
+    });
+    // forgot-password's own response is identical whether or not anything actually
+    // happens (see AuthService.ForgotPassword's per-address cooldown), but that
+    // cooldown only stops emails going out - without this, the endpoint itself could
+    // still be hit at line rate. Tighter and longer-windowed than "auth" since
+    // there's no legitimate reason to call it often.
+    options.AddPolicy("forgot-password", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(15),
+            QueueLimit = 0
+        });
+    });
 });
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();

@@ -6,6 +6,7 @@ using backend.Services.EmailService;
 using backend.Services.TokenService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
 namespace backend.Tests;
@@ -122,7 +123,7 @@ public class TokenServiceTests
         var (_, refreshToken) = await tokenService.GenerateTokensAsync(TestUser(user.Id));
 
         var configuration = new ConfigurationBuilder().Build();
-        var authService = new AuthService(context, configuration, new NoopEmailService(), tokenService);
+        var authService = new AuthService(context, configuration, new NoopEmailService(), tokenService, new MemoryCache(new MemoryCacheOptions()));
 
         var result = await authService.UpdatePassword(user.Id, "OldPassword1", "NewPassword1");
 

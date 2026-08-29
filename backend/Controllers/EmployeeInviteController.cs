@@ -85,6 +85,7 @@ public class EmployeeInviteController : ControllerBase
 
     [HttpPost("accept-invite")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> AcceptInvite(string token, [FromBody] UserRegisterDto user)
     {
         var accessToken = await _employeeInviteService.AcceptInviteAsync(token, user);
@@ -97,6 +98,7 @@ public class EmployeeInviteController : ControllerBase
 
     [HttpGet("validate-token")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ValidateInviteToken([FromQuery] string token)
     {
         if (string.IsNullOrEmpty(token))

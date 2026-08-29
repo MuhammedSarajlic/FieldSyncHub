@@ -6,6 +6,7 @@ using backend.Services.EmailService;
 using backend.Services.TokenService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
 namespace backend.Tests;
@@ -29,7 +30,7 @@ public class PasswordWorkFactorTests
             .Build();
 
         var tokenService = new TokenService(configuration, new HttpContextAccessor { HttpContext = new DefaultHttpContext() }, context);
-        return new AuthService(context, configuration, new NoopEmailService(), tokenService);
+        return new AuthService(context, configuration, new NoopEmailService(), tokenService, new MemoryCache(new MemoryCacheOptions()));
     }
 
     private static DataContext CreateContext()

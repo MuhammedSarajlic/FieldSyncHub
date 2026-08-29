@@ -6,6 +6,7 @@ using backend.Services.EmailService;
 using backend.Services.TokenService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace backend.Services.AuthService;
 
@@ -15,20 +16,46 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
     private readonly ITokenService _tokenService;
-    public AuthService(DataContext context, IConfiguration configuration, IEmailService emailService, ITokenService tokenService)
+    private readonly IMemoryCache _cache;
+    public AuthService(DataContext context, IConfiguration configuration, IEmailService emailService, ITokenService tokenService, IMemoryCache cache)
     {
         _context = context;
         _configuration = configuration;
         _emailService = emailService;
         _tokenService = tokenService;
+        _cache = cache;
+    }
+
+    // ASP.NET's IP-partitioned rate limiter (the "auth" policy) stops one source from
+    // hammering the endpoint, but does nothing for an attacker spraying guesses at one
+    // account from many source IPs/proxies. This tracks failures per account instead,
+    // in-process, and makes each further guess past a small free allowance cost
+    // exponentially more wall-clock time - cheap for a real user who mistyped their
+    // password once or twice, expensive for anyone trying to brute-force it.
+    private const int FreeLoginAttempts = 5;
+    private static readonly TimeSpan LoginFailureMemory = TimeSpan.FromMinutes(30);
+
+    private sealed class LoginFailureState
+    {
+        public int FailureCount;
+        public DateTime? LockedUntil;
     }
 
     public async Task<ApiResponse<GetUserDto>> Login(UserLoginDto userLogin)
     {
+        var accountKey = $"login-failures:{userLogin.Email.Trim().ToLowerInvariant()}";
+
+        if (_cache.TryGetValue(accountKey, out LoginFailureState? state)
+            && state!.LockedUntil is DateTime lockedUntil && lockedUntil > DateTime.UtcNow)
+        {
+            throw new AccountLockedException(lockedUntil - DateTime.UtcNow);
+        }
+
         var dbUser = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Email == userLogin.Email);
 
         if (dbUser == null || !VerifyPassword(userLogin.Password, dbUser.PasswordHash))
         {
+            RecordFailedLogin(accountKey, state);
             return new ApiResponse<GetUserDto>()
             {
                 Success = false,
@@ -36,6 +63,10 @@ public class AuthService : IAuthService
                 Payload = null
             };
         }
+
+        // A genuine login clears any accumulated failures - they shouldn't keep
+        // counting against a user who simply mistyped their password earlier.
+        _cache.Remove(accountKey);
 
         // Accounts created back when the work factor was 6 still carry that weak
         // hash at rest. We only ever see the plaintext password at a successful
@@ -55,6 +86,22 @@ public class AuthService : IAuthService
             ErrorMessage = "",
             Payload = userDto
         };
+    }
+
+    private void RecordFailedLogin(string accountKey, LoginFailureState? existing)
+    {
+        var state = existing ?? new LoginFailureState();
+        state.FailureCount++;
+
+        if (state.FailureCount > FreeLoginAttempts)
+        {
+            // 15s, 30s, 60s, 120s ... capped at 15 minutes.
+            var extra = state.FailureCount - FreeLoginAttempts;
+            var seconds = Math.Min(900, 15 * Math.Pow(2, extra - 1));
+            state.LockedUntil = DateTime.UtcNow.AddSeconds(seconds);
+        }
+
+        _cache.Set(accountKey, state, LoginFailureMemory);
     }
 
     public async Task<ApiResponse<GetUserDto>> Register(UserRegisterDto userRegister)
@@ -238,39 +285,50 @@ public class AuthService : IAuthService
         };
     }
 
+    private static readonly TimeSpan ForgotPasswordCooldown = TimeSpan.FromMinutes(2);
+
     public async Task<ApiResponse<string>> ForgotPassword(string email)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var cooldownKey = $"forgot-password-cooldown:{email.Trim().ToLowerInvariant()}";
 
-        // Only act if the account exists, but always return the same
-        // response either way so this endpoint can't be used to enumerate
-        // which emails have accounts.
-        if (user != null)
+        // The response below is identical no matter what happens - whether the
+        // account exists, and now whether this request actually does anything - so
+        // this can't be used to enumerate accounts, and repeatedly calling it can't
+        // be used to mail-bomb a real address either: only the first request in the
+        // cooldown window sends anything, every one after gets the same success
+        // reply with no observable difference and no email going out.
+        if (!_cache.TryGetValue(cooldownKey, out bool _))
         {
-            var token = GenerateSecureToken();
-            user.PasswordResetToken = token;
-            user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddHours(1);
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
+            _cache.Set(cooldownKey, true, ForgotPasswordCooldown);
 
-            var frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
-            var resetLink = $"{frontendUrl}/reset-password?token={token}";
-            var html = $"<p>Someone requested a password reset for your FieldSyncHub account.</p>" +
-                       $"<p><a href=\"{resetLink}\">Reset your password</a></p>" +
-                       $"<p>This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>";
-            var plainText = $"Reset your FieldSyncHub password: {resetLink} (expires in 1 hour)";
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user != null)
+            {
+                var token = GenerateSecureToken();
+                user.PasswordResetToken = token;
+                user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddHours(1);
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
 
-            try
-            {
-                await _emailService.SendEmailAsync(user.Email, "Reset your FieldSyncHub password", plainText, html);
-            }
-            catch (Exception ex)
-            {
-                // The reset token is already saved - a broken/missing email
-                // provider shouldn't turn into a 500 for the user, and this
-                // response is deliberately identical whether or not the
-                // email actually went out (see comment above).
-                Console.WriteLine($"Failed to send password reset email to {user.Email}: {ex.Message}");
+                var frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
+                var resetLink = $"{frontendUrl}/reset-password?token={token}";
+                var html = $"<p>Someone requested a password reset for your FieldSyncHub account.</p>" +
+                           $"<p><a href=\"{resetLink}\">Reset your password</a></p>" +
+                           $"<p>This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>";
+                var plainText = $"Reset your FieldSyncHub password: {resetLink} (expires in 1 hour)";
+
+                try
+                {
+                    await _emailService.SendEmailAsync(user.Email, "Reset your FieldSyncHub password", plainText, html);
+                }
+                catch (Exception ex)
+                {
+                    // The reset token is already saved - a broken/missing email
+                    // provider shouldn't turn into a 500 for the user, and this
+                    // response is deliberately identical whether or not the
+                    // email actually went out (see comment above).
+                    Console.WriteLine($"Failed to send password reset email to {user.Email}: {ex.Message}");
+                }
             }
         }
 

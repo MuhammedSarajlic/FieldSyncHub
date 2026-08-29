@@ -1,9 +1,11 @@
 using backend.Dtos.UserDto;
+using backend.Response;
 using backend.Services.AuthService;
 using backend.Services.TokenService;
 using backend.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
@@ -26,9 +28,20 @@ public class AuthController : ControllerBase
     [HttpPost]
     [Route("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Login(UserLoginDto userLogin)
     {
-        var userDB = await _authService.Login(userLogin);
+        ApiResponse<GetUserDto> userDB;
+        try
+        {
+            userDB = await _authService.Login(userLogin);
+        }
+        catch (AccountLockedException ex)
+        {
+            Response.Headers.RetryAfter = ((int)Math.Ceiling(ex.RetryAfter.TotalSeconds)).ToString();
+            return StatusCode(StatusCodes.Status429TooManyRequests, new { message = ex.Message });
+        }
+
         if (userDB.Success == false)
         {
             return BadRequest(new { message = userDB.ErrorMessage });
@@ -48,6 +61,7 @@ public class AuthController : ControllerBase
     [HttpPost]
     [Route("register")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Register(UserRegisterDto userRegister)
     {
         var userDB = await _authService.Register(userRegister);
@@ -83,6 +97,7 @@ public class AuthController : ControllerBase
     [HttpPost]
     [Route("google")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> GoogleLogin(GoogleAuthDto googleAuthDto)
     {
         var userDB = await _authService.LoginWithGoogle(googleAuthDto.IdToken);
@@ -105,6 +120,7 @@ public class AuthController : ControllerBase
     [HttpPost]
     [Route("forgot-password")]
     [AllowAnonymous]
+    [EnableRateLimiting("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
     {
         var result = await _authService.ForgotPassword(forgotPasswordDto.Email);
@@ -114,6 +130,7 @@ public class AuthController : ControllerBase
     [HttpPost]
     [Route("reset-password")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
     {
         var result = await _authService.ResetPassword(resetPasswordDto.Token, resetPasswordDto.NewPassword);
@@ -135,6 +152,7 @@ public class AuthController : ControllerBase
     [HttpPost]
     [Route("refresh")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> RefreshToken()
     {
         var refreshToken = Request.Cookies["refreshToken"];
