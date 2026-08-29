@@ -322,6 +322,62 @@ public class InvoiceService : IInvoiceService
         return invoice;
     }
 
+    public async Task<Invoice> RecordPayment(Guid invoiceId, RecordInvoicePaymentDto paymentDto, Guid callerWorkspaceId, Guid recordedByUserId)
+    {
+        var invoice = await _context.Invoices
+            .Include(i => i.Payments)
+            .Include(i => i.LineItems)
+            .FirstOrDefaultAsync(i => i.Id == invoiceId);
+
+        if (invoice == null || invoice.WorkspaceId != callerWorkspaceId)
+        {
+            throw new KeyNotFoundException($"Invoice with ID {invoiceId} not found.");
+        }
+
+        if (paymentDto.Amount <= 0m)
+        {
+            throw new InvalidOperationException("Payment amount must be greater than zero.");
+        }
+
+        if (invoice.BalanceDue <= 0m)
+        {
+            throw new InvalidOperationException("This invoice has already been paid in full.");
+        }
+
+        if (paymentDto.Amount > invoice.BalanceDue)
+        {
+            throw new InvalidOperationException("Payment amount cannot exceed the remaining balance due.");
+        }
+
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            InvoiceId = invoice.Id,
+            Amount = paymentDto.Amount,
+            Method = paymentDto.Method,
+            Status = PaymentRecordStatus.Succeeded,
+            PaidAt = DateTime.SpecifyKind(paymentDto.PaidAt, DateTimeKind.Utc),
+            RecordedByUserId = recordedByUserId,
+            Note = string.IsNullOrWhiteSpace(paymentDto.Note) ? null : paymentDto.Note.Trim(),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Payments.Add(payment);
+
+        invoice.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        var didSyncJob = await SyncJobPaymentStatusAsync(invoice.Id);
+        if (didSyncJob)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return await GetInvoiceById(invoice.Id, callerWorkspaceId)
+            ?? throw new KeyNotFoundException($"Invoice with ID {invoiceId} not found.");
+    }
+
     public async Task DeleteInvoice(Guid id, Guid callerWorkspaceId)
     {
         var invoiceToDelete = await _context.Invoices.FindAsync(id);
@@ -660,6 +716,40 @@ public class InvoiceService : IInvoiceService
             OverdueCount = overdueCount,
             AverageInvoiceValue = averageInvoiceValue
         };
+    }
+
+    private async Task<bool> SyncJobPaymentStatusAsync(Guid invoiceId)
+    {
+        var invoice = await _context.Invoices
+            .Include(i => i.Payments)
+            .Include(i => i.LineItems)
+            .FirstOrDefaultAsync(i => i.Id == invoiceId);
+
+        if (invoice?.JobId is not Guid jobId)
+        {
+            return false;
+        }
+
+        var job = await _context.Jobs.FirstOrDefaultAsync(j => j.Id == jobId);
+        if (job == null)
+        {
+            return false;
+        }
+
+        var newStatus = invoice.AmountPaid switch
+        {
+            <= 0m => PaymentStatus.Unpaid,
+            _ when invoice.BalanceDue <= 0m => PaymentStatus.Paid,
+            _ => PaymentStatus.Partial
+        };
+
+        if (job.PaymentStatus == newStatus)
+        {
+            return false;
+        }
+
+        job.PaymentStatus = newStatus;
+        return true;
     }
 
 

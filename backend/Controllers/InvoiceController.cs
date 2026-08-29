@@ -107,6 +107,29 @@ public class InvoiceController : ControllerBase
         return Ok(updatedInvoice);
     }
 
+    [HttpPost("{id}/payments")]
+    public async Task<ActionResult<Invoice>> RecordPayment(Guid id, [FromBody] RecordInvoicePaymentDto paymentDto)
+    {
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid recordedByUserId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            var invoice = await _invoiceService.RecordPayment(id, paymentDto, callerWorkspaceId, recordedByUserId);
+            return Ok(invoice);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpDelete("{id}")]
     [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> Delete(Guid id)

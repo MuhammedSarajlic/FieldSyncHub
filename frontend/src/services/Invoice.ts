@@ -1,4 +1,4 @@
-import { TAddInvoice, TUpdateInvoice } from '../types/Invoice';
+import { TAddInvoice, TRecordInvoicePayment, TUpdateInvoice } from '../types/Invoice';
 import api from './api';
 
 export async function GetAllInvoicesByWorkspaceId(
@@ -61,5 +61,13 @@ export async function UpdateInvoice(
 
 export async function DeleteInvoice(invoiceId: string) {
   const response = await api.delete(`/invoice/${invoiceId}`);
+  return response;
+}
+
+export async function RecordInvoicePayment(
+  invoiceId: string,
+  payment: TRecordInvoicePayment
+) {
+  const response = await api.post(`/invoice/${invoiceId}/payments`, payment);
   return response;
 }

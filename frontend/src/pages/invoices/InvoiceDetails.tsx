@@ -1,5 +1,9 @@
 import { useNavigate, useParams } from 'react-router';
-import { DeleteInvoice, GetInvoiceById } from '../../services/Invoice';
+import {
+  DeleteInvoice,
+  GetInvoiceById,
+  RecordInvoicePayment,
+} from '../../services/Invoice';
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
@@ -25,8 +29,14 @@ import {
   Archive,
   Trash2,
   CheckCircle,
+  Wallet,
 } from 'lucide-react';
-import { TInvoice } from '../../types/Invoice';
+import {
+  PaymentMethod,
+  PaymentRecordStatus,
+  TInvoice,
+  TRecordInvoicePayment,
+} from '../../types/Invoice';
 import { useAuth } from '../../context/AuthProvider';
 import IconButton from '../../components/CustomElements/Buttons/IconButton'; // Changed from CustomIconButton
 import { getInvoiceStatus } from '../../utils/FuntionHelpers/getInvoiceStatus';
@@ -42,6 +52,7 @@ import {
 } from '../../utils/FuntionHelpers/downloadPdfFile';
 import { DiscountType } from '../../constants/Enumeration/CommonEnum/DiscountEnum';
 import ActionConfirmationModal from '../../components/Quotes/QuotesModals/ActionConfirmationModal';
+import RecordPaymentModal from '../../components/Invoice/Modal/RecordPaymentModal';
 
 const InvoiceDetails = () => {
   const { invoiceId } = useParams();
@@ -53,6 +64,8 @@ const InvoiceDetails = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isRecordPaymentModalOpen, setIsRecordPaymentModalOpen] =
+    useState(false);
 
   const showMoreRef = useClickOutside<HTMLDivElement>(() =>
     setIsActionsOpen(false)
@@ -94,6 +107,19 @@ const InvoiceDetails = () => {
 
   const handleSendEmail = () => {
     // Implement actual email sending logic here
+  };
+
+  const handleRecordPayment = async (payment: TRecordInvoicePayment) => {
+    if (!invoiceId) return;
+
+    const response = await RecordInvoicePayment(invoiceId, {
+      ...payment,
+      paidAt: DateTime.fromISO(payment.paidAt).toUTC().toISO() ?? payment.paidAt,
+    });
+
+    if (response.status === 200) {
+      setInvoice(response.data);
+    }
   };
 
   const handleDownloadInvoicePdf = async () => {
@@ -182,6 +208,20 @@ const InvoiceDetails = () => {
   // Determine which property to display (job property takes precedence if job exists)
   const displayProperty =
     invoice.job?.property || invoice.customer.properties?.[0];
+  const sortedPayments = [...(invoice.payments ?? [])].sort((a, b) => {
+    const aDate = a.paidAt ?? a.createdAt;
+    const bDate = b.paidAt ?? b.createdAt;
+    return DateTime.fromISO(bDate).toMillis() - DateTime.fromISO(aDate).toMillis();
+  });
+
+  const paymentMethodLabels: Record<PaymentMethod, string> = {
+    [PaymentMethod.Cash]: 'Cash',
+    [PaymentMethod.Check]: 'Check',
+    [PaymentMethod.CardOnSite]: 'Card on site',
+    [PaymentMethod.Card]: 'Card',
+    [PaymentMethod.BankTransfer]: 'Bank transfer',
+    [PaymentMethod.Other]: 'Other',
+  };
 
   return (
     <div className='flex'>
@@ -229,6 +269,15 @@ const InvoiceDetails = () => {
                 >
                   Edit
                 </IconButton>
+                {invoice.balanceDue > 0 && (
+                  <IconButton
+                    icon={<Wallet className='w-4 h-4 mr-2' />}
+                    customStyle='py-2 px-4 border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                    onClick={() => setIsRecordPaymentModalOpen(true)}
+                  >
+                    Record Payment
+                  </IconButton>
+                )}
 
                 <div className='relative' ref={showMoreRef}>
                   <IconButton
@@ -281,13 +330,11 @@ const InvoiceDetails = () => {
                           Mark as Sent
                         </button>
                         <button
-                          // onClick={() =>
-                          //   handleChangeQuoteStatus(QuoteStatus.Approved)
-                          // }
+                          onClick={() => setIsRecordPaymentModalOpen(true)}
                           className='flex items-center cursor-pointer w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                         >
                           <CheckCircle className='w-4 h-4 mr-2' />
-                          Mark as Paid
+                          Record payment
                         </button>
 
                         {/* Actions group */}
@@ -548,6 +595,20 @@ const InvoiceDetails = () => {
                   Invoice Details
                 </h3>
                 <div className='space-y-3 text-sm'>
+                  <div className='flex justify-between'>
+                    <span className='text-gray-600'>Amount Paid</span>
+                    <span className='font-medium text-gray-900'>
+                      {formatCurrency(invoice.amountPaid)}
+                    </span>
+                  </div>
+
+                  <div className='flex justify-between'>
+                    <span className='text-gray-600'>Balance Due</span>
+                    <span className='font-semibold text-gray-900'>
+                      {formatCurrency(invoice.balanceDue)}
+                    </span>
+                  </div>
+
                   {invoice.issueDate && (
                     <div className='flex justify-between'>
                       <span className='text-gray-600'>Issue Date</span>
@@ -591,6 +652,65 @@ const InvoiceDetails = () => {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-200'>
+                <div className='mb-4 flex items-center justify-between'>
+                  <h3 className='text-lg font-semibold text-gray-900'>
+                    Payments
+                  </h3>
+                  {invoice.balanceDue > 0 && (
+                    <button
+                      onClick={() => setIsRecordPaymentModalOpen(true)}
+                      className='text-sm font-medium text-emerald-700 hover:text-emerald-800'
+                    >
+                      Record
+                    </button>
+                  )}
+                </div>
+
+                {sortedPayments.length > 0 ? (
+                  <div className='space-y-3'>
+                    {sortedPayments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className='rounded-lg border border-gray-200 px-4 py-3'
+                      >
+                        <div className='flex items-start justify-between gap-3'>
+                          <div>
+                            <p className='text-sm font-medium text-gray-900'>
+                              {paymentMethodLabels[payment.method]}
+                            </p>
+                            <p className='text-xs text-gray-500'>
+                              {payment.status === PaymentRecordStatus.Succeeded
+                                ? 'Recorded'
+                                : 'Pending'}{' '}
+                              {payment.paidAt
+                                ? DateTime.fromISO(payment.paidAt, {
+                                    zone: 'utc',
+                                  })
+                                    .toLocal()
+                                    .toFormat('MMM dd, yyyy')
+                                : ''}
+                            </p>
+                          </div>
+                          <p className='text-sm font-semibold text-gray-900'>
+                            {formatCurrency(payment.amount)}
+                          </p>
+                        </div>
+                        {payment.note && (
+                          <p className='mt-2 text-sm text-gray-600'>
+                            {payment.note}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500'>
+                    No payments recorded yet.
+                  </div>
+                )}
               </div>
 
               {/* Internal Notes */}
@@ -650,10 +770,16 @@ const InvoiceDetails = () => {
       <ActionConfirmationModal
         isOpen={isArchiveModalOpen}
         onClose={() => setIsArchiveModalOpen(false)}
-        onConfirm={() => {}}
+        onConfirm={async () => {}}
         itemName={invoice.title || 'Invoice'}
         actionType='archive'
         itemType='invoice'
+      />
+      <RecordPaymentModal
+        isOpen={isRecordPaymentModalOpen}
+        balanceDue={invoice.balanceDue}
+        onClose={() => setIsRecordPaymentModalOpen(false)}
+        onSubmit={handleRecordPayment}
       />
     </div>
   );

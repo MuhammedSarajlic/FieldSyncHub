@@ -36,6 +36,13 @@ export type TPayment = {
   updatedAt: string;
 };
 
+export type TRecordInvoicePayment = {
+  amount: number;
+  method: PaymentMethod;
+  paidAt: string;
+  note?: string;
+};
+
 export type TInvoice = {
   id: string;
   customerId: string;
