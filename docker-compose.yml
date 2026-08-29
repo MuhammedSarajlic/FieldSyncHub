@@ -37,6 +37,12 @@ services:
       AppSettings__Supabase__Url: ${SUPABASE_URL:-}
       AppSettings__Supabase__ServiceRoleKey: ${SUPABASE_SERVICE_ROLE_KEY:-}
       AppSettings__Supabase__Bucket: ${SUPABASE_STORAGE_BUCKET:-uploads}
+      # This compose file always sets ASPNETCORE_ENVIRONMENT to Development (it's a
+      # local/dev convenience setup - hot-reloading frontend volume mount and all),
+      # which would otherwise default the refresh cookie to Secure=false regardless
+      # of where it's actually run. Set COOKIE_SECURE=true in .env if you deploy
+      # this compose file somewhere real.
+      AppSettings__CookieSecure: ${COOKIE_SECURE:-}
     ports:
       - "5244:8080"
 

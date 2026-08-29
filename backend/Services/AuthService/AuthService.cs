@@ -435,7 +435,7 @@ public class AuthService : IAuthService
             HttpOnly = true,
             SameSite = SameSiteMode.Strict,
             Path = "/",
-            Secure = false
+            Secure = CookieSecurity.ShouldUseSecureCookies(_configuration)
         });
     }
 

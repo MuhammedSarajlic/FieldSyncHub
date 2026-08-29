@@ -55,7 +55,7 @@ public class TokenService : ITokenService
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = false, // Change to true in production
+            Secure = CookieSecurity.ShouldUseSecureCookies(_configuration),
             SameSite = SameSiteMode.Strict,
         };
 

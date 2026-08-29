@@ -27,11 +27,13 @@ builder.Services.AddDbContext<DataContext>(options =>
         new MySqlServerVersion(new Version(8, 0, 36))
     ));
 
+var allowedOrigins = CorsConfiguration.ParseAllowedOrigins(builder.Configuration["AppSettings:FrontendUrl"]);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", cf =>
     {
-        cf.WithOrigins("http://localhost:5173")
+        cf.WithOrigins(allowedOrigins)
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials();
