@@ -211,6 +211,8 @@ public class DataContext : DbContext
             .WithMany() // if Employee doesn’t have backref
             .UsingEntity(j => j.ToTable("EventEmployees")); // join table name
 
+        ConfigureDecimalPrecision(modelBuilder);
+
         // Defence in depth behind the application-level workspace checks every
         // service already does: a forgotten .Where(WorkspaceId == ...) in a new query
         // can no longer leak another tenant's rows, because every query against these
@@ -257,4 +259,22 @@ public class DataContext : DbContext
         modelBuilder.Entity<ActivityHistory>().HasIndex(a => new { a.EntityType, a.EntityId });
     }
 
+    private static void ConfigureDecimalPrecision(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<LineItem>().Property(li => li.UnitPrice).HasPrecision(19, 4);
+        modelBuilder.Entity<LineItem>().Property(li => li.Cost).HasPrecision(19, 4);
+
+        modelBuilder.Entity<ServiceItem>().Property(si => si.UnitPrice).HasPrecision(19, 4);
+        modelBuilder.Entity<ServiceItem>().Property(si => si.Cost).HasPrecision(19, 4);
+
+        modelBuilder.Entity<Job>().Property(j => j.DepositAmount).HasPrecision(19, 4);
+        modelBuilder.Entity<Job>().Property(j => j.DiscountValue).HasPrecision(19, 4);
+        modelBuilder.Entity<Job>().Property(j => j.TaxRate).HasPrecision(9, 6);
+
+        modelBuilder.Entity<Invoice>().Property(i => i.Discount).HasPrecision(19, 4);
+        modelBuilder.Entity<Invoice>().Property(i => i.TaxRate).HasPrecision(9, 6);
+
+        modelBuilder.Entity<Quote>().Property(q => q.DiscountValue).HasPrecision(19, 4);
+        modelBuilder.Entity<Quote>().Property(q => q.TaxRate).HasPrecision(9, 6);
+    }
 }
