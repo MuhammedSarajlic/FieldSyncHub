@@ -16,9 +16,10 @@ public class JobService : IJobService
         _context = context;
     }
 
-    public async Task<ApiResponse<Job>> GetJobById(Guid jobId, Guid callerWorkspaceId)
+    public async Task<ApiResponse<Job>> GetJobById(Guid jobId, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null)
     {
-        var job = await _context.Jobs.Where(j => j.Id == jobId && j.WorkspaceId == callerWorkspaceId)
+        var job = await _context.Jobs.Where(j => j.Id == jobId && j.WorkspaceId == callerWorkspaceId
+                                        && (restrictToEmployeeId == null || j.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
                                     .Include(j => j.LineItems)
                                         .ThenInclude(l => l.ServiceItem)
                                     .Include(j => j.Customer)
@@ -36,9 +37,10 @@ public class JobService : IJobService
         };
     }
 
-    public async Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId, Guid callerWorkspaceId)
+    public async Task<ApiResponse<List<Job>>> GetJobsByCustomerId(Guid customerId, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null)
     {
-        var jobs = await _context.Jobs.Where(j => j.CustomerId == customerId && j.WorkspaceId == callerWorkspaceId)
+        var jobs = await _context.Jobs.Where(j => j.CustomerId == customerId && j.WorkspaceId == callerWorkspaceId
+                                        && (restrictToEmployeeId == null || j.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
                                     .Include(j => j.LineItems)
                                         .ThenInclude(li => li.ServiceItem)
                                     .Include(j => j.Property)
@@ -59,9 +61,10 @@ public class JobService : IJobService
         return new ApiResponse<List<Job>> { Success = true, Payload = filteredJobs };
     }
 
-    public async Task<Job> GetJobByJobNumber(string jobNumber, Guid callerWorkspaceId)
+    public async Task<Job> GetJobByJobNumber(string jobNumber, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null)
     {
-        var job = await _context.Jobs.Where(j => j.JobNumber == jobNumber && j.WorkspaceId == callerWorkspaceId)
+        var job = await _context.Jobs.Where(j => j.JobNumber == jobNumber && j.WorkspaceId == callerWorkspaceId
+                                && (restrictToEmployeeId == null || j.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
                             .Include(j => j.LineItems)
                                 .ThenInclude(l => l.ServiceItem)
                             .Include(j => j.Customer)
@@ -74,10 +77,11 @@ public class JobService : IJobService
 
     }
 
-    public async Task<ApiResponse<PagedResult<Job>>> GetJobsByWorkspace(Guid workspaceId, int pageNumber, int pageSize)
+    public async Task<ApiResponse<PagedResult<Job>>> GetJobsByWorkspace(Guid workspaceId, int pageNumber, int pageSize, Guid? restrictToEmployeeId = null)
     {
         var query = _context.Jobs
-            .Where(j => j.WorkspaceId == workspaceId)
+            .Where(j => j.WorkspaceId == workspaceId
+                && (restrictToEmployeeId == null || j.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
             .Include(j => j.Customer)
             .Include(j => j.Property)
             .Include(j => j.LineItems)
@@ -108,10 +112,12 @@ public class JobService : IJobService
     JobFilterDto filterDto,
     Guid workspaceId,
     int pageNumber,
-    int pageSize)
+    int pageSize,
+    Guid? restrictToEmployeeId = null)
     {
         var dbQuery = _context.Jobs
-            .Where(j => j.WorkspaceId == workspaceId)
+            .Where(j => j.WorkspaceId == workspaceId
+                && (restrictToEmployeeId == null || j.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
             .Include(j => j.Customer)
             .Include(j => j.Property)
             .Include(j => j.LineItems)
@@ -312,7 +318,7 @@ public class JobService : IJobService
     }
 
 
-    public async Task<ApiResponse<Job>> UpdateJob(UpdateJobDto updatedJobDto, Guid callerWorkspaceId)
+    public async Task<ApiResponse<Job>> UpdateJob(UpdateJobDto updatedJobDto, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null)
     {
         var existingJob = await _context.Jobs
                                         .Include(j => j.LineItems)
@@ -320,7 +326,8 @@ public class JobService : IJobService
                                             .ThenInclude(e => e.User)
                                         .FirstOrDefaultAsync(j => j.Id == updatedJobDto.Id);
 
-        if (existingJob == null || existingJob.WorkspaceId != callerWorkspaceId)
+        if (existingJob == null || existingJob.WorkspaceId != callerWorkspaceId
+            || (restrictToEmployeeId != null && !existingJob.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
         {
             return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
         }
@@ -452,11 +459,12 @@ public class JobService : IJobService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace, Guid callerWorkspaceId)
+    public async Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null)
     {
-        var job = await _context.Jobs.FirstOrDefaultAsync(j => j.Id == jobId);
+        var job = await _context.Jobs.Include(j => j.AssignedTeamMembers).FirstOrDefaultAsync(j => j.Id == jobId);
 
-        if (job == null || job.WorkspaceId != callerWorkspaceId)
+        if (job == null || job.WorkspaceId != callerWorkspaceId
+            || (restrictToEmployeeId != null && !job.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
             return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
 
         if (replace)

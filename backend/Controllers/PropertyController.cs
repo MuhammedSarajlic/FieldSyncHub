@@ -3,6 +3,7 @@ using backend.Models;
 using backend.Response;
 using backend.Services.CurrentUserService;
 using backend.Services.PropertyService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -52,6 +53,7 @@ public class PropertyController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteProperty(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)

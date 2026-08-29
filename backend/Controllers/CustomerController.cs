@@ -4,6 +4,7 @@ using backend.Response;
 using backend.Services.CurrentUserService;
 using backend.Services.CustomerService;
 using backend.Wrappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -79,6 +80,7 @@ public class CustomerController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteCustomer(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -111,6 +113,7 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("export/{workspaceId:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> ExportCustomers(Guid workspaceId)
     {
         return await _customerService.ExportCustomers(workspaceId);

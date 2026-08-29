@@ -2,8 +2,10 @@ using backend.Dtos.JobDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.CurrentUserService;
+using backend.Services.EmployeeService;
 using backend.Services.JobService;
 using backend.Wrappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -13,11 +15,28 @@ namespace backend.Controllers;
 public class JobController : ControllerBase
 {
     private readonly IJobService _jobService;
+    private readonly IEmployeeService _employeeService;
     private readonly ICurrentUser _currentUser;
-    public JobController(IJobService jobService, ICurrentUser currentUser)
+    public JobController(IJobService jobService, IEmployeeService employeeService, ICurrentUser currentUser)
     {
         _jobService = jobService;
+        _employeeService = employeeService;
         _currentUser = currentUser;
+    }
+
+    // A caller with role Employee only sees/edits jobs they're assigned to - this
+    // resolves their Employee record (never trusting a request-supplied id) and
+    // returns an id that can't match anything if none exists, so lookup failure
+    // fails closed rather than silently granting unrestricted access.
+    private async Task<Guid?> ResolveJobRestriction(Guid workspaceId)
+    {
+        if (_currentUser.Role != UserRole.Employee)
+        {
+            return null;
+        }
+
+        var employeeId = await _employeeService.GetEmployeeIdForUserAsync(_currentUser.UserId!.Value, workspaceId);
+        return employeeId ?? Guid.Empty;
     }
 
     [HttpGet("{jobId:guid}")]
@@ -28,7 +47,8 @@ public class JobController : ControllerBase
             return Forbid();
         }
 
-        return Ok(await _jobService.GetJobById(jobId, callerWorkspaceId));
+        var restriction = await ResolveJobRestriction(callerWorkspaceId);
+        return Ok(await _jobService.GetJobById(jobId, callerWorkspaceId, restriction));
     }
 
     [HttpGet("customer/{customerId:guid}")]
@@ -39,13 +59,22 @@ public class JobController : ControllerBase
             return Forbid();
         }
 
-        return Ok(await _jobService.GetJobsByCustomerId(customerId, callerWorkspaceId));
+        var restriction = await ResolveJobRestriction(callerWorkspaceId);
+        return Ok(await _jobService.GetJobsByCustomerId(customerId, callerWorkspaceId, restriction));
     }
 
     [HttpGet("employee/{employeeId:guid}")]
     public async Task<ActionResult<ApiResponse<List<Job>>>> GetJobsByEmployeeId(Guid employeeId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
+        // An Employee can only ever list their own jobs this way - otherwise
+        // swapping the id in the URL would let them browse any teammate's jobs.
+        var restriction = await ResolveJobRestriction(callerWorkspaceId);
+        if (restriction != null && restriction != employeeId)
         {
             return Forbid();
         }
@@ -59,7 +88,8 @@ public class JobController : ControllerBase
     [FromQuery] int pageNumber,
     [FromQuery] int pageSize)
     {
-        return await _jobService.GetJobsByWorkspace(workspaceId, pageNumber, pageSize);
+        var restriction = await ResolveJobRestriction(workspaceId);
+        return await _jobService.GetJobsByWorkspace(workspaceId, pageNumber, pageSize, restriction);
     }
 
     [HttpGet("workspace/{workspaceId:guid}/filter")]
@@ -69,7 +99,8 @@ public class JobController : ControllerBase
         [FromQuery] int pageSize,
         [FromQuery] JobFilterDto filterDto)
     {
-        return await _jobService.GetJobsByFilter(filterDto, workspaceId, pageNumber, pageSize);
+        var restriction = await ResolveJobRestriction(workspaceId);
+        return await _jobService.GetJobsByFilter(filterDto, workspaceId, pageNumber, pageSize, restriction);
     }
 
     [HttpGet("job-number/{jobNumber}")]
@@ -80,7 +111,8 @@ public class JobController : ControllerBase
             return Forbid();
         }
 
-        var job = await _jobService.GetJobByJobNumber(jobNumber, callerWorkspaceId);
+        var restriction = await ResolveJobRestriction(callerWorkspaceId);
+        var job = await _jobService.GetJobByJobNumber(jobNumber, callerWorkspaceId, restriction);
         return Ok(job);
     }
 
@@ -100,11 +132,13 @@ public class JobController : ControllerBase
             return Forbid();
         }
 
-        var job = await _jobService.UpdateJob(updatedJobDto, callerWorkspaceId);
+        var restriction = await ResolveJobRestriction(callerWorkspaceId);
+        var job = await _jobService.UpdateJob(updatedJobDto, callerWorkspaceId, restriction);
         return Ok(job);
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteJob(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -134,7 +168,8 @@ public class JobController : ControllerBase
             return Forbid();
         }
 
-        await _jobService.UpdateJobTags(jobId, tags, replace, callerWorkspaceId);
+        var restriction = await ResolveJobRestriction(callerWorkspaceId);
+        await _jobService.UpdateJobTags(jobId, tags, replace, callerWorkspaceId, restriction);
         return Ok();
     }
 

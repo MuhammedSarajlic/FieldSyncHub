@@ -7,6 +7,7 @@ using backend.Services.CurrentUserService;
 using backend.Services.PdfService;
 using backend.Services.QuoteService;
 using backend.Wrappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -131,6 +132,7 @@ public class QuoteController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteQuote(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)

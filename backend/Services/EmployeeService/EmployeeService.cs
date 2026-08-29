@@ -17,6 +17,17 @@ public class EmployeeService : IEmployeeService
         _context = context;
     }
 
+    // Resolves the Employee record backing a logged-in user, so callers whose role is
+    // Employee can be scoped to only the jobs they're actually assigned to instead of
+    // trusting an id supplied in the request.
+    public async Task<Guid?> GetEmployeeIdForUserAsync(Guid userId, Guid workspaceId)
+    {
+        return await _context.Employees
+            .Where(e => e.UserId == userId && e.WorkspaceId == workspaceId)
+            .Select(e => (Guid?)e.Id)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<ApiResponse<Employee>> GetEmployeesById(Guid id, Guid callerWorkspaceId)
     {
         var employee = await _context.Employees.Where(e => e.Id == id && e.WorkspaceId == callerWorkspaceId).Include(e => e.User).FirstOrDefaultAsync();

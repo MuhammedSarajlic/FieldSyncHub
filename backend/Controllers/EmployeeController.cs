@@ -3,6 +3,7 @@ using backend.Models;
 using backend.Response;
 using backend.Services.CurrentUserService;
 using backend.Services.EmployeeService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -51,6 +52,7 @@ public class EmployeeController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<ActionResult<Employee>> CreateEmployee([FromBody] CreateEmployeeDto createEmployeeDto)
     {
         var createdEmployee = await _employeeService.CreateEmployee(createEmployeeDto);
@@ -58,6 +60,7 @@ public class EmployeeController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<ActionResult<Employee>> UpdateEmployee([FromBody] UpdateEmployeeDto updateEmployeeDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -70,6 +73,7 @@ public class EmployeeController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteEmployee(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -89,6 +93,7 @@ public class EmployeeController : ControllerBase
     }
 
     [HttpGet("export/{workspaceId:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> ExportEmployees(Guid workspaceId)
     {
         return await _employeeService.ExportEmployees(workspaceId);

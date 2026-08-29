@@ -3,6 +3,7 @@ using backend.Models;
 using backend.Response;
 using backend.Services.CurrentUserService;
 using backend.Services.LeadService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -72,6 +73,7 @@ public class LeadController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteLead(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)

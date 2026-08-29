@@ -3,6 +3,7 @@ using backend.Models;
 using backend.Response;
 using backend.Services.ServiceItemService;
 using backend.Wrappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -54,6 +55,7 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<ActionResult<ServiceItem>> CreateServiceItem([FromBody] CreateServiceItemDto createServiceItemDto)
     {
         var createdServiceItem = await _serviceItemService.CreateServiceItem(createServiceItemDto);
@@ -61,6 +63,7 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<ActionResult<ApiResponse<ServiceItem>>> UpdateServiceItem([FromBody] UpdateServiceItemDto updateServiceItemDto)
     {
         var updatedServiceItem = await _serviceItemService.UpdateServiceItem(updateServiceItemDto);
@@ -68,6 +71,7 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteServiceItem(Guid id)
     {
         await _serviceItemService.DeleteServiceItem(id);
@@ -75,12 +79,14 @@ public class ServiceItemController : ControllerBase
     }
 
     [HttpPost("import/{workspaceId}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<ApiResponse<object>> ImportServiceItems([FromBody] List<ImportedServiceItemDto> serviceItems, Guid workspaceId)
     {
         return await _serviceItemService.ImportServiceItemsAsync(serviceItems, workspaceId);
     }
 
     [HttpGet("export/{workspaceId}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> ExportServiceItems(Guid workspaceId)
     {
         return await _serviceItemService.ExportServiceItemsToCsvAsync(workspaceId);

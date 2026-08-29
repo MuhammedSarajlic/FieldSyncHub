@@ -4,6 +4,7 @@ using backend.Response;
 using backend.Services.CurrentUserService;
 using backend.Services.InvoiceService;
 using backend.Wrappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -107,6 +108,7 @@ public class InvoiceController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)

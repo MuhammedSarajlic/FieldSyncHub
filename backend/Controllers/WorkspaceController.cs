@@ -49,6 +49,7 @@ public class WorkspaceController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<ActionResult<GetWorkspaceDto>> UpdateWorkspace([FromBody] UpdateWorkspaceDto updateWorkspaceDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)

@@ -2,6 +2,7 @@ using backend.Dtos.CustomFieldDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.CustomFieldService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -31,6 +32,7 @@ public class CustomFieldController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<ActionResult<CustomField>> CreateCustomField([FromBody] CreateCustomFieldDto createCustomFieldDto)
     {
         var customField = await _customFieldService.CreateCustomField(createCustomFieldDto);
@@ -38,6 +40,7 @@ public class CustomFieldController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<ActionResult<CustomField>> UpdateCustomField([FromBody] UpdateCustomFieldDto updatedCustomField)
     {
         var customField = await _customFieldService.UpdateCustomField(updatedCustomField);
@@ -45,6 +48,7 @@ public class CustomFieldController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteCustomField(Guid id)
     {
         await _customFieldService.DeleteCustomField(id);

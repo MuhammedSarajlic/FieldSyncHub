@@ -1,6 +1,7 @@
 using backend.Models;
 using backend.Dtos.EventDto;
 using backend.Services.EventService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -48,6 +49,7 @@ public class EventController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteEvent(Guid id)
     {
         var deleted = await _eventService.DeleteEventAsync(id);

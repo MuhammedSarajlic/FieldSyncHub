@@ -2,6 +2,7 @@ using backend.Dtos.CustomerPhoneDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.CustomerPhoneService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -46,6 +47,7 @@ public class CustomerPhoneController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteCustomerPhone(Guid id)
     {
         await _customerPhoneService.DeleteCustomerPhone(id);

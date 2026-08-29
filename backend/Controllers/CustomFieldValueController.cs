@@ -2,6 +2,7 @@ using backend.Dtos.CustomFieldValueDto;
 using backend.Models;
 using backend.Response;
 using backend.Services.CustomFieldValueService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -39,6 +40,7 @@ public class CustomFieldValueController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteCustomField(Guid id)
     {
         await _customFieldServiceValue.DeleteCustomFieldValue(id);

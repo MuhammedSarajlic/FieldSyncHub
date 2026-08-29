@@ -15,5 +15,6 @@ namespace backend.Services.EmployeeService
         Task<Employee> UpdateEmployee(UpdateEmployeeDto updateEmployeeDto, Guid callerWorkspaceId);
         Task DeleteEmployee(Guid id, Guid callerWorkspaceId);
         Task<IActionResult> ExportEmployees(Guid workspaceId);
+        Task<Guid?> GetEmployeeIdForUserAsync(Guid userId, Guid workspaceId);
     }
 }
