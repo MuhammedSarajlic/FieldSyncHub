@@ -1,5 +1,6 @@
 using backend.Data;
 using backend.Models;
+using backend.Services.EmailService;
 using backend.Services.InvoiceService;
 using Microsoft.EntityFrameworkCore;
 
@@ -127,11 +128,22 @@ public class InvoicePdfDetailsTests
             ]
         };
 
-        var service = new InvoiceService(context);
+        var service = new InvoiceService(context, new StubEmailService());
         var pdfBytes = service.GenerateDocument(invoice);
 
         Assert.NotNull(pdfBytes);
         Assert.NotEmpty(pdfBytes);
         Assert.Equal("%PDF", System.Text.Encoding.ASCII.GetString(pdfBytes, 0, 4));
+    }
+
+    private sealed class StubEmailService : IEmailService
+    {
+        public bool IsConfigured => true;
+
+        public Task<EmailSendResult> SendEmailAsync(string toEmail, string subject, string plainTextContent, string htmlContent)
+            => Task.FromResult(EmailSendResult.Ok);
+
+        public Task<EmailSendResult> SendEmailAsync(IEnumerable<string> toEmails, string subject, string plainTextContent, string htmlContent, IEnumerable<EmailAttachment>? attachments = null)
+            => Task.FromResult(EmailSendResult.Ok);
     }
 }

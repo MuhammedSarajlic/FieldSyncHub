@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.Dtos.InvoiceDto;
 using backend.Models;
+using backend.Services.EmailService;
 using backend.Services.InvoiceService;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,7 +75,7 @@ public class RecordInvoicePaymentTests
         });
         await context.SaveChangesAsync();
 
-        var service = new InvoiceService(context);
+        var service = new InvoiceService(context, new StubEmailService());
         var updatedInvoice = await service.RecordPayment(
             invoiceId,
             new RecordInvoicePaymentDto
@@ -122,7 +123,7 @@ public class RecordInvoicePaymentTests
         });
         await context.SaveChangesAsync();
 
-        var service = new InvoiceService(context);
+        var service = new InvoiceService(context, new StubEmailService());
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.RecordPayment(
             invoiceId,
@@ -136,5 +137,16 @@ public class RecordInvoicePaymentTests
             Guid.NewGuid()));
 
         Assert.Equal("Payment amount cannot exceed the remaining balance due.", ex.Message);
+    }
+
+    private sealed class StubEmailService : IEmailService
+    {
+        public bool IsConfigured => true;
+
+        public Task<EmailSendResult> SendEmailAsync(string toEmail, string subject, string plainTextContent, string htmlContent)
+            => Task.FromResult(EmailSendResult.Ok);
+
+        public Task<EmailSendResult> SendEmailAsync(IEnumerable<string> toEmails, string subject, string plainTextContent, string htmlContent, IEnumerable<EmailAttachment>? attachments = null)
+            => Task.FromResult(EmailSendResult.Ok);
     }
 }

@@ -5,6 +5,8 @@ using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Response;
 using backend.Services.Billing;
+using backend.Services.EmailService;
+using backend.Services.StorageService;
 using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +19,15 @@ namespace backend.Services.InvoiceService;
 public class InvoiceService : IInvoiceService
 {
     private readonly DataContext _context;
+    private readonly IEmailService _emailService;
 
-    public InvoiceService(DataContext context)
+    public InvoiceService(DataContext context, IEmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
 
-    public async Task<Invoice?> GetInvoiceById(Guid id, Guid callerWorkspaceId)
+    public async Task<Invoice> GetInvoiceById(Guid id, Guid callerWorkspaceId)
     {
         var invoice = await _context.Invoices
             .Where(i => i.Id == id)
@@ -320,6 +324,204 @@ public class InvoiceService : IInvoiceService
         await _context.SaveChangesAsync();
 
         return invoice;
+    }
+
+    public async Task<ApiResponse<Invoice>> SendInvoice(Guid id, SendInvoiceDto sendInvoiceDto, Guid callerWorkspaceId, Guid userId, string userName)
+    {
+        var invoice = await _context.Invoices
+            .Where(i => i.Id == id)
+            .Include(i => i.Customer)
+                .ThenInclude(c => c.CustomerPhones)
+            .Include(i => i.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .Include(i => i.Payments)
+            .Include(i => i.Property)
+            .FirstOrDefaultAsync();
+
+        if (invoice == null || invoice.WorkspaceId != callerWorkspaceId)
+        {
+            return new ApiResponse<Invoice>
+            {
+                Success = false,
+                ErrorMessage = $"Invoice with ID {id} not found."
+            };
+        }
+
+        var recipients = (sendInvoiceDto.Recipients ?? [])
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Select(r => r.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (recipients.Count == 0)
+        {
+            return new ApiResponse<Invoice>
+            {
+                Success = false,
+                ErrorMessage = "Add at least one recipient before sending."
+            };
+        }
+
+        var customerEmails = invoice.Customer?.Emails ?? [];
+        var unknownRecipients = recipients
+            .Where(r => !customerEmails.Any(e => e.Equals(r, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        if (unknownRecipients.Count > 0)
+        {
+            return new ApiResponse<Invoice>
+            {
+                Success = false,
+                ErrorMessage = $"These addresses aren't on file for this invoice's customer: {string.Join(", ", unknownRecipients)}."
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(sendInvoiceDto.Subject))
+        {
+            return new ApiResponse<Invoice>
+            {
+                Success = false,
+                ErrorMessage = "A subject is required."
+            };
+        }
+
+        if (!_emailService.IsConfigured)
+        {
+            return new ApiResponse<Invoice>
+            {
+                Success = false,
+                ErrorMessage = "Email sending isn't set up yet. Add your Resend API token and sender address to the server configuration."
+            };
+        }
+
+        if (!UploadPolicy.TryGetRules("quote-attachment", out var attachmentRules))
+        {
+            throw new InvalidOperationException("Missing upload policy for quote-attachment.");
+        }
+
+        long totalAttachmentBytes = 0;
+        foreach (var file in sendInvoiceDto.Attachments ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(file.Content)) continue;
+
+            var contentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType;
+            if (!attachmentRules.AllowedContentTypes.Contains(contentType, StringComparer.OrdinalIgnoreCase))
+            {
+                return new ApiResponse<Invoice>
+                {
+                    Success = false,
+                    ErrorMessage = $"Attachment '{file.FileName}' has a file type that isn't allowed."
+                };
+            }
+
+            var estimatedBytes = (long)file.Content.Length * 3 / 4;
+            if (estimatedBytes > attachmentRules.MaxBytes || totalAttachmentBytes + estimatedBytes > attachmentRules.MaxBytes)
+            {
+                return new ApiResponse<Invoice>
+                {
+                    Success = false,
+                    ErrorMessage = $"Attachments exceed the {attachmentRules.MaxBytes / (1024 * 1024)}MB total limit for a single email."
+                };
+            }
+
+            totalAttachmentBytes += estimatedBytes;
+        }
+
+        var attachments = new List<EmailAttachment>();
+
+        if (sendInvoiceDto.AttachPdf)
+        {
+            try
+            {
+                var pdfBytes = GenerateDocument(invoice);
+                var fileName = string.IsNullOrWhiteSpace(invoice.InvoiceNumber)
+                    ? "Invoice.pdf"
+                    : $"Invoice-{invoice.InvoiceNumber}.pdf";
+                attachments.Add(new EmailAttachment(fileName, "application/pdf", pdfBytes));
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<Invoice>
+                {
+                    Success = false,
+                    ErrorMessage = $"Could not generate the invoice PDF: {ex.Message}"
+                };
+            }
+        }
+
+        foreach (var file in sendInvoiceDto.Attachments ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(file.Content)) continue;
+
+            try
+            {
+                attachments.Add(new EmailAttachment(
+                    string.IsNullOrWhiteSpace(file.FileName) ? "attachment" : file.FileName,
+                    string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                    Convert.FromBase64String(file.Content)));
+            }
+            catch (FormatException)
+            {
+                return new ApiResponse<Invoice>
+                {
+                    Success = false,
+                    ErrorMessage = $"Attachment '{file.FileName}' could not be read."
+                };
+            }
+        }
+
+        var workspace = await _context.Workspaces
+            .AsNoTracking()
+            .FirstOrDefaultAsync(w => w.Id == invoice.WorkspaceId);
+
+        var companyName = GetWorkspaceDisplayName(workspace);
+
+        var sent = await _emailService.SendEmailAsync(
+            recipients,
+            sendInvoiceDto.Subject,
+            sendInvoiceDto.Message,
+            BuildInvoiceEmailHtml(sendInvoiceDto.Message, companyName),
+            attachments);
+
+        if (!sent.Success)
+        {
+            return new ApiResponse<Invoice>
+            {
+                Success = false,
+                ErrorMessage = $"The email could not be delivered: {sent.Error}"
+            };
+        }
+
+        invoice.SentAt = DateTime.UtcNow;
+        invoice.UpdatedAt = DateTime.UtcNow;
+
+        if (invoice.WorkflowStatus == InvoiceStatus.Draft)
+        {
+            invoice.WorkflowStatus = InvoiceStatus.Sent;
+        }
+
+        _context.ActivityHistorys.Add(new ActivityHistory
+        {
+            Id = Guid.NewGuid(),
+            Type = "InvoiceSent",
+            Action = $"emailed the invoice to {string.Join(", ", recipients)}.",
+            EntityType = nameof(Invoice),
+            EntityId = invoice.Id,
+            WorkspaceId = invoice.WorkspaceId,
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = userId,
+            ChangedByName = userName,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<Invoice>
+        {
+            Success = true,
+            Payload = await GetInvoiceById(invoice.Id, callerWorkspaceId)
+        };
     }
 
     public async Task<Invoice> RecordPayment(Guid invoiceId, RecordInvoicePaymentDto paymentDto, Guid callerWorkspaceId, Guid recordedByUserId)
@@ -619,6 +821,20 @@ public class InvoiceService : IInvoiceService
 
         var address = string.Join(", ", parts);
         return string.IsNullOrWhiteSpace(address) ? null : address;
+    }
+
+    private static string BuildInvoiceEmailHtml(string message, string companyName)
+    {
+        var body = System.Net.WebUtility.HtmlEncode(message ?? string.Empty)
+            .Replace("\r\n", "\n")
+            .Replace("\n", "<br />");
+
+        return $@"
+<div style=""font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #1a2e35; max-width: 640px;"">
+  <div>{body}</div>
+  <hr style=""border: none; border-top: 1px solid #e5e7eb; margin: 28px 0 12px;"" />
+  <p style=""font-size: 12px; color: #6b7280; margin: 0;"">Sent by {System.Net.WebUtility.HtmlEncode(companyName)}</p>
+</div>";
     }
 
     private DateTime CalculateDueDate(DateTime issueDate, string paymentTerms, DateTime? dueDate)

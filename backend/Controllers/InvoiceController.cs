@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using backend.Dtos.InvoiceDto;
 using backend.Models;
 using backend.Response;
@@ -6,6 +7,7 @@ using backend.Services.InvoiceService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
@@ -105,6 +107,24 @@ public class InvoiceController : ControllerBase
 
         var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto, callerWorkspaceId);
         return Ok(updatedInvoice);
+    }
+
+    [HttpPost("{id:guid}/send")]
+    [EnableRateLimiting("email-relay")]
+    [RequestSizeLimit(15 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<Invoice>>> SendInvoice(Guid id, [FromBody] SendInvoiceDto sendInvoiceDto)
+    {
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid userId)
+        {
+            return Forbid();
+        }
+
+        var userName = User.Identity?.Name
+            ?? User.FindFirst(ClaimTypes.Name)?.Value
+            ?? "System";
+
+        var result = await _invoiceService.SendInvoice(id, sendInvoiceDto, callerWorkspaceId, userId, userName);
+        return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpPost("{id}/payments")]

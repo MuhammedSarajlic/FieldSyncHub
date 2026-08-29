@@ -14,6 +14,7 @@ public interface IInvoiceService
     Task<ApiResponse<List<Invoice>>> GetInvoicesByCustomerId(Guid customerId, Guid callerWorkspaceId);
     Task<Invoice> CreateInvoice(CreateInvoiceDto createInvoiceDto);
     Task<Invoice> UpdateInvoice(UpdateInvoiceDto updatedInvoiceDto, Guid callerWorkspaceId);
+    Task<ApiResponse<Invoice>> SendInvoice(Guid id, SendInvoiceDto sendInvoiceDto, Guid callerWorkspaceId, Guid userId, string userName);
     Task<Invoice> RecordPayment(Guid invoiceId, RecordInvoicePaymentDto paymentDto, Guid callerWorkspaceId, Guid recordedByUserId);
     Task DeleteInvoice(Guid id, Guid callerWorkspaceId);
     byte[] GenerateDocument(Invoice invoice);

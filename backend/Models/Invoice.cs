@@ -43,6 +43,7 @@ public class Invoice
     public InvoiceStatus WorkflowStatus { get; set; } = InvoiceStatus.Draft;
     [NotMapped]
     public InvoiceStatus Status => PaymentLedgerCalculator.DeriveInvoiceStatus(WorkflowStatus, BalanceDue, AmountPaid, DueDate, DateTime.UtcNow);
+    public DateTime? SentAt { get; set; }
     public DateTime IssueDate { get; set; } = DateTime.UtcNow;
     public DateTime DueDate { get; set; }
     public string PaymentTerms { get; set; } = string.Empty;

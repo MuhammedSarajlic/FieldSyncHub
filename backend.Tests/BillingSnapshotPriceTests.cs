@@ -90,7 +90,7 @@ public class BillingSnapshotPriceTests
         });
         await context.SaveChangesAsync();
 
-        var service = new InvoiceService(context);
+        var service = new InvoiceService(context, new StubEmailService());
         var stats = await service.GetInvoiceStats(workspaceId);
 
         Assert.Equal(240m, stats.TotalPaidThisMonth);
