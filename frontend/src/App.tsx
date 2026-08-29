@@ -27,6 +27,7 @@ import PrivateRoute from './utils/AuthHelpers/PrivateRoute';
 import PublicRoute from './utils/AuthHelpers/PublicRoute';
 import { useAuth } from './context/AuthProvider';
 import RequireWorkspace from './utils/AuthHelpers/RequireWorkspace';
+import RequireTwoFactorSetup from './utils/AuthHelpers/RequireTwoFactorSetup';
 import InviteJoin from './pages/InviteJoin';
 import EmployeeDetails from './pages/employees/EmployeeDetails';
 import InvoiceDetails from './pages/invoices/InvoiceDetails';
@@ -64,31 +65,44 @@ function App() {
           <Route path='workspace' element={<Workspace />} />
 
           <Route element={<RequireWorkspace />}>
-            <Route path='home' element={<Home />} />
-            <Route path='calendar' element={<Calendar />} />
-            <Route path='customers' element={<Customers />} />
-            <Route path='customers/:customerId' element={<CustomerDetails />} />
-            <Route path='jobs' element={<Jobs />} />
-            <Route path='jobs/:jobId' element={<JobDetails />} />
-            <Route path='jobsd' element={<JobDetails />} />
-            <Route path='invoices' element={<Invoices />} />
-            <Route path='invoices/:invoiceId' element={<InvoiceDetails />} />
-            <Route path='employees' element={<Employees />} />
-            <Route path='employees/:employeeId' element={<EmployeeDetails />} />
-            <Route path='dispatch' element={<Dispatch />} />
-            <Route path='leads' element={<Leads />} />
-            <Route path='leads/:leadId' element={<LeadDetails />} />
-            <Route path='quotes' element={<Quotes />} />
-            <Route path='quotes/:quoteId' element={<QuoteDetails />} />
-            <Route path='pricebook' element={<Pricebook />} />
-            <Route
-              path='pricebook/:serviceItemId'
-              element={<ServiceItemDetails />}
-            />
-            <Route path='marketing' element={<Marketing />} />
-            <Route path='reports' element={<Reports />} />
+            <Route element={<RequireTwoFactorSetup />}>
+              <Route path='home' element={<Home />} />
+              <Route path='calendar' element={<Calendar />} />
+              <Route path='customers' element={<Customers />} />
+              <Route
+                path='customers/:customerId'
+                element={<CustomerDetails />}
+              />
+              <Route path='jobs' element={<Jobs />} />
+              <Route path='jobs/:jobId' element={<JobDetails />} />
+              <Route path='jobsd' element={<JobDetails />} />
+              <Route path='invoices' element={<Invoices />} />
+              <Route
+                path='invoices/:invoiceId'
+                element={<InvoiceDetails />}
+              />
+              <Route path='employees' element={<Employees />} />
+              <Route
+                path='employees/:employeeId'
+                element={<EmployeeDetails />}
+              />
+              <Route path='dispatch' element={<Dispatch />} />
+              <Route path='leads' element={<Leads />} />
+              <Route path='leads/:leadId' element={<LeadDetails />} />
+              <Route path='quotes' element={<Quotes />} />
+              <Route path='quotes/:quoteId' element={<QuoteDetails />} />
+              <Route path='pricebook' element={<Pricebook />} />
+              <Route
+                path='pricebook/:serviceItemId'
+                element={<ServiceItemDetails />}
+              />
+              <Route path='marketing' element={<Marketing />} />
+              <Route path='reports' element={<Reports />} />
+              <Route path='support' element={<Settings />} />
+            </Route>
+            {/* Outside the 2FA gate - an Owner who hasn't enrolled yet must
+                still be able to reach the settings page that lets them. */}
             <Route path='settings' element={<Settings />} />
-            <Route path='support' element={<Settings />} />
           </Route>
         </Route>
 

@@ -12,6 +12,7 @@ export type TUser = {
   workspaceId?: string;
   workspace?: TWorkspace;
   role: UserRole;
+  twoFactorEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,6 +24,7 @@ export type TGetUser = {
   lastName: string;
   fullName: string;
   role: UserRole;
+  twoFactorEnabled: boolean;
   workspace?: TWorkspaceLookup;
   createdAt: string;
   updatedAt: string;

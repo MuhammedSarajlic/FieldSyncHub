@@ -55,6 +55,7 @@ public class DataContext : DbContext
     public DbSet<Event> Events => Set<Event>();
     public DbSet<RecurrenceRule> RecurrenceRules => Set<RecurrenceRule>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<RecoveryCode> RecoveryCodes => Set<RecoveryCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -217,6 +218,9 @@ public class DataContext : DbContext
 
         // Revoking every refresh token for a user (password change) queries by UserId.
         modelBuilder.Entity<RefreshToken>().HasIndex(r => r.UserId);
+
+        // Validating a recovery code queries all of a user's unused codes.
+        modelBuilder.Entity<RecoveryCode>().HasIndex(r => r.UserId);
     }
 
 }

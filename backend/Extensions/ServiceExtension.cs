@@ -21,6 +21,7 @@ using backend.Services.PdfService;
 using backend.Services.EventService;
 using backend.Services.CalendarService;
 using backend.Services.StorageService;
+using backend.Services.TwoFactorService;
 using Resend;
 
 namespace backend.Extensions;
@@ -61,5 +62,7 @@ public static class ServiceExtension
         services.AddScoped<ICalendarService, CalendarService>();
         services.AddScoped<QuotePdfService>();
         services.AddScoped<IStorageService, SupabaseStorageService>();
+        services.AddSingleton<TotpSecretProtector>();
+        services.AddScoped<ITwoFactorService, TwoFactorService>();
     }
 }

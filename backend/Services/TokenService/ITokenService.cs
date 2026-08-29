@@ -20,4 +20,17 @@ public interface ITokenService
 
     /// <summary>Revokes every outstanding refresh token for a user - e.g. on password change.</summary>
     Task RevokeAllRefreshTokensForUserAsync(Guid userId);
+
+    /// <summary>
+    /// A short-lived (5 min), single-purpose token proving "this caller just
+    /// supplied the right password for this account" without granting any API
+    /// access itself - the JWT bearer pipeline rejects anything but token_type
+    /// "access" outright, so this is only ever accepted by the 2FA challenge
+    /// endpoint, which validates it manually.
+    /// </summary>
+    string CreateMfaChallengeToken(Guid userId);
+
+    /// <summary>Validates signature, expiry, and the "mfa_pending" token_type claim.
+    /// Returns the token's owner if valid, or null otherwise - never throws.</summary>
+    Guid? ValidateMfaChallengeToken(string challengeToken);
 }

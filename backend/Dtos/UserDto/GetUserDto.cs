@@ -11,6 +11,7 @@ public class GetUserDto
     public string LastName { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public UserRole? Role { get; set; }
+    public bool TwoFactorEnabled { get; set; }
     public WorkspaceLookupDto? Workspace { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

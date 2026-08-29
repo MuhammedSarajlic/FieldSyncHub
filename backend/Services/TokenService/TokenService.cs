@@ -18,6 +18,7 @@ public class TokenService : ITokenService
     private const string TokenTypeClaim = "token_type";
     private const string AccessTokenType = "access";
     private const string RefreshTokenType = "refresh";
+    private const string MfaPendingTokenType = "mfa_pending";
 
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IConfiguration _configuration;
@@ -146,6 +147,41 @@ public class TokenService : ITokenService
             token.RevokedAt = now;
         }
         await _context.SaveChangesAsync();
+    }
+
+    public string CreateMfaChallengeToken(Guid userId)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(TokenTypeClaim, MfaPendingTokenType)
+        };
+
+        string? tokenKey = _configuration.GetSection("AppSettings:Token")?.Value;
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+        var token = new JwtSecurityToken(
+            issuer: JwtSettings.Issuer,
+            audience: JwtSettings.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(5),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public Guid? ValidateMfaChallengeToken(string challengeToken)
+    {
+        var principal = ValidateSignatureAndExpiry(challengeToken);
+        if (principal == null || principal.FindFirstValue(TokenTypeClaim) != MfaPendingTokenType)
+        {
+            return null;
+        }
+
+        return Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
     }
 
     private ClaimsPrincipal? ValidateSignatureAndExpiry(string token)

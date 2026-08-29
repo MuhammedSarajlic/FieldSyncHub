@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import images from '../../constants/AssetsConstants/images';
-import { Login, GoogleLogin } from '../../services/Auth';
+import {
+  Login,
+  GoogleLogin,
+  VerifyTwoFactorChallenge,
+} from '../../services/Auth';
 import { useAuth } from '../../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TUserLogin } from '../../types/User';
@@ -46,6 +50,11 @@ const Signin = () => {
   });
   const [currentSlide, setCurrentSlide] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [mfaChallengeToken, setMfaChallengeToken] = useState<string | null>(
+    null
+  );
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaSubmitting, setMfaSubmitting] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -63,6 +72,10 @@ const Signin = () => {
     setError(null);
     try {
       const response = await Login(userLoginData);
+      if (response.data.mfaRequired) {
+        setMfaChallengeToken(response.data.challengeToken);
+        return;
+      }
       const token = response.data.accessToken;
       setStoredToken(token, userLoginData.rememberMe);
       setAccessToken(token);
@@ -71,10 +84,35 @@ const Signin = () => {
     }
   };
 
+  const handleMfaSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!mfaChallengeToken) return;
+    setError(null);
+    setMfaSubmitting(true);
+    try {
+      const response = await VerifyTwoFactorChallenge(
+        mfaChallengeToken,
+        mfaCode,
+        userLoginData.rememberMe
+      );
+      const token = response.data.accessToken;
+      setStoredToken(token, userLoginData.rememberMe);
+      setAccessToken(token);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Invalid code');
+    } finally {
+      setMfaSubmitting(false);
+    }
+  };
+
   const handleGoogleCredential = async (idToken: string) => {
     try {
       const response = await GoogleLogin(idToken);
       if (response.status === 200) {
+        if (response.data.mfaRequired) {
+          setMfaChallengeToken(response.data.challengeToken);
+          return;
+        }
         const token = response.data.accessToken;
         setStoredToken(token, true);
         setAccessToken(token);
@@ -89,6 +127,70 @@ const Signin = () => {
       navigate('/home');
     }
   }, [user, loading]);
+
+  if (mfaChallengeToken) {
+    return (
+      <div className='w-full h-screen flex items-center justify-center bg-gray-50 font-sans px-4'>
+        <motion.div
+          className='w-full max-w-sm space-y-6 bg-white p-8 rounded-xl shadow-lg'
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className='text-center'>
+            <img
+              src={images.logo}
+              alt='logo'
+              className='mx-auto h-10 w-auto mb-4'
+            />
+            <h2 className='text-2xl font-bold text-gray-900'>
+              Two-factor verification
+            </h2>
+            <p className='mt-2 text-sm text-gray-600'>
+              Enter the 6-digit code from your authenticator app, or one of
+              your recovery codes.
+            </p>
+          </div>
+
+          <form onSubmit={handleMfaSubmit} className='space-y-4'>
+            <input
+              type='text'
+              inputMode='text'
+              autoComplete='one-time-code'
+              autoFocus
+              required
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value)}
+              placeholder='123456'
+              className='w-full text-center text-lg tracking-widest py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-bg-primary focus:border-bg-primary'
+            />
+
+            {error && <p className='text-sm text-red-600 text-center'>{error}</p>}
+
+            <button
+              type='submit'
+              disabled={mfaSubmitting}
+              className='w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-bg-primary hover:bg-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bg-primary transition-all duration-200 disabled:opacity-60'
+            >
+              {mfaSubmitting ? 'Verifying…' : 'Verify'}
+            </button>
+
+            <button
+              type='button'
+              onClick={() => {
+                setMfaChallengeToken(null);
+                setMfaCode('');
+                setError(null);
+              }}
+              className='w-full text-sm text-gray-500 hover:text-gray-700 transition-colors'
+            >
+              Back to sign in
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className='w-full h-screen flex bg-gray-50 font-sans'>
