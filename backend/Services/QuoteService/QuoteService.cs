@@ -681,6 +681,42 @@ public class QuoteService : IQuoteService
             };
         }
 
+        if (!UploadPolicy.TryGetRules("quote-attachment", out var attachmentRules))
+        {
+            throw new InvalidOperationException("Missing upload policy for quote-attachment.");
+        }
+
+        // Reject anything over budget from its base64 *string* length - roughly
+        // 4/3 the decoded size - before ever calling Convert.FromBase64String, so
+        // an oversized attachment never gets a decode buffer allocated for it at all.
+        long totalAttachmentBytes = 0;
+        foreach (var file in sendQuoteDto.Attachments ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(file.Content)) continue;
+
+            var contentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType;
+            if (!attachmentRules.AllowedContentTypes.Contains(contentType, StringComparer.OrdinalIgnoreCase))
+            {
+                return new ApiResponse<Quote>
+                {
+                    Success = false,
+                    ErrorMessage = $"Attachment '{file.FileName}' has a file type that isn't allowed."
+                };
+            }
+
+            var estimatedBytes = (long)file.Content.Length * 3 / 4;
+            if (estimatedBytes > attachmentRules.MaxBytes || totalAttachmentBytes + estimatedBytes > attachmentRules.MaxBytes)
+            {
+                return new ApiResponse<Quote>
+                {
+                    Success = false,
+                    ErrorMessage = $"Attachments exceed the {attachmentRules.MaxBytes / (1024 * 1024)}MB total limit for a single email."
+                };
+            }
+
+            totalAttachmentBytes += estimatedBytes;
+        }
+
         var attachments = new List<EmailAttachment>();
 
         if (sendQuoteDto.AttachPdf)

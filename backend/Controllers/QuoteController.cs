@@ -175,6 +175,10 @@ public class QuoteController : ControllerBase
 
     [HttpPost("{id:guid}/send")]
     [EnableRateLimiting("email-relay")]
+    // 10MB of attachments base64-encoded (~4/3 overhead) plus headroom for
+    // subject/message/recipients - rejected by Kestrel before model binding ever
+    // buffers a bigger body into memory, rather than only after decoding it.
+    [RequestSizeLimit(15 * 1024 * 1024)]
     public async Task<ActionResult<ApiResponse<Quote>>> SendQuote(Guid id, [FromBody] SendQuoteDto sendQuoteDto)
     {
         if (_currentUser.WorkspaceId is not Guid workspaceId)
