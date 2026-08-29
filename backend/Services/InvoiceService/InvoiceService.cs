@@ -610,7 +610,7 @@ public class InvoiceService : IInvoiceService
     {
         var now = DateTime.UtcNow;
         var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
-        var today = now.Date;
+        var firstDayOfNextMonth = firstDayOfThisMonth.AddMonths(1);
 
         var invoices = await _context.Invoices
             .Where(i => i.WorkspaceId == workspaceId)
@@ -627,19 +627,26 @@ public class InvoiceService : IInvoiceService
         foreach (var invoice in invoices)
         {
             var total = invoice.Total;
+            var balanceDue = invoice.BalanceDue;
 
             totalInvoiceSum += total;
 
-            bool isUnpaid = invoice.Status != InvoiceStatus.Paid && invoice.Status != InvoiceStatus.Overdue;
+            if (invoice.Status != InvoiceStatus.Draft && balanceDue > 0m)
+            {
+                totalOutstanding += balanceDue;
+            }
 
-            if (isUnpaid)
-                totalOutstanding += total;
+            totalPaidThisMonth += invoice.Payments
+                .Where(payment => payment.Status == PaymentRecordStatus.Succeeded
+                    && payment.PaidAt.HasValue
+                    && payment.PaidAt.Value >= firstDayOfThisMonth
+                    && payment.PaidAt.Value < firstDayOfNextMonth)
+                .Sum(payment => payment.Amount);
 
-            if (invoice.Status == InvoiceStatus.Paid && invoice.UpdatedAt >= firstDayOfThisMonth)
-                totalPaidThisMonth += total;
-
-            if (isUnpaid && invoice.DueDate < today)
+            if (invoice.Status == InvoiceStatus.Overdue)
+            {
                 overdueCount++;
+            }
         }
 
         var averageInvoiceValue = invoices.Count > 0
