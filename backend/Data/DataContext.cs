@@ -244,10 +244,10 @@ public class DataContext : DbContext
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
-        modelBuilder.Entity<Invoice>().HasIndex(i => i.WorkspaceId);
+        modelBuilder.Entity<Invoice>().HasIndex(i => new { i.WorkspaceId, i.InvoiceNumber }).IsUnique();
         modelBuilder.Entity<Payment>().HasIndex(p => new { p.InvoiceId, p.Status, p.PaidAt });
-        modelBuilder.Entity<Job>().HasIndex(j => j.WorkspaceId);
-        modelBuilder.Entity<Quote>().HasIndex(q => q.WorkspaceId);
+        modelBuilder.Entity<Job>().HasIndex(j => new { j.WorkspaceId, j.JobNumber }).IsUnique();
+        modelBuilder.Entity<Quote>().HasIndex(q => new { q.WorkspaceId, q.QuoteNumber }).IsUnique();
         modelBuilder.Entity<ServiceItem>().HasIndex(s => s.WorkspaceId);
 
         // Login and the email-change flow both assume at most one account per

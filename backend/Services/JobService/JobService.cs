@@ -10,6 +10,7 @@ namespace backend.Services.JobService;
 
 public class JobService : IJobService
 {
+    private const int MaxDocumentNumberGenerationAttempts = 5;
     private readonly DataContext _context;
     public JobService(DataContext context)
     {
@@ -217,10 +218,6 @@ public class JobService : IJobService
 
     public async Task<ApiResponse<Job>> CreateJob(CreateJobDto dto)
     {
-        var job = dto.Adapt<Job>();
-        job.Id = Guid.NewGuid();
-        job.JobNumber = await GenerateJobNumber(dto.WorkspaceId);
-
         if (dto.PropertyId.HasValue)
         {
             var propertyExists = await _context.Properties.AnyAsync(p => p.Id == dto.PropertyId.Value);
@@ -233,11 +230,11 @@ public class JobService : IJobService
                 };
         }
 
-        job.AssignedTeamMembers = [];
+        List<Employee> employees = [];
         if (dto.AssignedTeamMembers?.Any() == true)
         {
             var employeeIds = dto.AssignedTeamMembers.Select(e => e.Id).ToList();
-            var employees = _context.Employees
+            employees = _context.Employees
                 .AsEnumerable()
                 .Where(e => employeeIds.Contains(e.Id))
                 .ToList();
@@ -250,70 +247,98 @@ public class JobService : IJobService
                     Payload = null,
                     ErrorMessage = $"Missing team members: {string.Join(", ", missing)}"
                 };
-            job.AssignedTeamMembers.AddRange(employees);
         }
 
-        job.LineItems = [];
-        if (dto.LineItems?.Any() == true)
+        for (var attempt = 0; attempt < MaxDocumentNumberGenerationAttempts; attempt++)
         {
-            foreach (var lineItemDto in dto.LineItems)
+            var job = dto.Adapt<Job>();
+            job.Id = Guid.NewGuid();
+            job.JobNumber = await GenerateJobNumber(dto.WorkspaceId);
+            job.AssignedTeamMembers = [];
+            job.AssignedTeamMembers.AddRange(employees);
+            job.LineItems = [];
+
+            if (dto.LineItems?.Any() == true)
             {
-                var lineItem = new LineItem
+                foreach (var lineItemDto in dto.LineItems)
                 {
-                    Id = Guid.NewGuid(),
-                    JobId = job.Id,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    Quantity = lineItemDto.Quantity
+                    var lineItem = new LineItem
+                    {
+                        Id = Guid.NewGuid(),
+                        JobId = job.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        Quantity = lineItemDto.Quantity
+                    };
+
+                    if (lineItemDto.ServiceItemId.HasValue)
+                    {
+                        var serviceItem = await _context.ServiceItems.FirstOrDefaultAsync(s => s.Id == lineItemDto.ServiceItemId.Value);
+                        if (serviceItem == null)
+                            return new ApiResponse<Job>
+                            {
+                                Success = false,
+                                Payload = null,
+                                ErrorMessage = $"Service item {lineItemDto.ServiceItemId.Value} not found."
+                            };
+
+                        lineItem.ServiceItemId = serviceItem.Id;
+                        lineItem.Name = serviceItem.Name;
+                        lineItem.Description = serviceItem.Description;
+                        lineItem.UnitPrice = serviceItem.UnitPrice;
+                        lineItem.Cost = serviceItem.Cost;
+                        lineItem.IsTaxable = serviceItem.IsTaxable;
+                    }
+                    else
+                    {
+                        lineItem.Name = lineItemDto.Name ?? "Custom Item";
+                        lineItem.Description = lineItemDto.Description;
+                        lineItem.UnitPrice = lineItemDto.UnitPrice;
+                        lineItem.Cost = 0m;
+                        lineItem.IsTaxable = false;
+                    }
+
+                    job.LineItems.Add(lineItem);
+                }
+            }
+
+            job.Tags = dto.Tags ?? [];
+            job.StatusHistory = dto.StatusHistory ?? [];
+
+            var customer = await _context.Customers.FindAsync(dto.CustomerId)
+                ?? throw new KeyNotFoundException($"Customer with ID {dto.CustomerId} not found.");
+            customer.LastActivity = DateTime.UtcNow;
+
+            await _context.Jobs.AddAsync(job);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                return new ApiResponse<Job>
+                {
+                    Success = true,
+                    Payload = job,
+                    ErrorMessage = null
                 };
+            }
+            catch (DbUpdateException)
+            {
+                _context.ChangeTracker.Clear();
 
-                if (lineItemDto.ServiceItemId.HasValue)
+                if (!await _context.Jobs.IgnoreQueryFilters()
+                    .AnyAsync(j => j.WorkspaceId == dto.WorkspaceId && j.JobNumber == job.JobNumber))
                 {
-                    var serviceItem = await _context.ServiceItems.FirstOrDefaultAsync(s => s.Id == lineItemDto.ServiceItemId.Value);
-                    if (serviceItem == null)
-                        return new ApiResponse<Job>
-                        {
-                            Success = false,
-                            Payload = null,
-                            ErrorMessage = $"Service item {lineItemDto.ServiceItemId.Value} not found."
-                        };
-
-                    lineItem.ServiceItemId = serviceItem.Id;
-                    lineItem.Name = serviceItem.Name;
-                    lineItem.Description = serviceItem.Description;
-                    lineItem.UnitPrice = serviceItem.UnitPrice;
-                    lineItem.Cost = serviceItem.Cost;
-                    lineItem.IsTaxable = serviceItem.IsTaxable;
+                    throw;
                 }
-                else
-                {
-                    lineItem.Name = lineItemDto.Name ?? "Custom Item";
-                    lineItem.Description = lineItemDto.Description;
-                    lineItem.UnitPrice = lineItemDto.UnitPrice;
-                    lineItem.Cost = 0m;
-                    lineItem.IsTaxable = false;
-                }
-
-                job.LineItems.Add(lineItem);
             }
         }
 
-        job.Tags = dto.Tags ?? [];
-
-        job.StatusHistory = dto.StatusHistory ?? [];
-
-        var customer = await _context.Customers.FindAsync(dto.CustomerId);
-        customer.LastActivity = DateTime.UtcNow;
-
-        await _context.Jobs.AddAsync(job);
-        await _context.SaveChangesAsync();
-
-
         return new ApiResponse<Job>
         {
-            Success = true,
-            Payload = job,
-            ErrorMessage = null
+            Success = false,
+            Payload = null,
+            ErrorMessage = "Could not generate a unique job number. Please try again."
         };
     }
 

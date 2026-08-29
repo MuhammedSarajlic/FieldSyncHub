@@ -20,6 +20,7 @@ namespace backend.Services.QuoteService;
 
 public class QuoteService : IQuoteService
 {
+    private const int MaxDocumentNumberGenerationAttempts = 5;
     private readonly DataContext _context;
     private readonly IServiceItemService _serviceItemService;
     private readonly IEmailService _emailService;
@@ -248,90 +249,109 @@ public class QuoteService : IQuoteService
 
     public async Task<Quote> CreateQuote(CreateQuoteDto createQuoteDto)
     {
-        var quote = createQuoteDto.Adapt<Quote>();
-        quote.Id = Guid.NewGuid();
-        quote.QuoteNumber = await GenerateQuoteNumber(createQuoteDto.WorkspaceId);
-        quote.ExpiresAt = DateTime.UtcNow.AddDays(30);
-        quote.Source = createQuoteDto.Source ?? string.Empty;
+        for (var attempt = 0; attempt < MaxDocumentNumberGenerationAttempts; attempt++)
+        {
+            var quote = createQuoteDto.Adapt<Quote>();
+            quote.Id = Guid.NewGuid();
+            quote.QuoteNumber = await GenerateQuoteNumber(createQuoteDto.WorkspaceId);
+            quote.ExpiresAt = DateTime.UtcNow.AddDays(30);
+            quote.Source = createQuoteDto.Source ?? string.Empty;
 
-        if (quote.LineItems == null)
-        {
-            quote.LineItems = [];
-        }
-        else
-        {
-            quote.LineItems.Clear();
-        }
-
-        foreach (var lineItemDto in createQuoteDto.LineItems)
-        {
-            var lineItem = new LineItem
+            if (quote.LineItems == null)
             {
-                Id = Guid.NewGuid(),
-                Quantity = lineItemDto.Quantity,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                QuoteId = quote.Id
-            };
-
-            if (lineItemDto.ServiceItemId.HasValue)
-            {
-                var serviceItem = await _serviceItemService.GetServiceItemById(lineItemDto.ServiceItemId.Value)
-                    ?? throw new InvalidOperationException($"ServiceItem with ID {lineItemDto.ServiceItemId.Value} not found.");
-
-                // Map data from ServiceItem to LineItem
-                lineItem.ServiceItemId = serviceItem.Id;
-                lineItem.Name = serviceItem.Name;
-                lineItem.Description = serviceItem.Description;
-                lineItem.UnitPrice = serviceItem.UnitPrice;
-                lineItem.Cost = serviceItem.Cost;
-                lineItem.IsTaxable = serviceItem.IsTaxable;
+                quote.LineItems = [];
             }
             else
             {
-                // Line item is a custom item
-                lineItem.ServiceItemId = null;
-                lineItem.Name = lineItemDto.Name;
-                lineItem.Description = lineItemDto.Description;
-                lineItem.UnitPrice = lineItemDto.UnitPrice;
-                lineItem.Cost = 0m;
-                lineItem.IsTaxable = false;
+                quote.LineItems.Clear();
             }
 
-            quote.LineItems.Add(lineItem);
+            foreach (var lineItemDto in createQuoteDto.LineItems)
+            {
+                var lineItem = new LineItem
+                {
+                    Id = Guid.NewGuid(),
+                    Quantity = lineItemDto.Quantity,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    QuoteId = quote.Id
+                };
+
+                if (lineItemDto.ServiceItemId.HasValue)
+                {
+                    var serviceItem = await _serviceItemService.GetServiceItemById(lineItemDto.ServiceItemId.Value)
+                        ?? throw new InvalidOperationException($"ServiceItem with ID {lineItemDto.ServiceItemId.Value} not found.");
+
+                    lineItem.ServiceItemId = serviceItem.Id;
+                    lineItem.Name = serviceItem.Name;
+                    lineItem.Description = serviceItem.Description;
+                    lineItem.UnitPrice = serviceItem.UnitPrice;
+                    lineItem.Cost = serviceItem.Cost;
+                    lineItem.IsTaxable = serviceItem.IsTaxable;
+                }
+                else
+                {
+                    lineItem.ServiceItemId = null;
+                    lineItem.Name = lineItemDto.Name;
+                    lineItem.Description = lineItemDto.Description;
+                    lineItem.UnitPrice = lineItemDto.UnitPrice;
+                    lineItem.Cost = 0m;
+                    lineItem.IsTaxable = false;
+                }
+
+                quote.LineItems.Add(lineItem);
+            }
+
+            quote.CustomerNotes = createQuoteDto.CustomerNotes?.Select(n => new Note
+            {
+                Id = Guid.NewGuid(),
+                CreatedBy = n.CreatedBy,
+                CreatedByName = n.CreatedByName,
+                NoteText = n.NoteText,
+            }).ToList() ?? new List<Note>();
+
+            quote.InternalNotes = createQuoteDto.InternalNotes?.Select(n => new Note
+            {
+                Id = Guid.NewGuid(),
+                CreatedBy = n.CreatedBy,
+                CreatedByName = n.CreatedByName,
+                NoteText = n.NoteText,
+            }).ToList() ?? new List<Note>();
+
+            var user = await _context.Users.FindAsync(createQuoteDto.CreatedByUserId)
+                ?? throw new KeyNotFoundException($"User with ID {createQuoteDto.CreatedByUserId} not found.");
+
+            AddActivity(quote, QuoteActivityType.QuoteCreated, $"created quote #{quote.QuoteNumber}", user.Id.ToString(), user.FullName);
+
+            var customer = await _context.Customers.FindAsync(createQuoteDto.CustomerId)
+                ?? throw new KeyNotFoundException($"Customer with ID {createQuoteDto.CustomerId} not found.");
+            customer.LastActivity = DateTime.UtcNow;
+
+            _context.Quotes.Add(quote);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                quote = await _context.Quotes
+                    .Include(q => q.Property)
+                    .FirstOrDefaultAsync(q => q.Id == quote.Id);
+
+                return quote;
+            }
+            catch (DbUpdateException)
+            {
+                _context.ChangeTracker.Clear();
+
+                if (!await _context.Quotes.IgnoreQueryFilters()
+                    .AnyAsync(q => q.WorkspaceId == createQuoteDto.WorkspaceId && q.QuoteNumber == quote.QuoteNumber))
+                {
+                    throw;
+                }
+            }
         }
 
-        quote.CustomerNotes = createQuoteDto.CustomerNotes?.Select(n => new Note
-        {
-            Id = Guid.NewGuid(),
-            CreatedBy = n.CreatedBy,
-            CreatedByName = n.CreatedByName,
-            NoteText = n.NoteText,
-        }).ToList() ?? new List<Note>();
-
-        quote.InternalNotes = createQuoteDto.InternalNotes?.Select(n => new Note
-        {
-            Id = Guid.NewGuid(),
-            CreatedBy = n.CreatedBy,
-            CreatedByName = n.CreatedByName,
-            NoteText = n.NoteText,
-        }).ToList() ?? new List<Note>();
-
-        var user = await _context.Users.FindAsync(createQuoteDto.CreatedByUserId);
-
-        AddActivity(quote, QuoteActivityType.QuoteCreated, $"created quote #{quote.QuoteNumber}", user.Id.ToString(), user.FullName);
-
-        var customer = await _context.Customers.FindAsync(createQuoteDto.CustomerId);
-        customer.LastActivity = DateTime.UtcNow;
-
-        _context.Quotes.Add(quote);
-        await _context.SaveChangesAsync();
-
-        quote = await _context.Quotes
-            .Include(q => q.Property)
-            .FirstOrDefaultAsync(q => q.Id == quote.Id);
-
-        return quote;
+        throw new InvalidOperationException("Could not generate a unique quote number. Please try again.");
     }
 
     public async Task<Note> AddCustomerNoteToQuote(Guid quoteId, CreateNoteDto noteDto)

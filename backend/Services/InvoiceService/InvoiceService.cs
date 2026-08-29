@@ -18,6 +18,7 @@ namespace backend.Services.InvoiceService;
 
 public class InvoiceService : IInvoiceService
 {
+    private const int MaxDocumentNumberGenerationAttempts = 5;
     private readonly DataContext _context;
     private readonly IEmailService _emailService;
 
@@ -225,17 +226,36 @@ public class InvoiceService : IInvoiceService
 
     public async Task<Invoice> CreateInvoice(CreateInvoiceDto createInvoiceDto)
     {
-        var invoice = createInvoiceDto.Adapt<Invoice>();
-        invoice.InvoiceNumber = await GenerateInvoiceNumber(createInvoiceDto.WorkspaceId);
-        invoice.DueDate = CalculateDueDate(invoice.IssueDate, invoice.PaymentTerms, createInvoiceDto.DueDate);
+        for (var attempt = 0; attempt < MaxDocumentNumberGenerationAttempts; attempt++)
+        {
+            var invoice = createInvoiceDto.Adapt<Invoice>();
+            invoice.InvoiceNumber = await GenerateInvoiceNumber(createInvoiceDto.WorkspaceId);
+            invoice.DueDate = CalculateDueDate(invoice.IssueDate, invoice.PaymentTerms, createInvoiceDto.DueDate);
 
-        var customer = await _context.Customers.FindAsync(createInvoiceDto.CustomerId);
-        customer.LastActivity = DateTime.UtcNow;
+            var customer = await _context.Customers.FindAsync(createInvoiceDto.CustomerId)
+                ?? throw new KeyNotFoundException($"Customer with ID {createInvoiceDto.CustomerId} not found.");
+            customer.LastActivity = DateTime.UtcNow;
 
-        _context.Invoices.Add(invoice);
-        await _context.SaveChangesAsync();
+            _context.Invoices.Add(invoice);
 
-        return invoice;
+            try
+            {
+                await _context.SaveChangesAsync();
+                return invoice;
+            }
+            catch (DbUpdateException)
+            {
+                _context.ChangeTracker.Clear();
+
+                if (!await _context.Invoices.IgnoreQueryFilters()
+                    .AnyAsync(i => i.WorkspaceId == createInvoiceDto.WorkspaceId && i.InvoiceNumber == invoice.InvoiceNumber))
+                {
+                    throw;
+                }
+            }
+        }
+
+        throw new InvalidOperationException("Could not generate a unique invoice number. Please try again.");
     }
 
     //TODO: Later refactor and make update like on customer to use other repositories to update child elements
