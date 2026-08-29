@@ -13,8 +13,8 @@ public class TotalsCalculatorTests
     {
         List<LineItem> lineItems =
         [
-            new LineItem { UnitPrice = 19.99m, Quantity = 3 },
-            new LineItem { UnitPrice = 0.015m, Quantity = 1 }
+            new LineItem { UnitPrice = 19.99m, Quantity = 3, IsTaxable = true },
+            new LineItem { UnitPrice = 0.015m, Quantity = 1, IsTaxable = true }
         ];
 
         var totals = TotalsCalculator.Calculate(lineItems, DiscountType.Percentage, 12.345m, 0.0775m);
@@ -27,11 +27,29 @@ public class TotalsCalculatorTests
     }
 
     [Fact]
+    public void TotalsCalculator_taxes_only_taxable_items_and_allocates_fixed_discounts_proportionally()
+    {
+        List<LineItem> lineItems =
+        [
+            new LineItem { UnitPrice = 100m, Quantity = 1, IsTaxable = true },
+            new LineItem { UnitPrice = 50m, Quantity = 1, IsTaxable = false }
+        ];
+
+        var totals = TotalsCalculator.Calculate(lineItems, DiscountType.FixedAmount, 30m, 0.10m);
+
+        Assert.Equal(150m, totals.Subtotal);
+        Assert.Equal(30m, totals.Discount);
+        Assert.Equal(80m, totals.TaxableSubtotal);
+        Assert.Equal(8m, totals.TaxAmount);
+        Assert.Equal(128m, totals.Total);
+    }
+
+    [Fact]
     public void Quote_job_and_invoice_use_the_same_totals_calculator()
     {
         List<LineItem> lineItems =
         [
-            new LineItem { UnitPrice = 33.335m, Quantity = 3 }
+            new LineItem { UnitPrice = 33.335m, Quantity = 3, IsTaxable = true }
         ];
 
         var quote = new Quote
