@@ -144,7 +144,7 @@ public class InvoiceService : IInvoiceService
 
         resultList = resultList.Where(i =>
         {
-            var subtotal = i.LineItems.Sum(li => (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
+            var subtotal = i.LineItems.Sum(li => li.UnitPrice * li.Quantity);
             var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
             var total = subtotal - discount + ((subtotal - discount) * i.TaxRate);
 
@@ -169,13 +169,13 @@ public class InvoiceService : IInvoiceService
             "total" => filterDto.Sort == "desc"
                 ? resultList.OrderByDescending(i =>
                 {
-                    var subtotal = i.LineItems.Sum(li => (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
+                    var subtotal = i.LineItems.Sum(li => li.UnitPrice * li.Quantity);
                     var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
                     return subtotal - discount + ((subtotal - discount) * i.TaxRate);
                 }).ToList()
                 : resultList.OrderBy(i =>
                 {
-                    var subtotal = i.LineItems.Sum(li => (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity);
+                    var subtotal = i.LineItems.Sum(li => li.UnitPrice * li.Quantity);
                     var discount = i.DiscountType == DiscountType.Percentage ? subtotal * i.Discount / 100 : i.Discount;
                     return subtotal - discount + ((subtotal - discount) * i.TaxRate);
                 }).ToList(),
@@ -480,9 +480,7 @@ public class InvoiceService : IInvoiceService
 
         foreach (var invoice in invoices)
         {
-            var subtotal = invoice.LineItems.Sum(li =>
-                (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity
-            );
+            var subtotal = invoice.LineItems.Sum(li => li.UnitPrice * li.Quantity);
 
             var discount = invoice.DiscountType == DiscountType.Percentage
                 ? subtotal * invoice.Discount / 100

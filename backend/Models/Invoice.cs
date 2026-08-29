@@ -25,8 +25,7 @@ public class Invoice
     public decimal Discount { get; set; }
     public DiscountType DiscountType { get; set; } = DiscountType.Percentage;
     [NotMapped]
-    public decimal Subtotal => LineItems.Sum(li =>
-        (li?.ServiceItem?.UnitPrice ?? li?.UnitPrice ?? 0) * li.Quantity);
+    public decimal Subtotal => LineItems.Sum(li => (li?.UnitPrice ?? 0) * li.Quantity);
     [NotMapped]
     public decimal Total
     {

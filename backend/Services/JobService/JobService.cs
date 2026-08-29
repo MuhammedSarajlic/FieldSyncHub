@@ -526,9 +526,7 @@ public class JobService : IJobService
 
         foreach (var job in jobs)
         {
-            decimal jobTotal = job.LineItems.Sum(li =>
-                (li.ServiceItem?.UnitPrice ?? li.UnitPrice) * li.Quantity
-            );
+            decimal jobTotal = job.LineItems.Sum(li => li.UnitPrice * li.Quantity);
             totalValue += jobTotal;
         }
 
