@@ -108,11 +108,23 @@ public class QuoteController : ControllerBase
     [HttpPost("{quoteId}/attachment")]
     public async Task<IActionResult> AddAttachment(Guid quoteId, [FromBody] QuoteAttachmentDto attachmentDto)
     {
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        {
+            return Forbid();
+        }
+
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
         var userName = User.Identity?.Name ?? "System";
 
-        var attachment = await _quoteService.AddAttachmentToQuote(quoteId, attachmentDto, userId, userName);
-        return Ok(attachment);
+        try
+        {
+            var attachment = await _quoteService.AddAttachmentToQuote(quoteId, attachmentDto, userId, userName, callerWorkspaceId);
+            return Ok(attachment);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
 

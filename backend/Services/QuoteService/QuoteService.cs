@@ -8,6 +8,7 @@ using backend.Response;
 using backend.Services.EmailService;
 using backend.Services.PdfService;
 using backend.Services.ServiceItemService;
+using backend.Services.StorageService;
 using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -23,17 +24,20 @@ public class QuoteService : IQuoteService
     private readonly IServiceItemService _serviceItemService;
     private readonly IEmailService _emailService;
     private readonly QuotePdfService _quotePdfService;
+    private readonly IStorageService _storageService;
 
     public QuoteService(
         DataContext context,
         IServiceItemService serviceItemService,
         IEmailService emailService,
-        QuotePdfService quotePdfService)
+        QuotePdfService quotePdfService,
+        IStorageService storageService)
     {
         _context = context;
         _serviceItemService = serviceItemService;
         _emailService = emailService;
         _quotePdfService = quotePdfService;
+        _storageService = storageService;
     }
 
     public async Task<Quote> GetByIdAsync(Guid id, Guid callerWorkspaceId)
@@ -51,6 +55,15 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.ActivityHistory.OrderByDescending(a => a.ChangedAt))
                                         .Include(q => q.AssignedToUser)
                                         .FirstOrDefaultAsync(q => q.Id == id && q.WorkspaceId == callerWorkspaceId);
+
+        if (quote != null)
+        {
+            foreach (var attachment in quote.Attachments)
+            {
+                attachment.Url = await _storageService.ResolveAsync(attachment.Url);
+            }
+        }
+
         return quote;
     }
 
@@ -384,18 +397,31 @@ public class QuoteService : IQuoteService
         return note;
     }
 
-    public async Task<QuoteAttachment> AddAttachmentToQuote(Guid quoteId, QuoteAttachmentDto attachmentDto, string userId, string userName)
+    public async Task<QuoteAttachment> AddAttachmentToQuote(Guid quoteId, QuoteAttachmentDto attachmentDto, string userId, string userName, Guid callerWorkspaceId)
     {
         var quote = await _context.Quotes
             .Include(q => q.Attachments)
             .FirstOrDefaultAsync(q => q.Id == quoteId)
             ?? throw new Exception("Quote not found");
 
+        if (quote.WorkspaceId != callerWorkspaceId)
+        {
+            throw new UnauthorizedAccessException("That quote is not in your workspace.");
+        }
+
+        // Only accept a path this caller actually uploaded for this workspace -
+        // never an arbitrary client-supplied URL or another tenant's path.
+        var url = attachmentDto.Url;
+        if (!string.IsNullOrWhiteSpace(url) && !UploadPolicy.IsOwnedBy(url, callerWorkspaceId, null))
+        {
+            url = null;
+        }
+
         var attachment = new QuoteAttachment
         {
             Id = Guid.NewGuid(),
             FileName = attachmentDto.FileName,
-            Url = attachmentDto.Url,
+            Url = url,
             QuoteId = quoteId,
             CreatedAt = DateTime.UtcNow
         };
@@ -407,6 +433,7 @@ public class QuoteService : IQuoteService
         await _context.QuoteAttachments.AddAsync(attachment);
         await _context.SaveChangesAsync();
 
+        attachment.Url = await _storageService.ResolveAsync(attachment.Url);
         return attachment;
     }
 

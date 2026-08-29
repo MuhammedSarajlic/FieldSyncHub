@@ -7,6 +7,7 @@ using backend.Services.EmailService;
 using backend.Services.PdfService;
 using backend.Services.QuoteService;
 using backend.Services.ServiceItemService;
+using backend.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -190,7 +191,7 @@ public class OpenEmailRelayTests
     }
 
     private static QuoteService CreateQuoteService(DataContext context)
-        => new(context, new ServiceItemService(context), new NoopEmailService(), new QuotePdfService(context, new MemoryCache(new MemoryCacheOptions())));
+        => new(context, new ServiceItemService(context, new NoopStorageService()), new NoopEmailService(), new QuotePdfService(context, new MemoryCache(new MemoryCacheOptions()), new NoopStorageService()), new NoopStorageService());
 
     private sealed class NoopEmailService : IEmailService
     {

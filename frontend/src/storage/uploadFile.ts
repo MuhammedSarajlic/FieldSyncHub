@@ -1,17 +1,12 @@
-import { supabase, STORAGE_BUCKET } from './supabaseClient';
+import { uploadToBackend } from '../services/Upload';
 
+// Used for the company logo, uploaded during onboarding (before a workspace
+// exists) and again from Settings. Returns the storage path - callers persist
+// this directly as logoUrl; the backend resolves it to a real (short-lived,
+// signed) URL every time the workspace is fetched.
 export const uploadFile = async (file: File): Promise<string> => {
   if (!file) throw new Error('No file provided');
 
-  const path = `uploads/${Date.now()}_${file.name}`;
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(path, file);
-  if (error) throw error;
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-
-  return publicUrl;
+  const result = await uploadToBackend(file, 'logo');
+  return result.path;
 };

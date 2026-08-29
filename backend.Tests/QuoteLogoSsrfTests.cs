@@ -2,6 +2,7 @@ using backend.Data;
 using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Services.PdfService;
+using backend.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -28,7 +29,7 @@ public class QuoteLogoSsrfTests
     }
 
     private static QuotePdfService CreateService(DataContext context)
-        => new(context, new MemoryCache(new MemoryCacheOptions()));
+        => new(context, new MemoryCache(new MemoryCacheOptions()), new NoopStorageService());
 
     private static async Task<Quote> SeedQuote(DataContext context, string? logoUrl)
     {

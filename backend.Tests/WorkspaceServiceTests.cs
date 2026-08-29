@@ -2,6 +2,7 @@ using backend.Data;
 using backend.Dtos.WorkspaceDto;
 using backend.Models;
 using backend.Services.WorkspaceService;
+using backend.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Tests;
@@ -31,7 +32,7 @@ public class WorkspaceServiceTests
         context.Workspaces.Add(workspace);
         await context.SaveChangesAsync();
 
-        var service = new WorkspaceService(context);
+        var service = new WorkspaceService(context, new NoopStorageService());
         var result = await service.GetWorkspaceById(workspace.Id, Guid.NewGuid());
 
         Assert.False(result.Success);
@@ -45,7 +46,7 @@ public class WorkspaceServiceTests
         context.Workspaces.Add(workspace);
         await context.SaveChangesAsync();
 
-        var service = new WorkspaceService(context);
+        var service = new WorkspaceService(context, new NoopStorageService());
         var result = await service.GetWorkspaceById(workspace.Id, workspace.Id);
 
         Assert.True(result.Success);
@@ -60,8 +61,8 @@ public class WorkspaceServiceTests
         context.Workspaces.AddRange(caller, victim);
         await context.SaveChangesAsync();
 
-        var service = new WorkspaceService(context);
-        await service.UpdateWorkspace(new UpdateWorkspaceDto { Id = victim.Id, Name = "Pwned" }, caller.Id);
+        var service = new WorkspaceService(context, new NoopStorageService());
+        await service.UpdateWorkspace(new UpdateWorkspaceDto { Id = victim.Id, Name = "Pwned" }, caller.Id, Guid.NewGuid());
 
         var reloadedVictim = await context.Workspaces.SingleAsync(w => w.Id == victim.Id);
         var reloadedCaller = await context.Workspaces.SingleAsync(w => w.Id == caller.Id);
@@ -77,7 +78,7 @@ public class WorkspaceServiceTests
         context.Workspaces.Add(victim);
         await context.SaveChangesAsync();
 
-        var service = new WorkspaceService(context);
+        var service = new WorkspaceService(context, new NoopStorageService());
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.DeleteWorkspace(victim.Id, Guid.NewGuid()));
 

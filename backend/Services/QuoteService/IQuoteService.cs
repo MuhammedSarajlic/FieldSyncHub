@@ -17,7 +17,7 @@ public interface IQuoteService
     Task<Quote> CreateQuote(CreateQuoteDto createQuoteDto);
     Task<Note> AddCustomerNoteToQuote(Guid quoteId, CreateNoteDto noteDto);
     Task<Note> AddInternalNoteToQuote(Guid quoteId, CreateNoteDto noteDto);
-    Task<QuoteAttachment> AddAttachmentToQuote(Guid quoteId, QuoteAttachmentDto attachmentDto, string userId, string userName);
+    Task<QuoteAttachment> AddAttachmentToQuote(Guid quoteId, QuoteAttachmentDto attachmentDto, string userId, string userName, Guid callerWorkspaceId);
     Task<Quote> UpdateQuote(UpdateQuoteDto updatedQuoteDto, string userId, string userName, Guid callerWorkspaceId);
     Task<bool> DeleteQuote(Guid id, Guid callerWorkspaceId);
     Task ArchiveQuote(Guid id);

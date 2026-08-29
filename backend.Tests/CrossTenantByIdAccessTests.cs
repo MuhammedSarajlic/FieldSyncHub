@@ -5,6 +5,7 @@ using backend.Services.JobService;
 using backend.Services.LeadService;
 using backend.Services.NotesService;
 using backend.Services.PropertyService;
+using backend.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Tests;
@@ -120,7 +121,7 @@ public class CrossTenantByIdAccessTests
         context.Notes.Add(note);
         await context.SaveChangesAsync();
 
-        var service = new NotesService(context);
+        var service = new NotesService(context, new NoopStorageService());
 
         var crossTenant = await service.GetNoteById(note.Id, ownWorkspace);
         Assert.Null(crossTenant.Payload);

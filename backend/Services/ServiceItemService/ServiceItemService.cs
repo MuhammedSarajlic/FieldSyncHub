@@ -3,6 +3,7 @@ using backend.Data;
 using backend.Dtos.ServiceItemDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.StorageService;
 using backend.Wrappers;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
@@ -13,15 +14,18 @@ namespace backend.Services.ServiceItemService;
 public class ServiceItemService : IServiceItemService
 {
     private readonly DataContext _context;
-    public ServiceItemService(DataContext context)
+    private readonly IStorageService _storageService;
+    public ServiceItemService(DataContext context, IStorageService storageService)
     {
         _context = context;
+        _storageService = storageService;
     }
 
     public async Task<ServiceItem> GetServiceItemById(Guid id)
     {
-        var serviceItem = await _context.ServiceItems.FindAsync(id);
-        return serviceItem ?? throw new KeyNotFoundException("Service item not found");
+        var serviceItem = await _context.ServiceItems.FindAsync(id) ?? throw new KeyNotFoundException("Service item not found");
+        serviceItem.ImageUrl = await _storageService.ResolveAsync(serviceItem.ImageUrl);
+        return serviceItem;
     }
 
     public async Task<ApiResponse<PagedResult<ServiceItem>>> GetServiceItemsByWorkspace(
@@ -39,6 +43,11 @@ public class ServiceItemService : IServiceItemService
                                .Skip((pageNumber - 1) * pageSize)
                                .Take(pageSize)
                                .ToListAsync();
+
+        foreach (var item in items)
+        {
+            item.ImageUrl = await _storageService.ResolveAsync(item.ImageUrl);
+        }
 
         var result = new PagedResult<ServiceItem>
         {
@@ -137,6 +146,11 @@ public class ServiceItemService : IServiceItemService
             .Take(pageSize)
             .ToListAsync();
 
+        foreach (var item in pagedServiceItems)
+        {
+            item.ImageUrl = await _storageService.ResolveAsync(item.ImageUrl);
+        }
+
         var result = new PagedResult<ServiceItem>
         {
             Items = pagedServiceItems,
@@ -232,8 +246,18 @@ public class ServiceItemService : IServiceItemService
     {
         var item = createServiceItemDto.Adapt<ServiceItem>();
         item.Id = Guid.NewGuid();
+
+        // Only accept an image this caller actually uploaded for this workspace -
+        // never an arbitrary client-supplied URL or another tenant's path.
+        if (!string.IsNullOrWhiteSpace(item.ImageUrl) && !UploadPolicy.IsOwnedBy(item.ImageUrl, item.WorkspaceId, null))
+        {
+            item.ImageUrl = null;
+        }
+
         await _context.ServiceItems.AddAsync(item);
         await _context.SaveChangesAsync();
+
+        item.ImageUrl = await _storageService.ResolveAsync(item.ImageUrl);
         return item;
     }
 
@@ -255,7 +279,10 @@ public class ServiceItemService : IServiceItemService
         existingServiceItem.Description = updateServiceItemDto.Description ?? existingServiceItem.Description;
         existingServiceItem.Category = updateServiceItemDto.Category ?? existingServiceItem.Category;
         existingServiceItem.SKU = updateServiceItemDto.SKU ?? existingServiceItem.SKU;
-        existingServiceItem.ImageUrl = updateServiceItemDto.ImageUrl ?? existingServiceItem.ImageUrl;
+        if (!string.IsNullOrWhiteSpace(updateServiceItemDto.ImageUrl) && UploadPolicy.IsOwnedBy(updateServiceItemDto.ImageUrl, existingServiceItem.WorkspaceId, null))
+        {
+            existingServiceItem.ImageUrl = updateServiceItemDto.ImageUrl;
+        }
 
         if (updateServiceItemDto.Type.HasValue)
         {
@@ -281,6 +308,8 @@ public class ServiceItemService : IServiceItemService
         existingServiceItem.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+
+        existingServiceItem.ImageUrl = await _storageService.ResolveAsync(existingServiceItem.ImageUrl);
 
         return new ApiResponse<ServiceItem>
         {

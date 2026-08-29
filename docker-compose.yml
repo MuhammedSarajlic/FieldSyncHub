@@ -34,6 +34,9 @@ services:
       AppSettings__Resend__ApiToken: ${RESEND_API_TOKEN:-}
       AppSettings__Resend__SenderEmail: ${RESEND_SENDER_EMAIL:-onboarding@resend.dev}
       AppSettings__Resend__SenderName: FieldSyncHub
+      AppSettings__Supabase__Url: ${SUPABASE_URL:-}
+      AppSettings__Supabase__ServiceRoleKey: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      AppSettings__Supabase__Bucket: ${SUPABASE_STORAGE_BUCKET:-uploads}
     ports:
       - "5244:8080"
 

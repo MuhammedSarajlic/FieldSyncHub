@@ -52,12 +52,12 @@ public class WorkspaceController : ControllerBase
     [Authorize(Roles = "Owner,Admin")]
     public async Task<ActionResult<GetWorkspaceDto>> UpdateWorkspace([FromBody] UpdateWorkspaceDto updateWorkspaceDto)
     {
-        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid callerId)
         {
             return Forbid();
         }
 
-        var workspace = await _workspaceService.UpdateWorkspace(updateWorkspaceDto, callerWorkspaceId);
+        var workspace = await _workspaceService.UpdateWorkspace(updateWorkspaceDto, callerWorkspaceId, callerId);
         return Ok(workspace);
     }
 

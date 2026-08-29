@@ -2,6 +2,7 @@ using backend.Data;
 using backend.Dtos.NotesDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.StorageService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,14 +11,20 @@ namespace backend.Services.NotesService;
 public class NotesService : INotesService
 {
     private readonly DataContext _context;
-    public NotesService(DataContext context)
+    private readonly IStorageService _storageService;
+    public NotesService(DataContext context, IStorageService storageService)
     {
         _context = context;
+        _storageService = storageService;
     }
 
     public async Task<ApiResponse<Note>> GetNoteById(Guid id, Guid callerWorkspaceId)
     {
         var note = await _context.Notes.FirstOrDefaultAsync(n => n.Id == id && n.WorkspaceId == callerWorkspaceId);
+        if (note != null)
+        {
+            note.PathFile = await _storageService.ResolveAsync(note.PathFile);
+        }
         return new ApiResponse<Note>()
         {
             Success = true,
@@ -38,6 +45,11 @@ public class NotesService : INotesService
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
 
+        foreach (var note in notes)
+        {
+            note.PathFile = await _storageService.ResolveAsync(note.PathFile);
+        }
+
         return new ApiResponse<List<Note>>()
         {
             Success = true,
@@ -52,6 +64,13 @@ public class NotesService : INotesService
         note.Id = Guid.NewGuid();
         note.WorkspaceId = callerWorkspaceId;
 
+        // Only accept a path this caller actually uploaded for their own workspace -
+        // never an arbitrary client-supplied URL.
+        if (!string.IsNullOrWhiteSpace(note.PathFile) && !UploadPolicy.IsOwnedBy(note.PathFile, callerWorkspaceId, null))
+        {
+            note.PathFile = null;
+        }
+
         await _context.Notes.AddAsync(note);
 
         if (createNoteDto.CustomerId.HasValue)
@@ -64,6 +83,7 @@ public class NotesService : INotesService
 
         await _context.SaveChangesAsync();
 
+        note.PathFile = await _storageService.ResolveAsync(note.PathFile);
         return note;
     }
 
@@ -77,12 +97,16 @@ public class NotesService : INotesService
         }
 
         note.NoteText = updatedNoteDto.NoteText ?? note.NoteText;
-        note.PathFile = updatedNoteDto.PathFile ?? note.PathFile;
+        if (!string.IsNullOrWhiteSpace(updatedNoteDto.PathFile) && UploadPolicy.IsOwnedBy(updatedNoteDto.PathFile, callerWorkspaceId, null))
+        {
+            note.PathFile = updatedNoteDto.PathFile;
+        }
         note.UpdatedAt = DateTime.UtcNow;
 
         _context.Update(note);
         await _context.SaveChangesAsync();
 
+        note.PathFile = await _storageService.ResolveAsync(note.PathFile);
         return note;
     }
 

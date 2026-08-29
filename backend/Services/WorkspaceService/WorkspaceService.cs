@@ -2,6 +2,7 @@ using backend.Data;
 using backend.Dtos.WorkspaceDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.StorageService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,9 +11,11 @@ namespace backend.Services.WorkspaceService;
 public class WorkspaceService : IWorkspaceService
 {
     private readonly DataContext _context;
-    public WorkspaceService(DataContext context)
+    private readonly IStorageService _storageService;
+    public WorkspaceService(DataContext context, IStorageService storageService)
     {
         _context = context;
+        _storageService = storageService;
     }
 
     public async Task<ApiResponse<GetWorkspaceDto>> GetWorkspaceById(Guid id, Guid callerWorkspaceId)
@@ -31,6 +34,7 @@ public class WorkspaceService : IWorkspaceService
             };
         }
         var workspaceDto = workspace.Adapt<GetWorkspaceDto>();
+        workspaceDto.LogoUrl = await _storageService.ResolveAsync(workspaceDto.LogoUrl);
         return new ApiResponse<GetWorkspaceDto>()
         {
             Success = true,
@@ -42,6 +46,15 @@ public class WorkspaceService : IWorkspaceService
     public async Task<ApiResponse<GetWorkspaceDto>> CreateWorkspace(CreateWorkspaceDto createWorkspaceDto, Guid createdById)
     {
         var newWorkspace = createWorkspaceDto.Adapt<Workspace>();
+
+        // A workspace doesn't exist yet when the onboarding logo is uploaded, so
+        // that upload is keyed by the uploading user instead - only accept a
+        // LogoUrl that's actually theirs, never an arbitrary URL or another
+        // tenant's uploaded path.
+        if (!string.IsNullOrWhiteSpace(newWorkspace.LogoUrl) && !UploadPolicy.IsOwnedBy(newWorkspace.LogoUrl, null, createdById))
+        {
+            newWorkspace.LogoUrl = null;
+        }
 
         newWorkspace.Id = Guid.NewGuid();
         newWorkspace.CreatedAt = DateTime.UtcNow;
@@ -81,6 +94,7 @@ public class WorkspaceService : IWorkspaceService
         await _context.SaveChangesAsync();
 
         var createdWorkspaceDto = newWorkspace.Adapt<GetWorkspaceDto>();
+        createdWorkspaceDto.LogoUrl = await _storageService.ResolveAsync(createdWorkspaceDto.LogoUrl);
 
         return new ApiResponse<GetWorkspaceDto>()
         {
@@ -90,7 +104,7 @@ public class WorkspaceService : IWorkspaceService
         };
     }
 
-    public async Task<ApiResponse<GetWorkspaceDto>> UpdateWorkspace(UpdateWorkspaceDto updatedWorkspaceDto, Guid callerWorkspaceId)
+    public async Task<ApiResponse<GetWorkspaceDto>> UpdateWorkspace(UpdateWorkspaceDto updatedWorkspaceDto, Guid callerWorkspaceId, Guid callerId)
     {
         // The id in the body is ignored - callers may only edit their own workspace.
         var existingWorkspace = await _context.Workspaces
@@ -113,7 +127,17 @@ public class WorkspaceService : IWorkspaceService
         if (updatedWorkspaceDto.CompanyUrl != null) existingWorkspace.CompanyUrl = updatedWorkspaceDto.CompanyUrl;
         if (updatedWorkspaceDto.PhoneNumber != null) existingWorkspace.PhoneNumber = updatedWorkspaceDto.PhoneNumber;
         if (updatedWorkspaceDto.Size.HasValue) existingWorkspace.Size = updatedWorkspaceDto.Size.Value;
-        if (updatedWorkspaceDto.LogoUrl != null) existingWorkspace.LogoUrl = updatedWorkspaceDto.LogoUrl;
+        // The logo is keyed by the uploading user (see CreateWorkspace) - reject
+        // anything that isn't actually this caller's own uploaded path rather than
+        // trusting an arbitrary client-supplied URL. An empty string still clears it.
+        if (updatedWorkspaceDto.LogoUrl == string.Empty)
+        {
+            existingWorkspace.LogoUrl = null;
+        }
+        else if (updatedWorkspaceDto.LogoUrl != null && UploadPolicy.IsOwnedBy(updatedWorkspaceDto.LogoUrl, null, callerId))
+        {
+            existingWorkspace.LogoUrl = updatedWorkspaceDto.LogoUrl;
+        }
         if (updatedWorkspaceDto.Theme != null) existingWorkspace.Theme = updatedWorkspaceDto.Theme;
         if (updatedWorkspaceDto.Category != null) existingWorkspace.Category = updatedWorkspaceDto.Category;
 
@@ -123,6 +147,7 @@ public class WorkspaceService : IWorkspaceService
         await _context.SaveChangesAsync();
 
         var updatedWorkspaceResultDto = existingWorkspace.Adapt<GetWorkspaceDto>();
+        updatedWorkspaceResultDto.LogoUrl = await _storageService.ResolveAsync(updatedWorkspaceResultDto.LogoUrl);
 
         return new ApiResponse<GetWorkspaceDto>()
         {

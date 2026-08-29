@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using backend.Data;
 using backend.Models.QuoteModels;
+using backend.Services.StorageService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using QuestPDF.Fluent;
@@ -234,10 +235,11 @@ public class QuotePdfGenerator
     }
 }
 
-public class QuotePdfService(DataContext context, IMemoryCache cache)
+public class QuotePdfService(DataContext context, IMemoryCache cache, IStorageService storageService)
 {
     private readonly DataContext _context = context;
     private readonly IMemoryCache _cache = cache;
+    private readonly IStorageService _storageService = storageService;
 
     // A workspace-controlled LogoUrl fetched with no scheme allow-list, no
     // private-IP block, no timeout, and no size cap is a straight line to SSRF -
@@ -267,7 +269,14 @@ public class QuotePdfService(DataContext context, IMemoryCache cache)
 
         if (!string.IsNullOrWhiteSpace(logoUrl))
         {
-            logoBytes = await FetchLogoAsync(logoUrl);
+            // Uploads now go through UploadController and are stored as a path, not
+            // a URL - fetch those directly and authenticated, with no need for the
+            // SSRF checks below at all, since the destination is our own storage
+            // backend rather than an arbitrary caller-controlled host. A plain URL
+            // only remains for data uploaded before this feature existed.
+            logoBytes = UploadPolicy.LooksLikeAbsoluteUrl(logoUrl)
+                ? await FetchLogoAsync(logoUrl)
+                : await _storageService.DownloadAsync(logoUrl, MaxLogoBytes);
         }
 
         var generator = new QuotePdfGenerator(quote!, logoBytes);
