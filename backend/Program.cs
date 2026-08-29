@@ -123,6 +123,11 @@ builder.Services.AddRateLimiter(options =>
         });
     });
 });
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(365);
+    options.IncludeSubDomains = true;
+});
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
@@ -196,6 +201,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+app.UseSecurityHeaders(app.Environment);
 app.UseHttpsRedirection();
 app.UseCors("AllowSpecificOrigin");
 app.UseRouting();
