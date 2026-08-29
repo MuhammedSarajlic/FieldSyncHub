@@ -14,6 +14,7 @@ public class DecimalPrecisionModelTests
 
         AssertPrecision<LineItem>(context, nameof(LineItem.UnitPrice), 19, 4);
         AssertPrecision<LineItem>(context, nameof(LineItem.Cost), 19, 4);
+        AssertPrecision<LineItem>(context, nameof(LineItem.Quantity), 9, 3);
         AssertPrecision<ServiceItem>(context, nameof(ServiceItem.UnitPrice), 19, 4);
         AssertPrecision<ServiceItem>(context, nameof(ServiceItem.Cost), 19, 4);
         AssertPrecision<Job>(context, nameof(Job.DepositAmount), 19, 4);

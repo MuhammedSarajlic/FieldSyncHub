@@ -10,6 +10,7 @@ public class CreateServiceItemDto
     public ServiceItemType Type { get; set; } = ServiceItemType.Service;
     public string Category { get; set; } = string.Empty;
     public string? SKU { get; set; }
+    public string UnitOfMeasure { get; set; } = string.Empty;
 
     public decimal UnitPrice { get; set; }
     public decimal Cost { get; set; }

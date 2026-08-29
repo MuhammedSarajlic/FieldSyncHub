@@ -122,7 +122,8 @@ const NewJobModalItemsSection = ({
               <div className='col-span-2'>
                 <input
                   type='number'
-                  min='1'
+                  min='0'
+                  step='0.001'
                   value={item.quantity}
                   onChange={(e) =>
                     setSelectedLineItems(
@@ -130,7 +131,7 @@ const NewJobModalItemsSection = ({
                         lineItem.serviceItemId === item.serviceItemId
                           ? {
                               ...lineItem,
-                              quantity: parseInt(e.target.value),
+                              quantity: Number(e.target.value) || 0,
                             }
                           : lineItem
                       )

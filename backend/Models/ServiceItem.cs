@@ -13,6 +13,7 @@ public class ServiceItem
 
     public string Category { get; set; } = string.Empty;
     public string? SKU { get; set; }
+    public string UnitOfMeasure { get; set; } = string.Empty;
     [Range(0, double.MaxValue)]
     public decimal UnitPrice { get; set; }
     [Range(0, double.MaxValue)]

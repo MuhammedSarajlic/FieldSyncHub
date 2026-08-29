@@ -279,6 +279,7 @@ public class ServiceItemService : IServiceItemService
         existingServiceItem.Description = updateServiceItemDto.Description ?? existingServiceItem.Description;
         existingServiceItem.Category = updateServiceItemDto.Category ?? existingServiceItem.Category;
         existingServiceItem.SKU = updateServiceItemDto.SKU ?? existingServiceItem.SKU;
+        existingServiceItem.UnitOfMeasure = updateServiceItemDto.UnitOfMeasure ?? existingServiceItem.UnitOfMeasure;
         if (!string.IsNullOrWhiteSpace(updateServiceItemDto.ImageUrl) && UploadPolicy.IsOwnedBy(updateServiceItemDto.ImageUrl, existingServiceItem.WorkspaceId, null))
         {
             existingServiceItem.ImageUrl = updateServiceItemDto.ImageUrl;
@@ -379,6 +380,7 @@ public class ServiceItemService : IServiceItemService
                 Type = itemTypeForComparison,
                 Category = dto.Category,
                 SKU = dto.SKU?.Trim() ?? null,
+                UnitOfMeasure = dto.UnitOfMeasure?.Trim() ?? string.Empty,
                 UnitPrice = dto.UnitPrice,
                 Cost = dto.Cost,
                 IsTaxable = dto.IsTaxable,
@@ -421,11 +423,11 @@ public class ServiceItemService : IServiceItemService
 
         var sb = new StringBuilder();
 
-        sb.AppendLine("Name,Description,Type,Category,SKU,UnitPrice,Cost,IsTaxable,IsActive,ImageUrl");
+        sb.AppendLine("Name,Description,Type,Category,SKU,UnitOfMeasure,UnitPrice,Cost,IsTaxable,IsActive,ImageUrl");
 
         foreach (var item in serviceItems)
         {
-            sb.AppendLine($"{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{item.UnitPrice},{item.Cost},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
+            sb.AppendLine($"{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{EscapeCsvField(item.UnitOfMeasure)},{item.UnitPrice},{item.Cost},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());

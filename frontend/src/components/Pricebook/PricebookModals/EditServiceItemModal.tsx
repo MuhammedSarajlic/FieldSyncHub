@@ -37,6 +37,7 @@ const EditServiceItemModal = ({
     type: ServiceItemType.Service,
     category: '',
     sku: '',
+    unitOfMeasure: '',
     unitPrice: 0,
     cost: 0,
     taxRate: 0,
@@ -61,6 +62,7 @@ const EditServiceItemModal = ({
         type: serviceItem.type,
         category: serviceItem.category,
         sku: serviceItem.sku || '',
+        unitOfMeasure: serviceItem.unitOfMeasure || '',
         unitPrice: serviceItem.unitPrice,
         cost: serviceItem.cost,
         taxRate: serviceItem.taxRate * 100, // Convert back to percentage for input field
@@ -294,6 +296,24 @@ const EditServiceItemModal = ({
                     Category is required
                   </p>
                 )}
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Unit of Measure
+                </label>
+                <input
+                  type='text'
+                  className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-[#356852] focus:border-[#356852] text-sm'
+                  value={formData.unitOfMeasure || ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      unitOfMeasure: e.target.value,
+                    })
+                  }
+                  placeholder='e.g., hour, meter, each'
+                  disabled={uploading}
+                />
               </div>
               <div className='md:col-span-2'>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>

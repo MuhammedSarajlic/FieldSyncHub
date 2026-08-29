@@ -271,6 +271,7 @@ public class DataContext : DbContext
     {
         modelBuilder.Entity<LineItem>().Property(li => li.UnitPrice).HasPrecision(19, 4);
         modelBuilder.Entity<LineItem>().Property(li => li.Cost).HasPrecision(19, 4);
+        modelBuilder.Entity<LineItem>().Property(li => li.Quantity).HasPrecision(9, 3);
 
         modelBuilder.Entity<ServiceItem>().Property(si => si.UnitPrice).HasPrecision(19, 4);
         modelBuilder.Entity<ServiceItem>().Property(si => si.Cost).HasPrecision(19, 4);

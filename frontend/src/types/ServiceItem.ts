@@ -8,8 +8,10 @@ export type TServiceItem = {
   type: ServiceItemType;
   category: string;
   sku: string;
+  unitOfMeasure: string;
   unitPrice: number;
   cost: number;
+  taxRate?: number;
   isTaxable: boolean;
   isActive: boolean;
   imageUrl?: string;
@@ -24,8 +26,10 @@ export type TAddServiceItem = {
   type: ServiceItemType;
   category: string;
   sku?: string;
+  unitOfMeasure: string;
   unitPrice: number;
   cost: number;
+  taxRate?: number;
   isTaxable: boolean;
   isActive: boolean;
   imageUrl?: string;
@@ -38,8 +42,10 @@ export type TUpdateServiceItem = {
   type?: ServiceItemType;
   category?: string;
   sku?: string;
+  unitOfMeasure?: string;
   unitPrice?: number;
   cost?: number;
+  taxRate?: number;
   isTaxable?: boolean;
   isActive?: boolean;
   imageUrl?: string;
@@ -52,8 +58,10 @@ export type TImportServiceItem = {
   type?: ServiceItemType;
   category?: string;
   sku?: string;
+  unitOfMeasure?: string;
   unitPrice?: number;
   cost?: number;
+  taxRate?: number;
   isTaxable?: boolean;
   isActive?: boolean;
   imageUrl?: string;

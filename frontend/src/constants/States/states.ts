@@ -38,6 +38,7 @@ export const addServiceItemInitialState: TAddServiceItem = {
   type: 'service',
   category: '',
   sku: '',
+  unitOfMeasure: '',
   unitPrice: 0,
   cost: 0,
   taxRate: 0,

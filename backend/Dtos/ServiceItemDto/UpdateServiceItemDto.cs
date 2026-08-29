@@ -11,6 +11,7 @@ public class UpdateServiceItemDto
     public ServiceItemType? Type { get; set; }
     public string? Category { get; set; }
     public string? SKU { get; set; }
+    public string? UnitOfMeasure { get; set; }
 
     public decimal? UnitPrice { get; set; }
     public decimal? Cost { get; set; }

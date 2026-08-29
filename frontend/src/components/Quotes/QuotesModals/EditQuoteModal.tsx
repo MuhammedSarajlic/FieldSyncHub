@@ -750,14 +750,15 @@ const EditQuoteModal = ({
                         <div className='col-span-2'>
                           <input
                             type='number'
-                            min='1'
+                            min='0'
+                            step='0.001'
                             value={item.quantity}
                             onChange={(e) =>
                               handleLineItemChange(
                                 quote,
                                 index,
                                 'quantity',
-                                parseInt(e.target.value) || 1,
+                                Number(e.target.value) || 0,
                                 setQuote
                               )
                             }

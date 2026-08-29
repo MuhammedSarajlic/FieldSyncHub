@@ -18,8 +18,8 @@ public class LineItem
     public decimal Cost { get; set; }
     public bool IsOptional { get; set; }
     public bool IsTaxable { get; set; }
-    [Range(1, int.MaxValue)]
-    public int Quantity { get; set; } = 1;
+    [Range(0, double.MaxValue)]
+    public decimal Quantity { get; set; } = 1m;
     [NotMapped]
     public decimal Total => UnitPrice * Quantity;
 
