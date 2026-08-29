@@ -37,6 +37,16 @@ public class AuthService : IAuthService
             };
         }
 
+        // Accounts created back when the work factor was 6 still carry that weak
+        // hash at rest. We only ever see the plaintext password at a successful
+        // login, so that's the one place we can transparently upgrade it.
+        if (BCrypt.Net.BCrypt.PasswordNeedsRehash(dbUser.PasswordHash, BcryptWorkFactor))
+        {
+            dbUser.PasswordHash = HashPassword(userLogin.Password);
+            _context.Users.Update(dbUser);
+            await _context.SaveChangesAsync();
+        }
+
         var userDto = dbUser.Adapt<GetUserDto>();
 
         return new ApiResponse<GetUserDto>()
@@ -343,9 +353,13 @@ public class AuthService : IAuthService
         });
     }
 
+    // 64 rounds (work factor 6) is roughly a thousand times faster to brute-force
+    // than the modern default; 12 (4096 rounds) is that default.
+    private const int BcryptWorkFactor = 12;
+
     private static string HashPassword(string password)
     {
-        string salt = BCrypt.Net.BCrypt.GenerateSalt(6);
+        string salt = BCrypt.Net.BCrypt.GenerateSalt(BcryptWorkFactor);
         string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password, salt);
         return hashedPassword;
     }
