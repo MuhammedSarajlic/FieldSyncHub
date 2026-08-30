@@ -9,6 +9,7 @@ import {
   Package,
   TrendingUp,
   AlertTriangle,
+  BarChart3,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar/Sidebar';
 import Navbar from '../components/Navbar/Navbar';
@@ -16,7 +17,7 @@ import { useAuth } from '../context/AuthProvider';
 import { formatCurrency } from '../utils/FuntionHelpers/formatCurrency';
 import PageLoader from '../components/CustomElements/Loaders/PageLoader';
 import { GetCustomerStats } from '../services/Customer';
-import { GetJobStats } from '../services/Job';
+import { GetJobProfitability, GetJobStats } from '../services/Job';
 import { GetQuoteStats } from '../services/Quote';
 import { GetInvoiceStats } from '../services/Invoice';
 import { GetEmployeeStats } from '../services/Employee';
@@ -38,6 +39,7 @@ type TJobStats = {
   scheduledJobs: number;
   totalValue: number;
 };
+type TProfitability = { revenue: number; cost: number; marginPercent: number; byJob: { id: string; name: string; grossProfit: number }[] };
 
 type TQuoteStats = {
   totalQuotes: number;
@@ -156,6 +158,7 @@ const Reports = () => {
     null
   );
   const [jobStats, setJobStats] = useState<TJobStats | null>(null);
+  const [profitability, setProfitability] = useState<TProfitability | null>(null);
   const [quoteStats, setQuoteStats] = useState<TQuoteStats | null>(null);
   const [invoiceStats, setInvoiceStats] = useState<TInvoiceStats | null>(null);
   const [employeeStats, setEmployeeStats] = useState<TEmployeeStats | null>(
@@ -174,6 +177,7 @@ const Reports = () => {
       const [
         customerRes,
         jobRes,
+        profitabilityRes,
         quoteRes,
         invoiceRes,
         employeeRes,
@@ -182,6 +186,7 @@ const Reports = () => {
       ] = await Promise.all([
         GetCustomerStats(workspaceId),
         GetJobStats(workspaceId),
+        GetJobProfitability(workspaceId),
         GetQuoteStats(workspaceId),
         GetInvoiceStats(workspaceId),
         GetEmployeeStats(workspaceId),
@@ -191,6 +196,7 @@ const Reports = () => {
 
       if (customerRes.status === 200) setCustomerStats(customerRes.data);
       if (jobRes.status === 200) setJobStats(jobRes.data.payload);
+      if (profitabilityRes.status === 200) setProfitability(profitabilityRes.data.payload);
       if (quoteRes.status === 200) setQuoteStats(quoteRes.data.payload);
       if (invoiceRes.status === 200) setInvoiceStats(invoiceRes.data.payload);
       if (employeeRes.status === 200) setEmployeeStats(employeeRes.data);
@@ -268,6 +274,14 @@ const Reports = () => {
             </div>
 
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
+              <SectionCard title='Job profitability' icon={BarChart3}>
+                <div className='grid grid-cols-3 gap-3'>
+                  <div><div className='text-xl font-bold'>{formatCurrency(profitability?.revenue ?? 0)}</div><div className='text-sm text-gray-500'>Revenue</div></div>
+                  <div><div className='text-xl font-bold'>{formatCurrency(profitability?.cost ?? 0)}</div><div className='text-sm text-gray-500'>Cost</div></div>
+                  <div><div className='text-xl font-bold'>{(profitability?.marginPercent ?? 0).toFixed(1)}%</div><div className='text-sm text-gray-500'>Margin</div></div>
+                </div>
+                <div className='mt-5 space-y-2'>{(profitability?.byJob ?? []).slice(0, 5).map((job) => <div key={job.id} className='flex justify-between text-sm'><span className='truncate pr-3'>{job.name}</span><span className='font-medium'>{formatCurrency(job.grossProfit)}</span></div>)}</div>
+              </SectionCard>
               {/* Jobs */}
               <SectionCard title='Jobs' icon={Briefcase}>
                 <div className='grid grid-cols-2 gap-4 mb-5'>

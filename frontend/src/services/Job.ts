@@ -12,6 +12,10 @@ export async function GetJobStats(wokrspaceId: string) {
   return response;
 }
 
+export async function GetJobProfitability(workspaceId: string) {
+  return api.get(`/job/workspace/${workspaceId}/profitability`);
+}
+
 export async function GetJobsByWorkspaceId(
   wokrspaceId: string,
   pageNumber: number,

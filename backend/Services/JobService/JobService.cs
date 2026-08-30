@@ -763,5 +763,22 @@ public class JobService : IJobService
         };
     }
 
+    public async Task<JobProfitabilityDto> GetJobProfitability(Guid workspaceId)
+    {
+        var jobs = await _context.Jobs.AsNoTracking().Where(j => j.WorkspaceId == workspaceId)
+            .Include(j => j.LineItems).Include(j => j.AssignedTeamMembers).ThenInclude(e => e.User).ToListAsync();
+        static decimal Revenue(Job j) => j.LineItems.Sum(i => i.UnitPrice * i.Quantity);
+        static decimal Cost(Job j) => j.LineItems.Sum(i => i.Cost * i.Quantity);
+        static decimal Margin(decimal revenue, decimal cost) => revenue == 0 ? 0 : Math.Round((revenue - cost) / revenue * 100, 2);
+        static ProfitabilityRowDto Row(string id, string name, decimal revenue, decimal cost) => new() { Id = id, Name = name, Revenue = revenue, Cost = cost, GrossProfit = revenue - cost, MarginPercent = Margin(revenue, cost) };
+        var result = new JobProfitabilityDto { Revenue = jobs.Sum(Revenue), Cost = jobs.Sum(Cost) };
+        result.GrossProfit = result.Revenue - result.Cost;
+        result.MarginPercent = Margin(result.Revenue, result.Cost);
+        result.ByJob = jobs.Select(j => Row(j.Id.ToString(), j.Title, Revenue(j), Cost(j))).OrderByDescending(r => r.GrossProfit).ToList();
+        result.ByServiceItem = jobs.SelectMany(j => j.LineItems).GroupBy(i => i.ServiceItemId?.ToString() ?? $"custom:{i.Name}").Select(g => Row(g.Key, g.First().Name, g.Sum(i => i.UnitPrice * i.Quantity), g.Sum(i => i.Cost * i.Quantity))).OrderByDescending(r => r.GrossProfit).ToList();
+        result.ByTechnician = jobs.SelectMany(j => j.AssignedTeamMembers.Select(e => new { Employee = e, Job = j })).GroupBy(x => x.Employee.Id).Select(g => Row(g.Key.ToString(), g.First().Employee.User?.FullName ?? "Technician", g.Sum(x => Revenue(x.Job)), g.Sum(x => Cost(x.Job)))).OrderByDescending(r => r.GrossProfit).ToList();
+        return result;
+    }
+
 
 }

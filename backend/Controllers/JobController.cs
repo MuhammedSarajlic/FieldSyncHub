@@ -103,6 +103,12 @@ public class JobController : ControllerBase
         return await _jobService.GetJobsByFilter(filterDto, workspaceId, pageNumber, pageSize, restriction);
     }
 
+    [HttpGet("workspace/{workspaceId:guid}/profitability")]
+    public async Task<ApiResponse<JobProfitabilityDto>> GetJobProfitability(Guid workspaceId)
+    {
+        return new ApiResponse<JobProfitabilityDto> { Success = true, Payload = await _jobService.GetJobProfitability(workspaceId) };
+    }
+
     [HttpGet("job-number/{jobNumber}")]
     public async Task<ActionResult<Job>> GetJobByJobNumber(string jobNumber)
     {
