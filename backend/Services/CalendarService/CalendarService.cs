@@ -54,6 +54,8 @@ public class CalendarService : ICalendarService
                             j.StartDateTime <= endDate &&
                             j.EndDateTime >= startDate)
                 .Include(j => j.AssignedTeamMembers)
+                .Include(j => j.RecurrenceRule)
+                .AsNoTracking()
                 .ToListAsync(),
 
             Leads = await _context.Leads
@@ -63,6 +65,44 @@ public class CalendarService : ICalendarService
                 .ToListAsync()
         };
 
+        dto.Jobs = dto.Jobs.SelectMany(job => Expand(job, startDate, endDate)).ToList();
         return dto;
     }
+
+    private static IEnumerable<backend.Models.Job> Expand(backend.Models.Job source, DateTime start, DateTime end)
+    {
+        var rule = source.RecurrenceRule;
+        if (rule == null || rule.Frequency == backend.Models.RecurrenceFrequency.None) { yield return source; yield break; }
+        var cursor = source.StartDateTime;
+        var duration = source.EndDateTime - source.StartDateTime;
+        var occurrence = 0;
+        while (cursor <= end && occurrence < 1000)
+        {
+            var dayMatches = rule.DaysOfWeek.Count == 0 || rule.DaysOfWeek.Contains(cursor.DayOfWeek);
+            if (cursor >= start && dayMatches)
+            {
+                yield return CopyAt(source, cursor, duration);
+                occurrence++;
+            }
+            cursor = rule.Frequency switch
+            {
+                backend.Models.RecurrenceFrequency.Daily => cursor.AddDays(rule.Interval),
+                backend.Models.RecurrenceFrequency.Weekly => cursor.AddDays(1),
+                backend.Models.RecurrenceFrequency.Monthly => cursor.AddMonths(rule.Interval),
+                backend.Models.RecurrenceFrequency.Yearly => cursor.AddYears(rule.Interval),
+                _ => cursor.AddDays(rule.Interval)
+            };
+            if (rule.EndType == backend.Models.RecurrenceEndType.OnDate && rule.EndDate < cursor) break;
+            if (rule.EndType == backend.Models.RecurrenceEndType.AfterOccurrences && rule.OccurrenceCount <= occurrence) break;
+        }
+    }
+
+    private static backend.Models.Job CopyAt(backend.Models.Job source, DateTime start, TimeSpan duration) => new()
+    {
+        Id = Guid.NewGuid(), WorkspaceId = source.WorkspaceId, Title = source.Title, Description = source.Description,
+        CustomerId = source.CustomerId, PropertyId = source.PropertyId, JobType = source.JobType, Status = source.Status,
+        Priority = source.Priority, StartDateTime = start, EndDateTime = start + duration, RecurrenceRuleId = source.RecurrenceRuleId,
+        RecurrenceRule = source.RecurrenceRule, ArrivalWindow = source.ArrivalWindow, EstimatedDurationMinutes = source.EstimatedDurationMinutes,
+        AssignedTeamMembers = source.AssignedTeamMembers, LineItems = source.LineItems, JobNumber = source.JobNumber
+    };
 }

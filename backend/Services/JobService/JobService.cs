@@ -262,6 +262,18 @@ public class JobService : IJobService
             job.AssignedTeamMembers = [];
             job.AssignedTeamMembers.AddRange(employees);
             job.LineItems = [];
+            if (dto.RecurrenceRule != null)
+            {
+                job.RecurrenceRule = new RecurrenceRule
+                {
+                    Id = Guid.NewGuid(), Frequency = dto.RecurrenceRule.Frequency,
+                    Interval = Math.Max(1, dto.RecurrenceRule.Interval), DaysOfWeek = dto.RecurrenceRule.DaysOfWeek,
+                    EndType = dto.RecurrenceRule.EndType, OccurrenceCount = dto.RecurrenceRule.OccurrenceCount,
+                    EndDate = dto.RecurrenceRule.EndDate, DayOfMonth = dto.RecurrenceRule.DayOfMonth,
+                    WeekOfMonth = dto.RecurrenceRule.WeekOfMonth, DayOfWeekInMonth = dto.RecurrenceRule.DayOfWeekInMonth,
+                    MonthOfYear = dto.RecurrenceRule.MonthOfYear
+                };
+            }
 
             if (dto.LineItems?.Any() == true)
             {
