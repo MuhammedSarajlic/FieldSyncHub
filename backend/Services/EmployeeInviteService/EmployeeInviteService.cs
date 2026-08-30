@@ -33,7 +33,29 @@ public class EmployeeInviteService : IEmployeeInviteService
         var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == invite.Email);
         if (existingUser != null)
         {
-            return null;
+            var invitedWorkspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == invite.WorkspaceId);
+            if (invitedWorkspace == null) return null;
+
+            var membership = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == existingUser.Id && e.WorkspaceId == invite.WorkspaceId);
+            if (membership == null)
+            {
+                _context.Employees.Add(new Employee
+                {
+                    Id = Guid.NewGuid(), UserId = existingUser.Id, WorkspaceId = invite.WorkspaceId,
+                    HireDate = DateTime.UtcNow, Status = EmployeeStatus.Active
+                });
+            }
+
+            existingUser.Role = invite.Role;
+            existingUser.WorkspaceId = invite.WorkspaceId;
+            existingUser.Workspace = invitedWorkspace;
+            invite.IsAccepted = true;
+            await _context.SaveChangesAsync();
+
+            var existingUserDto = existingUser.Adapt<GetUserDto>();
+            var (existingAccessToken, existingRefreshToken) = await _tokenService.GenerateTokensAsync(existingUserDto);
+            _tokenService.SetRefreshTokenCookie(existingRefreshToken);
+            return existingAccessToken;
         }
 
         var newUser = new User
