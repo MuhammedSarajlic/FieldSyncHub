@@ -1,0 +1,11 @@
+services:
+  backend:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Staging
+      AppSettings__FrontendUrl: ${STAGING_FRONTEND_URL:-http://localhost:5173}
+      AppSettings__CookieSecure: ${COOKIE_SECURE:-true}
+
+  frontend:
+    build:
+      args:
+        VITE_BASE_URL: ${STAGING_API_URL:-/api}

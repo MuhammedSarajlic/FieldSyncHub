@@ -1,0 +1,10 @@
+{
+  "name": "fieldsynchub",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "seed:demo": "node scripts/seed.mjs",
+    "staging:up": "docker compose -f docker-compose.yml -f docker-compose.staging.yml up --build",
+    "staging:seed": "node scripts/seed.mjs"
+  }
+}

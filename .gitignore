@@ -1,6 +1,11 @@
 # Docker Compose environment overrides
 .env
 
+# Build and dependency output
+bin/
+obj/
+node_modules/
+
 # OS / editor
 .DS_Store
 .vscode/*

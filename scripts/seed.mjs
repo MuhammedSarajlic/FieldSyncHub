@@ -3,8 +3,8 @@
 // same validation and business logic the app itself uses.
 //
 // Usage:
-//   node scripts/seed.mjs
-//   SEED_BASE_URL=http://localhost:5244/api node scripts/seed.mjs
+//   npm run seed:demo
+//   SEED_BASE_URL=http://localhost:5244/api npm run seed:demo
 //
 // Requires Node 20+ (native fetch) and the backend running (docker compose
 // up, or `dotnet run` locally). Run scripts/reset-db.sql first if you want
@@ -23,10 +23,13 @@ const DiscountType = { Percentage: 0, FixedAmount: 1 };
 const QuoteStatus = { Draft: 0, Sent: 1, AwaitingResponse: 2, AwaitingApproval: 3, Approved: 4, Declined: 5, Expired: 6, ConvertedToJob: 7 };
 const LeadPriority = { Low: 0, Normal: 1, High: 2, Urgent: 3 };
 
-async function api(method, path, body) {
+async function api(method, path, body, accessToken) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
@@ -98,9 +101,10 @@ async function seedWorkspace(config, index) {
     lastName: config.ownerLastName,
   });
   const userId = registerRes.user.id;
+  const accessToken = registerRes.tokens.accessToken;
   console.log(`User created: ${config.email} (${userId})`);
 
-  const workspaceRes = await api('POST', `/workspace/${userId}`, {
+  const workspaceRes = await api('POST', '/workspace', {
     name: config.workspaceName,
     companyName: config.companyName,
     companyUrl: '',
@@ -110,7 +114,11 @@ async function seedWorkspace(config, index) {
     logoUrl: '',
     theme: 'light',
     category: config.category,
-  });
+    currency: 'USD',
+    defaultTaxRate: 8.25,
+    defaultPaymentTerms: 'Net 14',
+    timeZoneId: 'America/Chicago',
+  }, accessToken);
   const workspaceId = workspaceRes.payload.id;
   console.log(`Workspace created: ${config.workspaceName} (${workspaceId})`);
 
@@ -146,7 +154,7 @@ async function seedWorkspace(config, index) {
           isBillingAddress: true,
         },
       ],
-    });
+    }, accessToken);
     const customer = customerRes.payload;
     customers.push(customer);
     console.log(`  Customer: ${customer.displayName}`);
@@ -195,7 +203,7 @@ async function seedWorkspace(config, index) {
       invoiceSent: false,
       createdBy: config.ownerFirstName,
       tags: [],
-    });
+    }, accessToken);
 
     // Quote — mix of statuses
     const quoteStatus = pick(
@@ -213,7 +221,7 @@ async function seedWorkspace(config, index) {
       discountType: DiscountType.Percentage,
       discountValue: 0,
       taxRate: 8.25,
-    });
+    }, accessToken);
 
     // Invoice — mix of recent/overdue due dates
     await api('POST', '/invoice', {
@@ -231,7 +239,7 @@ async function seedWorkspace(config, index) {
       paymentTerms: 'Net 14',
       notes: '',
       internalNotes: '',
-    });
+    }, accessToken);
 
     // Lead — only for about half the customers
     if (i % 2 === 0) {
@@ -242,7 +250,7 @@ async function seedWorkspace(config, index) {
         priority: pick([LeadPriority.Normal, LeadPriority.High, LeadPriority.Low], i),
         notes: 'Follow up next week',
         lineItems: [],
-      });
+      }, accessToken);
     }
 
     console.log(`  Job + Quote + Invoice${i % 2 === 0 ? ' + Lead' : ''} created for ${customer.displayName}`);
