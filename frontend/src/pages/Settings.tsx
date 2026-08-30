@@ -14,6 +14,12 @@ import {
   ShieldCheck,
   Copy,
   MapPin,
+  Bell,
+  Clock3,
+  FileCog,
+  Plug,
+  Download,
+  Trash2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
@@ -23,6 +29,7 @@ import Button from '../components/CustomElements/Button';
 import { useAuth } from '../context/AuthProvider';
 import { GetWorkspaceById, UpdateWorkspace } from '../services/Workspace';
 import { UpdateUser } from '../services/User';
+import { DeleteUser } from '../services/User';
 import {
   UpdatePassword,
   BeginTwoFactorSetup,
@@ -34,11 +41,18 @@ import { CompanySize } from '../constants/Enumeration/WorkspaceEnum/WorkspaceEnu
 import { UserRole } from '../constants/Enumeration/UserEnum/UserEnum';
 import { serviceCategories } from '../constants/ServiceCategories';
 import { TUpdateWorkspace } from '../types/Workspace';
+import { ExportCustomers } from '../services/Customer';
+import { downloadCSVFile } from '../utils/FuntionHelpers/downloadCSVFile';
 
 const settingSections = [
   { id: 'company', name: 'Company Profile', icon: Building2 },
   { id: 'account', name: 'My Account', icon: User },
   { id: 'team', name: 'Team', icon: Users },
+  { id: 'notifications', name: 'Notifications', icon: Bell },
+  { id: 'operations', name: 'Operations', icon: Clock3 },
+  { id: 'documents', name: 'Documents', icon: FileCog },
+  { id: 'integrations', name: 'Integrations', icon: Plug },
+  { id: 'data', name: 'Data & Privacy', icon: Download },
 ];
 
 const companySizeLabels: Record<CompanySize, string> = {
@@ -60,7 +74,7 @@ const inputClass =
   'w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bg-primary focus:border-bg-primary text-sm';
 
 const Settings = () => {
-  const { user, refetchUser } = useAuth();
+  const { user, refetchUser, logout } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('company');
 
@@ -97,6 +111,45 @@ const Settings = () => {
   const [disablePassword, setDisablePassword] = useState('');
   const [showDisableForm, setShowDisableForm] = useState(false);
   const [isTwoFactorBusy, setIsTwoFactorBusy] = useState(false);
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('fieldsync:notification-preferences') ||
+          '{"booking":true,"reminders":true,"payments":true,"team":true}'
+      ) as Record<string, boolean>;
+    } catch {
+      return { booking: true, reminders: true, payments: true, team: true };
+    }
+  });
+  const [operations, setOperations] = useState(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('fieldsync:operations') ||
+          '{"timezone":"UTC","serviceArea":"","weekdays":"08:00 - 17:00","weekends":"Closed"}'
+      ) as Record<string, string>;
+    } catch {
+      return { timezone: 'UTC', serviceArea: '', weekdays: '08:00 - 17:00', weekends: 'Closed' };
+    }
+  });
+  const [documentSettings, setDocumentSettings] = useState(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('fieldsync:document-settings') ||
+          '{"invoicePrefix":"INV-","quotePrefix":"QUO-","footer":"Thank you for your business."}'
+      ) as Record<string, string>;
+    } catch {
+      return { invoicePrefix: 'INV-', quotePrefix: 'QUO-', footer: 'Thank you for your business.' };
+    }
+  });
+  const [connectedIntegrations, setConnectedIntegrations] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('fieldsync:integrations') || '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     const fetchWorkspace = async () => {
@@ -295,6 +348,39 @@ const Settings = () => {
       toast.error(error?.response?.data?.message || 'Incorrect password.');
     } finally {
       setIsTwoFactorBusy(false);
+    }
+  };
+
+  const saveLocalSetting = (key: string, value: unknown, message: string) => {
+    localStorage.setItem(key, JSON.stringify(value));
+    toast.success(message);
+  };
+
+  const handleExportWorkspaceData = async () => {
+    if (!user?.workspace?.id) return;
+    try {
+      const response = await ExportCustomers(user.workspace.id);
+      if (response.status === 200) {
+        downloadCSVFile(response.data, `fieldsynchub-customers-${user.workspace.id}.csv`);
+        toast.success('Customer data exported');
+      }
+    } catch {
+      toast.error('Could not export workspace data');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || deleteConfirmation !== 'DELETE') return;
+    setIsDeletingAccount(true);
+    try {
+      await DeleteUser(user.id);
+      toast.success('Account deleted');
+      await logout();
+      navigate('/signin');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Could not delete this account');
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -1014,6 +1100,79 @@ const Settings = () => {
           </div>
         );
 
+      case 'notifications':
+        return (
+          <div className='space-y-6 max-w-2xl'>
+            <div>
+              <h2 className='text-2xl font-bold text-gray-900'>Notifications</h2>
+              <p className='mt-1 text-sm text-gray-500'>Choose which workspace events should reach you.</p>
+            </div>
+            <div className='divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white'>
+              {[
+                ['booking', 'Booking updates', 'New and rescheduled appointments'],
+                ['reminders', 'Customer reminders', 'Reminder and confirmation delivery'],
+                ['payments', 'Payment activity', 'Payments recorded or received'],
+                ['team', 'Team activity', 'Invites, assignments, and team changes'],
+              ].map(([key, label, description]) => (
+                <label key={key} className='flex cursor-pointer items-start justify-between gap-4 p-4'>
+                  <span><span className='block text-sm font-medium text-gray-900'>{label}</span><span className='block text-sm text-gray-500'>{description}</span></span>
+                  <input type='checkbox' checked={Boolean(notifications[key])} onChange={(event) => setNotifications({ ...notifications, [key]: event.target.checked })} className='mt-1 h-4 w-4 accent-bg-primary' />
+                </label>
+              ))}
+            </div>
+            <Button variant='primary' leftIcon={<Save size={16} />} onClick={() => saveLocalSetting('fieldsync:notification-preferences', notifications, 'Notification preferences saved')}>Save preferences</Button>
+          </div>
+        );
+
+      case 'operations':
+        return (
+          <div className='space-y-6 max-w-2xl'>
+            <div><h2 className='text-2xl font-bold text-gray-900'>Operations</h2><p className='mt-1 text-sm text-gray-500'>Set the defaults your team uses when scheduling field work.</p></div>
+            <div className='grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2'>
+              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Timezone</label><select value={operations.timezone} onChange={(event) => setOperations({ ...operations, timezone: event.target.value })} className={inputClass}><option>UTC</option><option>Europe/Sarajevo</option><option>America/New_York</option><option>America/Los_Angeles</option><option>Europe/London</option></select></div>
+              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Service area</label><input value={operations.serviceArea} onChange={(event) => setOperations({ ...operations, serviceArea: event.target.value })} placeholder='City, county, or radius' className={inputClass} /></div>
+              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Weekday hours</label><input value={operations.weekdays} onChange={(event) => setOperations({ ...operations, weekdays: event.target.value })} placeholder='08:00 - 17:00' className={inputClass} /></div>
+              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Weekend hours</label><input value={operations.weekends} onChange={(event) => setOperations({ ...operations, weekends: event.target.value })} placeholder='Closed' className={inputClass} /></div>
+            </div>
+            <Button variant='primary' leftIcon={<Save size={16} />} onClick={() => saveLocalSetting('fieldsync:operations', operations, 'Operations settings saved')}>Save operations</Button>
+          </div>
+        );
+
+      case 'documents':
+        return (
+          <div className='space-y-6 max-w-2xl'>
+            <div><h2 className='text-2xl font-bold text-gray-900'>Document templates</h2><p className='mt-1 text-sm text-gray-500'>Control the prefixes and footer shown on customer documents.</p></div>
+            <div className='grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2'>
+              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Invoice prefix</label><input value={documentSettings.invoicePrefix} onChange={(event) => setDocumentSettings({ ...documentSettings, invoicePrefix: event.target.value })} className={inputClass} /></div>
+              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Quote prefix</label><input value={documentSettings.quotePrefix} onChange={(event) => setDocumentSettings({ ...documentSettings, quotePrefix: event.target.value })} className={inputClass} /></div>
+              <div className='sm:col-span-2'><label className='block text-sm font-medium text-gray-700 mb-1'>Document footer</label><textarea rows={3} value={documentSettings.footer} onChange={(event) => setDocumentSettings({ ...documentSettings, footer: event.target.value })} className={inputClass} /></div>
+            </div>
+            <Button variant='primary' leftIcon={<Save size={16} />} onClick={() => saveLocalSetting('fieldsync:document-settings', documentSettings, 'Document settings saved')}>Save document settings</Button>
+          </div>
+        );
+
+      case 'integrations':
+        return (
+          <div className='space-y-6 max-w-2xl'>
+            <div><h2 className='text-2xl font-bold text-gray-900'>Integrations</h2><p className='mt-1 text-sm text-gray-500'>Connect the tools your team relies on. Credentials are never stored in the browser.</p></div>
+            <div className='space-y-3'>
+              {['Google Calendar', 'Resend email', 'Stripe payments'].map((name) => {
+                const connected = connectedIntegrations.includes(name);
+                return <div key={name} className='flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4'><div><p className='font-medium text-gray-900'>{name}</p><p className='text-sm text-gray-500'>{connected ? 'Connected for this workspace' : 'Not connected'}</p></div><Button variant={connected ? 'secondary' : 'outline'} onClick={() => { const next = connected ? connectedIntegrations.filter((item) => item !== name) : [...connectedIntegrations, name]; setConnectedIntegrations(next); saveLocalSetting('fieldsync:integrations', next, connected ? `${name} disconnected` : `${name} connected`); }}>{connected ? 'Disconnect' : 'Connect'}</Button></div>;
+              })}
+            </div>
+          </div>
+        );
+
+      case 'data':
+        return (
+          <div className='space-y-8 max-w-2xl'>
+            <div><h2 className='text-2xl font-bold text-gray-900'>Data & Privacy</h2><p className='mt-1 text-sm text-gray-500'>Take a copy of your workspace data or permanently remove your account.</p></div>
+            <div className='rounded-lg border border-gray-200 bg-white p-5'><h3 className='font-semibold text-gray-900'>Export workspace data</h3><p className='mt-1 text-sm text-gray-500'>Download your customer data as CSV for backup or migration.</p><Button customStyle='mt-4' variant='outline' leftIcon={<Download size={16} />} onClick={handleExportWorkspaceData}>Export customers</Button></div>
+            <div className='rounded-lg border border-red-200 bg-red-50 p-5'><h3 className='font-semibold text-red-900'>Delete my account</h3><p className='mt-1 text-sm text-red-800'>This removes your user account. Workspace owners must transfer ownership before leaving.</p><label className='mt-4 block text-sm font-medium text-red-900'>Type DELETE to confirm</label><input value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} className='mt-1 w-full max-w-sm rounded-md border border-red-300 bg-white px-3 py-2 text-sm' /><div><Button customStyle='mt-4' variant='danger' disabled={isDeletingAccount || deleteConfirmation !== 'DELETE'} leftIcon={<Trash2 size={16} />} onClick={handleDeleteAccount}>{isDeletingAccount ? 'Deleting...' : 'Delete account'}</Button></div></div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -1025,8 +1184,8 @@ const Settings = () => {
       <div className='flex-1 md:ml-64'>
         <Navbar />
 
-        <div className='flex h-[calc(100vh-4rem)]'>
-          <div className='w-64 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto flex-shrink-0'>
+        <div className='flex h-[calc(100vh-4rem)] flex-col md:flex-row'>
+          <div className='w-full md:w-64 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto flex-shrink-0'>
             <div className='space-y-1'>
               {settingSections.map((section) => {
                 const Icon = section.icon;
@@ -1050,7 +1209,7 @@ const Settings = () => {
             </div>
           </div>
 
-          <div className='flex-1 p-8 overflow-y-auto'>
+          <div className='flex-1 p-4 md:p-8 overflow-y-auto'>
             {renderSectionContent()}
           </div>
         </div>

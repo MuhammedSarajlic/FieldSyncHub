@@ -15,6 +15,11 @@ export async function UpdateUser(user: TUpdateUser) {
   return response;
 }
 
+export async function DeleteUser(userId: string) {
+  const response = await api.delete(`/user/${userId}`);
+  return response;
+}
+
 export async function ConfirmEmailChange(token: string) {
   const response = await api.post(
     `/user/confirm-email-change?token=${token}`
