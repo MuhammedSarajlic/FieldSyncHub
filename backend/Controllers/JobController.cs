@@ -173,6 +173,21 @@ public class JobController : ControllerBase
         return Ok();
     }
 
+    [HttpPost("{jobId:guid}/deposit-payments")]
+    public async Task<ActionResult<ApiResponse<Job>>> RecordDepositPayment(
+        Guid jobId,
+        [FromBody] RecordJobDepositPaymentDto paymentDto)
+    {
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid recordedByUserId)
+        {
+            return Forbid();
+        }
+
+        var restriction = await ResolveJobRestriction(callerWorkspaceId);
+        var result = await _jobService.RecordDepositPayment(jobId, paymentDto, callerWorkspaceId, recordedByUserId, restriction);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpGet("workspace/{workspaceId:guid}/job-stats")]
     public async Task<ApiResponse<JobStatsDto>> GetJobStats(Guid workspaceId)
     {

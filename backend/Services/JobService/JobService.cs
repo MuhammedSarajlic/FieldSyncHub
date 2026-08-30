@@ -511,6 +511,66 @@ public class JobService : IJobService
         return new ApiResponse<Job> { Success = true, Payload = job };
     }
 
+    public async Task<ApiResponse<Job>> RecordDepositPayment(Guid jobId, RecordJobDepositPaymentDto paymentDto, Guid callerWorkspaceId, Guid recordedByUserId, Guid? restrictToEmployeeId = null)
+    {
+        var job = await _context.Jobs
+            .Include(j => j.Payments)
+            .Include(j => j.AssignedTeamMembers)
+            .FirstOrDefaultAsync(j => j.Id == jobId);
+
+        if (job == null || job.WorkspaceId != callerWorkspaceId
+            || (restrictToEmployeeId != null && !job.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
+        {
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
+        }
+
+        if (job.DepositAmount <= 0m)
+        {
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "This job doesn't have a deposit amount set." };
+        }
+
+        if (job.DepositBalanceDue <= 0m)
+        {
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "The deposit has already been paid in full." };
+        }
+
+        if (paymentDto.Amount > job.DepositBalanceDue)
+        {
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "Payment amount cannot exceed the remaining deposit balance." };
+        }
+
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            JobId = job.Id,
+            Amount = paymentDto.Amount,
+            Method = paymentDto.Method,
+            Status = PaymentRecordStatus.Succeeded,
+            PaidAt = DateTime.SpecifyKind(paymentDto.PaidAt, DateTimeKind.Utc),
+            RecordedByUserId = recordedByUserId,
+            Note = string.IsNullOrWhiteSpace(paymentDto.Note) ? null : paymentDto.Note.Trim(),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Computed from job.DepositPaid + this payment's amount rather than the
+        // post-save value, since job.Payments' in-memory fixup timing for a
+        // just-added, not-yet-saved entity isn't something to rely on here.
+        var updatedDepositPaid = job.DepositPaid + paymentDto.Amount;
+        job.PaymentStatus = updatedDepositPaid switch
+        {
+            <= 0m => PaymentStatus.Unpaid,
+            _ when job.TotalAmount > 0m && updatedDepositPaid >= job.TotalAmount => PaymentStatus.Paid,
+            _ => PaymentStatus.Partial
+        };
+        job.UpdatedAt = DateTime.UtcNow;
+
+        _context.Payments.Add(payment);
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<Job> { Success = true, Payload = job };
+    }
+
     private async Task<string> GenerateJobNumber(Guid workspaceId)
     {
         var today = DateTime.UtcNow.Date;

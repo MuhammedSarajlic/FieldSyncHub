@@ -8,9 +8,12 @@ public class Payment
 {
     [Key]
     public Guid Id { get; set; }
-    public Guid InvoiceId { get; set; }
+    public Guid? InvoiceId { get; set; }
     [JsonIgnore]
     public Invoice? Invoice { get; set; }
+    public Guid? JobId { get; set; }
+    [JsonIgnore]
+    public Job? Job { get; set; }
     public decimal Amount { get; set; }
     public PaymentMethod Method { get; set; } = PaymentMethod.Other;
     public PaymentRecordStatus Status { get; set; } = PaymentRecordStatus.Pending;

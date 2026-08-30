@@ -9,6 +9,7 @@ import {
   PaymentStatus,
 } from '../constants/Enumeration/JobEnum/JobEnum';
 import { TStatusChange } from './StatusHistory';
+import { PaymentMethod, TPayment } from './Invoice';
 import { DiscountType } from '../constants/Enumeration/CommonEnum/DiscountEnum';
 import {
   TAddRecurrenceRule,
@@ -39,6 +40,10 @@ export type TJob = {
   assignedTeamMembers: TEmployee[];
   paymentStatus: PaymentStatus;
   depositAmount: number;
+  payments: TPayment[];
+  depositPaid: number;
+  depositBalanceDue: number;
+  isDepositPaid: boolean;
   discountType: DiscountType;
   discountValue: number;
   taxRate: number;
@@ -140,6 +145,13 @@ export type JobFilter = {
   totalMax?: number;
   priority?: string;
   status?: string;
+};
+
+export type TRecordJobDepositPayment = {
+  amount: number;
+  method: PaymentMethod;
+  paidAt: string;
+  note?: string;
 };
 
 export type TJobStats = {

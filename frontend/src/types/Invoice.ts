@@ -24,7 +24,8 @@ export enum PaymentRecordStatus {
 
 export type TPayment = {
   id: string;
-  invoiceId: string;
+  invoiceId?: string | null;
+  jobId?: string | null;
   amount: number;
   method: PaymentMethod;
   status: PaymentRecordStatus;

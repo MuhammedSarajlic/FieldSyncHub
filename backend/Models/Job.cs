@@ -30,6 +30,13 @@ public class Job
     public List<Employee> AssignedTeamMembers { get; set; } = [];
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     public decimal DepositAmount { get; set; }
+    public List<Payment> Payments { get; set; } = [];
+    [NotMapped]
+    public decimal DepositPaid => PaymentLedgerCalculator.CalculateAmountPaid(Payments);
+    [NotMapped]
+    public decimal DepositBalanceDue => Math.Max(0m, DepositAmount - DepositPaid);
+    [NotMapped]
+    public bool IsDepositPaid => DepositAmount > 0m && DepositPaid >= DepositAmount;
     public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
     public decimal DiscountValue { get; set; }
     private TotalsBreakdown Totals => TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate);

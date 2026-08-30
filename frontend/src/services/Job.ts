@@ -1,4 +1,4 @@
-import { TAddJob, TUpdateJob } from '../types/Job';
+import { TAddJob, TRecordJobDepositPayment, TUpdateJob } from '../types/Job';
 import api from './api';
 
 export async function GetJobById(jobId: string) {
@@ -51,5 +51,13 @@ export async function UpdateJob(job: TUpdateJob) {
 
 export async function DeleteJob(jobId: string) {
   const response = await api.delete(`/job/${jobId}`);
+  return response;
+}
+
+export async function RecordJobDepositPayment(
+  jobId: string,
+  payment: TRecordJobDepositPayment
+) {
+  const response = await api.post(`/job/${jobId}/deposit-payments`, payment);
   return response;
 }

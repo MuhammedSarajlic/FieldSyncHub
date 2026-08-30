@@ -4,7 +4,8 @@ import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import { useNavigate, useParams } from 'react-router';
 import { TJob } from '../../types/Job';
-import { DeleteJob, GetJobById } from '../../services/Job';
+import { TRecordInvoicePayment } from '../../types/Invoice';
+import { DeleteJob, GetJobById, RecordJobDepositPayment } from '../../services/Job';
 import {
   JobPriority,
   JobStatus,
@@ -31,6 +32,7 @@ import {
   Star,
   Plus,
   MapIcon,
+  Wallet,
 } from 'lucide-react';
 import { getJobPriority } from '../../utils/FuntionHelpers/JobUtils/getJobPriority';
 import { getJobStatus } from '../../utils/FuntionHelpers/JobUtils/getJobStatus';
@@ -42,6 +44,7 @@ import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import { useClickOutside } from '../../hooks/useClickOutside'; // Assuming you have this hook from QuoteDetails
 import { formatTime } from '../../utils/FuntionHelpers/formatTime';
 import EditJobModal from '../../components/Jobs/JobsModal/EditJobModal';
+import RecordPaymentModal from '../../components/Invoice/Modal/RecordPaymentModal';
 import { formatPercent } from '../../utils/FuntionHelpers/formatPercent';
 
 const JobDetails = () => {
@@ -52,6 +55,8 @@ const JobDetails = () => {
   const [jobDetails, setJobDetails] = useState<TJob | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isEditJobModalOpen, setIsEditJobModalOpen] = useState<boolean>(false);
+  const [isRecordDepositModalOpen, setIsRecordDepositModalOpen] =
+    useState<boolean>(false);
 
   const fetchJobById = async () => {
     if (!jobId) return;
@@ -61,6 +66,21 @@ const JobDetails = () => {
       setJobDetails(response.data.payload);
     }
     setIsLoading(false);
+  };
+
+  const handleRecordDepositPayment = async (payment: TRecordInvoicePayment) => {
+    if (!jobId) return;
+
+    try {
+      await RecordJobDepositPayment(jobId, payment);
+      await fetchJobById();
+    } catch (err) {
+      const message =
+        (err as { response?: { data?: { errorMessage?: string } } })
+          ?.response?.data?.errorMessage ??
+        'Could not record the deposit payment.';
+      throw new Error(message);
+    }
   };
 
   const [showMoreActions, setShowMoreActions] = useState(false);
@@ -505,6 +525,27 @@ const JobDetails = () => {
                                       isTotal: true,
                                       customColor: 'text-text-primary',
                                     },
+                                    jobDetails.depositAmount > 0 && {
+                                      label: 'Deposit paid:',
+                                      value: `${formatCurrency(
+                                        jobDetails.depositPaid
+                                      )} / ${formatCurrency(
+                                        jobDetails.depositAmount
+                                      )}`,
+                                      color: jobDetails.isDepositPaid
+                                        ? 'text-green-600'
+                                        : 'text-gray-900',
+                                    },
+                                    jobDetails.depositAmount > 0 && {
+                                      label: 'Deposit balance due:',
+                                      value: `${formatCurrency(
+                                        jobDetails.depositBalanceDue
+                                      )}`,
+                                      color:
+                                        jobDetails.depositBalanceDue > 0
+                                          ? 'text-red-600'
+                                          : 'text-green-600',
+                                    },
                                   ]
                                     .filter(Boolean)
                                     .map(
@@ -545,6 +586,22 @@ const JobDetails = () => {
                                           </span>
                                         </div>
                                       )
+                                    )}
+                                  {jobDetails.depositAmount > 0 &&
+                                    jobDetails.depositBalanceDue > 0 && (
+                                      <div className='flex justify-end pt-2'>
+                                        <IconButton
+                                          icon={
+                                            <Wallet className='mr-2 h-4 w-4' />
+                                          }
+                                          onClick={() =>
+                                            setIsRecordDepositModalOpen(true)
+                                          }
+                                          customStyle='border-transparent bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700 text-sm'
+                                        >
+                                          Record deposit payment
+                                        </IconButton>
+                                      </div>
                                     )}
                                 </div>
                               </div>
@@ -800,6 +857,12 @@ const JobDetails = () => {
         onClose={() => setIsEditJobModalOpen(false)}
         jobToEdit={jobDetails}
         setJobDetails={setJobDetails}
+      />
+      <RecordPaymentModal
+        isOpen={isRecordDepositModalOpen}
+        balanceDue={jobDetails.depositBalanceDue}
+        onClose={() => setIsRecordDepositModalOpen(false)}
+        onSubmit={handleRecordDepositPayment}
       />
     </div>
   );

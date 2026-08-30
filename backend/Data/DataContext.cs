@@ -163,6 +163,14 @@ public class DataContext : DbContext
             .HasForeignKey(p => p.InvoiceId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Job → Payments (deposit payments recorded directly against the job,
+        // independent of any invoice it's later billed through)
+        modelBuilder.Entity<Job>()
+            .HasMany(j => j.Payments)
+            .WithOne(p => p.Job)
+            .HasForeignKey(p => p.JobId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Job → LineItems
         modelBuilder.Entity<Job>()
             .HasMany(j => j.LineItems)
@@ -246,6 +254,7 @@ public class DataContext : DbContext
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
         modelBuilder.Entity<Invoice>().HasIndex(i => new { i.WorkspaceId, i.InvoiceNumber }).IsUnique();
         modelBuilder.Entity<Payment>().HasIndex(p => new { p.InvoiceId, p.Status, p.PaidAt });
+        modelBuilder.Entity<Payment>().HasIndex(p => new { p.JobId, p.Status, p.PaidAt });
         modelBuilder.Entity<Job>().HasIndex(j => new { j.WorkspaceId, j.JobNumber }).IsUnique();
         modelBuilder.Entity<Quote>().HasIndex(q => new { q.WorkspaceId, q.QuoteNumber }).IsUnique();
         modelBuilder.Entity<ServiceItem>().HasIndex(s => s.WorkspaceId);
