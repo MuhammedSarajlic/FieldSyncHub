@@ -15,3 +15,7 @@ export async function UpdateWorkspace(workspace: TUpdateWorkspace) {
   const response = await api.put('/workspace', workspace);
   return response;
 }
+
+export const SwitchWorkspace = (workspaceId: string) => api.post(`/workspace/switch/${workspaceId}`);
+export const GetWorkspaceMemberships = () => api.get('/workspace/memberships');
+export const ExportWorkspace = (workspaceId: string) => api.get(`/workspace/${workspaceId}/export`, { responseType: 'blob' });

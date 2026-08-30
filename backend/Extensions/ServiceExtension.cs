@@ -24,6 +24,8 @@ using backend.Services.ActivityHistoryService;
 using backend.Services.StorageService;
 using backend.Services.TwoFactorService;
 using backend.Services.WebhookService;
+using backend.Services.StripeService;
+using backend.Services.AccountingService;
 using Resend;
 
 namespace backend.Extensions;
@@ -69,5 +71,7 @@ public static class ServiceExtension
         services.AddScoped<ITwoFactorService, TwoFactorService>();
         services.AddScoped<IActivityHistoryService, ActivityHistoryService>();
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
+        services.AddScoped<IStripePaymentService, StripePaymentService>();
+        services.AddScoped<IAccountingSyncService, AccountingSyncService>();
     }
 }

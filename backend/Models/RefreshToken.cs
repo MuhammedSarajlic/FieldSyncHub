@@ -13,6 +13,7 @@ public class RefreshToken
     [Key]
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    public Guid? WorkspaceId { get; set; }
     public User? User { get; set; }
     public bool RememberMe { get; set; }
     public DateTime ExpiresAt { get; set; }

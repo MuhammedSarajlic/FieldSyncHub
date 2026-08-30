@@ -3,6 +3,7 @@ using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Services.CurrentUserService;
 using backend.Services.PortalAccessService;
+using backend.Services.StripeService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,12 +17,29 @@ public class PortalController : ControllerBase
     private readonly DataContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IPortalAccessService _access;
+    private readonly IStripePaymentService _stripe;
 
-    public PortalController(DataContext db, ICurrentUser currentUser, IPortalAccessService access)
+    public PortalController(DataContext db, ICurrentUser currentUser, IPortalAccessService access, IStripePaymentService stripe)
     {
         _db = db;
         _currentUser = currentUser;
         _access = access;
+        _stripe = stripe;
+    }
+
+    [AllowAnonymous]
+    [HttpPost("{token}/payment-intent")]
+    public async Task<IActionResult> CreatePaymentIntent(string token)
+    {
+        if (!_access.TryRead(token, out var access) || access?.Kind != "invoice") return NotFound();
+        var invoice = await _db.Invoices.Include(i => i.Payments).Include(i => i.LineItems).FirstOrDefaultAsync(i => i.Id == access.DocumentId);
+        if (invoice == null) return NotFound();
+        if (invoice.BalanceDue <= 0m) return BadRequest(new { message = "This invoice is already paid." });
+        if (!_stripe.IsConfigured) return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Online payments are not configured for this workspace." });
+        var workspace = await _db.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.Id == invoice.WorkspaceId);
+        if (workspace == null) return NotFound();
+        var intent = await _stripe.CreatePaymentIntentAsync(invoice.BalanceDue, workspace.Currency, invoice.Id, Request.Headers["Idempotency-Key"].FirstOrDefault(), HttpContext.RequestAborted);
+        return intent == null ? StatusCode(StatusCodes.Status502BadGateway, new { message = "The payment provider could not create a payment." }) : Ok(new { intent.Id, clientSecret = intent.ClientSecret, publishableKey = _stripe.PublishableKey });
     }
 
     [Authorize]

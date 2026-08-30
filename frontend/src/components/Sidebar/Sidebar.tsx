@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthProvider';
 import images from '../../constants/AssetsConstants/images';
 import SidebarItem from './SidebarItem';
 import ThemeToggle from '../CustomElements/ThemeToggle';
+import { SwitchWorkspace } from '../../services/Workspace';
+import { setStoredToken } from '../../utils/AuthHelpers/tokenStorage';
 
 const Navigation = ({ onNavigate }: { onNavigate?: () => void }) => {
   const sections = [
@@ -32,7 +34,7 @@ const Navigation = ({ onNavigate }: { onNavigate?: () => void }) => {
 };
 
 const Profile = ({ onNavigate }: { onNavigate?: () => void }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, setAccessToken } = useAuth();
   const initials = user?.fullName?.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase() ?? '?';
 
   return (
@@ -44,6 +46,7 @@ const Profile = ({ onNavigate }: { onNavigate?: () => void }) => {
           <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>{user?.email}</p>
         </div>
       </div>
+      {(user?.workspaces?.length ?? 0) > 1 && <label className='block border-t border-gray-100 px-3 py-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400'>Workspace<select value={user?.workspace?.id ?? ''} onChange={async (event) => { const response = await SwitchWorkspace(event.target.value); const rememberMe = Boolean(localStorage.getItem('accessToken')); setStoredToken(response.data.accessToken, rememberMe); setAccessToken(response.data.accessToken); window.location.reload(); }} className='mt-1 w-full border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-white'>{user?.workspaces?.map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select></label>}
       <button
         type='button'
         onClick={() => { onNavigate?.(); void logout(); }}

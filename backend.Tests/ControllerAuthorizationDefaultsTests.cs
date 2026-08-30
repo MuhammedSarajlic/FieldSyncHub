@@ -26,6 +26,19 @@ public class ControllerAuthorizationDefaultsTests : IClassFixture<AuthorizationD
         ("POST", "api/invite/accept-invite"),
         ("GET", "api/invite/validate-token"),
         ("POST", "api/user/confirm-email-change"),
+        ("POST", "api/payments/stripe/webhook"),
+        ("GET", "api/portal/{token}"),
+        ("POST", "api/portal/{token}/approve"),
+        ("POST", "api/portal/{token}/payment-intent"),
+        ("POST", "api/booking/{workspaceId:guid}"),
+        ("GET", "api/review/{token}"),
+        ("POST", "api/review/{token}"),
+        ("GET", "api/marketing/campaigns/{campaignId:guid}/track/{recipientId:guid}"),
+        ("GET", "api/integrations/accounting/callback/{provider}"),
+        ("GET", "api/public/v1/customers"),
+        ("GET", "api/public/v1/invoices"),
+        ("POST", "api/public/v1/webhooks/subscribe"),
+        ("DELETE", "api/public/v1/webhooks/subscribe/{id:guid}"),
     };
 
     private readonly AuthorizationDefaultsFactory _factory;

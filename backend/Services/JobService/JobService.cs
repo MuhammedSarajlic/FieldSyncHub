@@ -6,6 +6,7 @@ using backend.Models;
 using backend.Models.QuoteModels;
 using backend.Response;
 using backend.Services.InvoiceService;
+using backend.Services.TimeService;
 using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -228,7 +229,10 @@ public class JobService : IJobService
 
     public async Task<ApiResponse<Job>> CreateJob(CreateJobDto dto)
     {
-        if (dto.EndDateTime <= dto.StartDateTime)
+        var timeZoneId = await _context.Workspaces.Where(w => w.Id == dto.WorkspaceId).Select(w => w.TimeZoneId).FirstOrDefaultAsync();
+        var startDateTime = WorkspaceTime.ToUtc(dto.StartDateTime, timeZoneId);
+        var endDateTime = WorkspaceTime.ToUtc(dto.EndDateTime, timeZoneId);
+        if (endDateTime <= startDateTime)
             return new ApiResponse<Job> { Success = false, ErrorMessage = "The job end time must be after its start time." };
         if (dto.PropertyId.HasValue)
         {
@@ -259,7 +263,7 @@ public class JobService : IJobService
                     ErrorMessage = $"Missing team members: {string.Join(", ", missing)}"
                 };
 
-            var scheduleError = await ValidateSchedule(dto.WorkspaceId, dto.StartDateTime, dto.EndDateTime, employeeIds);
+            var scheduleError = await ValidateSchedule(dto.WorkspaceId, startDateTime, endDateTime, employeeIds);
             if (scheduleError != null)
                 return new ApiResponse<Job> { Success = false, ErrorMessage = scheduleError };
         }
@@ -270,6 +274,8 @@ public class JobService : IJobService
             job.Id = Guid.NewGuid();
             job.JobNumber = await GenerateJobNumber(dto.WorkspaceId);
             job.AssignedTeamMembers = [];
+            job.StartDateTime = startDateTime;
+            job.EndDateTime = endDateTime;
             job.AssignedTeamMembers.AddRange(employees);
             job.LineItems = [];
             if (dto.RecurrenceRule != null)
@@ -279,7 +285,7 @@ public class JobService : IJobService
                     Id = Guid.NewGuid(), Frequency = dto.RecurrenceRule.Frequency,
                     Interval = Math.Max(1, dto.RecurrenceRule.Interval), DaysOfWeek = dto.RecurrenceRule.DaysOfWeek,
                     EndType = dto.RecurrenceRule.EndType, OccurrenceCount = dto.RecurrenceRule.OccurrenceCount,
-                    EndDate = dto.RecurrenceRule.EndDate, DayOfMonth = dto.RecurrenceRule.DayOfMonth,
+                    EndDate = dto.RecurrenceRule.EndDate.HasValue ? WorkspaceTime.ToUtc(dto.RecurrenceRule.EndDate.Value, timeZoneId) : null, DayOfMonth = dto.RecurrenceRule.DayOfMonth,
                     WeekOfMonth = dto.RecurrenceRule.WeekOfMonth, DayOfWeekInMonth = dto.RecurrenceRule.DayOfWeekInMonth,
                     MonthOfYear = dto.RecurrenceRule.MonthOfYear
                 };
@@ -426,6 +432,7 @@ public class JobService : IJobService
             return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
         }
 
+        var timeZoneId = await _context.Workspaces.Where(w => w.Id == callerWorkspaceId).Select(w => w.TimeZoneId).FirstOrDefaultAsync();
         existingJob.Title = updatedJobDto.Title ?? existingJob.Title;
         existingJob.Description = updatedJobDto.Description ?? existingJob.Description;
         existingJob.PropertyId = updatedJobDto.PropertyId ?? existingJob.PropertyId;
@@ -451,8 +458,8 @@ public class JobService : IJobService
         existingJob.Tags = updatedJobDto.Tags ?? existingJob.Tags;
         existingJob.SyncTagRecords();
 
-        if (updatedJobDto.StartDateTime != default) existingJob.StartDateTime = updatedJobDto.StartDateTime;
-        if (updatedJobDto.EndDateTime != default) existingJob.EndDateTime = updatedJobDto.EndDateTime;
+        if (updatedJobDto.StartDateTime != default) existingJob.StartDateTime = WorkspaceTime.ToUtc(updatedJobDto.StartDateTime, timeZoneId);
+        if (updatedJobDto.EndDateTime != default) existingJob.EndDateTime = WorkspaceTime.ToUtc(updatedJobDto.EndDateTime, timeZoneId);
 
         if (updatedJobDto.AssignedTeamMemberIds != null)
         {
@@ -480,14 +487,17 @@ public class JobService : IJobService
             }
         }
 
-        var scheduleError = await ValidateSchedule(
-            callerWorkspaceId,
-            existingJob.StartDateTime,
-            existingJob.EndDateTime,
-            existingJob.AssignedTeamMembers.Select(employee => employee.Id),
-            existingJob.Id);
-        if (scheduleError != null)
-            return new ApiResponse<Job> { Success = false, ErrorMessage = scheduleError };
+        if (existingJob.EndDateTime > existingJob.StartDateTime)
+        {
+            var scheduleError = await ValidateSchedule(
+                callerWorkspaceId,
+                existingJob.StartDateTime,
+                existingJob.EndDateTime,
+                existingJob.AssignedTeamMembers.Select(employee => employee.Id),
+                existingJob.Id);
+            if (scheduleError != null)
+                return new ApiResponse<Job> { Success = false, ErrorMessage = scheduleError };
+        }
 
         if (updatedJobDto.LineItems != null)
         {

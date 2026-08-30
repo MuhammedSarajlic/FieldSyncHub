@@ -9,6 +9,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/custom-field")]
+[Route("api/customfield")]
 public class CustomFieldController : ControllerBase
 {
     private readonly ICustomFieldService _customFieldService;

@@ -29,6 +29,7 @@ export default function Subscription() {
     try {
       const response = await changePlan(plan, seatCount);
       setMessage(response.data.message || 'Plan selection saved.');
+      if (response.data.checkoutUrl) { window.location.assign(response.data.checkoutUrl); return; }
       await load();
     } catch { setMessage('Plan could not be updated.'); }
   };

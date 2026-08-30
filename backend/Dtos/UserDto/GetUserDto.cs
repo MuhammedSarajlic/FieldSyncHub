@@ -13,6 +13,14 @@ public class GetUserDto
     public UserRole? Role { get; set; }
     public bool TwoFactorEnabled { get; set; }
     public WorkspaceLookupDto? Workspace { get; set; }
+    public List<UserWorkspaceDto> Workspaces { get; set; } = [];
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+}
+
+public class UserWorkspaceDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public UserRole Role { get; set; }
 }

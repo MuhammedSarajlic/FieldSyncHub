@@ -33,6 +33,29 @@ public sealed class JobNotificationWorker(IServiceScopeFactory scopeFactory, ILo
                     db.Leads.RemoveRange(await db.Leads.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
                     db.Events.RemoveRange(await db.Events.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
                     db.Employees.RemoveRange(await db.Employees.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.WorkspaceMemberships.RemoveRange(await db.WorkspaceMemberships.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.EmployeeInvites.RemoveRange(await db.EmployeeInvites.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.MarketingCampaigns.RemoveRange(await db.MarketingCampaigns.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.InventoryTransactions.RemoveRange(await db.InventoryTransactions.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.AccountingConnections.RemoveRange(await db.AccountingConnections.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.AccountingExternalRecords.RemoveRange(await db.AccountingExternalRecords.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.ApiKeys.RemoveRange(await db.ApiKeys.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.WebhookSubscriptions.RemoveRange(await db.WebhookSubscriptions.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.Subscriptions.RemoveRange(await db.Subscriptions.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.DunningAttempts.RemoveRange(await db.DunningAttempts.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.ReviewRequests.RemoveRange(await db.ReviewRequests.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.TimeEntries.RemoveRange(await db.TimeEntries.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.ActivityHistorys.RemoveRange(await db.ActivityHistorys.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.Notes.RemoveRange(await db.Notes.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.CustomFieldValues.RemoveRange(await db.CustomFieldValues.IgnoreQueryFilters().Where(x => x.Customer != null && x.Customer.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.CustomerEmails.RemoveRange(await db.CustomerEmails.IgnoreQueryFilters().Where(x => x.Customer != null && x.Customer.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.CustomerTags.RemoveRange(await db.CustomerTags.IgnoreQueryFilters().Where(x => x.Customer != null && x.Customer.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.CustomerPhones.RemoveRange(await db.CustomerPhones.IgnoreQueryFilters().Where(x => x.Customer != null && x.Customer.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.Properties.RemoveRange(await db.Properties.IgnoreQueryFilters().Where(x => x.Customer != null && x.Customer.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.Payments.RemoveRange(await db.Payments.IgnoreQueryFilters().Where(x => (x.Invoice != null && x.Invoice.WorkspaceId == workspace.Id) || (x.Job != null && x.Job.WorkspaceId == workspace.Id)).ToListAsync(stoppingToken));
+                    db.LineItems.RemoveRange(await db.LineItems.IgnoreQueryFilters().Where(x => (x.Invoice != null && x.Invoice.WorkspaceId == workspace.Id) || (x.Job != null && x.Job.WorkspaceId == workspace.Id) || (x.Quote != null && x.Quote.WorkspaceId == workspace.Id) || (x.Lead != null && x.Lead.WorkspaceId == workspace.Id)).ToListAsync(stoppingToken));
+                    db.StatusChanges.RemoveRange(await db.StatusChanges.IgnoreQueryFilters().Where(x => x.Job != null && x.Job.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
+                    db.QuoteAttachments.RemoveRange(await db.QuoteAttachments.IgnoreQueryFilters().Where(x => x.Quote != null && x.Quote.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
                     db.Workspaces.Remove(workspace);
                 }
                 var jobs = await db.Jobs.Include(j => j.Customer).ThenInclude(c => c!.EmailRecords).Include(j => j.Customer).ThenInclude(c => c!.CustomerPhones).Where(j =>

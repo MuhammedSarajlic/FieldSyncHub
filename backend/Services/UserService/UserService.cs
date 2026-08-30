@@ -27,7 +27,7 @@ public class UserService : IUserService
 
     public async Task<ApiResponse<GetUserDto>> GetLoggedInUser(Guid userId)
     {
-        var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _context.Users.IgnoreQueryFilters().Include(u => u.Workspace).Include(u => u.WorkspaceMemberships).ThenInclude(m => m.Workspace).FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null)
         {
@@ -40,6 +40,7 @@ public class UserService : IUserService
         }
 
         var userDto = user.Adapt<GetUserDto>();
+        userDto.Workspaces = user.WorkspaceMemberships.Where(m => m.IsActive && m.Workspace != null).Select(m => new UserWorkspaceDto { Id = m.WorkspaceId, Name = m.Workspace!.CompanyName ?? m.Workspace.Name, Role = m.Role }).ToList();
         return new ApiResponse<GetUserDto>()
         {
             Success = true,

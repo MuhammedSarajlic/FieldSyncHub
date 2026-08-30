@@ -20,6 +20,7 @@ public class User
     public string FullName => $"{FirstName} {LastName}";
     public Guid? WorkspaceId { get; set; }
     public Workspace? Workspace { get; set; }
+    public ICollection<WorkspaceMembership> WorkspaceMemberships { get; set; } = [];
     public UserRole? Role { get; set; } = UserRole.Employee;
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetTokenExpiresAt { get; set; }

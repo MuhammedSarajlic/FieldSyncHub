@@ -54,7 +54,7 @@ public class AuthService : IAuthService
             throw new AccountLockedException(lockedUntil - DateTime.UtcNow);
         }
 
-        var dbUser = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Email == userLogin.Email);
+        var dbUser = await _context.Users.Include(u => u.Workspace).Include(u => u.WorkspaceMemberships).ThenInclude(m => m.Workspace).FirstOrDefaultAsync(u => u.Email == userLogin.Email);
 
         if (dbUser == null || !VerifyPassword(userLogin.Password, dbUser.PasswordHash!))
         {
@@ -82,6 +82,7 @@ public class AuthService : IAuthService
         }
 
         var userDto = dbUser.Adapt<GetUserDto>();
+        PopulateMemberships(dbUser, userDto);
 
         return new ApiResponse<GetUserDto>()
         {
@@ -196,7 +197,7 @@ public class AuthService : IAuthService
             };
         }
 
-        var user = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.GoogleId == payload.Subject);
+        var user = await _context.Users.Include(u => u.Workspace).Include(u => u.WorkspaceMemberships).ThenInclude(m => m.Workspace).FirstOrDefaultAsync(u => u.GoogleId == payload.Subject);
 
         if (user == null)
         {
@@ -247,6 +248,7 @@ public class AuthService : IAuthService
         }
 
         var userDto = user.Adapt<GetUserDto>();
+        PopulateMemberships(user, userDto);
 
         return new ApiResponse<GetUserDto>()
         {
@@ -254,6 +256,19 @@ public class AuthService : IAuthService
             ErrorMessage = "",
             Payload = userDto
         };
+    }
+
+    private static void PopulateMemberships(User user, GetUserDto dto)
+    {
+        dto.Workspaces = user.WorkspaceMemberships
+            .Where(membership => membership.IsActive && membership.Workspace != null && !membership.Workspace.IsDeleted)
+            .Select(membership => new UserWorkspaceDto
+            {
+                Id = membership.WorkspaceId,
+                Name = membership.Workspace!.CompanyName ?? membership.Workspace.Name,
+                Role = membership.Role
+            })
+            .ToList();
     }
 
     public async Task<ApiResponse<string>> UpdatePassword(Guid userId, string currentPassword, string newPassword)

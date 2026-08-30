@@ -1,0 +1,13 @@
+{
+  "name": "fieldsynchub-zapier",
+  "version": "1.0.0",
+  "description": "Zapier connector for FieldSyncHub",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "test": "node --check index.js"
+  },
+  "dependencies": {
+    "zapier-platform-core": "^18.0.0"
+  }
+}

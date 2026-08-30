@@ -41,8 +41,7 @@ import { CompanySize } from '../constants/Enumeration/WorkspaceEnum/WorkspaceEnu
 import { UserRole } from '../constants/Enumeration/UserEnum/UserEnum';
 import { serviceCategories } from '../constants/ServiceCategories';
 import { TUpdateWorkspace } from '../types/Workspace';
-import { ExportCustomers } from '../services/Customer';
-import { downloadCSVFile } from '../utils/FuntionHelpers/downloadCSVFile';
+import { ExportWorkspace } from '../services/Workspace';
 import { AccountingConnection, connectAccounting, getAccountingConnections, syncAccounting } from '../services/Integrations';
 
 const settingSections = [
@@ -383,10 +382,15 @@ const Settings = () => {
   const handleExportWorkspaceData = async () => {
     if (!user?.workspace?.id) return;
     try {
-      const response = await ExportCustomers(user.workspace.id);
+      const response = await ExportWorkspace(user.workspace.id);
       if (response.status === 200) {
-        downloadCSVFile(response.data, `fieldsynchub-customers-${user.workspace.id}.csv`);
-        toast.success('Customer data exported');
+        const url = URL.createObjectURL(response.data);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `fieldsynchub-workspace-${user.workspace.id}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        toast.success('Workspace data exported');
       }
     } catch {
       toast.error('Could not export workspace data');
@@ -1201,7 +1205,7 @@ const Settings = () => {
               <h3 className='pt-3 text-lg font-semibold text-gray-900'>Accounting</h3>
               {['quickbooks', 'xero'].map((provider) => {
                 const connection = accountingConnections.find((item) => item.provider === provider);
-                return <div key={provider} className='flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4'><div><p className='font-medium capitalize text-gray-900'>{provider}</p><p className='text-sm text-gray-500'>{connection?.status || 'Not connected'}{connection?.lastError ? `: ${connection.lastError}` : ''}</p></div><div className='flex gap-2'><Button variant='outline' onClick={async () => { await connectAccounting(provider); const response = await getAccountingConnections(); setAccountingConnections(response.data); }}>Connect</Button>{connection && <Button variant='secondary' onClick={async () => { try { await syncAccounting(provider); } catch { toast.error('Connect the provider before syncing.'); } }}>Sync</Button>}</div></div>;
+                return <div key={provider} className='flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4'><div><p className='font-medium capitalize text-gray-900'>{provider}</p><p className='text-sm text-gray-500'>{connection?.status || 'Not connected'}{connection?.lastError ? `: ${connection.lastError}` : ''}</p></div><div className='flex gap-2'><Button variant='outline' onClick={async () => { const result = await connectAccounting(provider); if (result.data.authorizationUrl) window.location.assign(result.data.authorizationUrl); else { const response = await getAccountingConnections(); setAccountingConnections(response.data); } }}>Connect</Button>{connection && <Button variant='secondary' onClick={async () => { try { await syncAccounting(provider); const response = await getAccountingConnections(); setAccountingConnections(response.data); } catch { toast.error('Connect the provider before syncing.'); } }}>Sync</Button>}</div></div>;
               })}
             </div>
           </div>

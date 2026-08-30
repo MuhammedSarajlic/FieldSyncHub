@@ -66,10 +66,12 @@ public class DataContext : DbContext
     public DbSet<MarketingCampaignRecipient> MarketingCampaignRecipients => Set<MarketingCampaignRecipient>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
     public DbSet<AccountingConnection> AccountingConnections => Set<AccountingConnection>();
+    public DbSet<AccountingExternalRecord> AccountingExternalRecords => Set<AccountingExternalRecord>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<DunningAttempt> DunningAttempts => Set<DunningAttempt>();
+    public DbSet<WorkspaceMembership> WorkspaceMemberships => Set<WorkspaceMembership>();
 
     /// <summary>
     /// Audit rows are collected from the change tracker before the save and added to
@@ -355,10 +357,12 @@ public class DataContext : DbContext
         modelBuilder.Entity<MarketingCampaign>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<InventoryTransaction>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<AccountingConnection>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<AccountingExternalRecord>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<ApiKey>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<WebhookSubscription>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<Subscription>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<DunningAttempt>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<WorkspaceMembership>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
@@ -407,10 +411,17 @@ public class DataContext : DbContext
         modelBuilder.Entity<MarketingCampaignRecipient>().HasIndex(r => new { r.CampaignId, r.CustomerId }).IsUnique();
         modelBuilder.Entity<InventoryTransaction>().HasIndex(t => new { t.WorkspaceId, t.ServiceItemId, t.CreatedAt });
         modelBuilder.Entity<AccountingConnection>().HasIndex(c => new { c.WorkspaceId, c.Provider }).IsUnique();
+        modelBuilder.Entity<AccountingExternalRecord>().HasIndex(c => new { c.WorkspaceId, c.Provider, c.EntityType, c.ExternalId }).IsUnique();
         modelBuilder.Entity<ApiKey>().HasIndex(k => k.KeyHash).IsUnique();
         modelBuilder.Entity<WebhookSubscription>().HasIndex(w => w.WorkspaceId);
         modelBuilder.Entity<Subscription>().HasIndex(s => s.WorkspaceId).IsUnique();
         modelBuilder.Entity<DunningAttempt>().HasIndex(d => new { d.InvoiceId, d.DaysOverdue }).IsUnique();
+        modelBuilder.Entity<WorkspaceMembership>().HasIndex(m => new { m.UserId, m.WorkspaceId }).IsUnique();
+        modelBuilder.Entity<WorkspaceMembership>().HasIndex(m => m.WorkspaceId);
+        modelBuilder.Entity<WorkspaceMembership>()
+            .HasOne(m => m.User).WithMany(u => u.WorkspaceMemberships).HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<WorkspaceMembership>()
+            .HasOne(m => m.Workspace).WithMany().HasForeignKey(m => m.WorkspaceId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<MarketingCampaign>()
             .HasMany(c => c.Recipients)
             .WithOne(r => r.Campaign)

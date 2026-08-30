@@ -9,6 +9,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/customer-phone")]
+[Route("api/customerphone")]
 public class CustomerPhoneController : ControllerBase
 {
     private readonly ICustomerPhoneService _customerPhoneService;

@@ -1,6 +1,7 @@
 using backend.Dtos.CalendarDto;
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
+using backend.Services.TimeService;
 
 namespace backend.Services.CalendarService;
 
@@ -37,6 +38,9 @@ public class CalendarService : ICalendarService
 
     public async Task<CalendarEventsDto> GetCalendarEventsByWorkspaceAndDateRange(Guid workspaceId, DateTime startDate, DateTime endDate)
     {
+        var timeZoneId = await _context.Workspaces.Where(w => w.Id == workspaceId).Select(w => w.TimeZoneId).FirstOrDefaultAsync();
+        startDate = WorkspaceTime.ToUtc(startDate, timeZoneId);
+        endDate = WorkspaceTime.ToUtc(endDate, timeZoneId);
         var dto = new CalendarEventsDto
         {
             // Overlap check (not full containment): an item belongs in the range

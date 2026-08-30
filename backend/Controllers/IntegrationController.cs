@@ -5,6 +5,8 @@ using backend.Models;
 using backend.Services.CurrentUserService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using backend.Services.AccountingService;
 
 namespace backend.Controllers;
 
@@ -18,7 +20,9 @@ public class IntegrationController : ControllerBase
 {
     private readonly DataContext _db;
     private readonly ICurrentUser _currentUser;
-    public IntegrationController(DataContext db, ICurrentUser currentUser) { _db = db; _currentUser = currentUser; }
+    private readonly IAccountingSyncService _accounting;
+    private readonly IConfiguration _configuration;
+    public IntegrationController(DataContext db, ICurrentUser currentUser, IAccountingSyncService accounting, IConfiguration configuration) { _db = db; _currentUser = currentUser; _accounting = accounting; _configuration = configuration; }
 
     [HttpGet("accounting")]
     public async Task<IActionResult> Accounting()
@@ -34,12 +38,31 @@ public class IntegrationController : ControllerBase
         var provider = request.Provider.Trim().ToLowerInvariant();
         if (provider is not ("quickbooks" or "xero")) return BadRequest(new { message = "Provider must be quickbooks or xero." });
         var connection = await _db.AccountingConnections.FirstOrDefaultAsync(c => c.WorkspaceId == workspaceId && c.Provider == provider) ?? new AccountingConnection { Id = Guid.NewGuid(), WorkspaceId = workspaceId, Provider = provider };
-        connection.Status = "NeedsAuthorization";
-        connection.LastError = "OAuth credentials are not configured for this workspace.";
+        var authorizationUrl = _accounting.CreateAuthorizationUrl(workspaceId, provider);
+        connection.Status = authorizationUrl == null ? "NeedsConfiguration" : "NeedsAuthorization";
+        connection.LastError = authorizationUrl == null ? "Add the provider OAuth client ID, secret and redirect URI to backend configuration." : null;
         connection.UpdatedAt = DateTime.UtcNow;
         if (_db.Entry(connection).State == EntityState.Detached) _db.AccountingConnections.Add(connection);
         await _db.SaveChangesAsync();
-        return Ok(new { connection.Id, connection.Provider, connection.Status, connection.LastError });
+        return Ok(new { connection.Id, connection.Provider, connection.Status, connection.LastError, authorizationUrl });
+    }
+
+    [HttpGet("accounting/{provider}/authorize")]
+    public IActionResult AuthorizeAccounting(string provider)
+    {
+        if (_currentUser.WorkspaceId is not Guid workspaceId) return Forbid();
+        var url = _accounting.CreateAuthorizationUrl(workspaceId, provider);
+        return url == null ? StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Accounting OAuth is not configured." }) : Redirect(url);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("accounting/callback/{provider}")]
+    public async Task<IActionResult> AccountingCallback(string provider, [FromQuery] string code, [FromQuery] string state, [FromQuery] string? realmId = null, [FromQuery] string? error = null)
+    {
+        var frontendUrl = (_configuration["AppSettings:FrontendUrl"] ?? "http://localhost:5173").TrimEnd('/');
+        if (!string.IsNullOrWhiteSpace(error)) return Redirect($"{frontendUrl}/settings?accounting=error");
+        var completed = await _accounting.CompleteAuthorizationAsync(provider, code, state, realmId, HttpContext.RequestAborted);
+        return Redirect($"{frontendUrl}/settings?accounting={(completed ? "connected" : "error")}");
     }
 
     [HttpPost("accounting/{provider}/sync")]
@@ -48,11 +71,8 @@ public class IntegrationController : ControllerBase
         if (_currentUser.WorkspaceId is not Guid workspaceId) return Forbid();
         var connection = await _db.AccountingConnections.FirstOrDefaultAsync(c => c.WorkspaceId == workspaceId && c.Provider == provider.ToLowerInvariant());
         if (connection == null) return NotFound();
-        connection.Status = "NeedsAuthorization";
-        connection.LastError = "Connect the accounting provider before starting a sync.";
-        connection.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
-        return Conflict(new { message = connection.LastError });
+        try { return Ok(await _accounting.SyncAsync(workspaceId, provider, HttpContext.RequestAborted)); }
+        catch (InvalidOperationException ex) { connection.Status = "SyncFailed"; connection.LastError = ex.Message; connection.UpdatedAt = DateTime.UtcNow; await _db.SaveChangesAsync(); return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPost("api-keys")]

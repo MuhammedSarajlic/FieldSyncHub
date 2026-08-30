@@ -43,6 +43,7 @@ public class TokenService : ITokenService
         {
             Id = refreshJti,
             UserId = user.Id,
+            WorkspaceId = user.Workspace?.Id,
             RememberMe = rememberMe,
             ExpiresAt = refreshExpiry
         });
@@ -110,6 +111,15 @@ public class TokenService : ITokenService
         }
 
         return Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
+    }
+
+    public async Task<Guid?> GetRefreshTokenWorkspaceAsync(string refreshToken)
+    {
+        var principal = ValidateSignatureAndExpiry(refreshToken);
+        if (principal == null || principal.FindFirstValue(TokenTypeClaim) != RefreshTokenType ||
+            !Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Jti), out var jti)) return null;
+        var record = await _context.RefreshTokens.AsNoTracking().FirstOrDefaultAsync(r => r.Id == jti);
+        return record?.WorkspaceId;
     }
 
     public async Task RevokeRefreshTokenAsync(string refreshToken)

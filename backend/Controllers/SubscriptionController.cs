@@ -3,6 +3,7 @@ using backend.Models;
 using backend.Services.CurrentUserService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using backend.Services.StripeService;
 
 namespace backend.Controllers;
 
@@ -14,7 +15,8 @@ public class SubscriptionController : ControllerBase
 {
     private readonly DataContext _db;
     private readonly ICurrentUser _currentUser;
-    public SubscriptionController(DataContext db, ICurrentUser currentUser) { _db = db; _currentUser = currentUser; }
+    private readonly IStripePaymentService _stripe;
+    public SubscriptionController(DataContext db, ICurrentUser currentUser, IStripePaymentService stripe) { _db = db; _currentUser = currentUser; _stripe = stripe; }
 
     [HttpGet]
     public async Task<IActionResult> Get()
@@ -30,8 +32,11 @@ public class SubscriptionController : ControllerBase
         if (_currentUser.WorkspaceId is not Guid workspaceId) return Forbid();
         if (request.Plan is not ("Starter" or "Team" or "Pro")) return BadRequest(new { message = "Plan must be Starter, Team or Pro." });
         if (request.SeatCount is < 1 or > 500) return BadRequest(new { message = "Seat count must be between 1 and 500." });
-        var subscription = await Ensure(workspaceId); subscription.Plan = request.Plan; subscription.SeatCount = request.SeatCount; subscription.Status = "PendingPayment"; subscription.UpdatedAt = DateTime.UtcNow; await _db.SaveChangesAsync();
-        return Ok(new { subscription.Plan, subscription.SeatCount, subscription.Status, message = "Plan selected. Payment provider setup is required to activate billing." });
+        var workspace = await _db.Workspaces.Include(w => w.CreatedByUser).FirstOrDefaultAsync(w => w.Id == workspaceId);
+        var checkoutUrl = await _stripe.CreateSubscriptionCheckoutAsync(workspaceId, request.Plan, request.SeatCount, workspace?.CreatedByUser?.Email, HttpContext.RequestAborted);
+        if (checkoutUrl == null) return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Subscription billing is not configured. Add Stripe price IDs and keys before choosing a plan." });
+        var subscription = await Ensure(workspaceId); subscription.Plan = request.Plan; subscription.SeatCount = request.SeatCount; subscription.Status = "CheckoutPending"; subscription.UpdatedAt = DateTime.UtcNow; await _db.SaveChangesAsync();
+        return Ok(new { subscription.Plan, subscription.SeatCount, subscription.Status, checkoutUrl });
     }
 
     private async Task<Subscription> Ensure(Guid workspaceId)

@@ -14,6 +14,7 @@ public interface ITokenService
     /// token's owner if valid, or null otherwise - never throws.
     /// </summary>
     Task<Guid?> ValidateRefreshTokenAsync(string refreshToken);
+    Task<Guid?> GetRefreshTokenWorkspaceAsync(string refreshToken);
 
     /// <summary>Revokes one refresh token by jti (a no-op if it's not a valid, known token).</summary>
     Task RevokeRefreshTokenAsync(string refreshToken);

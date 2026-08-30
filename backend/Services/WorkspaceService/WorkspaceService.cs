@@ -115,6 +115,7 @@ public class WorkspaceService : IWorkspaceService
         };
 
         await _context.Employees.AddAsync(employee);
+        await _context.WorkspaceMemberships.AddAsync(new WorkspaceMembership { Id = Guid.NewGuid(), UserId = user.Id, WorkspaceId = newWorkspace.Id, Role = UserRole.Owner });
         await _context.SaveChangesAsync();
 
         var createdWorkspaceDto = newWorkspace.Adapt<GetWorkspaceDto>();
@@ -220,6 +221,10 @@ public class WorkspaceService : IWorkspaceService
         {
             user.WorkspaceId = null; // Detach user
         }
+
+        var memberships = await _context.WorkspaceMemberships.Where(m => m.WorkspaceId == id).ToListAsync();
+        foreach (var membership in memberships) membership.IsActive = false;
+        _context.WorkspaceMemberships.UpdateRange(memberships);
 
         _context.Users.UpdateRange(workspace.Users);
         _context.Workspaces.Update(workspace);

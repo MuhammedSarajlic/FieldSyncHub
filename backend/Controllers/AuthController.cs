@@ -198,7 +198,19 @@ public class AuthController : ControllerBase
         // The presented refresh token is single-use - rotate it so a copy an
         // attacker captured in transit stops working the moment the real client
         // refreshes.
+        var workspaceId = await _tokenService.GetRefreshTokenWorkspaceAsync(refreshToken);
+        if (workspaceId.HasValue && userResult.Payload.Workspaces.All(workspace => workspace.Id != workspaceId.Value))
+        {
+            return Unauthorized();
+        }
         await _tokenService.RevokeRefreshTokenAsync(refreshToken);
+
+        if (workspaceId.HasValue)
+        {
+            var selected = userResult.Payload.Workspaces.First(workspace => workspace.Id == workspaceId.Value);
+            userResult.Payload.Workspace = new backend.Dtos.WorkspaceDto.WorkspaceLookupDto { Id = selected.Id, Name = selected.Name };
+            userResult.Payload.Role = selected.Role;
+        }
 
         var rememberMe = _tokenService.GetRememberMeFromToken(refreshToken);
         (string accessToken, string newRefreshToken) tokens = await _tokenService.GenerateTokensAsync(userResult.Payload, rememberMe);

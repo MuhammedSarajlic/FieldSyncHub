@@ -3,6 +3,7 @@ using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
 using backend.Dtos.EventDto;
+using backend.Services.TimeService;
 
 namespace backend.Services.EventService;
 
@@ -34,6 +35,7 @@ public class EventService : IEventService
 
     public async Task<Event> CreateEventAsync(CreateEventDto dto)
     {
+        var timeZoneId = await _context.Workspaces.Where(w => w.Id == dto.WorkspaceId).Select(w => w.TimeZoneId).FirstOrDefaultAsync();
         var assignedIds = dto.AssignedToIds.ToArray();
 
         var entity = new Event
@@ -45,8 +47,8 @@ public class EventService : IEventService
             Category = dto.Category,
             Location = dto.Location,
             CustomerId = dto.CustomerId,
-            StartDateTime = dto.StartDateTime,
-            EndDateTime = dto.EndDateTime,
+            StartDateTime = WorkspaceTime.ToUtc(dto.StartDateTime, timeZoneId),
+            EndDateTime = WorkspaceTime.ToUtc(dto.EndDateTime, timeZoneId),
             IsAllDay = dto.IsAllDay,
             IsRecurring = dto.IsRecurring,
             RecurrenceRuleId = dto.RecurrenceRuleId,
@@ -73,7 +75,7 @@ public class EventService : IEventService
                 MonthOfYear = dto.RecurrenceRule.MonthOfYear,
                 EndType = dto.RecurrenceRule.EndType,
                 OccurrenceCount = dto.RecurrenceRule.OccurrenceCount,
-                EndDate = dto.RecurrenceRule.EndDate,
+                EndDate = dto.RecurrenceRule.EndDate.HasValue ? WorkspaceTime.ToUtc(dto.RecurrenceRule.EndDate.Value, timeZoneId) : null,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -95,14 +97,15 @@ public class EventService : IEventService
         if (entity == null)
             return null;
 
+        var timeZoneId = await _context.Workspaces.Where(w => w.Id == dto.WorkspaceId).Select(w => w.TimeZoneId).FirstOrDefaultAsync();
         entity.WorkspaceId = dto.WorkspaceId;
         entity.Title = dto.Title;
         entity.Description = dto.Description;
         entity.Category = dto.Category;
         entity.Location = dto.Location;
         entity.CustomerId = dto.CustomerId;
-        entity.StartDateTime = dto.StartDateTime;
-        entity.EndDateTime = dto.EndDateTime;
+        entity.StartDateTime = WorkspaceTime.ToUtc(dto.StartDateTime, timeZoneId);
+        entity.EndDateTime = WorkspaceTime.ToUtc(dto.EndDateTime, timeZoneId);
         entity.IsAllDay = dto.IsAllDay;
         entity.IsRecurring = dto.IsRecurring;
         entity.RecurrenceRuleId = dto.RecurrenceRuleId;

@@ -1,19 +1,41 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2, Clock3, FileText, Loader2 } from 'lucide-react';
 import { useParams } from 'react-router';
-import { approvePortalQuote, getPortalDocument } from '../services/Public';
+import { approvePortalQuote, createPortalPaymentIntent, getPortalDocument } from '../services/Public';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 type PortalData = { kind: 'quote' | 'invoice'; workspace: { name: string; logoUrl?: string; currency: string }; document: { number: string; title: string; status: string; expiresAt?: string; dueDate?: string; subtotal: number; discount: number; taxAmount: number; total: number; amountPaid?: number; balanceDue?: number; paymentTerms?: string; lineItems: { name: string; description?: string; quantity: number; unitPrice: number; total: number }[] } };
 
 const money = (value: number, currency: string) => new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value);
+
+function PaymentForm({ currency, onComplete }: { currency: string; onComplete: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!stripe || !elements) return;
+    setBusy(true); setError('');
+    const result = await stripe.confirmPayment({ elements, redirect: 'if_required' });
+    if (result.error) setError(result.error.message || 'Payment could not be completed.');
+    else { onComplete(); }
+    setBusy(false);
+  };
+  return <form onSubmit={submit} className='mt-4 space-y-4'><PaymentElement options={{ wallets: { applePay: 'auto', googlePay: 'auto' } }} /><button type='submit' disabled={!stripe || busy} className='flex w-full items-center justify-center gap-2 bg-bg-primary px-4 py-3 font-medium text-white disabled:opacity-50'>{busy ? <Loader2 className='h-4 w-4 animate-spin' /> : null}{busy ? 'Processing...' : `Pay ${currency}`}</button>{error && <p role='alert' className='text-sm text-red-600'>{error}</p>}</form>;
+}
 
 export default function Portal() {
   const { token = '' } = useParams();
   const [data, setData] = useState<PortalData | null>(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [paymentClientSecret, setPaymentClientSecret] = useState('');
+  const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
   useEffect(() => { getPortalDocument(token).then((response) => setData(response.data)).catch(() => setMessage('This link is invalid or has expired.')).finally(() => setLoading(false)); }, [token]);
   const approve = async () => { await approvePortalQuote(token); setData((current) => current ? { ...current, document: { ...current.document, status: 'Approved' } } : current); setMessage('Thanks. The quote has been approved.'); };
+  const startPayment = async () => { try { const response = await createPortalPaymentIntent(token); setPaymentClientSecret(response.data.clientSecret); setStripePromise(loadStripe(response.data.publishableKey)); } catch { setMessage('Online payment is not available for this invoice right now.'); } };
   if (loading) return <div className='min-h-screen grid place-items-center'><Loader2 className='animate-spin text-bg-primary' /></div>;
   if (!data) return <div className='min-h-screen grid place-items-center p-6 text-center'><p className='text-gray-600'>{message}</p></div>;
   const { document, workspace } = data;
@@ -25,6 +47,7 @@ export default function Portal() {
       {document.expiresAt && <p className='mt-6 flex items-center gap-2 text-sm text-gray-500'><Clock3 className='h-4 w-4' /> Expires {new Date(document.expiresAt).toLocaleDateString()}</p>}
       {data.kind === 'quote' && document.status !== 'Approved' && <button type='button' onClick={approve} className='mt-7 flex w-full items-center justify-center gap-2 bg-bg-primary px-4 py-3 font-medium text-white hover:bg-bg-primary-hover'><CheckCircle2 className='h-5 w-5' /> Approve quote</button>}
       {message && <p className='mt-4 text-center text-sm text-bg-primary'>{message}</p>}
-      {data.kind === 'invoice' && <p className='mt-7 text-center text-sm text-gray-500'>Online card payment will appear here when payment processing is connected.</p>}
+      {data.kind === 'invoice' && document.balanceDue !== undefined && document.balanceDue > 0 && !paymentClientSecret && <button type='button' onClick={() => void startPayment()} className='mt-7 flex w-full items-center justify-center gap-2 bg-bg-primary px-4 py-3 font-medium text-white'>Pay invoice</button>}
+      {data.kind === 'invoice' && paymentClientSecret && stripePromise && <Elements stripe={stripePromise} options={{ clientSecret: paymentClientSecret }}><PaymentForm currency={workspace.currency} onComplete={() => { setMessage('Payment submitted. Your receipt will appear once the payment is confirmed.'); setPaymentClientSecret(''); }} /></Elements>}
     </section></div></main>;
 }

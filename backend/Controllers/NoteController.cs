@@ -10,6 +10,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/note")]
+[Route("api/notes")]
 public class NoteController : ControllerBase
 {
     private readonly INotesService _notesService;

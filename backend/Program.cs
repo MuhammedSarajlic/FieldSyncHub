@@ -179,6 +179,8 @@ builder.Services.AddHttpClient("geocoding", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("FieldSyncHub/1.0 (+https://fieldsynchub.com)");
 });
 builder.Services.AddHttpClient("twilio");
+builder.Services.AddHttpClient("stripe", client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddHttpClient("accounting", client => client.Timeout = TimeSpan.FromSeconds(30));
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<IPortalAccessService, PortalAccessService>();
 builder.Services.AddScoped<ISmsService, TwilioSmsService>();

@@ -39,12 +39,18 @@ public class EmployeeInviteService : IEmployeeInviteService
             var membership = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == existingUser.Id && e.WorkspaceId == invite.WorkspaceId);
             if (membership == null)
             {
+                await EnsureSeatAvailable(invite.WorkspaceId);
                 _context.Employees.Add(new Employee
                 {
                     Id = Guid.NewGuid(), UserId = existingUser.Id, WorkspaceId = invite.WorkspaceId,
                     HireDate = DateTime.UtcNow, Status = EmployeeStatus.Active
                 });
             }
+
+            var workspaceMembership = await _context.WorkspaceMemberships.FirstOrDefaultAsync(m => m.UserId == existingUser.Id && m.WorkspaceId == invite.WorkspaceId);
+            if (workspaceMembership == null)
+                _context.WorkspaceMemberships.Add(new WorkspaceMembership { Id = Guid.NewGuid(), UserId = existingUser.Id, WorkspaceId = invite.WorkspaceId, Role = invite.Role });
+            else { workspaceMembership.Role = invite.Role; workspaceMembership.IsActive = true; workspaceMembership.UpdatedAt = DateTime.UtcNow; }
 
             existingUser.Role = invite.Role;
             existingUser.WorkspaceId = invite.WorkspaceId;
@@ -94,6 +100,8 @@ public class EmployeeInviteService : IEmployeeInviteService
             HireDate = DateTime.UtcNow
         };
         _context.Employees.Add(employee);
+        await EnsureSeatAvailable(invite.WorkspaceId);
+        _context.WorkspaceMemberships.Add(new WorkspaceMembership { Id = Guid.NewGuid(), UserId = newUser.Id, WorkspaceId = invite.WorkspaceId, Role = invite.Role });
 
         await _context.SaveChangesAsync();
 
@@ -106,6 +114,7 @@ public class EmployeeInviteService : IEmployeeInviteService
 
     public async Task SendInvite(string email, Guid workspaceId, UserRole role = UserRole.Employee)
     {
+        await EnsureSeatAvailable(workspaceId);
         var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64))
             .Replace("+", "-")
             .Replace("/", "_")
@@ -146,6 +155,18 @@ public class EmployeeInviteService : IEmployeeInviteService
         {
             throw new Exception($"Failed to send invitation email: {emailSent.Error}");
         }
+    }
+
+    private async Task EnsureSeatAvailable(Guid workspaceId)
+    {
+        var subscription = await _context.Subscriptions.FirstOrDefaultAsync(s => s.WorkspaceId == workspaceId);
+        // Workspaces created before subscription billing was introduced have no
+        // subscription row yet. Keep their existing invite flow working; once a
+        // subscription exists, enforce its status and seat limit.
+        if (subscription == null) return;
+        if (subscription.Status is "Canceled" or "PastDue") throw new InvalidOperationException("An active subscription is required to add team members.");
+        var activeSeats = await _context.Employees.CountAsync(e => e.WorkspaceId == workspaceId && e.Status != EmployeeStatus.Terminated && !e.IsArchived);
+        if (activeSeats >= subscription.SeatCount) throw new InvalidOperationException("This workspace has reached its plan seat limit.");
     }
 
 
