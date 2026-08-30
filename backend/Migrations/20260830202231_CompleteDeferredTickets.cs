@@ -58,11 +58,11 @@ namespace backend.Migrations
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     WorkspaceId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Provider = table.Column<string>(type: "varchar(255)", nullable: false)
+                    Provider = table.Column<string>(type: "varchar(191)", maxLength: 191, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    EntityType = table.Column<string>(type: "varchar(255)", nullable: false)
+                    EntityType = table.Column<string>(type: "varchar(191)", maxLength: 191, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    ExternalId = table.Column<string>(type: "varchar(255)", nullable: false)
+                    ExternalId = table.Column<string>(type: "varchar(191)", maxLength: 191, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Payload = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),

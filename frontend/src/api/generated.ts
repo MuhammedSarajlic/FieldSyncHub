@@ -386,6 +386,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/booking/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workspaceId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PublicBookingRequest"];
+                    "text/json": components["schemas"]["PublicBookingRequest"];
+                    "application/*+json": components["schemas"]["PublicBookingRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/calendar/workspace/{workspaceId}": {
         parameters: {
             query?: never;
@@ -1016,7 +1057,135 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/customerphone/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CustomerPhoneApiResponse"];
+                        "application/json": components["schemas"]["CustomerPhoneApiResponse"];
+                        "text/json": components["schemas"]["CustomerPhoneApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/customer-phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCustomerPhoneDto"];
+                    "text/json": components["schemas"]["UpdateCustomerPhoneDto"];
+                    "application/*+json": components["schemas"]["UpdateCustomerPhoneDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CustomerPhone"];
+                        "application/json": components["schemas"]["CustomerPhone"];
+                        "text/json": components["schemas"]["CustomerPhone"];
+                    };
+                };
+            };
+        };
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateCustomerPhoneDto"];
+                    "text/json": components["schemas"]["CreateCustomerPhoneDto"];
+                    "application/*+json": components["schemas"]["CreateCustomerPhoneDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CustomerPhoneApiResponse"];
+                        "application/json": components["schemas"]["CustomerPhoneApiResponse"];
+                        "text/json": components["schemas"]["CustomerPhoneApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/customerphone": {
         parameters: {
             query?: never;
             header?: never;
@@ -1127,7 +1296,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/customerphone/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    customerId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateCustomerPhoneDto"][];
+                    "text/json": components["schemas"]["CreateCustomerPhoneDto"][];
+                    "application/*+json": components["schemas"]["CreateCustomerPhoneDto"][];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/custom-field/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CustomFieldApiResponse"];
+                        "application/json": components["schemas"]["CustomFieldApiResponse"];
+                        "text/json": components["schemas"]["CustomFieldApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/customfield/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1224,7 +1492,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/customfield/workspace/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workspaceId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CustomFieldListApiResponse"];
+                        "application/json": components["schemas"]["CustomFieldListApiResponse"];
+                        "text/json": components["schemas"]["CustomFieldListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/custom-field": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCustomFieldDto"];
+                    "text/json": components["schemas"]["UpdateCustomFieldDto"];
+                    "application/*+json": components["schemas"]["UpdateCustomFieldDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CustomField"];
+                        "application/json": components["schemas"]["CustomField"];
+                        "text/json": components["schemas"]["CustomField"];
+                    };
+                };
+            };
+        };
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateCustomFieldDto"];
+                    "text/json": components["schemas"]["CreateCustomFieldDto"];
+                    "application/*+json": components["schemas"]["CreateCustomFieldDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CustomField"];
+                        "application/json": components["schemas"]["CustomField"];
+                        "text/json": components["schemas"]["CustomField"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/customfield": {
         parameters: {
             query?: never;
             header?: never;
@@ -1352,7 +1729,127 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/customfieldvalue/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CustomFieldValueApiResponse"];
+                        "application/json": components["schemas"]["CustomFieldValueApiResponse"];
+                        "text/json": components["schemas"]["CustomFieldValueApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/custom-field-value": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCustomFieldValueDto"];
+                    "text/json": components["schemas"]["UpdateCustomFieldValueDto"];
+                    "application/*+json": components["schemas"]["UpdateCustomFieldValueDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateCustomFieldValueDto"];
+                    "text/json": components["schemas"]["CreateCustomFieldValueDto"];
+                    "application/*+json": components["schemas"]["CreateCustomFieldValueDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/customfieldvalue": {
         parameters: {
             query?: never;
             header?: never;
@@ -2118,6 +2615,428 @@ export interface paths {
                         "application/json": components["schemas"]["Event"];
                         "text/json": components["schemas"]["Event"];
                     };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/accounting": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AccountingConnectionRequest"];
+                    "text/json": components["schemas"]["AccountingConnectionRequest"];
+                    "application/*+json": components["schemas"]["AccountingConnectionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/accounting/{provider}/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    provider: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/accounting/callback/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    code?: string;
+                    state?: string;
+                    realmId?: string;
+                    error?: string;
+                };
+                header?: never;
+                path: {
+                    provider: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/accounting/{provider}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    provider: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateApiKeyRequest"];
+                    "text/json": components["schemas"]["CreateApiKeyRequest"];
+                    "application/*+json": components["schemas"]["CreateApiKeyRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/api-keys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/integrations/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateWebhookRequest"];
+                    "text/json": components["schemas"]["CreateWebhookRequest"];
+                    "application/*+json": components["schemas"]["CreateWebhookRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inventory/{serviceItemId}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    serviceItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inventory/{serviceItemId}/adjust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    serviceItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InventoryAdjustment"];
+                    "text/json": components["schemas"]["InventoryAdjustment"];
+                    "application/*+json": components["schemas"]["InventoryAdjustment"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -3154,6 +4073,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/job/{jobId}/completion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CompleteJobDto"];
+                    "text/json": components["schemas"]["CompleteJobDto"];
+                    "application/*+json": components["schemas"]["CompleteJobDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/lead/{id}": {
         parameters: {
             query?: never;
@@ -3360,6 +4320,149 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/marketing/segments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketing/campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketing/campaigns/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateCampaignRequest"];
+                    "text/json": components["schemas"]["CreateCampaignRequest"];
+                    "application/*+json": components["schemas"]["CreateCampaignRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marketing/campaigns/{campaignId}/track/{recipientId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    type?: string;
+                };
+                header?: never;
+                path: {
+                    campaignId: string;
+                    recipientId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/note/{id}": {
         parameters: {
             query?: never;
@@ -3418,7 +4521,104 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NoteApiResponse"];
+                        "application/json": components["schemas"]["NoteApiResponse"];
+                        "text/json": components["schemas"]["NoteApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/note/{customerId}/customer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    customerId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NoteListApiResponse"];
+                        "application/json": components["schemas"]["NoteListApiResponse"];
+                        "text/json": components["schemas"]["NoteListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notes/{customerId}/customer": {
         parameters: {
             query?: never;
             header?: never;
@@ -3518,6 +4718,251 @@ export interface paths {
                         "application/json": components["schemas"]["Note"];
                         "text/json": components["schemas"]["Note"];
                     };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateNoteDto"];
+                    "text/json": components["schemas"]["UpdateNoteDto"];
+                    "application/*+json": components["schemas"]["UpdateNoteDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Note"];
+                        "application/json": components["schemas"]["Note"];
+                        "text/json": components["schemas"]["Note"];
+                    };
+                };
+            };
+        };
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateNoteDto"];
+                    "text/json": components["schemas"]["CreateNoteDto"];
+                    "application/*+json": components["schemas"]["CreateNoteDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Note"];
+                        "application/json": components["schemas"]["Note"];
+                        "text/json": components["schemas"]["Note"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{token}/payment-intent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/quote/{quoteId}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    quoteId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/invoice/{invoiceId}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    invoiceId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{token}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -3650,6 +5095,146 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/v1/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/v1/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/v1/webhooks/subscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PublicWebhookRequest"];
+                    "text/json": components["schemas"]["PublicWebhookRequest"];
+                    "application/*+json": components["schemas"]["PublicWebhookRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/v1/webhooks/subscribe/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -4220,6 +5805,101 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/review/job/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/review/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReviewSubmission"];
+                    "text/json": components["schemas"]["ReviewSubmission"];
+                    "application/*+json": components["schemas"]["ReviewSubmission"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/service-item/{id}": {
         parameters: {
             query?: never;
@@ -4555,6 +6235,213 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/payments/stripe/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/subscription/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChangePlanRequest"];
+                    "text/json": components["schemas"]["ChangePlanRequest"];
+                    "application/*+json": components["schemas"]["ChangePlanRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/job/{jobId}/time-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateTimeEntryDto"];
+                    "text/json": components["schemas"]["CreateTimeEntryDto"];
+                    "application/*+json": components["schemas"]["CreateTimeEntryDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/job/{jobId}/time-entries/{entryId}/clock-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                    entryId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": string;
+                    "text/json": string;
+                    "application/*+json": string;
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/api/auth/2fa/setup": {
@@ -4995,6 +6882,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workspace/memberships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workspace/switch/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workspaceId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workspace/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workspace/{id}": {
         parameters: {
             query?: never;
@@ -5127,6 +7117,9 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountingConnectionRequest: {
+            provider?: string | null;
+        };
         ActivityHistory: {
             /** Format: uuid */
             id?: string;
@@ -5186,17 +7179,37 @@ export interface components {
             jobs?: components["schemas"]["Job"][] | null;
             leads?: components["schemas"]["Lead"][] | null;
         };
+        ChangePlanRequest: {
+            plan?: string | null;
+            /** Format: int32 */
+            seatCount?: number;
+        };
         /**
          * Format: int32
          * @enum {integer}
          */
         CompanySize: 0 | 1 | 2 | 3;
+        CompleteJobDto: {
+            completionNote?: string | null;
+            customerSignaturePath?: string | null;
+            completionPhotoPaths?: string[] | null;
+        };
         CreateActivityHistoryDto: {
             type?: string | null;
             action?: string | null;
             /** Format: uuid */
             changedBy?: string;
             changedByName?: string | null;
+        };
+        CreateApiKeyRequest: {
+            name?: string | null;
+            scopes?: string | null;
+        };
+        CreateCampaignRequest: {
+            name?: string | null;
+            subject?: string | null;
+            body?: string | null;
+            segment?: string | null;
         };
         CreateCustomFieldDto: {
             /** Format: uuid */
@@ -5498,6 +7511,16 @@ export interface components {
             isTaxable?: boolean;
             isActive?: boolean;
             imageUrl?: string | null;
+        };
+        CreateTimeEntryDto: {
+            type?: components["schemas"]["TimeEntryType"];
+            /** Format: date-time */
+            clockIn?: string;
+            notes?: string | null;
+        };
+        CreateWebhookRequest: {
+            url?: string | null;
+            events?: string | null;
         };
         CreateWorkspaceDto: {
             name?: string | null;
@@ -5883,6 +7906,7 @@ export interface components {
             role?: components["schemas"]["UserRole"];
             twoFactorEnabled?: boolean;
             workspace?: components["schemas"]["WorkspaceLookupDto"];
+            workspaces?: components["schemas"]["UserWorkspaceDto"][] | null;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -5917,6 +7941,11 @@ export interface components {
             logoUrl?: string | null;
             theme?: string | null;
             category?: string | null;
+            dunningEnabled?: boolean;
+            dunningDays?: string | null;
+            documentPrimaryColor?: string | null;
+            documentFooterText?: string | null;
+            documentHeaderLayout?: string | null;
             users?: components["schemas"]["UserLookupDto"][] | null;
             /** Format: date-time */
             createdAt?: string;
@@ -5974,6 +8003,13 @@ export interface components {
             isTaxable?: boolean;
             isActive?: boolean;
             imageUrl?: string | null;
+        };
+        InventoryAdjustment: {
+            /** Format: double */
+            quantityDelta?: number;
+            reason?: string | null;
+            /** Format: uuid */
+            jobId?: string | null;
         };
         InvoiceResponseDto: {
             /** Format: uuid */
@@ -6130,6 +8166,10 @@ export interface components {
             jobNumber?: string | null;
             /** Format: date-time */
             completedAt?: string | null;
+            completionNote?: string | null;
+            customerSignaturePath?: string | null;
+            completionPhotoPaths?: string[] | null;
+            timeEntries?: components["schemas"]["TimeEntry"][] | null;
             createdBy?: string | null;
             source?: string | null;
             isArchived?: boolean;
@@ -6226,6 +8266,9 @@ export interface components {
             jobNumber?: string | null;
             /** Format: date-time */
             completedAt?: string | null;
+            completionNote?: string | null;
+            customerSignaturePath?: string | null;
+            completionPhotoPaths?: string[] | null;
             createdBy?: string | null;
             source?: string | null;
             tags?: string[] | null;
@@ -6597,6 +8640,19 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
         };
+        PublicBookingRequest: {
+            firstName?: string | null;
+            lastName?: string | null;
+            email?: string | null;
+            phoneNumber?: string | null;
+            description?: string | null;
+            /** Format: date-time */
+            preferredStartDateTime?: string | null;
+        };
+        PublicWebhookRequest: {
+            url?: string | null;
+            events?: string | null;
+        };
         Quote: {
             /** Format: uuid */
             id?: string;
@@ -6858,6 +8914,11 @@ export interface components {
             token?: string | null;
             newPassword?: string | null;
         };
+        ReviewSubmission: {
+            /** Format: int32 */
+            rating?: number;
+            comment?: string | null;
+        };
         SendInvoiceAttachmentDto: {
             fileName?: string | null;
             contentType?: string | null;
@@ -6965,6 +9026,33 @@ export interface components {
             /** Format: uuid */
             jobId?: string;
         };
+        TimeEntry: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            workspaceId?: string;
+            /** Format: uuid */
+            jobId?: string;
+            job?: components["schemas"]["Job"];
+            /** Format: uuid */
+            employeeId?: string;
+            employee?: components["schemas"]["Employee"];
+            /** Format: date-time */
+            clockIn?: string;
+            /** Format: date-time */
+            clockOut?: string | null;
+            type?: components["schemas"]["TimeEntryType"];
+            notes?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        TimeEntryType: 0 | 1 | 2;
         TwoFactorChallengeDto: {
             challengeToken?: string | null;
             code?: string | null;
@@ -7276,6 +9364,11 @@ export interface components {
             logoUrl?: string | null;
             theme?: string | null;
             category?: string | null;
+            dunningEnabled?: boolean | null;
+            dunningDays?: string | null;
+            documentPrimaryColor?: string | null;
+            documentFooterText?: string | null;
+            documentHeaderLayout?: string | null;
         };
         User: {
             /** Format: uuid */
@@ -7290,6 +9383,7 @@ export interface components {
             /** Format: uuid */
             workspaceId?: string | null;
             workspace?: components["schemas"]["Workspace"];
+            workspaceMemberships?: components["schemas"]["WorkspaceMembership"][] | null;
             role?: components["schemas"]["UserRole"];
             passwordResetToken?: string | null;
             /** Format: date-time */
@@ -7337,6 +9431,12 @@ export interface components {
             workspaceId?: string | null;
             role?: components["schemas"]["UserRole"];
         };
+        UserWorkspaceDto: {
+            /** Format: uuid */
+            id?: string;
+            name?: string | null;
+            role?: components["schemas"]["UserRole"];
+        };
         Workspace: {
             /** Format: uuid */
             id?: string;
@@ -7367,6 +9467,15 @@ export interface components {
             createdByUser?: components["schemas"]["User"];
             logoUrl?: string | null;
             theme?: string | null;
+            reviewRequestsEnabled?: boolean;
+            googleReviewUrl?: string | null;
+            /** Format: int32 */
+            reviewRequestDelayHours?: number;
+            dunningEnabled?: boolean;
+            dunningDays?: string | null;
+            documentPrimaryColor?: string | null;
+            documentFooterText?: string | null;
+            documentHeaderLayout?: string | null;
             category?: string | null;
             users?: components["schemas"]["User"][] | null;
             /** Format: date-time */
@@ -7378,6 +9487,22 @@ export interface components {
             /** Format: uuid */
             id?: string;
             name?: string | null;
+        };
+        WorkspaceMembership: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            userId?: string;
+            user?: components["schemas"]["User"];
+            /** Format: uuid */
+            workspaceId?: string;
+            workspace?: components["schemas"]["Workspace"];
+            role?: components["schemas"]["UserRole"];
+            isActive?: boolean;
+            /** Format: date-time */
+            joinedAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
         };
     };
     responses: never;

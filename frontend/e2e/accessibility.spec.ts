@@ -5,6 +5,7 @@ test.describe('accessibility smoke checks', () => {
   test('sign-in page has no critical or serious violations', async ({ page }) => {
     await page.goto('/signin');
     await expect(page.locator('form').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sign in to your Account' })).toHaveCSS('opacity', '1');
 
     const results = await new AxeBuilder({ page }).analyze();
     const blockingViolations = results.violations.filter((violation) =>

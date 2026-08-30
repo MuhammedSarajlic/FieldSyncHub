@@ -160,11 +160,13 @@ namespace backend.Migrations
 
                     b.Property<string>("EntityType")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasMaxLength(191)
+                        .HasColumnType("varchar(191)");
 
                     b.Property<string>("ExternalId")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasMaxLength(191)
+                        .HasColumnType("varchar(191)");
 
                     b.Property<DateTime>("LastSyncedAt")
                         .HasColumnType("datetime(6)");
@@ -175,7 +177,8 @@ namespace backend.Migrations
 
                     b.Property<string>("Provider")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasMaxLength(191)
+                        .HasColumnType("varchar(191)");
 
                     b.Property<Guid>("WorkspaceId")
                         .HasColumnType("char(36)");

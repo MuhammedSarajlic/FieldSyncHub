@@ -137,6 +137,18 @@ namespace backend.Migrations
                 nullable: false)
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.AlterColumn<string>(
+                name: "SKU",
+                table: "ServiceItems",
+                type: "varchar(255)",
+                maxLength: 255,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "longtext",
+                oldNullable: true)
+                .Annotation("MySql:CharSet", "utf8mb4")
+                .OldAnnotation("MySql:CharSet", "utf8mb4");
+
             migrationBuilder.CreateIndex(
                 name: "IX_ServiceItems_WorkspaceId_SKU",
                 table: "ServiceItems",

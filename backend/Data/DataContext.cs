@@ -444,11 +444,15 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<ServiceItem>().Property(si => si.UnitPrice).HasPrecision(19, 4);
         modelBuilder.Entity<ServiceItem>().Property(si => si.Cost).HasPrecision(19, 4);
+        modelBuilder.Entity<ServiceItem>().Property(si => si.SKU).HasMaxLength(255);
         modelBuilder.Entity<ServiceItem>().Property(si => si.StockLevel).HasPrecision(19, 4);
         modelBuilder.Entity<ServiceItem>().Property(si => si.ReorderPoint).HasPrecision(19, 4);
         modelBuilder.Entity<ServiceItem>().Property(si => si.MarkupPercentage).HasPrecision(9, 6);
         modelBuilder.Entity<Employee>().Property(e => e.HourlyCostRate).HasPrecision(19, 4);
         modelBuilder.Entity<Employee>().Property(e => e.BillableRate).HasPrecision(19, 4);
+        modelBuilder.Entity<AccountingExternalRecord>().Property(e => e.Provider).HasMaxLength(191);
+        modelBuilder.Entity<AccountingExternalRecord>().Property(e => e.EntityType).HasMaxLength(191);
+        modelBuilder.Entity<AccountingExternalRecord>().Property(e => e.ExternalId).HasMaxLength(191);
 
             modelBuilder.Entity<Workspace>().Property(w => w.DefaultTaxRate).HasPrecision(9, 6);
             modelBuilder.Entity<Quote>().Property(q => q.DepositAmount).HasPrecision(19, 4);
