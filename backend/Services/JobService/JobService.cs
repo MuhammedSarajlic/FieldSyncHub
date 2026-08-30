@@ -124,10 +124,6 @@ public class JobService : IJobService
         var dbQuery = _context.Jobs
             .Where(j => j.WorkspaceId == workspaceId
                 && (restrictToEmployeeId == null || j.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
-            .Include(j => j.Customer)
-            .Include(j => j.Property)
-            .Include(j => j.LineItems)
-                .ThenInclude(li => li.ServiceItem)
             .AsNoTracking()
             .AsQueryable();
 
@@ -139,9 +135,8 @@ public class JobService : IJobService
 
         if (filterDto.ScheduleDateMax.HasValue)
         {
-            var endOfDay = filterDto.ScheduleDateMax.Value.Date.AddDays(1).AddTicks(-1);
-            var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
-            dbQuery = dbQuery.Where(j => j.StartDateTime <= maxUtc);
+            var nextDayUtc = DateTime.SpecifyKind(filterDto.ScheduleDateMax.Value.Date.AddDays(1), DateTimeKind.Utc);
+            dbQuery = dbQuery.Where(j => j.StartDateTime < nextDayUtc);
         }
 
         if (!string.IsNullOrWhiteSpace(filterDto.Priority) &&
@@ -158,53 +153,50 @@ public class JobService : IJobService
 
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
-            var q = filterDto.Q.ToLower();
+            var q = filterDto.Q.Trim().ToLower();
             dbQuery = dbQuery.Where(j =>
                 j.JobNumber.ToLower().Contains(q) ||
-                j.Customer!.FirstName.ToLower().Contains(q) ||
-                j.Customer!.LastName.ToLower().Contains(q) ||
-                j.Property!.Street!.ToLower().Contains(q) ||
-                j.Property!.City!.ToLower().Contains(q));
+                (j.Customer != null && (j.Customer.FirstName.ToLower().Contains(q) || j.Customer.LastName.ToLower().Contains(q))) ||
+                (j.Property != null && j.Property.Street != null && j.Property.Street.ToLower().Contains(q)) ||
+                (j.Property != null && j.Property.City != null && j.Property.City.ToLower().Contains(q)));
         }
-
-        var jobsList = await dbQuery.ToListAsync();
 
         if (filterDto.TotalMin.HasValue)
         {
-            jobsList = jobsList
-                .Where(j => j.TotalAmount >= filterDto.TotalMin.Value)
-                .ToList();
+            dbQuery = dbQuery.Where(j => j.TotalAmount >= filterDto.TotalMin.Value);
         }
 
         if (filterDto.TotalMax.HasValue)
         {
-            jobsList = jobsList
-                .Where(j => j.TotalAmount <= filterDto.TotalMax.Value)
-                .ToList();
+            dbQuery = dbQuery.Where(j => j.TotalAmount <= filterDto.TotalMax.Value);
         }
 
-        jobsList = filterDto.SortBy?.ToLower() switch
+        dbQuery = filterDto.SortBy?.ToLower() switch
         {
             "customer" => filterDto.Sort == "desc"
-                ? jobsList.OrderByDescending(j => j.Customer?.FirstName).ToList()
-                : jobsList.OrderBy(j => j.Customer?.FirstName).ToList(),
+                ? dbQuery.OrderByDescending(j => j.Customer == null ? "" : j.Customer.FirstName)
+                : dbQuery.OrderBy(j => j.Customer == null ? "" : j.Customer.FirstName),
 
             "total" => filterDto.Sort == "desc"
-                ? jobsList.OrderByDescending(j => j.TotalAmount).ToList()
-                : jobsList.OrderBy(j => j.TotalAmount).ToList(),
+                ? dbQuery.OrderByDescending(j => j.TotalAmount)
+                : dbQuery.OrderBy(j => j.TotalAmount),
 
             "schedule" => filterDto.Sort == "desc"
-                ? jobsList.OrderByDescending(j => j.StartDateTime).ToList()
-                : jobsList.OrderBy(j => j.StartDateTime).ToList(),
+                ? dbQuery.OrderByDescending(j => j.StartDateTime)
+                : dbQuery.OrderBy(j => j.StartDateTime),
 
-            _ => jobsList.OrderByDescending(j => j.StartDateTime).ToList()
+            _ => dbQuery.OrderByDescending(j => j.StartDateTime)
         };
 
-        var totalCount = jobsList.Count;
-        var pagedJobs = jobsList
+        var totalCount = await dbQuery.CountAsync();
+        var pagedJobs = await dbQuery
+            .Include(j => j.Customer)
+            .Include(j => j.Property)
+            .Include(j => j.LineItems)
+                .ThenInclude(li => li.ServiceItem)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToList();
+            .ToListAsync();
 
         return new ApiResponse<PagedResult<Job>>
         {

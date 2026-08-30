@@ -154,47 +154,40 @@ public class QuoteService : IQuoteService
             dbQuery = dbQuery.Where(q => q.CreatedAt <= maxUtc);
         }
 
-        var quotesList = await dbQuery
-            .Include(q => q.Customer).ThenInclude(c => c!.Properties)
-            .Include(q => q.LineItems)
-            .ToListAsync();
-
         if (filterDto.TotalMin.HasValue)
         {
-            quotesList = quotesList
-                .Where(q => q.Total >= filterDto.TotalMin.Value)
-                .ToList();
+            dbQuery = dbQuery.Where(q => q.Total >= filterDto.TotalMin.Value);
         }
 
         if (filterDto.TotalMax.HasValue)
         {
-            quotesList = quotesList
-                .Where(q => q.Total <= filterDto.TotalMax.Value)
-                .ToList();
+            dbQuery = dbQuery.Where(q => q.Total <= filterDto.TotalMax.Value);
         }
 
-        quotesList = filterDto.SortBy?.ToLower() switch
+        dbQuery = filterDto.SortBy?.ToLower() switch
         {
             "customer" => filterDto.Sort == "desc"
-                ? quotesList.OrderByDescending(q => q.Customer?.FirstName).ToList()
-                : quotesList.OrderBy(q => q.Customer?.FirstName).ToList(),
+                ? dbQuery.OrderByDescending(q => q.Customer == null ? "" : q.Customer.FirstName)
+                : dbQuery.OrderBy(q => q.Customer == null ? "" : q.Customer.FirstName),
 
             "created" => filterDto.Sort == "desc"
-                ? quotesList.OrderByDescending(q => q.CreatedAt).ToList()
-                : quotesList.OrderBy(q => q.CreatedAt).ToList(),
+                ? dbQuery.OrderByDescending(q => q.CreatedAt)
+                : dbQuery.OrderBy(q => q.CreatedAt),
 
             "total" => filterDto.Sort == "desc"
-                ? quotesList.OrderByDescending(q => q.Total).ToList()
-                : quotesList.OrderBy(q => q.Total).ToList(),
+                ? dbQuery.OrderByDescending(q => q.Total)
+                : dbQuery.OrderBy(q => q.Total),
 
-            _ => quotesList.OrderByDescending(q => q.CreatedAt).ToList()
+            _ => dbQuery.OrderByDescending(q => q.CreatedAt)
         };
 
-        var totalCount = quotesList.Count;
-        var pagedQuotes = quotesList
+        var totalCount = await dbQuery.CountAsync();
+        var pagedQuotes = await dbQuery
+            .Include(q => q.Customer).ThenInclude(c => c!.Properties)
+            .Include(q => q.LineItems)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToList();
+            .ToListAsync();
 
         return new ApiResponse<PagedResult<Quote>>
         {

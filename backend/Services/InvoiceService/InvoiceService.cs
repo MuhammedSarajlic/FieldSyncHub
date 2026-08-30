@@ -119,10 +119,6 @@ public class InvoiceService : IInvoiceService
 
         var query = _context.Invoices
             .Where(i => i.WorkspaceId == workspaceId)
-            .Include(i => i.Customer)
-            .Include(i => i.LineItems)
-                .ThenInclude(li => li.ServiceItem)
-            .Include(i => i.Payments)
             .AsNoTracking()
             .AsQueryable();
 
@@ -134,58 +130,99 @@ public class InvoiceService : IInvoiceService
 
         if (filterDto.DueDateMax.HasValue)
         {
-            var endOfDay = filterDto.DueDateMax.Value.Date.AddDays(1).AddTicks(-1);
-            var maxUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
-            query = query.Where(i => i.DueDate <= maxUtc);
+            var nextDayUtc = DateTime.SpecifyKind(filterDto.DueDateMax.Value.Date.AddDays(1), DateTimeKind.Utc);
+            query = query.Where(i => i.DueDate < nextDayUtc);
         }
 
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
         {
-            var q = filterDto.Q.ToLower();
+            var q = filterDto.Q.Trim().ToLower();
             query = query.Where(i =>
                 i.InvoiceNumber.ToLower().Contains(q) ||
-                (i.Customer!.FirstName.ToLower().Contains(q) || i.Customer.LastName.ToLower().Contains(q)));
+                (i.Customer != null && (i.Customer.FirstName.ToLower().Contains(q) || i.Customer.LastName.ToLower().Contains(q))));
         }
 
-        var resultList = await query.ToListAsync();
-
         var hasStatusFilter = Enum.TryParse<InvoiceStatus>(filterDto.Status, true, out var parsedStatus);
-
-        resultList = resultList.Where(i =>
+        if (hasStatusFilter)
         {
-            var total = TotalsCalculator.Calculate(i.LineItems, i.DiscountType, i.Discount, i.TaxRate).Total;
+            var succeededPayments = query.Select(i => new
+            {
+                Invoice = i,
+                AmountPaid = i.Payments
+                    .Where(p => p.Status == PaymentRecordStatus.Succeeded)
+                    .Sum(p => (decimal?)p.Amount) ?? 0m
+            });
 
-            return (!hasStatusFilter || i.Status == parsedStatus)
-                && (!filterDto.TotalMin.HasValue || total >= filterDto.TotalMin.Value)
-                && (!filterDto.TotalMax.HasValue || total <= filterDto.TotalMax.Value);
-        }).ToList();
+            query = parsedStatus switch
+            {
+                InvoiceStatus.Draft => succeededPayments
+                    .Where(x => x.Invoice.WorkflowStatus == InvoiceStatus.Draft)
+                    .Select(x => x.Invoice),
+                InvoiceStatus.Paid => succeededPayments
+                    .Where(x => x.Invoice.Total <= x.AmountPaid)
+                    .Select(x => x.Invoice),
+                InvoiceStatus.Overdue => succeededPayments
+                    .Where(x => x.Invoice.WorkflowStatus != InvoiceStatus.Draft
+                        && x.Invoice.DueDate < DateTime.UtcNow.Date
+                        && x.Invoice.Total > x.AmountPaid)
+                    .Select(x => x.Invoice),
+                InvoiceStatus.Partial => succeededPayments
+                    .Where(x => x.Invoice.WorkflowStatus != InvoiceStatus.Draft
+                        && x.Invoice.DueDate >= DateTime.UtcNow.Date
+                        && x.AmountPaid > 0m
+                        && x.Invoice.Total > x.AmountPaid)
+                    .Select(x => x.Invoice),
+                _ => succeededPayments
+                    .Where(x => x.Invoice.WorkflowStatus != InvoiceStatus.Draft
+                        && x.Invoice.DueDate >= DateTime.UtcNow.Date
+                        && x.AmountPaid <= 0m
+                        && x.Invoice.Total > x.AmountPaid)
+                    .Select(x => x.Invoice)
+            };
+        }
 
-        resultList = filterDto.SortBy?.ToLower() switch
+        if (filterDto.TotalMin.HasValue)
+        {
+            query = query.Where(i => i.Total >= filterDto.TotalMin.Value);
+        }
+
+        if (filterDto.TotalMax.HasValue)
+        {
+            query = query.Where(i => i.Total <= filterDto.TotalMax.Value);
+        }
+
+        query = filterDto.SortBy?.ToLower() switch
         {
             "invoice-number" => filterDto.Sort == "desc"
-                ? resultList.OrderByDescending(i => i.InvoiceNumber).ToList()
-                : resultList.OrderBy(i => i.InvoiceNumber).ToList(),
+                ? query.OrderByDescending(i => i.InvoiceNumber)
+                : query.OrderBy(i => i.InvoiceNumber),
 
             "customer" => filterDto.Sort == "desc"
-                ? resultList.OrderByDescending(i => i.Customer?.FullName ?? "").ToList()
-                : resultList.OrderBy(i => i.Customer?.FullName ?? "").ToList(),
+                ? query.OrderByDescending(i => i.Customer == null ? "" : i.Customer.FirstName)
+                    .ThenByDescending(i => i.Customer == null ? "" : i.Customer.LastName)
+                : query.OrderBy(i => i.Customer == null ? "" : i.Customer.FirstName)
+                    .ThenBy(i => i.Customer == null ? "" : i.Customer.LastName),
 
             "due-date" => filterDto.Sort == "desc"
-                ? resultList.OrderByDescending(i => i.DueDate).ToList()
-                : resultList.OrderBy(i => i.DueDate).ToList(),
+                ? query.OrderByDescending(i => i.DueDate)
+                : query.OrderBy(i => i.DueDate),
 
             "total" => filterDto.Sort == "desc"
-                ? resultList.OrderByDescending(i => i.Total).ToList()
-                : resultList.OrderBy(i => i.Total).ToList(),
+                ? query.OrderByDescending(i => i.Total)
+                : query.OrderBy(i => i.Total),
 
-            _ => resultList.OrderByDescending(i => i.IssueDate).ToList()
+            _ => query.OrderByDescending(i => i.IssueDate)
         };
 
-        var totalCount = resultList.Count;
-        var paged = resultList
+        var totalCount = await query.CountAsync();
+        var paged = await query
+            .Include(i => i.Customer)
+            .Include(i => i.LineItems)
+                .ThenInclude(li => li.ServiceItem)
+            .Include(i => i.Payments)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToList();
+            .ToListAsync();
 
         return new ApiResponse<PagedResult<Invoice>>
         {
