@@ -25,6 +25,7 @@ public class Lead
     public LeadStatus Status { get; set; } = LeadStatus.Pending;
     public LeadPriority Priority { get; set; } = LeadPriority.Normal;
     public List<LineItem> LineItems { get; set; } = [];
+    public bool IsArchived { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

@@ -264,7 +264,8 @@ public class LeadService : ILeadService
             throw new UnauthorizedAccessException("That lead is not in your workspace.");
         }
 
-        _context.Leads.Remove(lead);
+        lead.IsArchived = true;
+        lead.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
     }
 }

@@ -59,6 +59,7 @@ public class Job
     public DateTime? CompletedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public string? Source { get; set; }
+    public bool IsArchived { get; set; }
     [JsonIgnore]
     public ICollection<JobTag> TagRecords { get; set; } = [];
 

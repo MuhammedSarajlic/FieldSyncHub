@@ -561,13 +561,8 @@ public class QuoteService : IQuoteService
 
         if (quote == null || quote.WorkspaceId != callerWorkspaceId) return false;
 
-        var notesToDelete = new List<Note>();
-        notesToDelete.AddRange(quote.InternalNotes);
-        notesToDelete.AddRange(quote.CustomerNotes);
-
-        _context.ActivityHistorys.RemoveRange(quote.ActivityHistory);
-        _context.Notes.RemoveRange(notesToDelete);
-        _context.Quotes.Remove(quote);
+        quote.IsArchived = true;
+        quote.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
         return true;

@@ -15,11 +15,21 @@ public class ServiceItem
     public string? SKU { get; set; }
     public string UnitOfMeasure { get; set; } = string.Empty;
     [Range(0, double.MaxValue)]
+    public decimal StockLevel { get; set; }
+    [Range(0, double.MaxValue)]
+    public decimal ReorderPoint { get; set; }
+    [Range(0, int.MaxValue)]
+    public int? DefaultDurationMinutes { get; set; }
+    [Range(0, double.MaxValue)]
+    public decimal MarkupPercentage { get; set; }
+    public string? Vendor { get; set; }
+    [Range(0, double.MaxValue)]
     public decimal UnitPrice { get; set; }
     [Range(0, double.MaxValue)]
     public decimal Cost { get; set; }
     public bool IsTaxable { get; set; }
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
+    public bool IsArchived { get; set; }
     public string? ImageUrl { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

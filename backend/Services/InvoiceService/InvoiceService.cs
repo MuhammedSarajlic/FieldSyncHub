@@ -664,12 +664,8 @@ public class InvoiceService : IInvoiceService
             throw new KeyNotFoundException($"Invoice with ID {id} not found.");
         }
 
-        if (invoiceToDelete == null || invoiceToDelete.WorkspaceId != callerWorkspaceId)
-        {
-            throw new KeyNotFoundException($"Invoice with ID {id} not found.");
-        }
-
-        _context.Invoices.Remove(invoiceToDelete);
+        invoiceToDelete.IsArchived = true;
+        invoiceToDelete.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
     }
 

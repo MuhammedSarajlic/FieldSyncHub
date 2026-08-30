@@ -298,13 +298,13 @@ public class DataContext : DbContext
         // DataContext directly; code that legitimately needs cross-tenant access
         // (an eventual admin portal, a background worker) must call
         // .IgnoreQueryFilters() explicitly rather than this silently opening up.
-        modelBuilder.Entity<Customer>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
-        modelBuilder.Entity<Invoice>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
-        modelBuilder.Entity<Job>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
-        modelBuilder.Entity<Quote>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
-        modelBuilder.Entity<ServiceItem>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
-        modelBuilder.Entity<Employee>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
-        modelBuilder.Entity<Lead>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Customer>().HasQueryFilter(e => !e.IsArchived && (_currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId));
+        modelBuilder.Entity<Invoice>().HasQueryFilter(e => !e.IsArchived && (_currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId));
+        modelBuilder.Entity<Job>().HasQueryFilter(e => !e.IsArchived && (_currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId));
+        modelBuilder.Entity<Quote>().HasQueryFilter(e => !e.IsArchived && (_currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId));
+        modelBuilder.Entity<ServiceItem>().HasQueryFilter(e => !e.IsArchived && (_currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId));
+        modelBuilder.Entity<Employee>().HasQueryFilter(e => !e.IsArchived && (_currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId));
+        modelBuilder.Entity<Lead>().HasQueryFilter(e => !e.IsArchived && (_currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId));
         modelBuilder.Entity<CustomField>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<EmployeeInvite>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<Event>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
@@ -319,6 +319,7 @@ public class DataContext : DbContext
         modelBuilder.Entity<Job>().HasIndex(j => new { j.WorkspaceId, j.JobNumber }).IsUnique();
         modelBuilder.Entity<Quote>().HasIndex(q => new { q.WorkspaceId, q.QuoteNumber }).IsUnique();
         modelBuilder.Entity<ServiceItem>().HasIndex(s => s.WorkspaceId);
+        modelBuilder.Entity<ServiceItem>().HasIndex(s => new { s.WorkspaceId, s.SKU });
         modelBuilder.Entity<Employee>().HasIndex(e => e.WorkspaceId);
         modelBuilder.Entity<CustomerEmail>().HasIndex(e => new { e.CustomerId, e.Email }).IsUnique();
         modelBuilder.Entity<CustomerEmail>().HasIndex(e => e.Email);
@@ -361,6 +362,11 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<ServiceItem>().Property(si => si.UnitPrice).HasPrecision(19, 4);
         modelBuilder.Entity<ServiceItem>().Property(si => si.Cost).HasPrecision(19, 4);
+        modelBuilder.Entity<ServiceItem>().Property(si => si.StockLevel).HasPrecision(19, 4);
+        modelBuilder.Entity<ServiceItem>().Property(si => si.ReorderPoint).HasPrecision(19, 4);
+        modelBuilder.Entity<ServiceItem>().Property(si => si.MarkupPercentage).HasPrecision(9, 6);
+        modelBuilder.Entity<Employee>().Property(e => e.HourlyCostRate).HasPrecision(19, 4);
+        modelBuilder.Entity<Employee>().Property(e => e.BillableRate).HasPrecision(19, 4);
 
             modelBuilder.Entity<Workspace>().Property(w => w.DefaultTaxRate).HasPrecision(9, 6);
             modelBuilder.Entity<Quote>().Property(q => q.DepositAmount).HasPrecision(19, 4);

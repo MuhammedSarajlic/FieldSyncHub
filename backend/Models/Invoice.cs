@@ -52,6 +52,7 @@ public class Invoice
     public string PaymentTerms { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
     public string InternalNotes { get; set; } = string.Empty;
+    public bool IsArchived { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     [Timestamp]

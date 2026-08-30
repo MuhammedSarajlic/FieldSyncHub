@@ -502,12 +502,14 @@ public class JobService : IJobService
 
     public async Task DeleteJob(Guid id, Guid callerWorkspaceId)
     {
-        var job = await _context.Jobs.FindAsync(id) ?? throw new Exception("Job not found");
+        var job = await _context.Jobs.IgnoreQueryFilters().FirstOrDefaultAsync(j => j.Id == id)
+            ?? throw new Exception("Job not found");
         if (job.WorkspaceId != callerWorkspaceId)
         {
             throw new UnauthorizedAccessException("That job is not in your workspace.");
         }
-        _context.Jobs.Remove(job);
+        job.IsArchived = true;
+        job.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
     }
 
