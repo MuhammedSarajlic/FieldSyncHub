@@ -481,7 +481,7 @@ public class QuoteService : IQuoteService
             if (updatedQuoteDto.AssignedToUserId.HasValue) quote.AssignedToUserId = updatedQuoteDto.AssignedToUserId.Value;
             quote.Title = updatedQuoteDto.Title ?? quote.Title;
             quote.Source = updatedQuoteDto.Source ?? quote.Source;
-            quote.PropertyId = updatedQuoteDto.PropertyId;
+            quote.PropertyId = updatedQuoteDto.PropertyId ?? quote.PropertyId;
 
             if (updatedQuoteDto.LineItems != null)
             {
@@ -627,7 +627,7 @@ public class QuoteService : IQuoteService
             .FirstOrDefaultAsync();
 
         quote.ActivityHistory = quote.ActivityHistory
-            .OrderByDescending(a => a.CreatedAt)
+            .OrderByDescending(a => a.ChangedAt)
             .ToList();
 
         return quote;
@@ -828,7 +828,7 @@ public class QuoteService : IQuoteService
             .FirstOrDefaultAsync();
 
         updated!.ActivityHistory = updated.ActivityHistory
-            .OrderByDescending(a => a.CreatedAt)
+            .OrderByDescending(a => a.ChangedAt)
             .ToList();
 
         return new ApiResponse<Quote>
