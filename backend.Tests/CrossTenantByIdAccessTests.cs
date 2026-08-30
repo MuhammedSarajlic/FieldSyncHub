@@ -39,7 +39,7 @@ public class CrossTenantByIdAccessTests
         context.Jobs.Add(job);
         await context.SaveChangesAsync();
 
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
 
         var crossTenant = await service.GetJobById(job.Id, ownWorkspace);
         Assert.Null(crossTenant.Payload);

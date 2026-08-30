@@ -18,6 +18,7 @@ public interface IJobService
     Task<ApiResponse<PagedResult<Job>>> GetJobsByFilter(JobFilterDto filterDto, Guid workspaceId, int pageNumber, int pageSize, Guid? restrictToEmployeeId = null);
     Task<ApiResponse<Job>> CreateJob(CreateJobDto createJobDto);
     Task<ApiResponse<Job>> UpdateJob(UpdateJobDto updatedJobDto, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null);
+    Task<ApiResponse<Job>> ChangeJobStatus(Guid jobId, JobStatus status, Guid callerWorkspaceId, Guid userId, Guid? restrictToEmployeeId = null);
     Task DeleteJob(Guid id, Guid callerWorkspaceId);
     Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null);
     Task<ApiResponse<Job>> RecordDepositPayment(Guid jobId, RecordJobDepositPaymentDto paymentDto, Guid callerWorkspaceId, Guid recordedByUserId, Guid? restrictToEmployeeId = null);

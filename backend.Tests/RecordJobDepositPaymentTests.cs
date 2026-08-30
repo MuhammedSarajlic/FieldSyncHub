@@ -44,7 +44,7 @@ public class RecordJobDepositPaymentTests
         context.Jobs.Add(CreateJob(workspaceId, jobId, depositAmount: 50m));
         await context.SaveChangesAsync();
 
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
         var result = await service.RecordDepositPayment(
             jobId,
             new RecordJobDepositPaymentDto
@@ -80,7 +80,7 @@ public class RecordJobDepositPaymentTests
         context.Jobs.Add(CreateJob(workspaceId, jobId, depositAmount: 50m));
         await context.SaveChangesAsync();
 
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
         var result = await service.RecordDepositPayment(
             jobId,
             new RecordJobDepositPaymentDto { Amount = 75m, Method = PaymentMethod.Cash },
@@ -101,7 +101,7 @@ public class RecordJobDepositPaymentTests
         context.Jobs.Add(CreateJob(workspaceId, jobId, depositAmount: 0m));
         await context.SaveChangesAsync();
 
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
         var result = await service.RecordDepositPayment(
             jobId,
             new RecordJobDepositPaymentDto { Amount = 10m, Method = PaymentMethod.Cash },
@@ -123,7 +123,7 @@ public class RecordJobDepositPaymentTests
         context.Jobs.Add(CreateJob(workspaceId, jobId, depositAmount: 50m));
         await context.SaveChangesAsync();
 
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
         await service.RecordDepositPayment(
             jobId,
             new RecordJobDepositPaymentDto { Amount = 50m, Method = PaymentMethod.Cash },

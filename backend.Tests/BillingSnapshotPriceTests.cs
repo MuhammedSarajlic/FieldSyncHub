@@ -132,7 +132,7 @@ public class BillingSnapshotPriceTests
         });
         await context.SaveChangesAsync();
 
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
         var stats = await service.GetJobStats(workspaceId);
 
         Assert.Equal(450m, stats.TotalValue);

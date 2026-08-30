@@ -5,7 +5,12 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import { useNavigate, useParams } from 'react-router';
 import { TJob } from '../../types/Job';
 import { TRecordInvoicePayment } from '../../types/Invoice';
-import { DeleteJob, GetJobById, RecordJobDepositPayment } from '../../services/Job';
+import {
+  ChangeJobStatus,
+  DeleteJob,
+  GetJobById,
+  RecordJobDepositPayment,
+} from '../../services/Job';
 import {
   JobPriority,
   JobStatus,
@@ -40,6 +45,7 @@ import { getPaymentStatusColor } from '../../utils/FuntionHelpers/JobUtils/getPa
 import JobDetailsMediaTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsMediaTab';
 import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
 import IconButton from '../../components/CustomElements/Buttons/IconButton';
+import CustomButton from '../../components/CustomElements/Buttons/CustomButton';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
 import { useClickOutside } from '../../hooks/useClickOutside'; // Assuming you have this hook from QuoteDetails
 import { formatTime } from '../../utils/FuntionHelpers/formatTime';
@@ -80,6 +86,21 @@ const JobDetails = () => {
           ?.response?.data?.errorMessage ??
         'Could not record the deposit payment.';
       throw new Error(message);
+    }
+  };
+
+  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+  const handleMarkJobCompleted = async () => {
+    if (!jobId) return;
+
+    setIsMarkingComplete(true);
+    try {
+      await ChangeJobStatus(jobId, JobStatus.Completed);
+      await fetchJobById();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsMarkingComplete(false);
     }
   };
 
@@ -382,6 +403,19 @@ const JobDetails = () => {
                                     {JobStatus[jobDetails.status]}
                                   </div>
                                 </div>
+                                {jobDetails.status !== JobStatus.Completed &&
+                                  jobDetails.status !==
+                                    JobStatus.Canceled && (
+                                    <CustomButton
+                                      onClick={handleMarkJobCompleted}
+                                      disabled={isMarkingComplete}
+                                      customStyle='self-end py-1.5 px-3 text-xs border-gray-300 hover:bg-gray-50 disabled:opacity-50'
+                                    >
+                                      {isMarkingComplete
+                                        ? 'Marking complete...'
+                                        : 'Mark as completed'}
+                                    </CustomButton>
+                                  )}
                               </div>
                               <div>
                                 <p className='text-gray-500 text-sm mb-1'>

@@ -157,6 +157,19 @@ public class JobController : ControllerBase
         return Ok();
     }
 
+    [HttpPatch("{jobId:guid}/status")]
+    public async Task<ActionResult<ApiResponse<Job>>> ChangeJobStatus(Guid jobId, [FromBody] JobStatus status)
+    {
+        if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid userId)
+        {
+            return Forbid();
+        }
+
+        var restriction = await ResolveJobRestriction(callerWorkspaceId);
+        var result = await _jobService.ChangeJobStatus(jobId, status, callerWorkspaceId, userId, restriction);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpPatch("{jobId:guid}/tags")]
     public async Task<IActionResult> UpdateTags(
         Guid jobId,

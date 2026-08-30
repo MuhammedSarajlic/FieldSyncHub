@@ -1,4 +1,5 @@
 import { TAddJob, TRecordJobDepositPayment, TUpdateJob } from '../types/Job';
+import { JobStatus } from '../constants/Enumeration/JobEnum/JobEnum';
 import api from './api';
 
 export async function GetJobById(jobId: string) {
@@ -59,5 +60,14 @@ export async function RecordJobDepositPayment(
   payment: TRecordJobDepositPayment
 ) {
   const response = await api.post(`/job/${jobId}/deposit-payments`, payment);
+  return response;
+}
+
+export async function ChangeJobStatus(jobId: string, status: JobStatus) {
+  const response = await api.patch(`/job/${jobId}/status`, JSON.stringify(status), {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
   return response;
 }

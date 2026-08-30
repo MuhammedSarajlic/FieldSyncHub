@@ -1,7 +1,10 @@
 using backend.Data;
+using backend.Dtos.InvoiceDto;
 using backend.Dtos.JobDto;
+using backend.Dtos.LineItemDto;
 using backend.Models;
 using backend.Response;
+using backend.Services.InvoiceService;
 using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -12,9 +15,11 @@ public class JobService : IJobService
 {
     private const int MaxDocumentNumberGenerationAttempts = 5;
     private readonly DataContext _context;
-    public JobService(DataContext context)
+    private readonly IInvoiceService _invoiceService;
+    public JobService(DataContext context, IInvoiceService invoiceService)
     {
         _context = context;
+        _invoiceService = invoiceService;
     }
 
     public async Task<ApiResponse<Job>> GetJobById(Guid jobId, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null)
@@ -569,6 +574,141 @@ public class JobService : IJobService
         await _context.SaveChangesAsync();
 
         return new ApiResponse<Job> { Success = true, Payload = job };
+    }
+
+    public async Task<ApiResponse<Job>> ChangeJobStatus(Guid jobId, JobStatus status, Guid callerWorkspaceId, Guid userId, Guid? restrictToEmployeeId = null)
+    {
+        var job = await _context.Jobs
+            .Include(j => j.LineItems)
+            .Include(j => j.AssignedTeamMembers)
+            .Include(j => j.StatusHistory)
+            .FirstOrDefaultAsync(j => j.Id == jobId);
+
+        if (job == null || job.WorkspaceId != callerWorkspaceId
+            || (restrictToEmployeeId != null && !job.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
+        {
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "Job not found" };
+        }
+
+        if (job.Status == status)
+        {
+            return new ApiResponse<Job> { Success = true, Payload = job };
+        }
+
+        var previousStatus = job.Status;
+        job.Status = status;
+        job.UpdatedAt = DateTime.UtcNow;
+        _context.StatusChanges.Add(new StatusChange
+        {
+            Id = Guid.NewGuid(),
+            JobId = job.Id,
+            FromStatus = previousStatus.ToString(),
+            ToStatus = status.ToString(),
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = userId
+        });
+
+        var justCompleted = status == JobStatus.Completed && previousStatus != JobStatus.Completed;
+        if (justCompleted)
+        {
+            job.CompletedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+
+        if (justCompleted && job.SendInvoice && !job.InvoiceSent)
+        {
+            await GenerateAndSendCompletionInvoiceAsync(job, callerWorkspaceId, userId);
+        }
+
+        return new ApiResponse<Job> { Success = true, Payload = job };
+    }
+
+    // Best-effort: a job's completion shouldn't fail (or roll back the status
+    // change already saved above) just because invoicing hit a snag - the
+    // InvoiceSent flag is only set once CreateInvoice succeeds, so a failure
+    // here leaves the job eligible to be invoiced again by hand.
+    private async Task GenerateAndSendCompletionInvoiceAsync(Job job, Guid callerWorkspaceId, Guid userId)
+    {
+        if (job.LineItems.Count == 0)
+        {
+            return;
+        }
+
+        var customer = await _context.Customers
+            .Include(c => c.Properties)
+            .FirstOrDefaultAsync(c => c.Id == job.CustomerId);
+        if (customer == null)
+        {
+            return;
+        }
+
+        var propertyId = job.PropertyId ?? customer.Properties?.FirstOrDefault()?.Id;
+        if (propertyId is not Guid resolvedPropertyId)
+        {
+            return;
+        }
+
+        Invoice invoice;
+        try
+        {
+            invoice = await _invoiceService.CreateInvoice(new CreateInvoiceDto
+            {
+                CustomerId = job.CustomerId,
+                WorkspaceId = callerWorkspaceId,
+                PropertyId = resolvedPropertyId,
+                JobId = job.Id,
+                Title = job.Title,
+                TaxRate = job.TaxRate,
+                Discount = job.DiscountValue,
+                DiscountType = job.DiscountType,
+                IssueDate = DateTime.UtcNow,
+                PaymentTerms = "uponReceipt",
+                LineItems = job.LineItems.Select(li => new CreateLineItemDto
+                {
+                    ServiceItemId = li.ServiceItemId,
+                    Name = li.Name,
+                    Description = li.Description,
+                    UnitPrice = li.UnitPrice,
+                    Cost = li.Cost,
+                    Quantity = li.Quantity,
+                    IsTaxable = li.IsTaxable,
+                    IsOptional = li.IsOptional
+                }).ToList()
+            });
+        }
+        catch (Exception)
+        {
+            return;
+        }
+
+        job.InvoiceSent = true;
+        await _context.SaveChangesAsync();
+
+        if (!customer.IsReceiveInvoiceNotifications || customer.Emails.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await _invoiceService.SendInvoice(
+                invoice.Id,
+                new SendInvoiceDto
+                {
+                    Recipients = customer.Emails,
+                    Subject = $"Invoice {invoice.InvoiceNumber} for {job.Title}",
+                    Message = "Thanks for choosing us! Your job is complete - please find the invoice attached.",
+                    AttachPdf = true
+                },
+                callerWorkspaceId,
+                userId,
+                "System");
+        }
+        catch (Exception)
+        {
+            // The invoice already exists and can still be sent manually.
+        }
     }
 
     private async Task<string> GenerateJobNumber(Guid workspaceId)

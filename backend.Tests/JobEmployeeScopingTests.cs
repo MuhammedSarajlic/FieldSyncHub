@@ -65,7 +65,7 @@ public class JobEmployeeScopingTests
     public async Task GetJobById_returns_the_job_when_the_employee_is_assigned()
     {
         var (context, workspaceId, assignedEmployeeId, _, assignedJob, _) = await Seed();
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
 
         var result = await service.GetJobById(assignedJob.Id, workspaceId, assignedEmployeeId);
 
@@ -76,7 +76,7 @@ public class JobEmployeeScopingTests
     public async Task GetJobById_hides_a_job_the_employee_is_not_assigned_to()
     {
         var (context, workspaceId, assignedEmployeeId, _, _, unassignedJob) = await Seed();
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
 
         var result = await service.GetJobById(unassignedJob.Id, workspaceId, assignedEmployeeId);
 
@@ -88,7 +88,7 @@ public class JobEmployeeScopingTests
     {
         // The Owner/Admin path - JobController passes null for anyone who isn't an Employee.
         var (context, workspaceId, _, _, _, unassignedJob) = await Seed();
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
 
         var result = await service.GetJobById(unassignedJob.Id, workspaceId, restrictToEmployeeId: null);
 
@@ -99,7 +99,7 @@ public class JobEmployeeScopingTests
     public async Task GetJobsByWorkspace_only_returns_jobs_the_employee_is_assigned_to()
     {
         var (context, workspaceId, assignedEmployeeId, _, assignedJob, unassignedJob) = await Seed();
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
 
         var result = await service.GetJobsByWorkspace(workspaceId, pageNumber: 1, pageSize: 50, restrictToEmployeeId: assignedEmployeeId);
 
@@ -112,7 +112,7 @@ public class JobEmployeeScopingTests
     public async Task GetJobsByFilter_only_returns_jobs_the_employee_is_assigned_to()
     {
         var (context, workspaceId, assignedEmployeeId, _, assignedJob, unassignedJob) = await Seed();
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
 
         var result = await service.GetJobsByFilter(new JobFilterDto(), workspaceId, pageNumber: 1, pageSize: 50, restrictToEmployeeId: assignedEmployeeId);
 
@@ -125,7 +125,7 @@ public class JobEmployeeScopingTests
     public async Task UpdateJob_rejects_a_job_the_employee_is_not_assigned_to()
     {
         var (context, workspaceId, assignedEmployeeId, _, _, unassignedJob) = await Seed();
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
 
         var result = await service.UpdateJob(new UpdateJobDto { Id = unassignedJob.Id, Title = "Hijacked" }, workspaceId, assignedEmployeeId);
 
@@ -136,7 +136,7 @@ public class JobEmployeeScopingTests
     public async Task UpdateJob_allows_a_job_the_employee_is_assigned_to()
     {
         var (context, workspaceId, assignedEmployeeId, _, assignedJob, _) = await Seed();
-        var service = new JobService(context);
+        var service = new JobService(context, new NotImplementedInvoiceService());
 
         var result = await service.UpdateJob(new UpdateJobDto { Id = assignedJob.Id, Title = "Updated" }, workspaceId, assignedEmployeeId);
 
