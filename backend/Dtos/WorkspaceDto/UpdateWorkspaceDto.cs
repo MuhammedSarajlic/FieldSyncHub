@@ -24,4 +24,9 @@ public class UpdateWorkspaceDto
     public string? LogoUrl { get; set; }
     public string? Theme { get; set; }
     public string? Category { get; set; }
+    public bool? DunningEnabled { get; set; }
+    public string? DunningDays { get; set; }
+    public string? DocumentPrimaryColor { get; set; }
+    public string? DocumentFooterText { get; set; }
+    public string? DocumentHeaderLayout { get; set; }
 }

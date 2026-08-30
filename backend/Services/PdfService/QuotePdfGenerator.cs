@@ -17,7 +17,7 @@ namespace backend.Services.PdfService;
 public class QuotePdfGenerator
 {
     private readonly Quote _quote;
-    private readonly string _primaryColor = "#343a40";
+    private readonly string _primaryColor;
     private readonly Workspace? _workspace;
     private byte[]? Logo { get; set; }
 
@@ -25,6 +25,7 @@ public class QuotePdfGenerator
     {
         _quote = quote;
         _workspace = quote.CreatedByUser?.Workspace;
+        _primaryColor = IsHexColor(_workspace?.DocumentPrimaryColor) ? _workspace!.DocumentPrimaryColor : "#343a40";
         Logo = logo;
     }
 
@@ -40,7 +41,7 @@ public class QuotePdfGenerator
 
                 page.Header().Element(ComposeHeader);
                 page.Content().Element(ComposeContent);
-                // page.Footer().Element(ComposeFooter);
+                page.Footer().Element(ComposeFooter);
             });
         });
 
@@ -265,6 +266,21 @@ public class QuotePdfGenerator
     {
         return container.BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingVertical(8);
     }
+
+    private void ComposeFooter(IContainer container)
+    {
+        container.AlignCenter().DefaultTextStyle(text => text.FontSize(9).FontColor(Colors.Grey.Darken1)).Text(text =>
+        {
+            text.Span(_workspace?.DocumentFooterText ?? GetWorkspaceDisplayName());
+            text.Span("  ");
+            text.CurrentPageNumber();
+            text.Span(" of ");
+            text.TotalPages();
+        });
+    }
+
+    private static bool IsHexColor(string? value)
+        => value is { Length: 7 } && value[0] == '#' && value.Skip(1).All(Uri.IsHexDigit);
 
     private string FormatCurrency(decimal amount)
     {

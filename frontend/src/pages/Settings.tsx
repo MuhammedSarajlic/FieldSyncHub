@@ -43,6 +43,7 @@ import { serviceCategories } from '../constants/ServiceCategories';
 import { TUpdateWorkspace } from '../types/Workspace';
 import { ExportCustomers } from '../services/Customer';
 import { downloadCSVFile } from '../utils/FuntionHelpers/downloadCSVFile';
+import { AccountingConnection, connectAccounting, getAccountingConnections, syncAccounting } from '../services/Integrations';
 
 const settingSections = [
   { id: 'company', name: 'Company Profile', icon: Building2 },
@@ -131,6 +132,8 @@ const Settings = () => {
       return { timezone: 'UTC', serviceArea: '', weekdays: '08:00 - 17:00', weekends: 'Closed' };
     }
   });
+  const [dunningEnabled, setDunningEnabled] = useState(true);
+  const [dunningDays, setDunningDays] = useState('7,14,30');
   const [documentSettings, setDocumentSettings] = useState(() => {
     try {
       return JSON.parse(
@@ -148,6 +151,7 @@ const Settings = () => {
       return [];
     }
   });
+  const [accountingConnections, setAccountingConnections] = useState<AccountingConnection[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
@@ -175,10 +179,25 @@ const Settings = () => {
             state: ws.state,
             postalCode: ws.postalCode,
             country: ws.country,
+            timeZoneId: ws.timeZoneId,
             size: ws.size,
             category: ws.category,
             logoUrl: ws.logoUrl,
+            dunningEnabled: ws.dunningEnabled,
+            dunningDays: ws.dunningDays,
+            documentPrimaryColor: ws.documentPrimaryColor,
+            documentFooterText: ws.documentFooterText,
+            documentHeaderLayout: ws.documentHeaderLayout,
           });
+          setOperations((current) => ({ ...current, timezone: ws.timeZoneId || current.timezone }));
+          setDunningEnabled(ws.dunningEnabled);
+          setDunningDays(ws.dunningDays || '7,14,30');
+          setDocumentSettings((current) => ({
+            ...current,
+            primaryColor: ws.documentPrimaryColor || current.primaryColor || '#0f5132',
+            footer: ws.documentFooterText ?? current.footer,
+            headerLayout: ws.documentHeaderLayout || current.headerLayout || 'standard',
+          }));
           localStorage.setItem('workspaceCurrency', ws.currency || 'USD');
           setLogoPreview(ws.logoUrl ?? null);
         }
@@ -189,6 +208,11 @@ const Settings = () => {
       }
     };
     fetchWorkspace();
+  }, [user?.workspace?.id]);
+
+  useEffect(() => {
+    if (!user?.workspace?.id) return;
+    void getAccountingConnections().then((response) => setAccountingConnections(response.data)).catch(() => undefined);
   }, [user?.workspace?.id]);
 
   useEffect(() => {
@@ -1132,9 +1156,15 @@ const Settings = () => {
               <div><label className='block text-sm font-medium text-gray-700 mb-1'>Timezone</label><select value={operations.timezone} onChange={(event) => setOperations({ ...operations, timezone: event.target.value })} className={inputClass}><option>UTC</option><option>Europe/Sarajevo</option><option>America/New_York</option><option>America/Los_Angeles</option><option>Europe/London</option></select></div>
               <div><label className='block text-sm font-medium text-gray-700 mb-1'>Service area</label><input value={operations.serviceArea} onChange={(event) => setOperations({ ...operations, serviceArea: event.target.value })} placeholder='City, county, or radius' className={inputClass} /></div>
               <div><label className='block text-sm font-medium text-gray-700 mb-1'>Weekday hours</label><input value={operations.weekdays} onChange={(event) => setOperations({ ...operations, weekdays: event.target.value })} placeholder='08:00 - 17:00' className={inputClass} /></div>
-              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Weekend hours</label><input value={operations.weekends} onChange={(event) => setOperations({ ...operations, weekends: event.target.value })} placeholder='Closed' className={inputClass} /></div>
+               <div><label className='block text-sm font-medium text-gray-700 mb-1'>Weekend hours</label><input value={operations.weekends} onChange={(event) => setOperations({ ...operations, weekends: event.target.value })} placeholder='Closed' className={inputClass} /></div>
+               <div><label className='block text-sm font-medium text-gray-700 mb-1'>Dunning reminder days</label><input value={dunningDays} onChange={(event) => setDunningDays(event.target.value)} placeholder='7,14,30' className={inputClass} /><p className='mt-1 text-xs text-gray-500'>Comma-separated days after the due date.</p></div>
+               <label className='flex items-center gap-3 pt-7 text-sm font-medium text-gray-700'><input type='checkbox' checked={dunningEnabled} onChange={(event) => setDunningEnabled(event.target.checked)} className='h-4 w-4' /> Send overdue reminders</label>
             </div>
-            <Button variant='primary' leftIcon={<Save size={16} />} onClick={() => saveLocalSetting('fieldsync:operations', operations, 'Operations settings saved')}>Save operations</Button>
+              <Button variant='primary' leftIcon={<Save size={16} />} onClick={async () => {
+                 if (workspace) await UpdateWorkspace({ ...workspace, timeZoneId: operations.timezone, dunningEnabled, dunningDays });
+                saveLocalSetting('fieldsync:operations', operations, 'Operations settings saved');
+                await refetchUser();
+              }}>Save operations</Button>
           </div>
         );
 
@@ -1143,11 +1173,17 @@ const Settings = () => {
           <div className='space-y-6 max-w-2xl'>
             <div><h2 className='text-2xl font-bold text-gray-900'>Document templates</h2><p className='mt-1 text-sm text-gray-500'>Control the prefixes and footer shown on customer documents.</p></div>
             <div className='grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2'>
+              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Document colour</label><input type='color' value={documentSettings.primaryColor || '#0f5132'} onChange={(event) => setDocumentSettings({ ...documentSettings, primaryColor: event.target.value })} className='h-10 w-full border border-gray-300 p-1' /></div>
+              <div><label className='block text-sm font-medium text-gray-700 mb-1'>Header layout</label><select value={documentSettings.headerLayout || 'standard'} onChange={(event) => setDocumentSettings({ ...documentSettings, headerLayout: event.target.value })} className={inputClass}><option value='standard'>Standard</option><option value='compact'>Compact</option></select></div>
               <div><label className='block text-sm font-medium text-gray-700 mb-1'>Invoice prefix</label><input value={documentSettings.invoicePrefix} onChange={(event) => setDocumentSettings({ ...documentSettings, invoicePrefix: event.target.value })} className={inputClass} /></div>
               <div><label className='block text-sm font-medium text-gray-700 mb-1'>Quote prefix</label><input value={documentSettings.quotePrefix} onChange={(event) => setDocumentSettings({ ...documentSettings, quotePrefix: event.target.value })} className={inputClass} /></div>
               <div className='sm:col-span-2'><label className='block text-sm font-medium text-gray-700 mb-1'>Document footer</label><textarea rows={3} value={documentSettings.footer} onChange={(event) => setDocumentSettings({ ...documentSettings, footer: event.target.value })} className={inputClass} /></div>
             </div>
-            <Button variant='primary' leftIcon={<Save size={16} />} onClick={() => saveLocalSetting('fieldsync:document-settings', documentSettings, 'Document settings saved')}>Save document settings</Button>
+            <Button variant='primary' leftIcon={<Save size={16} />} onClick={async () => {
+              if (workspace) await UpdateWorkspace({ ...workspace, documentPrimaryColor: documentSettings.primaryColor, documentFooterText: documentSettings.footer, documentHeaderLayout: documentSettings.headerLayout });
+              saveLocalSetting('fieldsync:document-settings', documentSettings, 'Document settings saved');
+              await refetchUser();
+            }}>Save document settings</Button>
           </div>
         );
 
@@ -1159,6 +1195,13 @@ const Settings = () => {
               {['Google Calendar', 'Resend email', 'Stripe payments'].map((name) => {
                 const connected = connectedIntegrations.includes(name);
                 return <div key={name} className='flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4'><div><p className='font-medium text-gray-900'>{name}</p><p className='text-sm text-gray-500'>{connected ? 'Connected for this workspace' : 'Not connected'}</p></div><Button variant={connected ? 'secondary' : 'outline'} onClick={() => { const next = connected ? connectedIntegrations.filter((item) => item !== name) : [...connectedIntegrations, name]; setConnectedIntegrations(next); saveLocalSetting('fieldsync:integrations', next, connected ? `${name} disconnected` : `${name} connected`); }}>{connected ? 'Disconnect' : 'Connect'}</Button></div>;
+              })}
+            </div>
+            <div className='space-y-3'>
+              <h3 className='pt-3 text-lg font-semibold text-gray-900'>Accounting</h3>
+              {['quickbooks', 'xero'].map((provider) => {
+                const connection = accountingConnections.find((item) => item.provider === provider);
+                return <div key={provider} className='flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4'><div><p className='font-medium capitalize text-gray-900'>{provider}</p><p className='text-sm text-gray-500'>{connection?.status || 'Not connected'}{connection?.lastError ? `: ${connection.lastError}` : ''}</p></div><div className='flex gap-2'><Button variant='outline' onClick={async () => { await connectAccounting(provider); const response = await getAccountingConnections(); setAccountingConnections(response.data); }}>Connect</Button>{connection && <Button variant='secondary' onClick={async () => { try { await syncAccounting(provider); } catch { toast.error('Connect the provider before syncing.'); } }}>Sync</Button>}</div></div>;
               })}
             </div>
           </div>

@@ -85,6 +85,7 @@ public class WorkspaceService : IWorkspaceService
         newWorkspace.CreatedByUserId = createdById;
 
         await _context.Workspaces.AddAsync(newWorkspace);
+        await _context.Subscriptions.AddAsync(new Subscription { Id = Guid.NewGuid(), WorkspaceId = newWorkspace.Id });
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == createdById);
         if (user == null)
@@ -174,6 +175,11 @@ public class WorkspaceService : IWorkspaceService
         }
         if (updatedWorkspaceDto.Theme != null) existingWorkspace.Theme = updatedWorkspaceDto.Theme;
         if (updatedWorkspaceDto.Category != null) existingWorkspace.Category = updatedWorkspaceDto.Category;
+        if (updatedWorkspaceDto.DunningEnabled.HasValue) existingWorkspace.DunningEnabled = updatedWorkspaceDto.DunningEnabled.Value;
+        if (updatedWorkspaceDto.DunningDays != null) existingWorkspace.DunningDays = updatedWorkspaceDto.DunningDays;
+        if (updatedWorkspaceDto.DocumentPrimaryColor != null) existingWorkspace.DocumentPrimaryColor = updatedWorkspaceDto.DocumentPrimaryColor;
+        if (updatedWorkspaceDto.DocumentFooterText != null) existingWorkspace.DocumentFooterText = updatedWorkspaceDto.DocumentFooterText;
+        if (updatedWorkspaceDto.DocumentHeaderLayout != null) existingWorkspace.DocumentHeaderLayout = updatedWorkspaceDto.DocumentHeaderLayout;
 
         existingWorkspace.UpdatedAt = DateTime.UtcNow;
 

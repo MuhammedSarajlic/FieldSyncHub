@@ -11,6 +11,9 @@ import {
   UserCheck,
   UserPlus,
   Users,
+  Megaphone,
+  Boxes,
+  CreditCard,
 } from 'lucide-react';
 
 export const sidebarItems = [
@@ -76,6 +79,9 @@ export const sidebarItems = [
     slug: 'reports',
     section: 'business',
   },
+  { name: 'Marketing', Icon: Megaphone, slug: 'marketing', section: 'business' },
+  { name: 'Inventory', Icon: Boxes, slug: 'inventory', section: 'business' },
+  { name: 'Billing', Icon: CreditCard, slug: 'billing', section: 'business' },
   {
     name: 'Settings',
     Icon: Settings,

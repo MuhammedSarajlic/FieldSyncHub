@@ -32,6 +32,11 @@ public class Workspace
     public bool ReviewRequestsEnabled { get; set; }
     public string? GoogleReviewUrl { get; set; }
     public int ReviewRequestDelayHours { get; set; } = 24;
+    public bool DunningEnabled { get; set; } = true;
+    public string DunningDays { get; set; } = "7,14,30";
+    public string DocumentPrimaryColor { get; set; } = "#0f5132";
+    public string? DocumentFooterText { get; set; }
+    public string DocumentHeaderLayout { get; set; } = "standard";
     public string Category { get; set; } = string.Empty;
     public ICollection<User> Users { get; set; } = [];
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -1,0 +1,9 @@
+{
+  "name": "FieldSyncHub",
+  "short_name": "FieldSyncHub",
+  "start_url": "/my-day",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#0f5132",
+  "description": "Field service schedule and customer operations"
+}

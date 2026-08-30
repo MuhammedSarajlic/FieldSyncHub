@@ -23,6 +23,7 @@ using backend.Services.CalendarService;
 using backend.Services.ActivityHistoryService;
 using backend.Services.StorageService;
 using backend.Services.TwoFactorService;
+using backend.Services.WebhookService;
 using Resend;
 
 namespace backend.Extensions;
@@ -67,5 +68,6 @@ public static class ServiceExtension
         services.AddSingleton<TotpSecretProtector>();
         services.AddScoped<ITwoFactorService, TwoFactorService>();
         services.AddScoped<IActivityHistoryService, ActivityHistoryService>();
+        services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
     }
 }

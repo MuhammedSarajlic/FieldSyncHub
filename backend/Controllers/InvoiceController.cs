@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
+using backend.Services.WebhookService;
 
 namespace backend.Controllers;
 
@@ -19,11 +20,13 @@ public class InvoiceController : ControllerBase
 {
     private readonly IInvoiceService _invoiceService;
     private readonly ICurrentUser _currentUser;
+    private readonly IWebhookDispatcher _webhooks;
 
-    public InvoiceController(IInvoiceService invoiceService, ICurrentUser currentUser)
+    public InvoiceController(IInvoiceService invoiceService, ICurrentUser currentUser, IWebhookDispatcher webhooks)
     {
         _invoiceService = invoiceService;
         _currentUser = currentUser;
+        _webhooks = webhooks;
     }
 
 
@@ -159,6 +162,7 @@ public class InvoiceController : ControllerBase
         try
         {
             var invoice = await _invoiceService.RecordPayment(id, paymentDto, callerWorkspaceId, recordedByUserId);
+            await _webhooks.PublishAsync(callerWorkspaceId, invoice.BalanceDue <= 0 ? "invoice.paid" : "invoice.payment_recorded", new { invoiceId = id, amount = paymentDto.Amount });
             return Ok(invoice.ToResponse());
         }
         catch (KeyNotFoundException ex)

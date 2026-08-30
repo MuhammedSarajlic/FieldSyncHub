@@ -62,6 +62,14 @@ public class DataContext : DbContext
     public DbSet<RecoveryCode> RecoveryCodes => Set<RecoveryCode>();
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
     public DbSet<ReviewRequest> ReviewRequests => Set<ReviewRequest>();
+    public DbSet<MarketingCampaign> MarketingCampaigns => Set<MarketingCampaign>();
+    public DbSet<MarketingCampaignRecipient> MarketingCampaignRecipients => Set<MarketingCampaignRecipient>();
+    public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+    public DbSet<AccountingConnection> AccountingConnections => Set<AccountingConnection>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<DunningAttempt> DunningAttempts => Set<DunningAttempt>();
 
     /// <summary>
     /// Audit rows are collected from the change tracker before the save and added to
@@ -344,6 +352,13 @@ public class DataContext : DbContext
         modelBuilder.Entity<ActivityHistory>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<TimeEntry>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<ReviewRequest>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<MarketingCampaign>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<InventoryTransaction>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<AccountingConnection>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<ApiKey>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<WebhookSubscription>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<Subscription>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<DunningAttempt>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
@@ -388,6 +403,24 @@ public class DataContext : DbContext
         modelBuilder.Entity<TimeEntry>().HasIndex(t => new { t.JobId, t.ClockOut });
         modelBuilder.Entity<ReviewRequest>().HasIndex(r => r.TokenHash).IsUnique();
         modelBuilder.Entity<ReviewRequest>().HasIndex(r => new { r.WorkspaceId, r.JobId }).IsUnique();
+        modelBuilder.Entity<MarketingCampaign>().HasIndex(c => new { c.WorkspaceId, c.CreatedAt });
+        modelBuilder.Entity<MarketingCampaignRecipient>().HasIndex(r => new { r.CampaignId, r.CustomerId }).IsUnique();
+        modelBuilder.Entity<InventoryTransaction>().HasIndex(t => new { t.WorkspaceId, t.ServiceItemId, t.CreatedAt });
+        modelBuilder.Entity<AccountingConnection>().HasIndex(c => new { c.WorkspaceId, c.Provider }).IsUnique();
+        modelBuilder.Entity<ApiKey>().HasIndex(k => k.KeyHash).IsUnique();
+        modelBuilder.Entity<WebhookSubscription>().HasIndex(w => w.WorkspaceId);
+        modelBuilder.Entity<Subscription>().HasIndex(s => s.WorkspaceId).IsUnique();
+        modelBuilder.Entity<DunningAttempt>().HasIndex(d => new { d.InvoiceId, d.DaysOverdue }).IsUnique();
+        modelBuilder.Entity<MarketingCampaign>()
+            .HasMany(c => c.Recipients)
+            .WithOne(r => r.Campaign)
+            .HasForeignKey(r => r.CampaignId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<InventoryTransaction>()
+            .HasOne(t => t.ServiceItem)
+            .WithMany()
+            .HasForeignKey(t => t.ServiceItemId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     private static void ConfigureDecimalPrecision(ModelBuilder modelBuilder)

@@ -688,7 +688,7 @@ public class InvoiceService : IInvoiceService
                 page.Margin(40);
                 page.Size(PageSizes.A4);
 
-                page.Header().Text("INVOICE").FontSize(24).Bold().AlignCenter();
+                page.Header().Text("INVOICE").FontSize(24).Bold().FontColor(IsHexColor(workspace?.DocumentPrimaryColor) ? workspace!.DocumentPrimaryColor : "#0f5132").AlignCenter();
 
                 page.Content().Column(col =>
                 {
@@ -777,13 +777,13 @@ public class InvoiceService : IInvoiceService
                         summary.Item().Text($"Total: {CurrencyFormatter.Format(totals.Total, currencyCode)}").Bold();
                     });
 
-                    col.Item().Text("See our Terms & Conditions").Italic().FontSize(10);
+                    col.Item().Text(string.IsNullOrWhiteSpace(workspace?.DocumentFooterText) ? "See our Terms & Conditions" : workspace.DocumentFooterText).Italic().FontSize(10);
                     // col.Item().Text(invoice.TermsUrl).FontSize(10).Underline().Color(Colors.Blue.Medium);
                 });
 
                 page.Footer().AlignCenter().DefaultTextStyle(x => x.FontSize(10)).Text(text =>
                 {
-                    text.Span(senderName);
+                    text.Span(workspace?.DocumentFooterText ?? senderName);
                     text.Span(" ");
                     text.CurrentPageNumber();
                     text.Span(" of ");
@@ -799,6 +799,9 @@ public class InvoiceService : IInvoiceService
         => string.IsNullOrWhiteSpace(workspace?.CompanyName)
             ? (string.IsNullOrWhiteSpace(workspace?.Name) ? "FieldSyncHub" : workspace.Name)
             : workspace.CompanyName;
+
+    private static bool IsHexColor(string? value)
+        => value is { Length: 7 } && value[0] == '#' && value.Skip(1).All(Uri.IsHexDigit);
 
     internal static List<string> BuildWorkspaceIdentityLines(Workspace? workspace)
     {

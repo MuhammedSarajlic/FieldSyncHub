@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using backend.Services.WebhookService;
 
 namespace backend.Controllers;
 
@@ -23,13 +24,15 @@ public class QuoteController : ControllerBase
     private readonly QuotePdfService _quotePdfService;
     private readonly ICurrentUser _currentUser;
     private readonly ILogger<QuoteController> _logger;
+    private readonly IWebhookDispatcher _webhooks;
 
-    public QuoteController(IQuoteService quoteService, QuotePdfService quotePdfService, ICurrentUser currentUser, ILogger<QuoteController> logger)
+    public QuoteController(IQuoteService quoteService, QuotePdfService quotePdfService, ICurrentUser currentUser, ILogger<QuoteController> logger, IWebhookDispatcher webhooks)
     {
         _quoteService = quoteService;
         _quotePdfService = quotePdfService;
         _currentUser = currentUser;
         _logger = logger;
+        _webhooks = webhooks;
     }
 
 
@@ -195,6 +198,7 @@ public class QuoteController : ControllerBase
         var userName = User.Identity?.Name ?? "System";
 
         var quote = await _quoteService.ChangeQuoteStatus(id, status, userId, userName);
+        if (status == QuoteStatus.Approved && _currentUser.WorkspaceId is Guid workspaceId) await _webhooks.PublishAsync(workspaceId, "quote.approved", new { quoteId = id });
         return Ok(quote.ToResponse());
     }
 

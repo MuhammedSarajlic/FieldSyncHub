@@ -19,6 +19,9 @@ const LeadDetails = lazy(() => import('./pages/LeadDetails'));
 const Quotes = lazy(() => import('./pages/quotes/Quotes'));
 const Pricebook = lazy(() => import('./pages/pricebook/Pricebook'));
 const Reports = lazy(() => import('./pages/Reports'));
+const Marketing = lazy(() => import('./pages/Marketing'));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const Subscription = lazy(() => import('./pages/Subscription'));
 const Settings = lazy(() => import('./pages/Settings'));
 const QuoteDetails = lazy(() => import('./pages/quotes/QuoteDetails'));
 const Workspace = lazy(() => import('./pages/Workspace'));
@@ -55,6 +58,9 @@ const getPageTitle = (pathname: string) => {
   if (pathname.startsWith('/quotes')) return 'Quotes';
   if (pathname.startsWith('/pricebook')) return 'Pricebook';
   if (pathname.startsWith('/reports')) return 'Reports';
+  if (pathname.startsWith('/marketing')) return 'Marketing';
+  if (pathname.startsWith('/inventory')) return 'Inventory';
+  if (pathname.startsWith('/billing')) return 'Billing';
   if (pathname.startsWith('/settings')) return 'Settings';
   if (pathname.startsWith('/workspace')) return 'Workspace setup';
   if (pathname.startsWith('/signin')) return 'Sign in';
@@ -161,6 +167,9 @@ function App() {
                 element={<ServiceItemDetails />}
               />
               <Route path='reports' element={<Reports />} />
+              <Route path='marketing' element={<Marketing />} />
+              <Route path='inventory' element={<Inventory />} />
+              <Route path='billing' element={<Subscription />} />
             </Route>
             {/* Outside the 2FA gate - an Owner who hasn't enrolled yet must
                 still be able to reach the settings page that lets them. */}

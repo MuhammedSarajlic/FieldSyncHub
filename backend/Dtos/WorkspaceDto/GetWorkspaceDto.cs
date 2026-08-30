@@ -26,6 +26,11 @@ public class GetWorkspaceDto
     public string? LogoUrl { get; set; }
     public string Theme { get; set; } = "light";
     public string Category { get; set; } = string.Empty;
+    public bool DunningEnabled { get; set; }
+    public string DunningDays { get; set; } = "7,14,30";
+    public string DocumentPrimaryColor { get; set; } = "#0f5132";
+    public string? DocumentFooterText { get; set; }
+    public string DocumentHeaderLayout { get; set; } = "standard";
     public ICollection<UserLookupDto> Users { get; set; } = [];
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

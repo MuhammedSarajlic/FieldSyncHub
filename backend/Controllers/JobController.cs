@@ -6,6 +6,7 @@ using backend.Services.CurrentUserService;
 using backend.Services.EmployeeService;
 using backend.Services.JobService;
 using backend.Wrappers;
+using backend.Services.WebhookService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,11 +20,13 @@ public class JobController : ControllerBase
     private readonly IJobService _jobService;
     private readonly IEmployeeService _employeeService;
     private readonly ICurrentUser _currentUser;
-    public JobController(IJobService jobService, IEmployeeService employeeService, ICurrentUser currentUser)
+    private readonly IWebhookDispatcher _webhooks;
+    public JobController(IJobService jobService, IEmployeeService employeeService, ICurrentUser currentUser, IWebhookDispatcher webhooks)
     {
         _jobService = jobService;
         _employeeService = employeeService;
         _currentUser = currentUser;
+        _webhooks = webhooks;
     }
 
     // A caller with role Employee only sees/edits jobs they're assigned to - this
@@ -183,6 +186,7 @@ public class JobController : ControllerBase
         var restriction = await ResolveJobRestriction(callerWorkspaceId);
         var result = await _jobService.ChangeJobStatus(jobId, status, callerWorkspaceId, userId, restriction);
         var response = result.Map(payload => payload.ToResponse());
+        if (result.Success && result.Payload != null) await _webhooks.PublishAsync(callerWorkspaceId, status == JobStatus.Completed ? "job.completed" : "job.status_changed", new { jobId, status });
         return result.Success ? Ok(response) : BadRequest(response);
     }
 

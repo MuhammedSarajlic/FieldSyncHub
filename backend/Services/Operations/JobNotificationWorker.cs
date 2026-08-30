@@ -87,6 +87,34 @@ public sealed class JobNotificationWorker(IServiceScopeFactory scopeFactory, ILo
                     else db.ReviewRequests.Remove(request);
                 }
                 await db.SaveChangesAsync(stoppingToken);
+
+                var invoices = await db.Invoices
+                      .Include(invoice => invoice.Customer).ThenInclude(customer => customer!.EmailRecords)
+                      .Include(invoice => invoice.LineItems).Include(invoice => invoice.Payments)
+                     .Where(invoice => invoice.DueDate < now && invoice.WorkflowStatus != InvoiceStatus.Draft)
+                      .ToListAsync(stoppingToken);
+                foreach (var invoice in invoices)
+                {
+                    // BalanceDue is intentionally derived from the payment ledger and
+                    // cannot be translated to SQL, so filter it after loading the
+                    // already narrow set of overdue invoices.
+                    if (invoice.BalanceDue <= 0m) continue;
+                    var workspace = await db.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.Id == invoice.WorkspaceId, stoppingToken);
+                    if (workspace is not { DunningEnabled: true }) continue;
+                    var daysOverdue = Math.Max(1, (int)Math.Floor((now - invoice.DueDate).TotalDays));
+                    var ladder = workspace.DunningDays.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(value => int.TryParse(value.Trim(), out var days) ? days : 0).Where(days => days > 0);
+                    foreach (var days in ladder.Where(days => days <= daysOverdue))
+                    {
+                        if (await db.DunningAttempts.AnyAsync(attempt => attempt.InvoiceId == invoice.Id && attempt.DaysOverdue == days, stoppingToken)) continue;
+                        var address = invoice.Customer?.Emails.FirstOrDefault();
+                        if (string.IsNullOrWhiteSpace(address) || !email.IsConfigured) continue;
+                        var message = $"Invoice {invoice.InvoiceNumber} has an outstanding balance of {invoice.BalanceDue:0.00} and is {daysOverdue} days overdue.";
+                        if (!(await email.SendEmailAsync(address, $"Payment reminder: {invoice.InvoiceNumber}", message, $"<p>{message}</p>")).Success) continue;
+                        db.DunningAttempts.Add(new DunningAttempt { Id = Guid.NewGuid(), WorkspaceId = invoice.WorkspaceId, InvoiceId = invoice.Id, DaysOverdue = days, SentAt = now });
+                    }
+                }
+                await db.SaveChangesAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
             catch (Exception ex) { logger.LogError(ex, "Job notification worker failed"); }
