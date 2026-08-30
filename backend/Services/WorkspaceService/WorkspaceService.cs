@@ -55,6 +55,7 @@ public class WorkspaceService : IWorkspaceService
         newWorkspace.State = NormalizeOptional(newWorkspace.State);
         newWorkspace.PostalCode = NormalizeOptional(newWorkspace.PostalCode);
         newWorkspace.Country = NormalizeOptional(newWorkspace.Country);
+        newWorkspace.TimeZoneId = NormalizeTimeZone(newWorkspace.TimeZoneId);
 
         // A workspace doesn't exist yet when the onboarding logo is uploaded, so
         // that upload is keyed by the uploading user instead - only accept a
@@ -145,6 +146,7 @@ public class WorkspaceService : IWorkspaceService
         if (updatedWorkspaceDto.State != null) existingWorkspace.State = NormalizeOptional(updatedWorkspaceDto.State);
         if (updatedWorkspaceDto.PostalCode != null) existingWorkspace.PostalCode = NormalizeOptional(updatedWorkspaceDto.PostalCode);
         if (updatedWorkspaceDto.Country != null) existingWorkspace.Country = NormalizeOptional(updatedWorkspaceDto.Country);
+        if (updatedWorkspaceDto.TimeZoneId != null) existingWorkspace.TimeZoneId = NormalizeTimeZone(updatedWorkspaceDto.TimeZoneId);
         if (updatedWorkspaceDto.Size.HasValue) existingWorkspace.Size = updatedWorkspaceDto.Size.Value;
         // The logo is keyed by the uploading user (see CreateWorkspace) - reject
         // anything that isn't actually this caller's own uploaded path rather than
@@ -190,14 +192,17 @@ public class WorkspaceService : IWorkspaceService
 
         if (workspace == null) return;
 
-        // Detach all users from the workspace
+        workspace.IsDeleted = true;
+        workspace.DeletedAt = DateTime.UtcNow;
+        workspace.PurgeAfter = DateTime.UtcNow.AddDays(30);
+        // Disable access immediately while retaining data during the retention window.
         foreach (var user in workspace.Users)
         {
             user.WorkspaceId = null; // Detach user
         }
 
         _context.Users.UpdateRange(workspace.Users);
-        _context.Workspaces.Remove(workspace);
+        _context.Workspaces.Update(workspace);
 
         await _context.SaveChangesAsync();
     }
@@ -207,6 +212,13 @@ public class WorkspaceService : IWorkspaceService
 
     private static string NormalizePaymentTerms(string? paymentTerms)
         => string.IsNullOrWhiteSpace(paymentTerms) ? "uponReceipt" : paymentTerms.Trim();
+
+    private static string NormalizeTimeZone(string? timeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(timeZoneId)) return "UTC";
+        try { TimeZoneInfo.FindSystemTimeZoneById(timeZoneId); return timeZoneId.Trim(); }
+        catch { return "UTC"; }
+    }
 
     private static string? NormalizeOptional(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

@@ -95,6 +95,7 @@ public class DataContext : DbContext
             .WithOne(u => u.Workspace)
             .HasForeignKey(u => u.WorkspaceId)
             .IsRequired(false);
+        modelBuilder.Entity<Workspace>().HasQueryFilter(w => !w.IsDeleted);
 
         // Workspace → CreatedByUser
         modelBuilder.Entity<Workspace>()

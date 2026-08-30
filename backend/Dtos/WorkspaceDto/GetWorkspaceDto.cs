@@ -20,6 +20,7 @@ public class GetWorkspaceDto
     public string? State { get; set; }
     public string? PostalCode { get; set; }
     public string? Country { get; set; }
+    public string TimeZoneId { get; set; } = "UTC";
     public CompanySize Size { get; set; }
     public UserLookupDto? CreatedByUser { get; set; }
     public string? LogoUrl { get; set; }

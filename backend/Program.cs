@@ -17,6 +17,7 @@ using backend.Filters;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using backend.Services.TokenService;
+using backend.Services.Operations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -130,6 +131,7 @@ builder.Services.AddHsts(options =>
     options.IncludeSubDomains = true;
 });
 builder.Services.AddHttpClient();
+builder.Services.AddHostedService<JobNotificationWorker>();
 builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();

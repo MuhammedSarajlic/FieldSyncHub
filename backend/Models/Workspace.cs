@@ -20,6 +20,10 @@ public class Workspace
     public string? State { get; set; }
     public string? PostalCode { get; set; }
     public string? Country { get; set; }
+    public string TimeZoneId { get; set; } = "UTC";
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    public DateTime? PurgeAfter { get; set; }
     public CompanySize Size { get; set; } = CompanySize.Solo;
     public Guid CreatedByUserId { get; set; }
     public User? CreatedByUser { get; set; }

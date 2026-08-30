@@ -19,6 +19,7 @@ public class UpdateWorkspaceDto
     public string? State { get; set; }
     public string? PostalCode { get; set; }
     public string? Country { get; set; }
+    public string? TimeZoneId { get; set; }
     public CompanySize? Size { get; set; }
     public string? LogoUrl { get; set; }
     public string? Theme { get; set; }
