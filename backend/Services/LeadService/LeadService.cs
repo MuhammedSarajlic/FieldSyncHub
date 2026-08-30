@@ -23,6 +23,7 @@ public class LeadService : ILeadService
     {
         var lead = await _context.Leads.Where(r => r.Id == id && r.WorkspaceId == callerWorkspaceId)
                                     .Include(r => r.Customer).ThenInclude(c => c!.CustomerPhones)
+                                    .Include(r => r.Customer).ThenInclude(c => c!.EmailRecords)
                                     .Include(r => r.Customer).ThenInclude(c => c!.Properties)
                                     .Include(r => r.LineItems)
                                     .FirstOrDefaultAsync();
@@ -40,6 +41,7 @@ public class LeadService : ILeadService
     {
         var leads = await _context.Leads.Where(r => r.WorkspaceId == workspaceId)
                                             .Include(r => r.Customer)
+                                            .ThenInclude(c => c!.EmailRecords)
                                             .Include(r => r.LineItems)
                                             .ToListAsync();
 
@@ -55,6 +57,7 @@ public class LeadService : ILeadService
     {
         var leads = await _context.Leads.Where(r => r.CustomerId == customerId && r.WorkspaceId == callerWorkspaceId)
                                             .Include(r => r.Customer)
+                                            .ThenInclude(c => c!.EmailRecords)
                                             .Include(r => r.LineItems)
                                             .ToListAsync();
 

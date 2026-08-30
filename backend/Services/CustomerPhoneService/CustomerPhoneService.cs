@@ -31,6 +31,7 @@ public class CustomerPhoneService : ICustomerPhoneService
         var customerPhone = createCustomerPhoneDto.Adapt<CustomerPhone>();
         var customer = await _context.Customers.Where(c => c.Id == createCustomerPhoneDto.CustomerId)
                                             .Include(c => c.CustomerPhones)
+                                            .Include(c => c.EmailRecords)
                                             .FirstOrDefaultAsync();
 
         customerPhone.Id = Guid.NewGuid();
@@ -51,6 +52,7 @@ public class CustomerPhoneService : ICustomerPhoneService
     {
         var customer = await _context.Customers.Where(c => c.Id == customerId)
                                             .Include(c => c.CustomerPhones)
+                                            .Include(c => c.EmailRecords)
                                             .FirstOrDefaultAsync();
 
         var customerPhones = createCustomerPhoneDtos.Adapt<List<CustomerPhone>>();

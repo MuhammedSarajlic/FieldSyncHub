@@ -345,6 +345,8 @@ public class QuotePdfService(DataContext context, IMemoryCache cache, IStorageSe
                                         .Include(q => q.Customer)
                                         .ThenInclude(c => c!.CustomerPhones)
                                         .Include(q => q.Customer)
+                                        .ThenInclude(c => c!.EmailRecords)
+                                        .Include(q => q.Customer)
                                         .ThenInclude(c => c!.Properties)
                                         .Include(q => q.LineItems)
                                         .FirstOrDefaultAsync();

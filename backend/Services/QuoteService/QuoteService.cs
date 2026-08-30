@@ -46,6 +46,8 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.Customer)
                                             .ThenInclude(c => c!.CustomerPhones)
                                         .Include(q => q.Customer)
+                                            .ThenInclude(c => c!.EmailRecords)
+                                        .Include(q => q.Customer)
                                             .ThenInclude(c => c!.Properties)
                                         .Include(q => q.CustomerNotes.OrderByDescending(n => n.CreatedAt))
                                         .Include(q => q.InternalNotes.OrderByDescending(n => n.CreatedAt))
@@ -80,6 +82,8 @@ public class QuoteService : IQuoteService
         var query = _context.Quotes
             .Include(q => q.Customer)
                 .ThenInclude(c => c!.Properties)
+            .Include(q => q.Customer)
+                .ThenInclude(c => c!.EmailRecords)
             .Include(q => q.LineItems)
             .OrderByDescending(q => q.CreatedAt)
             .Where(q => q.WorkspaceId == workspaceId);
@@ -110,6 +114,8 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.LineItems)
                                         .Include(q => q.Customer)
                                         .ThenInclude(c => c!.Properties)
+                                        .Include(q => q.Customer)
+                                        .ThenInclude(c => c!.EmailRecords)
                                         .OrderByDescending(q => q.CreatedAt)
                                         .ToListAsync();
         return new ApiResponse<List<Quote>> { Success = true, Payload = quotes };
@@ -184,6 +190,7 @@ public class QuoteService : IQuoteService
         var totalCount = await dbQuery.CountAsync();
         var pagedQuotes = await dbQuery
             .Include(q => q.Customer).ThenInclude(c => c!.Properties)
+            .Include(q => q.Customer).ThenInclude(c => c!.EmailRecords)
             .Include(q => q.LineItems)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -630,6 +637,7 @@ public class QuoteService : IQuoteService
         var quote = await _context.Quotes.Where(q => q.Id == id)
                                         .Include(q => q.ActivityHistory)
                                         .Include(q => q.Customer)
+                                        .ThenInclude(c => c!.EmailRecords)
                                         .Include(q => q.CreatedByUser)
                                             .ThenInclude(u => u!.Workspace)
                                         .FirstOrDefaultAsync();

@@ -30,7 +30,7 @@ public sealed class JobNotificationWorker(IServiceScopeFactory scopeFactory, ILo
                     db.Employees.RemoveRange(await db.Employees.IgnoreQueryFilters().Where(x => x.WorkspaceId == workspace.Id).ToListAsync(stoppingToken));
                     db.Workspaces.Remove(workspace);
                 }
-                var jobs = await db.Jobs.Include(j => j.Customer).Where(j =>
+                var jobs = await db.Jobs.Include(j => j.Customer).ThenInclude(c => c!.EmailRecords).Where(j =>
                     (j.SendReminder && !j.ReminderSent) || (j.ConfirmationSent == false && j.StartDateTime > now)).ToListAsync(stoppingToken);
                 foreach (var job in jobs)
                 {

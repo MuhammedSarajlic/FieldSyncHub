@@ -27,10 +27,14 @@ public class Invoice
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }
     public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
-    public decimal Subtotal { get; private set; }
-    public decimal DiscountAmount { get; private set; }
-    public decimal TaxAmount { get; private set; }
-    public decimal Total { get; private set; }
+    private decimal _subtotal;
+    private decimal _discountAmount;
+    private decimal _taxAmount;
+    private decimal _total;
+    public decimal Subtotal { get => EffectiveTotals().Subtotal; private set => _subtotal = value; }
+    public decimal DiscountAmount { get => EffectiveTotals().Discount; private set => _discountAmount = value; }
+    public decimal TaxAmount { get => EffectiveTotals().TaxAmount; private set => _taxAmount = value; }
+    public decimal Total { get => EffectiveTotals().Total; private set => _total = value; }
     [NotMapped]
     public decimal AmountPaid => PaymentLedgerCalculator.CalculateAmountPaid(Payments);
     [NotMapped]
@@ -56,11 +60,16 @@ public class Invoice
     public void RecalculateTotals()
     {
         var totals = TotalsCalculator.Calculate(LineItems, DiscountType, Discount, TaxRate);
-        Subtotal = totals.Subtotal;
-        DiscountAmount = totals.Discount;
-        TaxAmount = totals.TaxAmount;
-        Total = totals.Total;
+        _subtotal = totals.Subtotal;
+        _discountAmount = totals.Discount;
+        _taxAmount = totals.TaxAmount;
+        _total = totals.Total;
     }
+
+    private TotalsBreakdown EffectiveTotals()
+        => LineItems.Count > 0
+            ? TotalsCalculator.Calculate(LineItems, DiscountType, Discount, TaxRate)
+            : new TotalsBreakdown(_subtotal, _discountAmount, 0m, _taxAmount, _total);
 }
 
 public enum InvoiceStatus

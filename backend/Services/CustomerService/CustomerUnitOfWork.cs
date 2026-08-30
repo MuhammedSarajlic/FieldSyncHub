@@ -41,6 +41,8 @@ public class CustomerUnitOfWork : ICustomerUnitOfWork
                                                  .Include(c => c.CustomFieldValues)
                                                  .Include(c => c.Properties)
                                                  .Include(c => c.CustomerPhones)
+                                                 .Include(c => c.EmailRecords)
+                                                 .Include(c => c.TagRecords)
                                                  .FirstOrDefaultAsync();
 
             if (customer == null || customer.WorkspaceId != callerWorkspaceId)
@@ -88,6 +90,7 @@ public class CustomerUnitOfWork : ICustomerUnitOfWork
             if (updatedCustomerDto.Emails != null)
             {
                 customer.Emails = updatedCustomerDto.Emails;
+                customer.SyncEmailRecords();
             }
 
 

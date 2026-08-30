@@ -103,6 +103,7 @@ public class CalendarService : ICalendarService
         CustomerId = source.CustomerId, PropertyId = source.PropertyId, JobType = source.JobType, Status = source.Status,
         Priority = source.Priority, StartDateTime = start, EndDateTime = start + duration, RecurrenceRuleId = source.RecurrenceRuleId,
         RecurrenceRule = source.RecurrenceRule, ArrivalWindow = source.ArrivalWindow, EstimatedDurationMinutes = source.EstimatedDurationMinutes,
-        AssignedTeamMembers = source.AssignedTeamMembers, LineItems = source.LineItems, JobNumber = source.JobNumber
+        AssignedTeamMembers = source.AssignedTeamMembers, LineItems = source.LineItems, JobNumber = source.JobNumber,
+        Tags = source.Tags
     };
 }

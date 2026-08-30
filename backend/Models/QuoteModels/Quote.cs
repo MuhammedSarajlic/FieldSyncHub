@@ -41,10 +41,14 @@ public class Quote
     public decimal DiscountValue { get; set; }
     public decimal TaxRate { get; set; }
 
-    public decimal Subtotal { get; private set; }
-    public decimal Discount { get; private set; }
-    public decimal TaxAmount { get; private set; }
-    public decimal Total { get; private set; }
+    private decimal _subtotal;
+    private decimal _discount;
+    private decimal _taxAmount;
+    private decimal _total;
+    public decimal Subtotal { get => EffectiveTotals().Subtotal; private set => _subtotal = value; }
+    public decimal Discount { get => EffectiveTotals().Discount; private set => _discount = value; }
+    public decimal TaxAmount { get => EffectiveTotals().TaxAmount; private set => _taxAmount = value; }
+    public decimal Total { get => EffectiveTotals().Total; private set => _total = value; }
 
     public List<Note> CustomerNotes { get; set; } = [];
     public List<Note> InternalNotes { get; set; } = [];
@@ -65,11 +69,16 @@ public class Quote
     public void RecalculateTotals()
     {
         var totals = TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate);
-        Subtotal = totals.Subtotal;
-        Discount = totals.Discount;
-        TaxAmount = totals.TaxAmount;
-        Total = totals.Total;
+        _subtotal = totals.Subtotal;
+        _discount = totals.Discount;
+        _taxAmount = totals.TaxAmount;
+        _total = totals.Total;
     }
+
+    private TotalsBreakdown EffectiveTotals()
+        => LineItems.Count > 0
+            ? TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate)
+            : new TotalsBreakdown(_subtotal, _discount, 0m, _taxAmount, _total);
 }
 
 public enum QuoteStatus

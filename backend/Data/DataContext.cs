@@ -35,6 +35,9 @@ public class DataContext : DbContext
     }
     public DbSet<User> Users => Set<User>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CustomerEmail> CustomerEmails => Set<CustomerEmail>();
+    public DbSet<CustomerTag> CustomerTags => Set<CustomerTag>();
+    public DbSet<JobTag> JobTags => Set<JobTag>();
     public DbSet<CustomField> CustomFields => Set<CustomField>();
     public DbSet<CustomFieldValue> CustomFieldValues => Set<CustomFieldValue>();
     public DbSet<Workspace> Workspaces => Set<Workspace>();
@@ -65,6 +68,7 @@ public class DataContext : DbContext
     /// </summary>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        RecalculateTrackedDocumentTotals();
         var auditEntries = AuditWriter.Collect(ChangeTracker, _currentUser);
         if (auditEntries.Count > 0)
         {
@@ -76,6 +80,7 @@ public class DataContext : DbContext
 
     public override int SaveChanges()
     {
+        RecalculateTrackedDocumentTotals();
         var auditEntries = AuditWriter.Collect(ChangeTracker, _currentUser);
         if (auditEntries.Count > 0)
         {
@@ -83,6 +88,33 @@ public class DataContext : DbContext
         }
 
         return base.SaveChanges();
+    }
+
+    private void RecalculateTrackedDocumentTotals()
+    {
+        foreach (var entry in ChangeTracker.Entries<Invoice>().Where(entry => entry.State != EntityState.Deleted))
+        {
+            if (entry.State == EntityState.Added || entry.Collection(invoice => invoice.LineItems).IsLoaded)
+            {
+                entry.Entity.RecalculateTotals();
+            }
+        }
+
+        foreach (var entry in ChangeTracker.Entries<Job>().Where(entry => entry.State != EntityState.Deleted))
+        {
+            if (entry.State == EntityState.Added || entry.Collection(job => job.LineItems).IsLoaded)
+            {
+                entry.Entity.RecalculateTotals();
+            }
+        }
+
+        foreach (var entry in ChangeTracker.Entries<Quote>().Where(entry => entry.State != EntityState.Deleted))
+        {
+            if (entry.State == EntityState.Added || entry.Collection(quote => quote.LineItems).IsLoaded)
+            {
+                entry.Entity.RecalculateTotals();
+            }
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -132,6 +164,24 @@ public class DataContext : DbContext
             .HasMany(c => c.CustomerPhones)
             .WithOne(p => p.Customer)
             .HasForeignKey(p => p.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Customer>()
+            .HasMany(c => c.EmailRecords)
+            .WithOne(e => e.Customer)
+            .HasForeignKey(e => e.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Customer>()
+            .HasMany(c => c.TagRecords)
+            .WithOne(t => t.Customer)
+            .HasForeignKey(t => t.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Job>()
+            .HasMany(j => j.TagRecords)
+            .WithOne(t => t.Job)
+            .HasForeignKey(t => t.JobId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Customer → CustomFieldValues (cascade)
@@ -264,6 +314,13 @@ public class DataContext : DbContext
         modelBuilder.Entity<Quote>().HasIndex(q => new { q.WorkspaceId, q.QuoteNumber }).IsUnique();
         modelBuilder.Entity<ServiceItem>().HasIndex(s => s.WorkspaceId);
         modelBuilder.Entity<Employee>().HasIndex(e => e.WorkspaceId);
+        modelBuilder.Entity<CustomerEmail>().HasIndex(e => new { e.CustomerId, e.Email }).IsUnique();
+        modelBuilder.Entity<CustomerEmail>().HasIndex(e => e.Email);
+        modelBuilder.Entity<CustomerTag>().HasIndex(t => new { t.CustomerId, t.Tag }).IsUnique();
+        modelBuilder.Entity<JobTag>().HasIndex(t => new { t.JobId, t.Tag }).IsUnique();
+        modelBuilder.Entity<CustomerEmail>().Property(e => e.Email).HasMaxLength(320);
+        modelBuilder.Entity<CustomerTag>().Property(t => t.Tag).HasMaxLength(100);
+        modelBuilder.Entity<JobTag>().Property(t => t.Tag).HasMaxLength(100);
 
         // Login and the email-change flow both assume at most one account per
         // address - enforce it at the database level too, not just in application code.

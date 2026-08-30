@@ -29,6 +29,8 @@ public class CustomerService : ICustomerService
                                             .Include(c => c.Notes!
                                                 .OrderByDescending(n => n.CreatedAt)
                                             )
+                                            .Include(c => c.EmailRecords)
+                                            .Include(c => c.TagRecords)
                                             .FirstOrDefaultAsync();
         if (customer == null || customer.WorkspaceId != callerWorkspaceId)
         {
@@ -77,6 +79,8 @@ public class CustomerService : ICustomerService
         var query = _context.Customers.Where(c => c.WorkspaceId == workspaceId && c.IsArchived != true)
                                     .Include(c => c.Properties)
                                     .Include(c => c.CustomerPhones)
+                                    .Include(c => c.EmailRecords)
+                                    .Include(c => c.TagRecords)
                                     .Include(c => c.Notes);
 
         var totalCount = await query.CountAsync();
@@ -112,6 +116,8 @@ public class CustomerService : ICustomerService
             .Where(c => c.WorkspaceId == workspaceId && !c.IsArchived)
             .Include(c => c.Properties)
             .Include(c => c.CustomerPhones)
+            .Include(c => c.EmailRecords)
+            .Include(c => c.TagRecords)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filterDto.Q))
@@ -159,13 +165,18 @@ public class CustomerService : ICustomerService
                 queryable = queryable.Where(c => !c.CustomerPhones!.Any());
         }
 
-        // if (filterDto.HasEmail.HasValue)
-        // {
-        //     if (filterDto.HasEmail.Value)
-        //         queryable = queryable.Where(c => c.Emails != null && c.Emails.Any(e => !string.IsNullOrWhiteSpace(e)));
-        //     else
-        //         queryable = queryable.Where(c => c.Emails == null || c.Emails.All(string.IsNullOrWhiteSpace));
-        // }
+        if (filterDto.HasEmail.HasValue)
+        {
+            queryable = filterDto.HasEmail.Value
+                ? queryable.Where(c => c.EmailRecords.Any())
+                : queryable.Where(c => !c.EmailRecords.Any());
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterDto.Tags))
+        {
+            var tagList = filterDto.Tags.Split(',').Select(t => t.Trim().ToLower()).ToList();
+            queryable = queryable.Where(c => c.TagRecords.Any(tag => tagList.Contains(tag.Tag.ToLower())));
+        }
 
         queryable = filterDto.SortBy?.ToLower() switch
         {
@@ -189,22 +200,6 @@ public class CustomerService : ICustomerService
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
-
-        if (filterDto.HasEmail.HasValue)
-        {
-            pagedCustomers = filterDto.HasEmail.Value
-                ? pagedCustomers.Where(c => c.Emails != null && c.Emails.Any(e => !string.IsNullOrWhiteSpace(e))).ToList()
-                : pagedCustomers.Where(c => c.Emails == null || c.Emails.All(string.IsNullOrWhiteSpace)).ToList();
-        }
-
-        if (!string.IsNullOrWhiteSpace(filterDto.Tags))
-        {
-            var tagList = filterDto.Tags.Split(',').Select(t => t.Trim().ToLower()).ToList();
-
-            pagedCustomers = pagedCustomers
-                .Where(c => c.Tags != null && c.Tags.Any(tag => tagList.Contains(tag.ToLower())))
-                .ToList();
-        }
 
         return new ApiResponse<PagedResult<Customer>>
         {
@@ -243,15 +238,14 @@ public class CustomerService : ICustomerService
                                                     .Include(c => c.CustomerPhones)
                                                     .Select(c => new
                                                     {
-                                                        c.Emails,
+                                                        HasEmail = c.EmailRecords.Any(),
                                                         PhoneCount = c.CustomerPhones!.Count
                                                     })
                                                     .AsNoTracking()
                                                     .ToListAsync();
 
         var missingInfo = customersSlim.Count(c =>
-            c.Emails == null ||
-            c.Emails.Count == 0 ||
+            !c.HasEmail ||
             c.PhoneCount == 0);
 
         return new CustomerStatsDto
@@ -268,6 +262,8 @@ public class CustomerService : ICustomerService
     {
         var customer = createCustomerDto.Adapt<Customer>();
         customer.Id = Guid.NewGuid();
+        customer.SyncEmailRecords();
+        customer.SyncTagRecords();
 
         if (createCustomerDto.Properties != null && createCustomerDto.Properties.Count != 0)
         {
@@ -311,6 +307,8 @@ public class CustomerService : ICustomerService
                                              .Include(c => c.CustomFieldValues)
                                              .Include(c => c.Properties)
                                              .Include(c => c.CustomerPhones)
+                                             .Include(c => c.EmailRecords)
+                                             .Include(c => c.TagRecords)
                                              .FirstOrDefaultAsync();
 
         if (existingCustomer == null)
@@ -326,6 +324,7 @@ public class CustomerService : ICustomerService
         updatedCustomerDto.Adapt(existingCustomer);
 
         existingCustomer.Emails = updatedCustomerDto.Emails ?? [];
+        existingCustomer.SyncEmailRecords();
 
         if (updatedCustomerDto.CustomFieldValues != null && existingCustomer.CustomFieldValues != null)
         {
@@ -382,7 +381,10 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResponse<List<Customer>>> ImportCustomers(List<ImportedCustomerDto> customers, Guid workspaceId)
     {
-        var existingCustomers = await _context.Customers.Where(c => c.WorkspaceId == workspaceId).ToListAsync();
+        var existingCustomers = await _context.Customers
+            .Where(c => c.WorkspaceId == workspaceId)
+            .Include(c => c.EmailRecords)
+            .ToListAsync();
 
         var normalizedExisting = existingCustomers.Select(c => new
         {
@@ -400,6 +402,10 @@ public class CustomerService : ICustomerService
             if (normalizedExisting.Any(c => c.Key == key)) continue;
 
             var customer = dto.Adapt<Customer>();
+            customer.Id = Guid.NewGuid();
+            customer.WorkspaceId = workspaceId;
+            customer.SyncEmailRecords();
+            customer.SyncTagRecords();
 
             toImport.Add(customer);
         }
@@ -420,6 +426,8 @@ public class CustomerService : ICustomerService
         var customers = await _context.Customers
             .Where(c => c.WorkspaceId == workspaceId)
             .Include(c => c.CustomerPhones)
+            .Include(c => c.EmailRecords)
+            .Include(c => c.TagRecords)
             .ToListAsync();
 
         if (customers == null || customers.Count == 0)
@@ -467,16 +475,20 @@ public class CustomerService : ICustomerService
 
     public async Task UpdateCustomerTags(Guid id, string tag, Guid callerWorkspaceId)
     {
-        var customer = await _context.Customers.FindAsync(id);
+        var customer = await _context.Customers
+            .Include(c => c.TagRecords)
+            .FirstOrDefaultAsync(c => c.Id == id);
 
         if (customer == null || customer.WorkspaceId != callerWorkspaceId)
             throw new Exception("Customer not found");
 
-        if (customer.Tags == null)
-            customer.Tags = new List<string>();
-
-        if (!customer.Tags.Contains(tag))
-            customer.Tags.Add(tag);
+        var tags = customer.Tags;
+        if (!tags.Contains(tag, StringComparer.OrdinalIgnoreCase))
+        {
+            tags.Add(tag);
+            customer.Tags = tags;
+            customer.SyncTagRecords();
+        }
 
         customer.LastActivity = DateTime.UtcNow;
 
@@ -485,14 +497,18 @@ public class CustomerService : ICustomerService
 
     public async Task RemoveCustomerTag(Guid id, string tag, Guid callerWorkspaceId)
     {
-        var customer = await _context.Customers.FindAsync(id);
+        var customer = await _context.Customers
+            .Include(c => c.TagRecords)
+            .FirstOrDefaultAsync(c => c.Id == id);
 
         if (customer == null || customer.WorkspaceId != callerWorkspaceId)
             throw new Exception("Customer not found");
 
-        if (customer.Tags != null && customer.Tags.Contains(tag))
+        var tags = customer.Tags;
+        if (tags.RemoveAll(existingTag => existingTag.Equals(tag, StringComparison.OrdinalIgnoreCase)) > 0)
         {
-            customer.Tags.Remove(tag);
+            customer.Tags = tags;
+            customer.SyncTagRecords();
             customer.LastActivity = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
@@ -522,7 +538,9 @@ public class CustomerService : ICustomerService
             };
         }
 
-        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == customerId);
+        var customer = await _context.Customers
+            .Include(c => c.EmailRecords)
+            .FirstOrDefaultAsync(c => c.Id == customerId);
 
         // Same "not found" message whether the customer doesn't exist or belongs to
         // another workspace, so this can't be used to probe for other tenants' ids.

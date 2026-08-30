@@ -32,6 +32,9 @@ public class JobService : IJobService
                                         .ThenInclude(c => c!.CustomerPhones)
                                     .Include(j => j.Customer)
                                         .ThenInclude(c => c!.Properties)
+                                    .Include(j => j.Customer)
+                                        .ThenInclude(c => c!.EmailRecords)
+                                    .Include(j => j.TagRecords)
                                     .Include(j => j.AssignedTeamMembers)
                                         .ThenInclude(a => a.User)
                                     .FirstOrDefaultAsync();
@@ -62,6 +65,8 @@ public class JobService : IJobService
                                             .Include(j => j.LineItems)
                                             .Include(j => j.Property)
                                             .Include(j => j.Customer)
+                                                .ThenInclude(c => c!.EmailRecords)
+                                            .Include(j => j.TagRecords)
                                             .ToListAsync();
 
         return new ApiResponse<List<Job>> { Success = true, Payload = filteredJobs };
@@ -77,6 +82,9 @@ public class JobService : IJobService
                                 .ThenInclude(c => c!.CustomerPhones)
                             .Include(j => j.Customer)
                                 .ThenInclude(c => c!.Properties)
+                            .Include(j => j.Customer)
+                                .ThenInclude(c => c!.EmailRecords)
+                            .Include(j => j.TagRecords)
                             .FirstOrDefaultAsync();
 
         return job ?? throw new Exception("Job not found");
@@ -89,9 +97,11 @@ public class JobService : IJobService
             .Where(j => j.WorkspaceId == workspaceId
                 && (restrictToEmployeeId == null || j.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
             .Include(j => j.Customer)
+                .ThenInclude(c => c!.EmailRecords)
             .Include(j => j.Property)
             .Include(j => j.LineItems)
                 .ThenInclude(li => li.ServiceItem)
+            .Include(j => j.TagRecords)
             .AsNoTracking();
 
         var totalCount = await query.CountAsync();
@@ -191,9 +201,11 @@ public class JobService : IJobService
         var totalCount = await dbQuery.CountAsync();
         var pagedJobs = await dbQuery
             .Include(j => j.Customer)
+                .ThenInclude(c => c!.EmailRecords)
             .Include(j => j.Property)
             .Include(j => j.LineItems)
                 .ThenInclude(li => li.ServiceItem)
+            .Include(j => j.TagRecords)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -311,6 +323,7 @@ public class JobService : IJobService
             }
 
             job.Tags = dto.Tags ?? [];
+            job.SyncTagRecords();
             job.StatusHistory = dto.StatusHistory ?? [];
             job.RecalculateTotals();
 
@@ -356,6 +369,7 @@ public class JobService : IJobService
     {
         var existingJob = await _context.Jobs
                                         .Include(j => j.LineItems)
+                                        .Include(j => j.TagRecords)
                                         .Include(j => j.AssignedTeamMembers)
                                             .ThenInclude(e => e.User)
                                         .FirstOrDefaultAsync(j => j.Id == updatedJobDto.Id);
@@ -389,6 +403,7 @@ public class JobService : IJobService
         existingJob.CustomerNotes = updatedJobDto.CustomerNotes ?? existingJob.CustomerNotes;
         existingJob.InternalNotes = updatedJobDto.InternalNotes ?? existingJob.InternalNotes;
         existingJob.Tags = updatedJobDto.Tags ?? existingJob.Tags;
+        existingJob.SyncTagRecords();
 
         if (updatedJobDto.StartDateTime != default) existingJob.StartDateTime = updatedJobDto.StartDateTime;
         if (updatedJobDto.EndDateTime != default) existingJob.EndDateTime = updatedJobDto.EndDateTime;
@@ -498,7 +513,10 @@ public class JobService : IJobService
 
     public async Task<ApiResponse<Job>> UpdateJobTags(Guid jobId, List<string> tags, bool replace, Guid callerWorkspaceId, Guid? restrictToEmployeeId = null)
     {
-        var job = await _context.Jobs.Include(j => j.AssignedTeamMembers).FirstOrDefaultAsync(j => j.Id == jobId);
+        var job = await _context.Jobs
+            .Include(j => j.AssignedTeamMembers)
+            .Include(j => j.TagRecords)
+            .FirstOrDefaultAsync(j => j.Id == jobId);
 
         if (job == null || job.WorkspaceId != callerWorkspaceId
             || (restrictToEmployeeId != null && !job.AssignedTeamMembers.Any(e => e.Id == restrictToEmployeeId)))
@@ -517,6 +535,7 @@ public class JobService : IJobService
             job.Tags = updatedTags.ToList();
         }
 
+        job.SyncTagRecords();
         job.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
@@ -644,6 +663,7 @@ public class JobService : IJobService
 
         var customer = await _context.Customers
             .Include(c => c.Properties)
+            .Include(c => c.EmailRecords)
             .FirstOrDefaultAsync(c => c.Id == job.CustomerId);
         if (customer == null)
         {
