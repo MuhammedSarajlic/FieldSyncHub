@@ -25,6 +25,22 @@ jobs:
         run: dotnet restore FieldSyncHub.sln
       - name: Build with warnings as errors
         run: dotnet build backend/backend.csproj --no-restore --warnaserror
+      - name: Generate OpenAPI schema and client
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          AppSettings__Token: ci-only-token-that-is-long-enough-for-hmac-sha512-0123456789
+        run: |
+          nohup dotnet run --project backend/backend.csproj --no-build --no-launch-profile --urls http://127.0.0.1:5244 > /tmp/fieldsynchub-api.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:5244/swagger/v1/swagger.json > /tmp/fieldsynchub-openapi.json; then
+              break
+            fi
+            sleep 1
+          done
+          test -s /tmp/fieldsynchub-openapi.json
+          npm ci --prefix frontend
+          npm run api:generate --prefix frontend -- /tmp/fieldsynchub-openapi.json
+          git diff --exit-code -- frontend/src/api/generated.ts
       - name: Test
         env:
           RUN_MYSQL_TESTS: true

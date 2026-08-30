@@ -40,6 +40,15 @@ npm run dev
 
 When running the Vite server directly, set `frontend/.env` to point `VITE_BASE_URL` at `http://localhost:5244/api`. The compose frontend uses the same-origin `/api` proxy.
 
+The OpenAPI-derived client types are generated into `frontend/src/api/generated.ts`:
+
+```powershell
+cd frontend
+npm run api:generate -- http://localhost:5244/swagger/v1/swagger.json
+```
+
+Swagger is enabled only in the Development environment. CI starts a temporary Development API, regenerates the file, and fails if the checked-in output is stale.
+
 Database schema changes are a deployment concern. Apply them explicitly with `backend/scripts/migrate.ps1` on Windows or `backend/scripts/migrate.sh` on Unix-like systems after setting `ConnectionStrings__WebApiDatabase`.
 
 ## Demo data
