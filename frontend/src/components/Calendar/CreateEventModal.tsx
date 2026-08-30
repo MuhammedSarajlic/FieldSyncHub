@@ -16,6 +16,8 @@ import {
 import { TAddRecurrenceRule } from '../../types/RecurrenceRule';
 import { formatDateTime } from '../../utils/CalendarHelpers';
 import { CreateEvent } from '../../services/Event';
+import { GetCustomerByWorkspace } from '../../services/Customer';
+import { TCustomer } from '../../types/Customer';
 
 interface ICreateEventModal {
   isOpen: boolean;
@@ -75,6 +77,7 @@ const CreateEventModal = ({
   const { user } = useAuth();
   const [isAssignEmployeeOpen, setIsAssignEmployeeOpen] = useState(false);
   const [employees, setEmployees] = useState<TEmployee[]>([]);
+  const [customers, setCustomers] = useState<TCustomer[]>([]);
   const [assignedEmployees, setAssignedEmployees] = useState<TEmployee[]>([]);
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<
     RecurrenceFrequency | ''
@@ -90,6 +93,9 @@ const CreateEventModal = ({
     workspaceId: user?.workspace?.id || '',
     title: '',
     description: '',
+    category: 'event',
+    location: '',
+    customerId: undefined,
     assignedToIds: [],
     startDateTime: defaultStart,
     endDateTime: defaultEnd,
@@ -105,6 +111,14 @@ const CreateEventModal = ({
     const response = await GetEmployeesByWorkspace(user?.workspace.id);
     if (response.status === 200) {
       setEmployees(response.data.payload);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    if (!user?.workspace?.id) return;
+    const response = await GetCustomerByWorkspace(user.workspace.id, 1, 100);
+    if (response.status === 200) {
+      setCustomers(response.data.payload.items || []);
     }
   };
 
@@ -218,6 +232,7 @@ const CreateEventModal = ({
 
   useEffect(() => {
     fetchEmployees();
+    fetchCustomers();
   }, []);
 
   useEffect(() => {
@@ -263,6 +278,44 @@ const CreateEventModal = ({
               onChange={handleChange}
               className='min-h-20 p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-bg-primary focus:ring-offset-1'
             />
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
+              <select
+                name='category'
+                value={event.category}
+                onChange={handleChange}
+                className='p-2.5 border border-gray-300 rounded-lg text-sm'
+              >
+                <option value='event'>Event</option>
+                <option value='job'>Job</option>
+                <option value='lead'>Lead</option>
+              </select>
+              <input
+                type='text'
+                name='location'
+                placeholder='Location'
+                value={event.location}
+                onChange={handleChange}
+                className='p-2.5 border border-gray-300 rounded-lg text-sm'
+              />
+              <select
+                name='customerId'
+                value={event.customerId ?? ''}
+                onChange={(e) =>
+                  setEvent((prev) => ({
+                    ...prev,
+                    customerId: e.target.value || undefined,
+                  }))
+                }
+                className='p-2.5 border border-gray-300 rounded-lg text-sm'
+              >
+                <option value=''>No customer</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.displayName || `${customer.firstName} ${customer.lastName}`}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className='w-full space-x-8 flex items-start'>
             <div className='w-3/5 space-y-6'>

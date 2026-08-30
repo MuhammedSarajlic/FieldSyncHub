@@ -13,6 +13,7 @@ export type TLead = {
   customer?: TCustomer;
   quoteId?: string;
   quote?: TQuote;
+  convertedToJobId?: string;
   workspaceId: string;
   workspace?: TWorkspace;
   firstName?: string;

@@ -10,6 +10,7 @@ public class Quote
     public Guid Id { get; set; }
     public Guid WorkspaceId { get; set; }
     public Guid? JobId { get; set; }
+    public Job? Job { get; set; }
 
     public Guid CustomerId { get; set; }
     public Customer? Customer { get; set; }

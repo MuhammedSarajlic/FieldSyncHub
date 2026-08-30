@@ -6,6 +6,9 @@ export type TEvent = {
   workspaceId: string;
   title: string;
   description?: string;
+  category: string;
+  location?: string;
+  customerId?: string;
   // assignedToIds: string[];
   assignedTo: TEmployee[];
   startDateTime: string;
@@ -23,6 +26,9 @@ export type TAddEvent = {
   workspaceId: string;
   title: string;
   description?: string;
+  category: string;
+  location?: string;
+  customerId?: string;
   assignedToIds: string[];
   startDateTime: string;
   endDateTime: string;
@@ -38,6 +44,9 @@ export type TUpdateEvent = {
   workspaceId: string;
   title: string;
   description?: string;
+  category: string;
+  location?: string;
+  customerId?: string;
   assignedToIds: string[];
   startDateTime: string;
   endDateTime: string;

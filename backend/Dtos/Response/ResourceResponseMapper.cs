@@ -188,7 +188,7 @@ public static class ResourceResponseMapper
 
     public static LeadResponseDto ToResponse(this Lead source) => new()
     {
-        Id = source.Id, CustomerId = source.CustomerId, Customer = source.Customer?.ToResponse(), QuoteId = source.QuoteId,
+        Id = source.Id, CustomerId = source.CustomerId, Customer = source.Customer?.ToResponse(), QuoteId = source.QuoteId, ConvertedToJobId = source.ConvertedToJobId,
         WorkspaceId = source.WorkspaceId, FirstName = source.FirstName, LastName = source.LastName, Email = source.Email,
         PhoneNumber = source.PhoneNumber, Source = source.Source, Description = source.Description, StartDateTime = source.StartDateTime,
         EndDateTime = source.EndDateTime, Status = source.Status, Priority = source.Priority,

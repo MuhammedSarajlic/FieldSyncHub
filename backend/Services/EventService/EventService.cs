@@ -42,6 +42,9 @@ public class EventService : IEventService
             WorkspaceId = dto.WorkspaceId,
             Title = dto.Title,
             Description = dto.Description,
+            Category = dto.Category,
+            Location = dto.Location,
+            CustomerId = dto.CustomerId,
             StartDateTime = dto.StartDateTime,
             EndDateTime = dto.EndDateTime,
             IsAllDay = dto.IsAllDay,
@@ -51,8 +54,7 @@ public class EventService : IEventService
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             AssignedTo = _context.Employees
-                .AsEnumerable()
-                .Where(e => dto.AssignedToIds.Contains(e.Id))
+                .Where(e => e.WorkspaceId == dto.WorkspaceId && dto.AssignedToIds.Contains(e.Id))
                 .ToList()
         };
 
@@ -96,6 +98,9 @@ public class EventService : IEventService
         entity.WorkspaceId = dto.WorkspaceId;
         entity.Title = dto.Title;
         entity.Description = dto.Description;
+        entity.Category = dto.Category;
+        entity.Location = dto.Location;
+        entity.CustomerId = dto.CustomerId;
         entity.StartDateTime = dto.StartDateTime;
         entity.EndDateTime = dto.EndDateTime;
         entity.IsAllDay = dto.IsAllDay;
@@ -115,8 +120,7 @@ public class EventService : IEventService
 
             // add new
             var toAdd = _context.Employees
-                .AsEnumerable()
-                .Where(e => newIds.Except(currentIds).Contains(e.Id))
+                .Where(e => e.WorkspaceId == dto.WorkspaceId && newIds.Except(currentIds).Contains(e.Id))
                 .ToList();
             foreach (var emp in toAdd)
                 entity.AssignedTo.Add(emp);

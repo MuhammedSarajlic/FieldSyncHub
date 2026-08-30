@@ -260,6 +260,24 @@ public class DataContext : DbContext
             .HasForeignKey(r => r.CustomerId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<Quote>()
+            .HasOne(q => q.Job)
+            .WithMany()
+            .HasForeignKey(q => q.JobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Lead>()
+            .HasOne(l => l.ConvertedToJob)
+            .WithMany()
+            .HasForeignKey(l => l.ConvertedToJobId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Event>()
+            .HasOne(e => e.Customer)
+            .WithMany()
+            .HasForeignKey(e => e.CustomerId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         //many-to-many job<->employee
         modelBuilder.Entity<Job>()
             .HasMany(j => j.AssignedTeamMembers)

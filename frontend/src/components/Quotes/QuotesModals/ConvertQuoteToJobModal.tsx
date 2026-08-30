@@ -309,6 +309,7 @@ const ConvertQuoteToJobModal = ({ isOpen, onClose, quote }: INewJobModal) => {
     const updatedJob = {
       ...job,
       workspaceId: user.workspace.id,
+      quoteId: quote.id,
       createdBy: user.id,
       taxRate: job.taxRate / 100,
     };

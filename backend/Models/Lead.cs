@@ -16,6 +16,8 @@ public class Lead
     public string? Source { get; set; }
     public Guid? QuoteId { get; set; }
     public Quote? Quote { get; set; }
+    public Guid? ConvertedToJobId { get; set; }
+    public Job? ConvertedToJob { get; set; }
     public Guid WorkspaceId { get; set; }
     public Workspace? Workspace { get; set; }
     [Required]

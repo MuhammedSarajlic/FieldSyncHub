@@ -12,6 +12,9 @@ public class UpdateEventDto
     [Required]
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string Category { get; set; } = "event";
+    public string? Location { get; set; }
+    public Guid? CustomerId { get; set; }
     public ICollection<Guid> AssignedToIds { get; set; } = [];
     [Required]
     public DateTime StartDateTime { get; set; }

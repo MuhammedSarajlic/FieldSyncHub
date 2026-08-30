@@ -3,6 +3,7 @@ using backend.Dtos.InvoiceDto;
 using backend.Dtos.JobDto;
 using backend.Dtos.LineItemDto;
 using backend.Models;
+using backend.Models.QuoteModels;
 using backend.Response;
 using backend.Services.InvoiceService;
 using backend.Wrappers;
@@ -327,9 +328,48 @@ public class JobService : IJobService
             job.StatusHistory = [];
             job.RecalculateTotals();
 
+            Quote? sourceQuote = null;
+            if (dto.QuoteId is Guid quoteId)
+            {
+                sourceQuote = await _context.Quotes.FirstOrDefaultAsync(q =>
+                    q.Id == quoteId && q.WorkspaceId == dto.WorkspaceId);
+                if (sourceQuote == null)
+                    return new ApiResponse<Job> { Success = false, ErrorMessage = "Quote not found." };
+                if (sourceQuote.JobId.HasValue)
+                    return new ApiResponse<Job> { Success = false, ErrorMessage = "That quote is already linked to a job." };
+                if (sourceQuote.CustomerId != dto.CustomerId)
+                    return new ApiResponse<Job> { Success = false, ErrorMessage = "The quote and job customer must match." };
+            }
+
+            Lead? sourceLead = null;
+            if (dto.LeadId is Guid leadId)
+            {
+                sourceLead = await _context.Leads.FirstOrDefaultAsync(l =>
+                    l.Id == leadId && l.WorkspaceId == dto.WorkspaceId);
+                if (sourceLead == null)
+                    return new ApiResponse<Job> { Success = false, ErrorMessage = "Lead not found." };
+                if (sourceLead.ConvertedToJobId.HasValue)
+                    return new ApiResponse<Job> { Success = false, ErrorMessage = "That lead is already linked to a job." };
+                if (sourceLead.CustomerId.HasValue && sourceLead.CustomerId != dto.CustomerId)
+                    return new ApiResponse<Job> { Success = false, ErrorMessage = "The lead and job customer must match." };
+            }
+
             var customer = await _context.Customers.FindAsync(dto.CustomerId)
                 ?? throw new KeyNotFoundException($"Customer with ID {dto.CustomerId} not found.");
             customer.LastActivity = DateTime.UtcNow;
+
+            if (sourceQuote != null)
+            {
+                sourceQuote.JobId = job.Id;
+                sourceQuote.Status = QuoteStatus.ConvertedToJob;
+                sourceQuote.UpdatedAt = DateTime.UtcNow;
+            }
+            if (sourceLead != null)
+            {
+                sourceLead.ConvertedToJobId = job.Id;
+                sourceLead.Status = LeadStatus.Converted;
+                sourceLead.UpdatedAt = DateTime.UtcNow;
+            }
 
             await _context.Jobs.AddAsync(job);
 

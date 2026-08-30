@@ -12,6 +12,8 @@ public class CreateJobDto
     public string? Description { get; set; }
     public Guid CustomerId { get; set; }
     public Guid? PropertyId { get; set; }
+    public Guid? QuoteId { get; set; }
+    public Guid? LeadId { get; set; }
     public JobType JobType { get; set; } = JobType.OneTime;
     public ICollection<CreateLineItemDto> LineItems { get; set; } = [];
     public JobStatus Status { get; set; } = JobStatus.Scheduled;

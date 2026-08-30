@@ -363,6 +363,7 @@ public sealed class LeadResponseDto
     public Guid? CustomerId { get; init; }
     public CustomerResponseDto? Customer { get; init; }
     public Guid? QuoteId { get; init; }
+    public Guid? ConvertedToJobId { get; init; }
     public Guid WorkspaceId { get; init; }
     public string? FirstName { get; init; }
     public string? LastName { get; init; }

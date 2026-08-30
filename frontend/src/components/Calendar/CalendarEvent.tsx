@@ -18,7 +18,11 @@ const getEventTitle = (event: TJob | TEvent | TLead, eventType: string) => {
 };
 
 const CalendarEvent = ({ event, eventType, onClick }: ICalendarEvent) => {
-  const category = EVENT_CATEGORIES[eventType];
+  const categoryKey =
+    eventType === 'event' && 'category' in event
+      ? event.category
+      : eventType;
+  const category = EVENT_CATEGORIES[categoryKey] ?? EVENT_CATEGORIES.event;
   const title = getEventTitle(event, eventType);
   return (
     <div

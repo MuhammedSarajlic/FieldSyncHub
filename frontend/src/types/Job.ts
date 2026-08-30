@@ -25,6 +25,8 @@ export type TJob = {
   customerId: string;
   customer?: TCustomer;
   propertyId?: string;
+  quoteId?: string;
+  leadId?: string;
   property?: TProperty;
   jobType: JobType;
   lineItems: TLineItem[];
