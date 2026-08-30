@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { Menu, Settings } from 'lucide-react';
 import { TCustomer } from '../../types/Customer';
 import { useAuth } from '../../context/AuthProvider';
+import GlobalSearch from './GlobalSearch';
 
 interface INavbar {
   customer?: TCustomer;
@@ -21,7 +22,7 @@ const Navbar = ({ customer }: INavbar) => {
         >
           <Menu className='w-5 h-5' />
         </button>
-        <div className='text-[#6c757d] dark:text-gray-400 flex items-center space-x-3'>
+        <div className='text-[#6c757d] dark:text-gray-400 flex items-center space-x-3 min-w-0'>
           <span>{user?.workspace?.name}</span>
           {customer && (
             <>
@@ -34,6 +35,7 @@ const Navbar = ({ customer }: INavbar) => {
             </>
           )}
         </div>
+        <GlobalSearch />
         <div className='flex items-center space-x-2'>
           <button type='button' aria-label='Open settings' onClick={() => navigate('/settings')} className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'>
             <Settings className='w-5 h-5' />
