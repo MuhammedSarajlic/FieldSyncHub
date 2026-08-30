@@ -239,10 +239,9 @@ public class JobService : IJobService
         if (dto.AssignedTeamMembers?.Any() == true)
         {
             var employeeIds = dto.AssignedTeamMembers.Select(e => e.Id).ToList();
-            employees = _context.Employees
-                .AsEnumerable()
-                .Where(e => employeeIds.Contains(e.Id))
-                .ToList();
+            employees = await _context.Employees
+                .Where(e => e.WorkspaceId == dto.WorkspaceId && employeeIds.Contains(e.Id))
+                .ToListAsync();
 
             var missing = employeeIds.Except(employees.Select(e => e.Id)).ToList();
             if (missing.Count != 0)
@@ -411,7 +410,9 @@ public class JobService : IJobService
 
             if (idsToAdd.Any())
             {
-                var employeesToAdd = _context.Employees.AsEnumerable().Where(e => idsToAdd.Contains(e.Id)).ToList();
+                var employeesToAdd = await _context.Employees
+                    .Where(e => e.WorkspaceId == callerWorkspaceId && idsToAdd.Contains(e.Id))
+                    .ToListAsync();
                 foreach (var e in employeesToAdd)
                 {
                     existingJob.AssignedTeamMembers.Add(e);
@@ -757,7 +758,7 @@ public class JobService : IJobService
 
         int totalJobs = jobs.Count;
         int completedJobs = jobs.Count(j => j.Status == JobStatus.Completed);
-        int scheduledJobs = jobs.Count(j => j.Status == JobStatus.Scheduled || j.StartDateTime > DateTime.UtcNow);
+        int scheduledJobs = jobs.Count(j => j.Status == JobStatus.Scheduled);
 
         decimal totalValue = 0;
 
