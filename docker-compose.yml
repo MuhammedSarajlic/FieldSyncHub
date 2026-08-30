@@ -49,16 +49,14 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_BASE_URL: /api
     restart: unless-stopped
     depends_on:
-      - backend
-    environment:
-      VITE_BASE_URL: ${VITE_BASE_URL:-http://localhost:5244/api}
+      backend:
+        condition: service_started
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "5173:80"
 
 volumes:
   mysql_data:
