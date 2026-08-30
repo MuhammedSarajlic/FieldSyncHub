@@ -367,6 +367,7 @@ public class JobService : IJobService
         existingJob.PropertyId = updatedJobDto.PropertyId ?? existingJob.PropertyId;
         existingJob.JobType = updatedJobDto.JobType ?? existingJob.JobType;
         existingJob.Priority = updatedJobDto.Priority ?? existingJob.Priority;
+        existingJob.Status = updatedJobDto.Status ?? existingJob.Status;
         existingJob.ArrivalWindow = updatedJobDto.ArrivalWindow ?? existingJob.ArrivalWindow;
         existingJob.EstimatedDurationMinutes = updatedJobDto.EstimatedDurationMinutes ?? existingJob.EstimatedDurationMinutes;
         existingJob.DepositAmount = updatedJobDto.DepositAmount ?? existingJob.DepositAmount;
@@ -385,9 +386,7 @@ public class JobService : IJobService
         existingJob.InternalNotes = updatedJobDto.InternalNotes ?? existingJob.InternalNotes;
         existingJob.Tags = updatedJobDto.Tags ?? existingJob.Tags;
 
-        //Date can't be null check later if there is problem with dates
-        // if (updatedJobDto.StartDateTime != null) existingJob.StartDateTime = updatedJobDto.StartDateTime;
-        // if (updatedJobDto.EndDateTime != null) existingJob.EndDateTime = updatedJobDto.EndDateTime;
+        // Scheduling fields are handled by the reschedule update below.
 
         if (updatedJobDto.AssignedTeamMembers != null)
         {

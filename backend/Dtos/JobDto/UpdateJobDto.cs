@@ -14,6 +14,7 @@ public class UpdateJobDto
     public JobType? JobType { get; set; }
     public ICollection<UpdateLineItemDto>? LineItems { get; set; }
     public JobPriority? Priority { get; set; }
+    public JobStatus? Status { get; set; }
     public DateTime StartDateTime { get; set; }
     public DateTime EndDateTime { get; set; }
     public UpdateRecurrenceRuleDto? RecurrenceRule { get; set; }
