@@ -8,7 +8,6 @@ import {
   DollarSign,
   Plus,
   Receipt,
-  Truck,
   FileText,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar/Sidebar';
@@ -229,11 +228,6 @@ const Home = () => {
                     icon={<Receipt />}
                     label='New Invoice'
                     onClick={() => navigate('/invoices')}
-                  />
-                  <ActionButton
-                    icon={<Truck />}
-                    label='Dispatch Board'
-                    onClick={() => navigate('/dispatch')}
                   />
                   <ActionButton
                     icon={<FileText />}
