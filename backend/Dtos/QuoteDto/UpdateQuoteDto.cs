@@ -14,5 +14,7 @@ public class UpdateQuoteDto
     public DiscountType? DiscountType { get; set; }
     public decimal? DiscountValue { get; set; }
     public decimal? TaxRate { get; set; }
+    public string? PaymentTerms { get; set; }
+    public decimal? DepositAmount { get; set; }
     public string? Source { get; set; }
 }

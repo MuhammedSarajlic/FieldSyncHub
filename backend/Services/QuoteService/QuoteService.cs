@@ -252,6 +252,9 @@ public class QuoteService : IQuoteService
             quote.Id = Guid.NewGuid();
             quote.QuoteNumber = await GenerateQuoteNumber(createQuoteDto.WorkspaceId);
             quote.ExpiresAt = DateTime.UtcNow.AddDays(30);
+            var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.Id == createQuoteDto.WorkspaceId);
+            quote.PaymentTerms = createQuoteDto.PaymentTerms ?? workspace?.DefaultPaymentTerms ?? "uponReceipt";
+            quote.DepositAmount = createQuoteDto.DepositAmount ?? 0m;
             quote.Source = createQuoteDto.Source ?? string.Empty;
 
             if (quote.LineItems == null)

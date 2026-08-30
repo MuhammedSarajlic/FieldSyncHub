@@ -20,6 +20,8 @@ public class CreateQuoteDto
     public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
     public decimal DiscountValue { get; set; }
     public decimal TaxRate { get; set; }
+    public string? PaymentTerms { get; set; }
+    public decimal? DepositAmount { get; set; }
     public List<CreateNoteDto> CustomerNotes { get; set; } = [];
     public List<CreateNoteDto> InternalNotes { get; set; } = [];
     public List<CreateActivityHistoryDto> ActivityHistory { get; set; } = [];

@@ -32,6 +32,8 @@ public class Quote
     public bool Viewed { get; set; } = false;
     public DateTime? ViewedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }
+    public string PaymentTerms { get; set; } = "uponReceipt";
+    public decimal DepositAmount { get; set; }
 
     public ICollection<LineItem> LineItems { get; set; } = [];
 

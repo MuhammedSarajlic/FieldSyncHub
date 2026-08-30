@@ -36,7 +36,7 @@ public class QuotePdfGenerator
             {
                 page.Size(PageSizes.A4);
                 page.Margin(40);
-                page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+                page.DefaultTextStyle(x => x.FontSize(10).FontFamily("DejaVu Sans"));
 
                 page.Header().Element(ComposeHeader);
                 page.Content().Element(ComposeContent);
@@ -97,11 +97,11 @@ public class QuotePdfGenerator
                             r.ConstantItem(80).AlignRight().Text(_quote.CreatedAt.ToString("dd-MM-yyyy"));
                         });
 
-                        // Due Date
+                        // Expiry Date
                         inner.Item().PaddingTop(5).Row(r =>
                         {
-                            r.RelativeItem().AlignRight().Text("Due Date").Bold();
-                            r.ConstantItem(80).AlignRight().Text(_quote.CreatedAt.ToString("dd-MM-yyyy"));
+                            r.RelativeItem().AlignRight().Text("Valid Until").Bold();
+                            r.ConstantItem(80).AlignRight().Text((_quote.ExpiresAt ?? _quote.CreatedAt.AddDays(30)).ToString("dd-MM-yyyy"));
                         });
                     });
                 });
@@ -227,6 +227,36 @@ public class QuotePdfGenerator
                         r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.Total))
                             .Bold().FontSize(12);
                     });
+
+                if (_quote.DepositAmount > 0)
+                {
+                    totals.Item().PaddingTop(5).Row(r =>
+                    {
+                        r.RelativeItem().Text("Deposit due");
+                        r.ConstantItem(80).AlignRight().Text(FormatCurrency(_quote.DepositAmount));
+                    });
+                }
+            });
+
+            column.Item().PaddingTop(24).BorderTop(1).BorderColor(Colors.Grey.Lighten2).Column(terms =>
+            {
+                terms.Item().Text("Terms").Bold().FontSize(11);
+                terms.Item().PaddingTop(4).Text($"Payment terms: {FormatPaymentTerms(_quote.PaymentTerms)}");
+                terms.Item().Text($"This quote is valid until {(_quote.ExpiresAt ?? _quote.CreatedAt.AddDays(30)):dd-MM-yyyy}.");
+                terms.Item().PaddingTop(24).Row(row =>
+                {
+                    row.RelativeItem().Column(signature =>
+                    {
+                        signature.Item().BorderBottom(1).BorderColor(Colors.Grey.Medium).Text(" ");
+                        signature.Item().PaddingTop(4).Text("Authorized signature").FontSize(9);
+                    });
+                    row.ConstantItem(30);
+                    row.RelativeItem().Column(signature =>
+                    {
+                        signature.Item().BorderBottom(1).BorderColor(Colors.Grey.Medium).Text(" ");
+                        signature.Item().PaddingTop(4).Text("Date").FontSize(9);
+                    });
+                });
             });
         });
     }
@@ -245,6 +275,15 @@ public class QuotePdfGenerator
         => string.IsNullOrWhiteSpace(_workspace?.CompanyName)
             ? (string.IsNullOrWhiteSpace(_workspace?.Name) ? "Company Name" : _workspace.Name)
             : _workspace.CompanyName;
+
+    private static string FormatPaymentTerms(string? terms) => terms?.ToLowerInvariant() switch
+    {
+        "uponreceipt" => "Due upon receipt",
+        "net15" => "Net 15 days",
+        "net30" => "Net 30 days",
+        "custom" => "As agreed",
+        _ => string.IsNullOrWhiteSpace(terms) ? "Due upon receipt" : terms
+    };
 
     private List<string> BuildWorkspaceIdentityLines()
     {
