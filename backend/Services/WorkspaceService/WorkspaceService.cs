@@ -5,21 +5,32 @@ using backend.Response;
 using backend.Services.StorageService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace backend.Services.WorkspaceService;
 
 public class WorkspaceService : IWorkspaceService
 {
+    private static readonly TimeSpan ReferenceCacheDuration = TimeSpan.FromMinutes(2);
     private readonly DataContext _context;
     private readonly IStorageService _storageService;
-    public WorkspaceService(DataContext context, IStorageService storageService)
+    private readonly IMemoryCache? _cache;
+
+    public WorkspaceService(DataContext context, IStorageService storageService, IMemoryCache? cache = null)
     {
         _context = context;
         _storageService = storageService;
+        _cache = cache;
     }
 
     public async Task<ApiResponse<GetWorkspaceDto>> GetWorkspaceById(Guid id, Guid callerWorkspaceId)
     {
+        var cacheKey = $"workspace-settings:{id}";
+        if (_cache?.TryGetValue(cacheKey, out ApiResponse<GetWorkspaceDto>? cached) == true && cached != null)
+        {
+            return cached;
+        }
+
         var workspace = await _context.Workspaces.Include(w => w.Users).FirstOrDefaultAsync(w => w.Id == id);
 
         // Same "not found" message whether it doesn't exist or belongs to another
@@ -35,12 +46,14 @@ public class WorkspaceService : IWorkspaceService
         }
         var workspaceDto = workspace.Adapt<GetWorkspaceDto>();
         workspaceDto.LogoUrl = await _storageService.ResolveAsync(workspaceDto.LogoUrl);
-        return new ApiResponse<GetWorkspaceDto>()
+        var response = new ApiResponse<GetWorkspaceDto>()
         {
             Success = true,
             Payload = workspaceDto,
             ErrorMessage = null
         };
+        _cache?.Set(cacheKey, response, ReferenceCacheDuration);
+        return response;
     }
 
     public async Task<ApiResponse<GetWorkspaceDto>> CreateWorkspace(CreateWorkspaceDto createWorkspaceDto, Guid createdById)
@@ -166,6 +179,7 @@ public class WorkspaceService : IWorkspaceService
 
         _context.Update(existingWorkspace);
         await _context.SaveChangesAsync();
+        _cache?.Remove($"workspace-settings:{callerWorkspaceId}");
 
         var updatedWorkspaceResultDto = existingWorkspace.Adapt<GetWorkspaceDto>();
         updatedWorkspaceResultDto.LogoUrl = await _storageService.ResolveAsync(updatedWorkspaceResultDto.LogoUrl);

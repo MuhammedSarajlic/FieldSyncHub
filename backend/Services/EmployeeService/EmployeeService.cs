@@ -6,15 +6,20 @@ using backend.Response;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace backend.Services.EmployeeService;
 
 public class EmployeeService : IEmployeeService
 {
+    private static readonly TimeSpan ReferenceCacheDuration = TimeSpan.FromMinutes(2);
     private readonly DataContext _context;
-    public EmployeeService(DataContext context)
+    private readonly IMemoryCache? _cache;
+
+    public EmployeeService(DataContext context, IMemoryCache? cache = null)
     {
         _context = context;
+        _cache = cache;
     }
 
     // Resolves the Employee record backing a logged-in user, so callers whose role is
@@ -41,9 +46,17 @@ public class EmployeeService : IEmployeeService
 
     public async Task<ApiResponse<List<Employee>>> GetEmployeesByWorkspaceId(Guid workspaceId)
     {
+        var cacheKey = $"employees:{workspaceId}";
+        if (_cache?.TryGetValue(cacheKey, out List<Employee>? cachedEmployees) == true && cachedEmployees != null)
+        {
+            return new ApiResponse<List<Employee>> { Success = true, Payload = cachedEmployees };
+        }
+
         var employees = await _context.Employees.Where(e => e.WorkspaceId == workspaceId)
                                                 .Include(e => e.User)
+                                                .AsNoTracking()
                                                 .ToListAsync();
+        _cache?.Set(cacheKey, employees, ReferenceCacheDuration);
         return new ApiResponse<List<Employee>>()
         {
             Success = true,
@@ -141,6 +154,7 @@ public class EmployeeService : IEmployeeService
 
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
+        InvalidateWorkspaceCache(employee.WorkspaceId);
 
         return new ActionResult<Employee>(employee);
     }
@@ -178,6 +192,7 @@ public class EmployeeService : IEmployeeService
 
         existingEmployee.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+        InvalidateWorkspaceCache(existingEmployee.WorkspaceId);
 
         return existingEmployee;
     }
@@ -191,7 +206,11 @@ public class EmployeeService : IEmployeeService
         }
         _context.Remove(employee);
         await _context.SaveChangesAsync();
+        InvalidateWorkspaceCache(employee.WorkspaceId);
     }
+
+    private void InvalidateWorkspaceCache(Guid workspaceId)
+        => _cache?.Remove($"employees:{workspaceId}");
 
     public async Task<IActionResult> ExportEmployees(Guid workspaceId)
     {

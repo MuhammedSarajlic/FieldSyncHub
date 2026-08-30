@@ -8,17 +8,22 @@ using backend.Wrappers;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace backend.Services.ServiceItemService;
 
 public class ServiceItemService : IServiceItemService
 {
+    private static readonly TimeSpan ReferenceCacheDuration = TimeSpan.FromMinutes(2);
     private readonly DataContext _context;
     private readonly IStorageService _storageService;
-    public ServiceItemService(DataContext context, IStorageService storageService)
+    private readonly IMemoryCache? _cache;
+
+    public ServiceItemService(DataContext context, IStorageService storageService, IMemoryCache? cache = null)
     {
         _context = context;
         _storageService = storageService;
+        _cache = cache;
     }
 
     public async Task<ServiceItem> GetServiceItemById(Guid id)
@@ -34,36 +39,45 @@ public class ServiceItemService : IServiceItemService
             int pageSize
         )
     {
+        var cacheKey = $"pricebook:{workspaceId}";
+        if (_cache?.TryGetValue(cacheKey, out List<ServiceItem>? cachedItems) == true && cachedItems != null)
+        {
+            return CreatePagedResponse(cachedItems, pageNumber, pageSize);
+        }
+
         var query = _context.ServiceItems
-            .Where(s => s.WorkspaceId == workspaceId && s.IsActive && s.Category != null);
+            .Where(s => s.WorkspaceId == workspaceId && s.IsActive && s.Category != null)
+            .AsNoTracking();
 
-        var totalCount = await query.CountAsync();
-
-        var items = await query.OrderByDescending(s => s.CreatedAt)
-                               .Skip((pageNumber - 1) * pageSize)
-                               .Take(pageSize)
-                               .ToListAsync();
+        var items = await query.OrderByDescending(s => s.CreatedAt).ToListAsync();
 
         foreach (var item in items)
         {
             item.ImageUrl = await _storageService.ResolveAsync(item.ImageUrl);
         }
 
-        var result = new PagedResult<ServiceItem>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
-        };
+        _cache?.Set(cacheKey, items, ReferenceCacheDuration);
+        return CreatePagedResponse(items, pageNumber, pageSize);
+    }
 
-        return new ApiResponse<PagedResult<ServiceItem>>()
+    private static ApiResponse<PagedResult<ServiceItem>> CreatePagedResponse(
+        IReadOnlyList<ServiceItem> items,
+        int pageNumber,
+        int pageSize)
+        => new()
         {
             Success = true,
-            Payload = result,
-            ErrorMessage = null
+            Payload = new PagedResult<ServiceItem>
+            {
+                Items = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList(),
+                TotalCount = items.Count,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }
         };
-    }
+
+    private void InvalidateWorkspaceCache(Guid workspaceId)
+        => _cache?.Remove($"pricebook:{workspaceId}");
 
     public async Task<ApiResponse<PagedResult<ServiceItem>>> GetServiceItemsByFilter(
         ServiceItemFilterDto filterDto,
@@ -256,6 +270,7 @@ public class ServiceItemService : IServiceItemService
 
         await _context.ServiceItems.AddAsync(item);
         await _context.SaveChangesAsync();
+        InvalidateWorkspaceCache(item.WorkspaceId);
 
         item.ImageUrl = await _storageService.ResolveAsync(item.ImageUrl);
         return item;
@@ -309,6 +324,7 @@ public class ServiceItemService : IServiceItemService
         existingServiceItem.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        InvalidateWorkspaceCache(existingServiceItem.WorkspaceId);
 
         existingServiceItem.ImageUrl = await _storageService.ResolveAsync(existingServiceItem.ImageUrl);
 
@@ -327,6 +343,7 @@ public class ServiceItemService : IServiceItemService
 
         _context.ServiceItems.Remove(serviceItem);
         await _context.SaveChangesAsync();
+        InvalidateWorkspaceCache(serviceItem.WorkspaceId);
     }
 
     public async Task<ApiResponse<object>> ImportServiceItemsAsync(List<ImportedServiceItemDto> serviceItems, Guid workspaceId)
@@ -397,6 +414,7 @@ public class ServiceItemService : IServiceItemService
         {
             await _context.ServiceItems.AddRangeAsync(toImport);
             await _context.SaveChangesAsync();
+            InvalidateWorkspaceCache(workspaceId);
         }
 
         return new ApiResponse<object>
