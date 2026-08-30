@@ -1,4 +1,5 @@
 using backend.Dtos.LeadDto;
+using backend.Dtos.Response;
 using backend.Models;
 using backend.Response;
 using backend.Services.CurrentUserService;
@@ -23,7 +24,7 @@ public class LeadController : ControllerBase
 
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<Lead>>> GetLeadById(Guid id)
+    public async Task<ActionResult<ApiResponse<LeadResponseDto>>> GetLeadById(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -31,18 +32,18 @@ public class LeadController : ControllerBase
         }
 
         var leads = await _leadService.GetLeadById(id, callerWorkspaceId);
-        return Ok(leads);
+        return Ok(leads.Map(payload => payload.ToResponse()));
     }
 
     [HttpGet("workspace/{workspaceId}")]
-    public async Task<ActionResult<ApiResponse<List<Lead>>>> GetLeadsByWorkspaceId(Guid workspaceId)
+    public async Task<ActionResult<ApiResponse<List<LeadResponseDto>>>> GetLeadsByWorkspaceId(Guid workspaceId)
     {
         var leads = await _leadService.GetLeadsByWorkspaceId(workspaceId);
-        return Ok(leads);
+        return Ok(leads.MapList(lead => lead.ToResponse()));
     }
 
     [HttpGet("customer/{customerId}")]
-    public async Task<ActionResult<ApiResponse<List<Lead>>>> GetLeadsByCustomerId(Guid customerId)
+    public async Task<ActionResult<ApiResponse<List<LeadResponseDto>>>> GetLeadsByCustomerId(Guid customerId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -50,18 +51,18 @@ public class LeadController : ControllerBase
         }
 
         var leads = await _leadService.GetLeadsByCustomerId(customerId, callerWorkspaceId);
-        return Ok(leads);
+        return Ok(leads.MapList(lead => lead.ToResponse()));
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<Lead>>> CreateLead([FromBody] CreateLeadDto createLeadDto)
+    public async Task<ActionResult<ApiResponse<LeadResponseDto>>> CreateLead([FromBody] CreateLeadDto createLeadDto)
     {
         var result = await _leadService.CreateLead(createLeadDto);
-        return Ok(result);
+        return Ok(result.Map(payload => payload.ToResponse()));
     }
 
     [HttpPut]
-    public async Task<ActionResult<ApiResponse<Lead>>> UpdateLead([FromBody] UpdateLeadDto updatedLeadDto)
+    public async Task<ActionResult<ApiResponse<LeadResponseDto>>> UpdateLead([FromBody] UpdateLeadDto updatedLeadDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -69,7 +70,7 @@ public class LeadController : ControllerBase
         }
 
         var result = await _leadService.UpdateLead(updatedLeadDto, callerWorkspaceId);
-        return Ok(result);
+        return Ok(result.Map(payload => payload.ToResponse()));
     }
 
     [HttpDelete("{id}")]

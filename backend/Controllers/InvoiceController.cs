@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using backend.Dtos.InvoiceDto;
+using backend.Dtos.Response;
 using backend.Models;
 using backend.Response;
 using backend.Services.CurrentUserService;
@@ -27,7 +28,7 @@ public class InvoiceController : ControllerBase
 
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Invoice>> GetInvoiceById(Guid id)
+    public async Task<ActionResult<InvoiceResponseDto>> GetInvoiceById(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -35,11 +36,11 @@ public class InvoiceController : ControllerBase
         }
 
         var invoice = await _invoiceService.GetInvoiceById(id, callerWorkspaceId);
-        return Ok(invoice);
+        return Ok(invoice.ToResponse());
     }
 
     [HttpGet("invoice-number/{invoiceNumber}")]
-    public async Task<ActionResult<Invoice>> GetByInvoiceNumber(string invoiceNumber)
+    public async Task<ActionResult<InvoiceResponseDto>> GetByInvoiceNumber(string invoiceNumber)
     {
         if (_currentUser.WorkspaceId is not Guid workspaceId)
         {
@@ -47,26 +48,26 @@ public class InvoiceController : ControllerBase
         }
 
         var invoice = await _invoiceService.GetInvoiceByInvoiceNumber(workspaceId, invoiceNumber);
-        return Ok(invoice);
+        return Ok(invoice.ToResponse());
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
-    public async Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByWorkspaceId(
+    public async Task<ApiResponse<PagedResult<InvoiceResponseDto>>> GetInvoicesByWorkspaceId(
         Guid workspaceId,
         [FromQuery] int pageNumber,
         [FromQuery] int pageSize)
     {
-        return await _invoiceService.GetInvoicesByWorkspaceId(workspaceId, pageNumber, pageSize);
+        return (await _invoiceService.GetInvoicesByWorkspaceId(workspaceId, pageNumber, pageSize)).MapPage(invoice => invoice.ToResponse());
     }
 
     [HttpGet("workspace/{workspaceId:guid}/filter")]
-    public async Task<ApiResponse<PagedResult<Invoice>>> GetInvoicesByFilter(
+    public async Task<ApiResponse<PagedResult<InvoiceResponseDto>>> GetInvoicesByFilter(
         Guid workspaceId,
         [FromQuery] int pageNumber,
         [FromQuery] int pageSize,
         [FromQuery] InvoiceFilterDto filterDto)
     {
-        return await _invoiceService.GetInvoicesByFilter(filterDto, workspaceId, pageNumber, pageSize);
+        return (await _invoiceService.GetInvoicesByFilter(filterDto, workspaceId, pageNumber, pageSize)).MapPage(invoice => invoice.ToResponse());
     }
 
     [HttpGet("workspace/{workspaceId:guid}/invoice-stats")]
@@ -81,25 +82,25 @@ public class InvoiceController : ControllerBase
     }
 
     [HttpGet("customer/{customerId}")]
-    public async Task<ActionResult<ApiResponse<List<Invoice>>>> GetInvoicesByCustomerId(Guid customerId)
+    public async Task<ActionResult<ApiResponse<List<InvoiceResponseDto>>>> GetInvoicesByCustomerId(Guid customerId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
             return Forbid();
         }
 
-        return await _invoiceService.GetInvoicesByCustomerId(customerId, callerWorkspaceId);
+        return Ok((await _invoiceService.GetInvoicesByCustomerId(customerId, callerWorkspaceId)).MapList(invoice => invoice.ToResponse()));
     }
 
     [HttpPost]
-    public async Task<ActionResult<Invoice>> CreateInvoice([FromBody] CreateInvoiceDto createInvoiceDto)
+    public async Task<ActionResult<InvoiceResponseDto>> CreateInvoice([FromBody] CreateInvoiceDto createInvoiceDto)
     {
         var createdInvoice = await _invoiceService.CreateInvoice(createInvoiceDto);
-        return Ok(createdInvoice);
+        return Ok(createdInvoice.ToResponse());
     }
 
     [HttpPut]
-    public async Task<ActionResult<Invoice>> UpdateInvoice([FromBody] UpdateInvoiceDto updatedInvoiceDto)
+    public async Task<ActionResult<InvoiceResponseDto>> UpdateInvoice([FromBody] UpdateInvoiceDto updatedInvoiceDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -111,7 +112,7 @@ public class InvoiceController : ControllerBase
             try
             {
                 var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto, callerWorkspaceId);
-                return Ok(updatedInvoice);
+                return Ok(updatedInvoice.ToResponse());
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -131,7 +132,7 @@ public class InvoiceController : ControllerBase
     [HttpPost("{id:guid}/send")]
     [EnableRateLimiting("email-relay")]
     [RequestSizeLimit(15 * 1024 * 1024)]
-    public async Task<ActionResult<ApiResponse<Invoice>>> SendInvoice(Guid id, [FromBody] SendInvoiceDto sendInvoiceDto)
+    public async Task<ActionResult<ApiResponse<InvoiceResponseDto>>> SendInvoice(Guid id, [FromBody] SendInvoiceDto sendInvoiceDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid userId)
         {
@@ -143,11 +144,12 @@ public class InvoiceController : ControllerBase
             ?? "System";
 
         var result = await _invoiceService.SendInvoice(id, sendInvoiceDto, callerWorkspaceId, userId, userName);
-        return result.Success ? Ok(result) : BadRequest(result);
+        var response = result.Map(payload => payload.ToResponse());
+        return result.Success ? Ok(response) : BadRequest(response);
     }
 
     [HttpPost("{id}/payments")]
-    public async Task<ActionResult<Invoice>> RecordPayment(Guid id, [FromBody] RecordInvoicePaymentDto paymentDto)
+    public async Task<ActionResult<InvoiceResponseDto>> RecordPayment(Guid id, [FromBody] RecordInvoicePaymentDto paymentDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid recordedByUserId)
         {
@@ -157,7 +159,7 @@ public class InvoiceController : ControllerBase
         try
         {
             var invoice = await _invoiceService.RecordPayment(id, paymentDto, callerWorkspaceId, recordedByUserId);
-            return Ok(invoice);
+            return Ok(invoice.ToResponse());
         }
         catch (KeyNotFoundException ex)
         {

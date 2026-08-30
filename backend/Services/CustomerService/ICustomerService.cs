@@ -1,4 +1,5 @@
 using backend.Dtos.CustomerDto;
+using backend.Dtos.Response;
 using backend.Models;
 using backend.Response;
 using backend.Wrappers;
@@ -8,7 +9,7 @@ namespace backend.Services.CustomerService;
 
 public interface ICustomerService
 {
-    Task<ApiResponse<object>> GetCustomerById(Guid id, Guid callerWorkspaceId);
+    Task<ApiResponse<CustomerDetailsResponseDto>> GetCustomerById(Guid id, Guid callerWorkspaceId);
     Task<ApiResponse<PagedResult<Customer>>> GetCustomersByWorkspace(Guid workspaceId, int pageNumber, int pageSize);
     Task<CustomerStatsDto> GetCustomerStats(Guid workspaceId);
     Task<ApiResponse<PagedResult<Customer>>> GetCustomersByFilter(

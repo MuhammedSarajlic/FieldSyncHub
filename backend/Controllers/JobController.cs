@@ -1,4 +1,5 @@
 using backend.Dtos.JobDto;
+using backend.Dtos.Response;
 using backend.Models;
 using backend.Response;
 using backend.Services.CurrentUserService;
@@ -41,7 +42,7 @@ public class JobController : ControllerBase
     }
 
     [HttpGet("{jobId:guid}")]
-    public async Task<ActionResult<ApiResponse<Job>>> GetJobById(Guid jobId)
+    public async Task<ActionResult<ApiResponse<JobResponseDto>>> GetJobById(Guid jobId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -49,11 +50,11 @@ public class JobController : ControllerBase
         }
 
         var restriction = await ResolveJobRestriction(callerWorkspaceId);
-        return Ok(await _jobService.GetJobById(jobId, callerWorkspaceId, restriction));
+        return Ok((await _jobService.GetJobById(jobId, callerWorkspaceId, restriction)).Map(job => job.ToResponse()));
     }
 
     [HttpGet("customer/{customerId:guid}")]
-    public async Task<ActionResult<ApiResponse<List<Job>>>> GetJobsByCustomerId(Guid customerId)
+    public async Task<ActionResult<ApiResponse<List<JobResponseDto>>>> GetJobsByCustomerId(Guid customerId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -61,11 +62,11 @@ public class JobController : ControllerBase
         }
 
         var restriction = await ResolveJobRestriction(callerWorkspaceId);
-        return Ok(await _jobService.GetJobsByCustomerId(customerId, callerWorkspaceId, restriction));
+        return Ok((await _jobService.GetJobsByCustomerId(customerId, callerWorkspaceId, restriction)).MapList(job => job.ToResponse()));
     }
 
     [HttpGet("employee/{employeeId:guid}")]
-    public async Task<ActionResult<ApiResponse<List<Job>>>> GetJobsByEmployeeId(Guid employeeId)
+    public async Task<ActionResult<ApiResponse<List<JobResponseDto>>>> GetJobsByEmployeeId(Guid employeeId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -80,28 +81,28 @@ public class JobController : ControllerBase
             return Forbid();
         }
 
-        return Ok(await _jobService.GetAllJobsByEmployeeId(employeeId, callerWorkspaceId));
+        return Ok((await _jobService.GetAllJobsByEmployeeId(employeeId, callerWorkspaceId)).MapList(job => job.ToResponse()));
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
-    public async Task<ApiResponse<PagedResult<Job>>> GetJobsByWorkspace(
+    public async Task<ApiResponse<PagedResult<JobResponseDto>>> GetJobsByWorkspace(
     Guid workspaceId,
     [FromQuery] int pageNumber,
     [FromQuery] int pageSize)
     {
         var restriction = await ResolveJobRestriction(workspaceId);
-        return await _jobService.GetJobsByWorkspace(workspaceId, pageNumber, pageSize, restriction);
+        return (await _jobService.GetJobsByWorkspace(workspaceId, pageNumber, pageSize, restriction)).MapPage(job => job.ToResponse());
     }
 
     [HttpGet("workspace/{workspaceId:guid}/filter")]
-    public async Task<ApiResponse<PagedResult<Job>>> GetJobsByFilter(
+    public async Task<ApiResponse<PagedResult<JobResponseDto>>> GetJobsByFilter(
         Guid workspaceId,
         [FromQuery] int pageNumber,
         [FromQuery] int pageSize,
         [FromQuery] JobFilterDto filterDto)
     {
         var restriction = await ResolveJobRestriction(workspaceId);
-        return await _jobService.GetJobsByFilter(filterDto, workspaceId, pageNumber, pageSize, restriction);
+        return (await _jobService.GetJobsByFilter(filterDto, workspaceId, pageNumber, pageSize, restriction)).MapPage(job => job.ToResponse());
     }
 
     [HttpGet("workspace/{workspaceId:guid}/profitability")]
@@ -111,7 +112,7 @@ public class JobController : ControllerBase
     }
 
     [HttpGet("job-number/{jobNumber}")]
-    public async Task<ActionResult<Job>> GetJobByJobNumber(string jobNumber)
+    public async Task<ActionResult<JobResponseDto>> GetJobByJobNumber(string jobNumber)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -120,19 +121,19 @@ public class JobController : ControllerBase
 
         var restriction = await ResolveJobRestriction(callerWorkspaceId);
         var job = await _jobService.GetJobByJobNumber(jobNumber, callerWorkspaceId, restriction);
-        return Ok(job);
+        return Ok(job.ToResponse());
     }
 
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<Job>>> CreateJob([FromBody] CreateJobDto createJobDto)
+    public async Task<ActionResult<ApiResponse<JobResponseDto>>> CreateJob([FromBody] CreateJobDto createJobDto)
     {
         var job = await _jobService.CreateJob(createJobDto);
-        return Ok(job);
+        return Ok(job.Map(payload => payload.ToResponse()));
     }
 
     [HttpPut]
-    public async Task<ActionResult<ApiResponse<Job>>> UpdateJob([FromBody] UpdateJobDto updatedJobDto)
+    public async Task<ActionResult<ApiResponse<JobResponseDto>>> UpdateJob([FromBody] UpdateJobDto updatedJobDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -143,7 +144,7 @@ public class JobController : ControllerBase
         try
         {
             var job = await _jobService.UpdateJob(updatedJobDto, callerWorkspaceId, restriction);
-            return Ok(job);
+            return Ok(job.Map(payload => payload.ToResponse()));
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -172,7 +173,7 @@ public class JobController : ControllerBase
     }
 
     [HttpPatch("{jobId:guid}/status")]
-    public async Task<ActionResult<ApiResponse<Job>>> ChangeJobStatus(Guid jobId, [FromBody] JobStatus status)
+    public async Task<ActionResult<ApiResponse<JobResponseDto>>> ChangeJobStatus(Guid jobId, [FromBody] JobStatus status)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid userId)
         {
@@ -181,7 +182,8 @@ public class JobController : ControllerBase
 
         var restriction = await ResolveJobRestriction(callerWorkspaceId);
         var result = await _jobService.ChangeJobStatus(jobId, status, callerWorkspaceId, userId, restriction);
-        return result.Success ? Ok(result) : BadRequest(result);
+        var response = result.Map(payload => payload.ToResponse());
+        return result.Success ? Ok(response) : BadRequest(response);
     }
 
     [HttpPatch("{jobId:guid}/tags")]
@@ -201,7 +203,7 @@ public class JobController : ControllerBase
     }
 
     [HttpPost("{jobId:guid}/deposit-payments")]
-    public async Task<ActionResult<ApiResponse<Job>>> RecordDepositPayment(
+    public async Task<ActionResult<ApiResponse<JobResponseDto>>> RecordDepositPayment(
         Guid jobId,
         [FromBody] RecordJobDepositPaymentDto paymentDto)
     {
@@ -212,7 +214,8 @@ public class JobController : ControllerBase
 
         var restriction = await ResolveJobRestriction(callerWorkspaceId);
         var result = await _jobService.RecordDepositPayment(jobId, paymentDto, callerWorkspaceId, recordedByUserId, restriction);
-        return result.Success ? Ok(result) : BadRequest(result);
+        var response = result.Map(payload => payload.ToResponse());
+        return result.Success ? Ok(response) : BadRequest(response);
     }
 
     [HttpGet("workspace/{workspaceId:guid}/job-stats")]

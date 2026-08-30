@@ -1,4 +1,5 @@
 using backend.Dtos.CustomerDto;
+using backend.Dtos.Response;
 using backend.Models;
 using backend.Response;
 using backend.Services.CurrentUserService;
@@ -27,7 +28,7 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<object>>> GetCustomerById(Guid id)
+    public async Task<ActionResult<ApiResponse<CustomerDetailsResponseDto>>> GetCustomerById(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -38,9 +39,9 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
-    public async Task<ApiResponse<PagedResult<Customer>>> GetCustomersByWorkspace(Guid workspaceId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
+    public async Task<ApiResponse<PagedResult<CustomerResponseDto>>> GetCustomersByWorkspace(Guid workspaceId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
-        return await _customerService.GetCustomersByWorkspace(workspaceId, pageNumber, pageSize);
+        return (await _customerService.GetCustomersByWorkspace(workspaceId, pageNumber, pageSize)).MapPage(customer => customer.ToResponse());
     }
 
     [HttpGet("stats/{workspaceId:guid}")]
@@ -51,25 +52,25 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("workspace/{workspaceId:guid}/filter")]
-    public async Task<ApiResponse<PagedResult<Customer>>> GetCustomersByFilter(
+    public async Task<ApiResponse<PagedResult<CustomerResponseDto>>> GetCustomersByFilter(
         Guid workspaceId,
         [FromQuery] int pageNumber,
         [FromQuery] int pageSize,
         [FromQuery] CustomerFilterDto filterDto
     )
     {
-        return await _customerService.GetCustomersByFilter(workspaceId, pageNumber, pageSize, filterDto);
+        return (await _customerService.GetCustomersByFilter(workspaceId, pageNumber, pageSize, filterDto)).MapPage(customer => customer.ToResponse());
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<Customer>>> CreateCustomer([FromBody] CreateCustomerDto createCustomerDto)
+    public async Task<ActionResult<ApiResponse<CustomerResponseDto>>> CreateCustomer([FromBody] CreateCustomerDto createCustomerDto)
     {
         var customer = await _customerService.CreateCustomer(createCustomerDto);
-        return Ok(customer);
+        return Ok(customer.Map(payload => payload.ToResponse()));
     }
 
     [HttpPut]
-    public async Task<ActionResult<ApiResponse<Customer>>> UpdateCustomer([FromBody] UpdateCustomerDto updatedCustomerDto)
+    public async Task<ActionResult<ApiResponse<CustomerResponseDto>>> UpdateCustomer([FromBody] UpdateCustomerDto updatedCustomerDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -79,7 +80,7 @@ public class CustomerController : ControllerBase
         try
         {
             var customer = await _customerUnitOfWork.UpdateCustomerWithDependenciesAsync(updatedCustomerDto, callerWorkspaceId);
-            return Ok(customer);
+            return Ok(customer.Map(payload => payload.ToResponse()));
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -108,7 +109,7 @@ public class CustomerController : ControllerBase
     }
 
     [HttpPost("import")]
-    public async Task<ActionResult<ApiResponse<List<Customer>>>> ImportCustomers(
+    public async Task<ActionResult<ApiResponse<List<CustomerResponseDto>>>> ImportCustomers(
         [FromBody] List<ImportedCustomerDto> customers)
     {
         if (_currentUser.WorkspaceId is not Guid workspaceId)
@@ -117,7 +118,7 @@ public class CustomerController : ControllerBase
         }
 
         var result = await _customerService.ImportCustomers(customers, workspaceId);
-        return Ok(result);
+        return Ok(result.MapList(customer => customer.ToResponse()));
     }
 
     [HttpGet("export/{workspaceId:guid}")]

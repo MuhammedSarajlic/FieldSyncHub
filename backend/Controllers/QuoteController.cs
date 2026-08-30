@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using backend.Dtos.NotesDto;
 using backend.Dtos.QuoteDto;
+using backend.Dtos.Response;
 using backend.Models.QuoteModels;
 using backend.Response;
 using backend.Services.CurrentUserService;
@@ -33,7 +34,7 @@ public class QuoteController : ControllerBase
 
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Quote>> GetQuoteById(Guid id)
+    public async Task<ActionResult<QuoteResponseDto>> GetQuoteById(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -41,20 +42,20 @@ public class QuoteController : ControllerBase
         }
 
         var result = await _quoteService.GetByIdAsync(id, callerWorkspaceId);
-        return result == null ? NotFound() : Ok(result);
+        return result == null ? NotFound() : Ok(result.ToResponse());
     }
 
     [HttpGet("workspace/{workspaceId:guid}")]
-    public async Task<ApiResponse<PagedResult<Quote>>> GetQuotesByWorkspace(
+    public async Task<ApiResponse<PagedResult<QuoteResponseDto>>> GetQuotesByWorkspace(
         Guid workspaceId,
         [FromQuery] int pageNumber,
         [FromQuery] int pageSize)
     {
-        return await _quoteService.GetQuotesByWorkspace(workspaceId, pageNumber, pageSize);
+        return (await _quoteService.GetQuotesByWorkspace(workspaceId, pageNumber, pageSize)).MapPage(quote => quote.ToResponse());
     }
 
     [HttpGet("customer/{customerId}")]
-    public async Task<ActionResult<List<Quote>>> GetQuotesByCustomerId(Guid customerId)
+    public async Task<ActionResult<ApiResponse<List<QuoteResponseDto>>>> GetQuotesByCustomerId(Guid customerId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -62,17 +63,17 @@ public class QuoteController : ControllerBase
         }
 
         var result = await _quoteService.GetQuotesByCustomerId(customerId, callerWorkspaceId);
-        return result == null ? NotFound() : Ok(result);
+        return result == null ? NotFound() : Ok(result.MapList(quote => quote.ToResponse()));
     }
 
     [HttpGet("workspace/{workspaceId:guid}/filter")]
-    public async Task<ApiResponse<PagedResult<Quote>>> GetQuotesByFilter(
+    public async Task<ApiResponse<PagedResult<QuoteResponseDto>>> GetQuotesByFilter(
         Guid workspaceId,
         [FromQuery] int pageNumber,
         [FromQuery] int pageSize,
         [FromQuery] QuoteFilterDto filterDto)
     {
-        return await _quoteService.GetQuotesByFilter(workspaceId, pageNumber, pageSize, filterDto);
+        return (await _quoteService.GetQuotesByFilter(workspaceId, pageNumber, pageSize, filterDto)).MapPage(quote => quote.ToResponse());
     }
 
     [HttpGet("workspace/{workspaceId:guid}/quote-stats")]
@@ -88,24 +89,24 @@ public class QuoteController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Quote>> CreateQuote(CreateQuoteDto createQuoteDto)
+    public async Task<ActionResult<QuoteResponseDto>> CreateQuote(CreateQuoteDto createQuoteDto)
     {
         var result = await _quoteService.CreateQuote(createQuoteDto);
-        return Ok(result);
+        return Ok(result.ToResponse());
     }
 
     [HttpPost("{quoteId}/customer-note")]
     public async Task<IActionResult> AddCustomerNote(Guid quoteId, [FromBody] CreateNoteDto noteDto)
     {
         var note = await _quoteService.AddCustomerNoteToQuote(quoteId, noteDto);
-        return Ok(note);
+        return Ok(note.ToResponse());
     }
 
     [HttpPost("{quoteId}/internal-note")]
     public async Task<IActionResult> AddInternalNote(Guid quoteId, [FromBody] CreateNoteDto noteDto)
     {
         var note = await _quoteService.AddInternalNoteToQuote(quoteId, noteDto);
-        return Ok(note);
+        return Ok(note.ToResponse());
     }
 
     [HttpPost("{quoteId}/attachment")]
@@ -123,7 +124,7 @@ public class QuoteController : ControllerBase
         try
         {
             var attachment = await _quoteService.AddAttachmentToQuote(quoteId, attachmentDto, userId, userName, callerWorkspaceId);
-            return Ok(attachment);
+            return Ok(attachment.ToResponse());
         }
         catch (UnauthorizedAccessException)
         {
@@ -133,7 +134,7 @@ public class QuoteController : ControllerBase
 
 
     [HttpPut]
-    public async Task<ActionResult<Quote>> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
+    public async Task<ActionResult<QuoteResponseDto>> UpdateQuote(UpdateQuoteDto updatedQuoteDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
         {
@@ -149,7 +150,7 @@ public class QuoteController : ControllerBase
             try
             {
                 var result = await _quoteService.UpdateQuote(updatedQuoteDto, userId, userName, callerWorkspaceId);
-                return Ok(result);
+                return Ok(result.ToResponse());
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -187,14 +188,14 @@ public class QuoteController : ControllerBase
     }
 
     [HttpPatch("{id}")]
-    public async Task<ActionResult<Quote>> ChangeQuoteStatus(Guid id, [FromBody] QuoteStatus status)
+    public async Task<ActionResult<QuoteResponseDto>> ChangeQuoteStatus(Guid id, [FromBody] QuoteStatus status)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out _)) return Unauthorized();
         var userName = User.Identity?.Name ?? "System";
 
         var quote = await _quoteService.ChangeQuoteStatus(id, status, userId, userName);
-        return Ok(quote);
+        return Ok(quote.ToResponse());
     }
 
     [HttpPost("{id:guid}/send")]
@@ -203,7 +204,7 @@ public class QuoteController : ControllerBase
     // subject/message/recipients - rejected by Kestrel before model binding ever
     // buffers a bigger body into memory, rather than only after decoding it.
     [RequestSizeLimit(15 * 1024 * 1024)]
-    public async Task<ActionResult<ApiResponse<Quote>>> SendQuote(Guid id, [FromBody] SendQuoteDto sendQuoteDto)
+    public async Task<ActionResult<ApiResponse<QuoteResponseDto>>> SendQuote(Guid id, [FromBody] SendQuoteDto sendQuoteDto)
     {
         if (_currentUser.WorkspaceId is not Guid workspaceId)
         {
@@ -216,7 +217,8 @@ public class QuoteController : ControllerBase
 
         var result = await _quoteService.SendQuote(id, sendQuoteDto, userId, userName, workspaceId);
 
-        return result.Success ? Ok(result) : BadRequest(result);
+        var response = result.Map(payload => payload.ToResponse());
+        return result.Success ? Ok(response) : BadRequest(response);
     }
 
     [HttpGet("{id}/pdf")]

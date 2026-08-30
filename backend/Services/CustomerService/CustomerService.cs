@@ -1,6 +1,7 @@
 using System.Text;
 using backend.Data;
 using backend.Dtos.CustomerDto;
+using backend.Dtos.Response;
 using backend.Models;
 using backend.Response;
 using backend.Services.EmailService;
@@ -21,7 +22,7 @@ public class CustomerService : ICustomerService
         _emailService = emailService;
     }
 
-    public async Task<ApiResponse<object>> GetCustomerById(Guid id, Guid callerWorkspaceId)
+    public async Task<ApiResponse<CustomerDetailsResponseDto>> GetCustomerById(Guid id, Guid callerWorkspaceId)
     {
         var customer = await _context.Customers.Where(c => c.Id == id)
                                             .Include(c => c.Properties)
@@ -34,7 +35,7 @@ public class CustomerService : ICustomerService
                                             .FirstOrDefaultAsync();
         if (customer == null || customer.WorkspaceId != callerWorkspaceId)
         {
-            return new ApiResponse<object>
+            return new ApiResponse<CustomerDetailsResponseDto>
             {
                 Success = false,
                 Payload = null,
@@ -55,14 +56,14 @@ public class CustomerService : ICustomerService
         var quotesCount = await _context.Quotes.CountAsync(q => q.CustomerId == id);
         var invoicesCount = invoices.Count;
 
-        return new ApiResponse<object>()
+        return new ApiResponse<CustomerDetailsResponseDto>()
         {
             Success = true,
-            Payload = new
+            Payload = new CustomerDetailsResponseDto
             {
-                Item = customer,
+                Item = customer.ToResponse(),
                 TotalInvoiceValue = totalInvoiceValue,
-                Counts = new
+                Counts = new CustomerCountsResponseDto
                 {
                     Jobs = jobsCount,
                     Leads = leadsCount,
