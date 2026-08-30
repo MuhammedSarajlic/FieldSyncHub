@@ -60,6 +60,8 @@ public class DataContext : DbContext
     public DbSet<RecurrenceRule> RecurrenceRules => Set<RecurrenceRule>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<RecoveryCode> RecoveryCodes => Set<RecoveryCode>();
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+    public DbSet<ReviewRequest> ReviewRequests => Set<ReviewRequest>();
 
     /// <summary>
     /// Audit rows are collected from the change tracker before the save and added to
@@ -247,6 +249,18 @@ public class DataContext : DbContext
             .HasForeignKey(s => s.JobId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<Job>()
+            .HasMany(j => j.TimeEntries)
+            .WithOne(t => t.Job)
+            .HasForeignKey(t => t.JobId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TimeEntry>()
+            .HasOne(t => t.Employee)
+            .WithMany()
+            .HasForeignKey(t => t.EmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Quote ↔ Lead (optional)
         modelBuilder.Entity<Lead>()
             .HasOne(r => r.Quote)
@@ -328,6 +342,8 @@ public class DataContext : DbContext
         modelBuilder.Entity<Event>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<Note>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
         modelBuilder.Entity<ActivityHistory>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<TimeEntry>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
+        modelBuilder.Entity<ReviewRequest>().HasQueryFilter(e => _currentUser.WorkspaceId == null || e.WorkspaceId == _currentUser.WorkspaceId);
 
         // Indexes (only key performance fields)
         modelBuilder.Entity<Customer>().HasIndex(c => c.WorkspaceId);
@@ -368,6 +384,10 @@ public class DataContext : DbContext
         // table has years of rows in it.
         modelBuilder.Entity<ActivityHistory>().HasIndex(a => new { a.WorkspaceId, a.ChangedAt });
         modelBuilder.Entity<ActivityHistory>().HasIndex(a => new { a.EntityType, a.EntityId });
+        modelBuilder.Entity<TimeEntry>().HasIndex(t => new { t.WorkspaceId, t.EmployeeId, t.ClockIn });
+        modelBuilder.Entity<TimeEntry>().HasIndex(t => new { t.JobId, t.ClockOut });
+        modelBuilder.Entity<ReviewRequest>().HasIndex(r => r.TokenHash).IsUnique();
+        modelBuilder.Entity<ReviewRequest>().HasIndex(r => new { r.WorkspaceId, r.JobId }).IsUnique();
     }
 
     private static void ConfigureDecimalPrecision(ModelBuilder modelBuilder)

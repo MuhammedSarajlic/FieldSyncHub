@@ -23,6 +23,8 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using backend.Middleware;
 using backend.Response;
 using backend.Validation;
+using backend.Services.PortalAccessService;
+using backend.Services.SmsService;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -176,6 +178,10 @@ builder.Services.AddHttpClient("geocoding", client =>
     client.Timeout = TimeSpan.FromSeconds(3);
     client.DefaultRequestHeaders.UserAgent.ParseAdd("FieldSyncHub/1.0 (+https://fieldsynchub.com)");
 });
+builder.Services.AddHttpClient("twilio");
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<IPortalAccessService, PortalAccessService>();
+builder.Services.AddScoped<ISmsService, TwilioSmsService>();
 builder.Services.AddHostedService<JobNotificationWorker>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHealthChecks()

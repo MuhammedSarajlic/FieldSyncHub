@@ -24,4 +24,5 @@ public interface IJobService
     Task<ApiResponse<Job>> RecordDepositPayment(Guid jobId, RecordJobDepositPaymentDto paymentDto, Guid callerWorkspaceId, Guid recordedByUserId, Guid? restrictToEmployeeId = null);
     Task<JobStatsDto> GetJobStats(Guid workspaceId);
     Task<JobProfitabilityDto> GetJobProfitability(Guid workspaceId);
+    Task<string?> ValidateSchedule(Guid workspaceId, DateTime start, DateTime end, IEnumerable<Guid> employeeIds, Guid? excludeJobId = null);
 }

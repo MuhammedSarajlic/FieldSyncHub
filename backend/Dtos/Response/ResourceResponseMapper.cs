@@ -136,7 +136,9 @@ public static class ResourceResponseMapper
         TaxAmount = source.TaxAmount, Subtotal = source.Subtotal, TotalAmount = source.TotalAmount,
         SendInvoice = source.SendInvoice, SendReminder = source.SendReminder, ReminderDaysBefore = source.ReminderDaysBefore,
         ConfirmationSent = source.ConfirmationSent, ReminderSent = source.ReminderSent, InvoiceSent = source.InvoiceSent,
-        JobNumber = source.JobNumber, CompletedAt = source.CompletedAt, CreatedBy = source.CreatedBy, Source = source.Source,
+        JobNumber = source.JobNumber, CompletedAt = source.CompletedAt, CompletionNote = source.CompletionNote,
+        CustomerSignaturePath = source.CustomerSignaturePath, CompletionPhotoPaths = source.CompletionPhotoPaths,
+        CreatedBy = source.CreatedBy, Source = source.Source,
         Tags = source.Tags, CustomerNotes = source.CustomerNotes, InternalNotes = source.InternalNotes,
         CreatedAt = source.CreatedAt, UpdatedAt = source.UpdatedAt
     };

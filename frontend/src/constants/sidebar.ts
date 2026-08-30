@@ -3,6 +3,7 @@ import {
   BookOpen,
   BriefcaseBusiness,
   CalendarDays,
+  ClipboardList,
   FileText,
   Home,
   Receipt,
@@ -25,6 +26,8 @@ export const sidebarItems = [
     slug: 'calendar',
     section: 'general',
   },
+  { name: 'Dispatch', Icon: ClipboardList, slug: 'dispatch', section: 'general' },
+  { name: 'My day', Icon: CalendarDays, slug: 'my-day', section: 'general' },
   {
     name: 'Customers',
     Icon: Users,

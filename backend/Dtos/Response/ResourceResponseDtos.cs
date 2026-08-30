@@ -241,6 +241,9 @@ public sealed class JobResponseDto
     public bool InvoiceSent { get; init; }
     public string JobNumber { get; init; } = string.Empty;
     public DateTime? CompletedAt { get; init; }
+    public string? CompletionNote { get; init; }
+    public string? CustomerSignaturePath { get; init; }
+    public List<string> CompletionPhotoPaths { get; init; } = [];
     public string CreatedBy { get; init; } = string.Empty;
     public string? Source { get; init; }
     public List<string> Tags { get; init; } = [];

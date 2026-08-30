@@ -679,6 +679,13 @@ namespace backend.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("CompletionNote")
+                        .HasColumnType("longtext");
+
+                    b.PrimitiveCollection<string>("CompletionPhotoPaths")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("ConfirmationSent")
                         .HasColumnType("tinyint(1)");
 
@@ -693,6 +700,9 @@ namespace backend.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<string>("CustomerNotes")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("CustomerSignaturePath")
                         .HasColumnType("longtext");
 
                     b.Property<decimal>("DepositAmount")
@@ -1360,6 +1370,58 @@ namespace backend.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("backend.Models.ReviewRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("OpenedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid>("WorkspaceId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("WorkspaceId", "JobId")
+                        .IsUnique();
+
+                    b.ToTable("ReviewRequests");
+                });
+
             modelBuilder.Entity("backend.Models.ServiceItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1474,6 +1536,50 @@ namespace backend.Migrations
                     b.HasIndex("JobId");
 
                     b.ToTable("StatusChanges");
+                });
+
+            modelBuilder.Entity("backend.Models.TimeEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("ClockIn")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("ClockOut")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("WorkspaceId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("JobId", "ClockOut");
+
+                    b.HasIndex("WorkspaceId", "EmployeeId", "ClockIn");
+
+                    b.ToTable("TimeEntries");
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>
@@ -1595,6 +1701,9 @@ namespace backend.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("GoogleReviewUrl")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
@@ -1613,6 +1722,12 @@ namespace backend.Migrations
 
                     b.Property<DateTime?>("PurgeAfter")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<int>("ReviewRequestDelayHours")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ReviewRequestsEnabled")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("Size")
                         .HasColumnType("int");
@@ -2059,6 +2174,25 @@ namespace backend.Migrations
                     b.Navigation("Job");
                 });
 
+            modelBuilder.Entity("backend.Models.TimeEntry", b =>
+                {
+                    b.HasOne("backend.Models.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Job", "Job")
+                        .WithMany("TimeEntries")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Job");
+                });
+
             modelBuilder.Entity("backend.Models.User", b =>
                 {
                     b.HasOne("backend.Models.Workspace", "Workspace")
@@ -2106,6 +2240,8 @@ namespace backend.Migrations
                     b.Navigation("StatusHistory");
 
                     b.Navigation("TagRecords");
+
+                    b.Navigation("TimeEntries");
                 });
 
             modelBuilder.Entity("backend.Models.Lead", b =>

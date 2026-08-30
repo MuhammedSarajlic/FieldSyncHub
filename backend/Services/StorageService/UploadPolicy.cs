@@ -34,6 +34,7 @@ public static class UploadPolicy
         ["note"] = new UploadCategoryRules(UploadScope.Workspace, 10 * 1024 * 1024, AttachmentTypes, AttachmentExtensions),
         ["quote-attachment"] = new UploadCategoryRules(UploadScope.Workspace, 10 * 1024 * 1024, AttachmentTypes, AttachmentExtensions),
         ["service-item-image"] = new UploadCategoryRules(UploadScope.Workspace, 5 * 1024 * 1024, ImageTypes, ImageExtensions),
+        ["job-completion"] = new UploadCategoryRules(UploadScope.Workspace, 10 * 1024 * 1024, ImageTypes, ImageExtensions),
     };
 
     public static bool TryGetRules(string? category, out UploadCategoryRules rules)

@@ -30,6 +30,11 @@ import RequireTwoFactorSetup from './utils/AuthHelpers/RequireTwoFactorSetup';
 const InviteJoin = lazy(() => import('./pages/InviteJoin'));
 const EmployeeDetails = lazy(() => import('./pages/employees/EmployeeDetails'));
 const InvoiceDetails = lazy(() => import('./pages/invoices/InvoiceDetails'));
+const Portal = lazy(() => import('./pages/Portal'));
+const Booking = lazy(() => import('./pages/Booking'));
+const MyDay = lazy(() => import('./pages/MyDay'));
+const DispatchBoard = lazy(() => import('./pages/DispatchBoard'));
+const Review = lazy(() => import('./pages/Review'));
 const ServiceItemDetails = lazy(() => import('./pages/pricebook/ServiceItemDetails'));
 import { Toaster } from 'react-hot-toast';
 import ScreenLoader from './components/CustomElements/Loaders/ScreenLoader';
@@ -37,6 +42,11 @@ import ScreenLoader from './components/CustomElements/Loaders/ScreenLoader';
 const getPageTitle = (pathname: string) => {
   if (pathname === '/' || pathname.startsWith('/home')) return 'Dashboard';
   if (pathname.startsWith('/calendar')) return 'Calendar';
+  if (pathname.startsWith('/dispatch')) return 'Dispatch';
+  if (pathname.startsWith('/my-day')) return 'My day';
+  if (pathname.startsWith('/portal')) return 'Customer portal';
+  if (pathname.startsWith('/book')) return 'Request service';
+  if (pathname.startsWith('/review')) return 'Customer feedback';
   if (pathname.startsWith('/customers')) return 'Customers';
   if (pathname.startsWith('/jobs')) return 'Jobs';
   if (pathname.startsWith('/invoices')) return 'Invoices';
@@ -101,6 +111,9 @@ function App() {
           <Routes>
         <Route path='/' element={<Navigate to='/home' replace />} />
         <Route path='confirm-email-change' element={<ConfirmEmailChange />} />
+        <Route path='portal/:token' element={<Portal />} />
+        <Route path='book/:workspaceId' element={<Booking />} />
+        <Route path='review/:token' element={<Review />} />
 
         <Route element={<PublicRoute />}>
           <Route path='signin' element={<Signin />} />
@@ -119,6 +132,8 @@ function App() {
             <Route element={<RequireTwoFactorSetup />}>
               <Route path='home' element={<Home />} />
               <Route path='calendar' element={<Calendar />} />
+              <Route path='dispatch' element={<DispatchBoard />} />
+              <Route path='my-day' element={<MyDay />} />
               <Route path='customers' element={<Customers />} />
               <Route
                 path='customers/:customerId'

@@ -29,6 +29,9 @@ public class Workspace
     public User? CreatedByUser { get; set; }
     public string? LogoUrl { get; set; }
     public string Theme { get; set; } = "light";
+    public bool ReviewRequestsEnabled { get; set; }
+    public string? GoogleReviewUrl { get; set; }
+    public int ReviewRequestDelayHours { get; set; } = 24;
     public string Category { get; set; } = string.Empty;
     public ICollection<User> Users { get; set; } = [];
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

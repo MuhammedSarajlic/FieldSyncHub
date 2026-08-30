@@ -57,6 +57,10 @@ public class Job
     public bool InvoiceSent { get; set; }
     public string JobNumber { get; set; } = string.Empty;
     public DateTime? CompletedAt { get; set; }
+    public string? CompletionNote { get; set; }
+    public string? CustomerSignaturePath { get; set; }
+    public List<string> CompletionPhotoPaths { get; set; } = [];
+    public ICollection<TimeEntry> TimeEntries { get; set; } = [];
     public string CreatedBy { get; set; } = string.Empty;
     public string? Source { get; set; }
     public bool IsArchived { get; set; }

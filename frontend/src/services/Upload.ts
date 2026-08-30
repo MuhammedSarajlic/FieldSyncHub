@@ -6,7 +6,8 @@ export type UploadCategory =
   | 'logo'
   | 'note'
   | 'quote-attachment'
-  | 'service-item-image';
+  | 'service-item-image'
+  | 'job-completion';
 
 export interface BackendUploadResult {
   // The stored object's path - this is what must be persisted (as logoUrl,

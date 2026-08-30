@@ -228,6 +228,8 @@ public class JobService : IJobService
 
     public async Task<ApiResponse<Job>> CreateJob(CreateJobDto dto)
     {
+        if (dto.EndDateTime <= dto.StartDateTime)
+            return new ApiResponse<Job> { Success = false, ErrorMessage = "The job end time must be after its start time." };
         if (dto.PropertyId.HasValue)
         {
             var propertyExists = await _context.Properties.AnyAsync(p => p.Id == dto.PropertyId.Value);
@@ -256,6 +258,10 @@ public class JobService : IJobService
                     Payload = null,
                     ErrorMessage = $"Missing team members: {string.Join(", ", missing)}"
                 };
+
+            var scheduleError = await ValidateSchedule(dto.WorkspaceId, dto.StartDateTime, dto.EndDateTime, employeeIds);
+            if (scheduleError != null)
+                return new ApiResponse<Job> { Success = false, ErrorMessage = scheduleError };
         }
 
         for (var attempt = 0; attempt < MaxDocumentNumberGenerationAttempts; attempt++)
@@ -474,6 +480,15 @@ public class JobService : IJobService
             }
         }
 
+        var scheduleError = await ValidateSchedule(
+            callerWorkspaceId,
+            existingJob.StartDateTime,
+            existingJob.EndDateTime,
+            existingJob.AssignedTeamMembers.Select(employee => employee.Id),
+            existingJob.Id);
+        if (scheduleError != null)
+            return new ApiResponse<Job> { Success = false, ErrorMessage = scheduleError };
+
         if (updatedJobDto.LineItems != null)
         {
             var dtoItems = updatedJobDto.LineItems;
@@ -537,6 +552,33 @@ public class JobService : IJobService
         await _context.SaveChangesAsync();
 
         return new ApiResponse<Job> { Success = true, Payload = existingJob };
+    }
+
+    public async Task<string?> ValidateSchedule(Guid workspaceId, DateTime start, DateTime end, IEnumerable<Guid> employeeIds, Guid? excludeJobId = null)
+    {
+        if (end <= start) return "The job end time must be after its start time.";
+        var ids = employeeIds.Distinct().ToList();
+        if (ids.Count == 0) return null;
+
+        var conflict = await _context.Jobs
+            .Where(job => job.WorkspaceId == workspaceId && job.Id != excludeJobId && job.Status != JobStatus.Canceled &&
+                job.StartDateTime < end && job.EndDateTime > start &&
+                job.AssignedTeamMembers.Any(employee => ids.Contains(employee.Id)))
+            .Select(job => new { job.JobNumber, job.Title })
+            .FirstOrDefaultAsync();
+        if (conflict != null)
+            return $"This time overlaps with {conflict.JobNumber} ({conflict.Title}).";
+
+        var employees = await _context.Employees.Where(employee => ids.Contains(employee.Id) && employee.WorkspaceId == workspaceId).ToListAsync();
+        foreach (var employee in employees)
+        {
+            if (employee.WorkingDays.Count > 0 && !employee.WorkingDays.Contains(start.DayOfWeek))
+                return $"{employee.User?.FullName ?? "A technician"} is not scheduled to work on {start:dddd}.";
+            if (employee.WorkdayStart.HasValue && start.TimeOfDay < employee.WorkdayStart.Value ||
+                employee.WorkdayEnd.HasValue && end.TimeOfDay > employee.WorkdayEnd.Value)
+                return $"The selected time is outside {employee.User?.FullName ?? "the technician"}'s working hours.";
+        }
+        return null;
     }
 
 

@@ -53,6 +53,10 @@ export async function CreateJob(job: TAddJob) {
   return response;
 }
 
+export async function GetJobsByEmployee(employeeId: string) {
+  return api.get(`/job/employee/${employeeId}`);
+}
+
 export async function UpdateJob(job: TUpdateJob) {
   const { assignedTeamMembers, ...jobPayload } = job;
   const response = await api.put('/job', {
