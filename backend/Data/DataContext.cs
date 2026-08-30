@@ -325,6 +325,12 @@ public class DataContext : DbContext
         // Login and the email-change flow both assume at most one account per
         // address - enforce it at the database level too, not just in application code.
         modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+        modelBuilder.Entity<User>().Property(u => u.PasswordResetToken).HasMaxLength(64);
+        modelBuilder.Entity<User>().HasIndex(u => u.PasswordResetToken);
+
+        // Invite tokens are looked up on every acceptance and must be globally unique.
+        modelBuilder.Entity<EmployeeInvite>().Property(i => i.Token).HasMaxLength(128);
+        modelBuilder.Entity<EmployeeInvite>().HasIndex(i => i.Token).IsUnique();
 
         // Revoking every refresh token for a user (password change) queries by UserId.
         modelBuilder.Entity<RefreshToken>().HasIndex(r => r.UserId);
