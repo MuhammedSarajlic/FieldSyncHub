@@ -25,7 +25,6 @@ import { CreateInvoice } from '../../../services/Invoice';
 import { useAuth } from '../../../context/AuthProvider';
 import { DiscountType } from '../../../constants/Enumeration/CommonEnum/DiscountEnum';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
-import { InvoiceStatus } from '../../../constants/Enumeration/InvoiceEnum/InvoiceEnum';
 import { useDebounce } from '../../../hooks/useDebounce';
 
 interface ICreateInvoiceModal {
@@ -62,12 +61,12 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
         isOptional: false,
       },
     ],
-    taxRate: 0,
+    taxRate: user?.workspace?.defaultTaxRate ?? 0,
     discount: 0,
     discountType: DiscountType.Percentage,
     dueDate: '',
     issueDate: new Date().toISOString().split('T')[0],
-    paymentTerms: 'uponReceipt',
+    paymentTerms: user?.workspace?.defaultPaymentTerms ?? 'uponReceipt',
     notes: '',
     internalNotes: '',
   });
@@ -121,7 +120,6 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
     calculateInvoiceTotals(invoice);
 
   const selectServiceItem = (
-    currentInvoice: TAddInvoice,
     index: number,
     serviceItem: TServiceItem,
     setInvoice: React.Dispatch<React.SetStateAction<TAddInvoice>>,
@@ -145,7 +143,7 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
   };
 
   const handleLineItemChange = (
-    currentInvoice: TAddInvoice,
+    _currentInvoice: TAddInvoice,
     index: number,
     field: keyof TAddLineItem,
     value: any,
@@ -166,7 +164,7 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
         updatedItem.serviceItemId = undefined;
       }
 
-      updatedItem[field] = value;
+      (updatedItem as Record<string, any>)[field] = value;
       newLineItems[index] = updatedItem;
 
       return { ...prev, lineItems: newLineItems };
@@ -174,7 +172,6 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
   };
 
   const addNewLineItem = (
-    currentInvoice: TAddInvoice,
     setInvoice: React.Dispatch<React.SetStateAction<TAddInvoice>>
   ) => {
     setInvoice((prev) => ({
@@ -193,11 +190,10 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
   };
 
   const removeLineItem = (
-    currentInvoice: TAddInvoice,
     index: number,
     setInvoice: React.Dispatch<React.SetStateAction<TAddInvoice>>
   ) => {
-    if (currentInvoice.lineItems.length > 1) {
+    if (invoice.lineItems.length > 1) {
       setInvoice((prev) => ({
         ...prev,
         lineItems: prev.lineItems.filter((_, i) => i !== index),
@@ -265,12 +261,12 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
               isOptional: false,
             },
           ],
-          taxRate: 0,
+          taxRate: user?.workspace?.defaultTaxRate ?? 0,
           discount: 0,
           discountType: DiscountType.Percentage,
           issueDate: new Date().toISOString().split('T')[0],
           dueDate: '',
-          paymentTerms: 'uponReceipt',
+          paymentTerms: user?.workspace?.defaultPaymentTerms ?? 'uponReceipt',
           notes: '',
           internalNotes: '',
         });
@@ -330,6 +326,27 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
   useEffect(() => {
     fetchCustomers();
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setInvoice((prev) => {
+      if (prev.customerId || prev.title || prev.notes || prev.internalNotes) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        taxRate: user?.workspace?.defaultTaxRate ?? prev.taxRate,
+        paymentTerms:
+          user?.workspace?.defaultPaymentTerms ?? prev.paymentTerms,
+      };
+    });
+  }, [
+    isOpen,
+    user?.workspace?.defaultPaymentTerms,
+    user?.workspace?.defaultTaxRate,
+  ]);
 
   useEffect(() => {
     if (debouncedSearchTerm && activeSearchIndex !== null) {
@@ -631,7 +648,9 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
                           }
                           className='w-full p-2.5 text-sm font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-bg-primary focus:border-transparent outline-none'
                           placeholder='Service name'
-                          ref={(el) => (searchInputRefs.current[index] = el)}
+                          ref={(el) => {
+                            searchInputRefs.current[index] = el;
+                          }}
                         />
 
                         {/* Search Results Dropdown */}
@@ -646,7 +665,6 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
                                   onMouseDown={(e) => e.preventDefault()}
                                   onClick={() =>
                                     selectServiceItem(
-                                      invoice,
                                       index,
                                       service,
                                       setInvoice,
@@ -741,7 +759,7 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
                             name='Remove'
                             customTextStyle='text-red-500'
                             handleBtnClick={() =>
-                              removeLineItem(invoice, index, setInvoice)
+                              removeLineItem(index, setInvoice)
                             }
                           />
                         )}
@@ -753,7 +771,7 @@ const CreateInvoiceModal = ({ isOpen, onClose }: ICreateInvoiceModal) => {
               <div className='flex items-center space-x-3'>
                 <IconButton
                   icon={<Plus className='w-4 h-4 mr-2' />}
-                  onClick={() => addNewLineItem(invoice, setInvoice)}
+                  onClick={() => addNewLineItem(setInvoice)}
                   customStyle='py-2 px-4 text-white bg-bg-primary'
                 >
                   Add Line Item

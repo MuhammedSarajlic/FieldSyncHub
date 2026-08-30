@@ -276,6 +276,8 @@ public class DataContext : DbContext
         modelBuilder.Entity<ServiceItem>().Property(si => si.UnitPrice).HasPrecision(19, 4);
         modelBuilder.Entity<ServiceItem>().Property(si => si.Cost).HasPrecision(19, 4);
 
+        modelBuilder.Entity<Workspace>().Property(w => w.DefaultTaxRate).HasPrecision(9, 6);
+
         modelBuilder.Entity<Job>().Property(j => j.DepositAmount).HasPrecision(19, 4);
         modelBuilder.Entity<Job>().Property(j => j.DiscountValue).HasPrecision(19, 4);
         modelBuilder.Entity<Job>().Property(j => j.TaxRate).HasPrecision(9, 6);

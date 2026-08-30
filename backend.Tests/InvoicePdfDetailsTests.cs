@@ -25,13 +25,26 @@ public class InvoicePdfDetailsTests
             Name = "Field Crew",
             CompanyName = "Northwind Mechanical",
             PhoneNumber = "(555) 111-2222",
-            CompanyUrl = "northwind.example"
+            CompanyUrl = "northwind.example",
+            AddressLine1 = "100 Market St",
+            AddressLine2 = "Suite 4",
+            City = "Austin",
+            State = "TX",
+            PostalCode = "78701",
+            Country = "USA",
+            TaxRegistrationNumber = "VAT-123"
         };
 
         var lines = InvoiceService.BuildWorkspaceIdentityLines(workspace);
 
         Assert.Equal(
-            ["Northwind Mechanical", "(555) 111-2222", "northwind.example"],
+            [
+                "Northwind Mechanical",
+                "(555) 111-2222",
+                "northwind.example",
+                "Suite 4, 100 Market St, Austin, TX 78701, USA",
+                "Tax ID: VAT-123"
+            ],
             lines);
         Assert.DoesNotContain("Inat Digital", lines);
         Assert.DoesNotContain("lordmest.lm@gmail.com", lines);

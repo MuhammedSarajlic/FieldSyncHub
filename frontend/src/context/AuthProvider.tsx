@@ -6,6 +6,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { GetLoggedInUser } from '../services/User';
+import { GetWorkspaceById } from '../services/Workspace';
 import { TContext } from '../types/Context';
 import { TUser } from '../types/User';
 import { Logout } from '../services/Auth';
@@ -20,6 +21,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
   const [loading, setLoading] = useState(true);
 
+  const hydrateUserWorkspace = async (currentUser: TUser) => {
+    if (!currentUser.workspace?.id) {
+      localStorage.removeItem('workspaceCurrency');
+      return currentUser;
+    }
+
+    try {
+      const workspaceResponse = await GetWorkspaceById(currentUser.workspace.id);
+      if (workspaceResponse.status === 200) {
+        localStorage.setItem(
+          'workspaceCurrency',
+          workspaceResponse.data.payload.currency || 'USD'
+        );
+
+        return {
+          ...currentUser,
+          workspace: workspaceResponse.data.payload,
+        };
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    return currentUser;
+  };
+
   const fetchCurrentUser = async () => {
     setLoading(true);
     try {
@@ -32,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await GetLoggedInUser(token);
 
       if (response.status === 200) {
-        setUser(response.data.payload);
+        setUser(await hydrateUserWorkspace(response.data.payload));
       } else {
         setUser(null);
       }
@@ -53,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await GetLoggedInUser(token);
       if (response.status === 200) {
-        setUser(response.data.payload);
+        setUser(await hydrateUserWorkspace(response.data.payload));
       }
     } catch (error) {
       console.error(error);

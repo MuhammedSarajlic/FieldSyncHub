@@ -88,7 +88,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     ],
     discountType: DiscountType.Percentage,
     discountValue: 0,
-    taxRate: 0,
+    taxRate: user?.workspace?.defaultTaxRate ?? 0,
     customerNotes: [
       {
         createdBy: '',
@@ -152,7 +152,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     calculateQuoteTotals(quote);
 
   const selectServiceItem = (
-    currentQuote: TAddQuote,
+    _currentQuote: TAddQuote,
     index: number,
     serviceItem: TServiceItem,
     setQuote: React.Dispatch<React.SetStateAction<TAddQuote>>,
@@ -176,7 +176,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
   };
 
   const handleLineItemChange = (
-    currentQuote: TAddQuote,
+    _currentQuote: TAddQuote,
     index: number,
     field: keyof TAddLineItem,
     value: any,
@@ -197,7 +197,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
         updatedItem.serviceItemId = undefined;
       }
 
-      updatedItem[field] = value;
+      (updatedItem as Record<string, any>)[field] = value;
       newLineItems[index] = updatedItem;
 
       return { ...prev, lineItems: newLineItems };
@@ -205,7 +205,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
   };
 
   const addNewLineItem = (
-    currentQuote: TAddQuote,
+    _currentQuote: TAddQuote,
     setQuote: React.Dispatch<React.SetStateAction<TAddQuote>>
   ) => {
     setQuote((prev) => ({
@@ -224,7 +224,7 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
   };
 
   const removeLineItem = (
-    currentQuote: TAddQuote,
+    _currentQuote: TAddQuote,
     index: number,
     setQuote: React.Dispatch<React.SetStateAction<TAddQuote>>
   ) => {
@@ -372,6 +372,21 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
     fetchCustomers();
     // fetchAllServiceItems();
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setQuote((prev) => {
+      if (prev.customerId || prev.title || prev.source) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        taxRate: user?.workspace?.defaultTaxRate ?? prev.taxRate,
+      };
+    });
+  }, [isOpen, user?.workspace?.defaultTaxRate]);
 
   useEffect(() => {
     if (debouncedUserSearchTerm.trim() === '') {
@@ -746,7 +761,9 @@ const NewQuoteModal = ({ isOpen, onClose, setQuotes }: INewQuoteModal) => {
                             }
                             className='w-full p-2.5 text-sm font-medium border border-gray-300 rounded-lg focus:ring-0.5 focus:ring-[#356852] focus:border-[#356852] outline-none'
                             placeholder='Service name'
-                            ref={(el) => (searchInputRefs.current[index] = el)}
+                            ref={(el) => {
+                              searchInputRefs.current[index] = el;
+                            }}
                           />
 
                           {/* Search Results Dropdown */}

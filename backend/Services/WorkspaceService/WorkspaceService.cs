@@ -46,6 +46,15 @@ public class WorkspaceService : IWorkspaceService
     public async Task<ApiResponse<GetWorkspaceDto>> CreateWorkspace(CreateWorkspaceDto createWorkspaceDto, Guid createdById)
     {
         var newWorkspace = createWorkspaceDto.Adapt<Workspace>();
+        newWorkspace.Currency = NormalizeCurrencyCode(newWorkspace.Currency);
+        newWorkspace.DefaultPaymentTerms = NormalizePaymentTerms(newWorkspace.DefaultPaymentTerms);
+        newWorkspace.TaxRegistrationNumber = NormalizeOptional(newWorkspace.TaxRegistrationNumber);
+        newWorkspace.AddressLine1 = NormalizeOptional(newWorkspace.AddressLine1);
+        newWorkspace.AddressLine2 = NormalizeOptional(newWorkspace.AddressLine2);
+        newWorkspace.City = NormalizeOptional(newWorkspace.City);
+        newWorkspace.State = NormalizeOptional(newWorkspace.State);
+        newWorkspace.PostalCode = NormalizeOptional(newWorkspace.PostalCode);
+        newWorkspace.Country = NormalizeOptional(newWorkspace.Country);
 
         // A workspace doesn't exist yet when the onboarding logo is uploaded, so
         // that upload is keyed by the uploading user instead - only accept a
@@ -126,6 +135,16 @@ public class WorkspaceService : IWorkspaceService
         if (updatedWorkspaceDto.CompanyName != null) existingWorkspace.CompanyName = updatedWorkspaceDto.CompanyName;
         if (updatedWorkspaceDto.CompanyUrl != null) existingWorkspace.CompanyUrl = updatedWorkspaceDto.CompanyUrl;
         if (updatedWorkspaceDto.PhoneNumber != null) existingWorkspace.PhoneNumber = updatedWorkspaceDto.PhoneNumber;
+        if (updatedWorkspaceDto.Currency != null) existingWorkspace.Currency = NormalizeCurrencyCode(updatedWorkspaceDto.Currency);
+        if (updatedWorkspaceDto.DefaultTaxRate.HasValue) existingWorkspace.DefaultTaxRate = updatedWorkspaceDto.DefaultTaxRate.Value;
+        if (updatedWorkspaceDto.DefaultPaymentTerms != null) existingWorkspace.DefaultPaymentTerms = NormalizePaymentTerms(updatedWorkspaceDto.DefaultPaymentTerms);
+        if (updatedWorkspaceDto.TaxRegistrationNumber != null) existingWorkspace.TaxRegistrationNumber = NormalizeOptional(updatedWorkspaceDto.TaxRegistrationNumber);
+        if (updatedWorkspaceDto.AddressLine1 != null) existingWorkspace.AddressLine1 = NormalizeOptional(updatedWorkspaceDto.AddressLine1);
+        if (updatedWorkspaceDto.AddressLine2 != null) existingWorkspace.AddressLine2 = NormalizeOptional(updatedWorkspaceDto.AddressLine2);
+        if (updatedWorkspaceDto.City != null) existingWorkspace.City = NormalizeOptional(updatedWorkspaceDto.City);
+        if (updatedWorkspaceDto.State != null) existingWorkspace.State = NormalizeOptional(updatedWorkspaceDto.State);
+        if (updatedWorkspaceDto.PostalCode != null) existingWorkspace.PostalCode = NormalizeOptional(updatedWorkspaceDto.PostalCode);
+        if (updatedWorkspaceDto.Country != null) existingWorkspace.Country = NormalizeOptional(updatedWorkspaceDto.Country);
         if (updatedWorkspaceDto.Size.HasValue) existingWorkspace.Size = updatedWorkspaceDto.Size.Value;
         // The logo is keyed by the uploading user (see CreateWorkspace) - reject
         // anything that isn't actually this caller's own uploaded path rather than
@@ -183,4 +202,12 @@ public class WorkspaceService : IWorkspaceService
         await _context.SaveChangesAsync();
     }
 
+    private static string NormalizeCurrencyCode(string? currency)
+        => string.IsNullOrWhiteSpace(currency) ? "USD" : currency.Trim().ToUpperInvariant();
+
+    private static string NormalizePaymentTerms(string? paymentTerms)
+        => string.IsNullOrWhiteSpace(paymentTerms) ? "uponReceipt" : paymentTerms.Trim();
+
+    private static string? NormalizeOptional(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

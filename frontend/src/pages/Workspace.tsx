@@ -81,6 +81,16 @@ const Workspace = () => {
     companyName: '',
     companyUrl: '',
     phoneNumber: '',
+    currency: 'USD',
+    defaultTaxRate: 0,
+    defaultPaymentTerms: 'uponReceipt',
+    taxRegistrationNumber: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
     size: CompanySize.Solo,
     createdByUserId: user?.id ?? '',
     logoUrl: '',
@@ -175,6 +185,10 @@ const Workspace = () => {
 
       const response = await CreateWorkspace(finalWorkspace);
       if (response.status === 200) {
+        localStorage.setItem(
+          'workspaceCurrency',
+          finalWorkspace.currency || 'USD'
+        );
         // The workspace was just created server-side, but the in-memory
         // `user` from AuthProvider still reflects the pre-workspace state
         // (it's only fetched once on token change). Without this refetch,

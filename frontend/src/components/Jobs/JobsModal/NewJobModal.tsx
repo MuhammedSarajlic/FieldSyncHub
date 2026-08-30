@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   X,
   Plus,
-  Settings,
   Building2,
   Mail,
   Phone,
@@ -11,7 +10,6 @@ import {
   ChevronDown,
   UserPlus,
   Home,
-  Calendar,
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/FuntionHelpers/formatCurrency';
 import { TAddJob, TJob } from '../../../types/Job';
@@ -111,7 +109,7 @@ const NewJobModal = ({
     depositAmount: 0,
     discountType: DiscountType.Percentage,
     discountValue: 0,
-    taxRate: 0,
+    taxRate: user?.workspace?.defaultTaxRate ?? 0,
     sendInvoice: false,
     sendReminder: false,
     reminderDaysBefore: 1,
@@ -328,7 +326,7 @@ const NewJobModal = ({
     calculateJobTotals(job);
 
   const selectServiceItem = (
-    currentJob: TAddJob,
+    _currentJob: TAddJob,
     index: number,
     serviceItem: TServiceItem,
     setJob: React.Dispatch<React.SetStateAction<TAddJob>>,
@@ -352,7 +350,7 @@ const NewJobModal = ({
   };
 
   const handleLineItemChange = (
-    currentJob: TAddJob,
+    _currentJob: TAddJob,
     index: number,
     field: keyof TAddLineItem,
     value: any,
@@ -373,7 +371,7 @@ const NewJobModal = ({
         updatedItem.serviceItemId = undefined;
       }
 
-      updatedItem[field] = value;
+      (updatedItem as Record<string, any>)[field] = value;
       newLineItems[index] = updatedItem;
 
       return { ...prev, lineItems: newLineItems };
@@ -381,7 +379,7 @@ const NewJobModal = ({
   };
 
   const addNewLineItem = (
-    currentJob: TAddJob,
+    _currentJob: TAddJob,
     setJob: React.Dispatch<React.SetStateAction<TAddJob>>
   ) => {
     setJob((prev) => ({
@@ -400,7 +398,7 @@ const NewJobModal = ({
   };
 
   const removeLineItem = (
-    currentJob: TAddJob,
+    _currentJob: TAddJob,
     index: number,
     setJob: React.Dispatch<React.SetStateAction<TAddJob>>
   ) => {
@@ -568,6 +566,21 @@ const NewJobModal = ({
     fetchEmployees();
     fetchAllServiceItems();
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setJob((prev) => {
+      if (prev.customerId || prev.title || prev.source) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        taxRate: user?.workspace?.defaultTaxRate ?? prev.taxRate,
+      };
+    });
+  }, [isOpen, user?.workspace?.defaultTaxRate]);
 
   useEffect(() => {
     if (debouncedSearchTerm && activeSearchIndex !== null) {
@@ -1096,7 +1109,9 @@ const NewJobModal = ({
                             }
                             className='w-full p-2.5 text-sm font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#356852] focus:border-[#356852] outline-none'
                             placeholder='Service name'
-                            ref={(el) => (searchInputRefs.current[index] = el)}
+                            ref={(el) => {
+                              searchInputRefs.current[index] = el;
+                            }}
                           />
 
                           {activeSearchIndex === index &&

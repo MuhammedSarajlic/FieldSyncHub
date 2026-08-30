@@ -209,7 +209,7 @@ const EditJobModal = ({
         updatedItem.serviceItemId = undefined;
       }
 
-      updatedItem[field] = value;
+      (updatedItem as Record<string, any>)[field] = value;
       newLineItems[index] = updatedItem;
 
       return { ...prev, lineItems: newLineItems };
@@ -961,7 +961,9 @@ const EditJobModal = ({
                             }
                             className='w-full p-2.5 text-sm font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#356852] focus:border-[#356852] outline-none'
                             placeholder='Service name'
-                            ref={(el) => (searchInputRefs.current[index] = el)}
+                            ref={(el) => {
+                              searchInputRefs.current[index] = el;
+                            }}
                           />
 
                           {activeSearchIndex === index &&

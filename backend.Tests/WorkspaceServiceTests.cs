@@ -71,6 +71,45 @@ public class WorkspaceServiceTests
     }
 
     [Fact]
+    public async Task UpdateWorkspace_persists_billing_defaults_and_address_fields()
+    {
+        await using var context = CreateContext();
+        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Mine" };
+        context.Workspaces.Add(workspace);
+        await context.SaveChangesAsync();
+
+        var service = new WorkspaceService(context, new NoopStorageService());
+        var result = await service.UpdateWorkspace(new UpdateWorkspaceDto
+        {
+            Id = Guid.NewGuid(),
+            Currency = "eur",
+            DefaultTaxRate = 0.17m,
+            DefaultPaymentTerms = "net30",
+            TaxRegistrationNumber = "VAT-123",
+            AddressLine1 = "100 Market St",
+            AddressLine2 = "Suite 4",
+            City = "Austin",
+            State = "TX",
+            PostalCode = "78701",
+            Country = "USA"
+        }, workspace.Id, Guid.NewGuid());
+
+        Assert.True(result.Success);
+
+        var reloaded = await context.Workspaces.SingleAsync(w => w.Id == workspace.Id);
+        Assert.Equal("EUR", reloaded.Currency);
+        Assert.Equal(0.17m, reloaded.DefaultTaxRate);
+        Assert.Equal("net30", reloaded.DefaultPaymentTerms);
+        Assert.Equal("VAT-123", reloaded.TaxRegistrationNumber);
+        Assert.Equal("100 Market St", reloaded.AddressLine1);
+        Assert.Equal("Suite 4", reloaded.AddressLine2);
+        Assert.Equal("Austin", reloaded.City);
+        Assert.Equal("TX", reloaded.State);
+        Assert.Equal("78701", reloaded.PostalCode);
+        Assert.Equal("USA", reloaded.Country);
+    }
+
+    [Fact]
     public async Task DeleteWorkspace_throws_when_the_target_is_not_the_callers_own()
     {
         await using var context = CreateContext();

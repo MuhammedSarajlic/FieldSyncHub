@@ -13,6 +13,7 @@ import {
   ArrowRight,
   ShieldCheck,
   Copy,
+  MapPin,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
@@ -46,6 +47,14 @@ const companySizeLabels: Record<CompanySize, string> = {
   [CompanySize.Medium]: '6-10 People',
   [CompanySize.Large]: '10+ People',
 };
+
+const currencyOptions = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'];
+const paymentTermOptions = [
+  { value: 'uponReceipt', label: 'Upon receipt' },
+  { value: 'net15', label: 'Net 15' },
+  { value: 'net30', label: 'Net 30' },
+  { value: 'custom', label: 'Custom' },
+];
 
 const inputClass =
   'w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bg-primary focus:border-bg-primary text-sm';
@@ -103,10 +112,21 @@ const Settings = () => {
             companyName: ws.companyName,
             companyUrl: ws.companyUrl,
             phoneNumber: ws.phoneNumber,
+            currency: ws.currency,
+            defaultTaxRate: ws.defaultTaxRate,
+            defaultPaymentTerms: ws.defaultPaymentTerms,
+            taxRegistrationNumber: ws.taxRegistrationNumber,
+            addressLine1: ws.addressLine1,
+            addressLine2: ws.addressLine2,
+            city: ws.city,
+            state: ws.state,
+            postalCode: ws.postalCode,
+            country: ws.country,
             size: ws.size,
             category: ws.category,
             logoUrl: ws.logoUrl,
           });
+          localStorage.setItem('workspaceCurrency', ws.currency || 'USD');
           setLogoPreview(ws.logoUrl ?? null);
         }
       } catch (error) {
@@ -151,6 +171,10 @@ const Settings = () => {
       }
       const response = await UpdateWorkspace({ ...workspace, logoUrl });
       if (response.status === 200) {
+        localStorage.setItem(
+          'workspaceCurrency',
+          response.data.payload.currency || workspace.currency || 'USD'
+        );
         toast.success('Company profile updated');
         setLogoFile(null);
         await refetchUser();
@@ -450,6 +474,196 @@ const Settings = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                <div className='space-y-4 rounded-lg border border-gray-200 p-5'>
+                  <div className='flex items-center gap-2 text-gray-900'>
+                    <MapPin size={16} />
+                    <h3 className='text-sm font-semibold'>Billing Defaults</h3>
+                  </div>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        Currency
+                      </label>
+                      <select
+                        value={workspace.currency ?? 'USD'}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            currency: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      >
+                        {currencyOptions.map((currency) => (
+                          <option key={currency} value={currency}>
+                            {currency}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        Default Tax Rate (%)
+                      </label>
+                      <input
+                        type='number'
+                        min='0'
+                        step='0.01'
+                        value={(workspace.defaultTaxRate ?? 0) * 100}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            defaultTaxRate:
+                              (parseFloat(e.target.value) || 0) / 100,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        Default Payment Terms
+                      </label>
+                      <select
+                        value={workspace.defaultPaymentTerms ?? 'uponReceipt'}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            defaultPaymentTerms: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      >
+                        {paymentTermOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        Tax Registration Number
+                      </label>
+                      <input
+                        type='text'
+                        value={workspace.taxRegistrationNumber ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            taxRegistrationNumber: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className='space-y-4 rounded-lg border border-gray-200 p-5'>
+                  <h3 className='text-sm font-semibold text-gray-900'>
+                    Business Address
+                  </h3>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        Address Line 1
+                      </label>
+                      <input
+                        type='text'
+                        value={workspace.addressLine1 ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            addressLine1: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        Address Line 2
+                      </label>
+                      <input
+                        type='text'
+                        value={workspace.addressLine2 ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            addressLine2: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        City
+                      </label>
+                      <input
+                        type='text'
+                        value={workspace.city ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            city: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        State / Region
+                      </label>
+                      <input
+                        type='text'
+                        value={workspace.state ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            state: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        Postal Code
+                      </label>
+                      <input
+                        type='text'
+                        value={workspace.postalCode ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            postalCode: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        Country
+                      </label>
+                      <input
+                        type='text'
+                        value={workspace.country ?? ''}
+                        onChange={(e) =>
+                          setWorkspace({
+                            ...workspace,
+                            country: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
                 </div>
 

@@ -626,6 +626,7 @@ public class InvoiceService : IInvoiceService
         var senderName = GetWorkspaceDisplayName(workspace);
         var senderLines = BuildWorkspaceIdentityLines(workspace);
         var billToLines = BuildBillToLines(invoice);
+        var currencyCode = workspace?.Currency;
 
         var pdf = Document.Create(container =>
         {
@@ -702,25 +703,25 @@ public class InvoiceService : IInvoiceService
                         {
                             table.Cell().Text(item.Name);
                             table.Cell().Text($"{item.Quantity}");
-                            table.Cell().Text($"${item.UnitPrice:0.00}");
-                            table.Cell().Text($"${item.Total:0.00}");
+                            table.Cell().Text(CurrencyFormatter.Format(item.UnitPrice, currencyCode));
+                            table.Cell().Text(CurrencyFormatter.Format(item.Total, currencyCode));
                         }
                     });
 
                     col.Item().AlignRight().Column(summary =>
                     {
-                        summary.Item().Text($"Subtotal: ${invoice.Subtotal:0.00}");
+                        summary.Item().Text($"Subtotal: {CurrencyFormatter.Format(invoice.Subtotal, currencyCode)}");
 
                         if (invoice.Discount > 0)
                         {
                             var discountLabel = invoice.DiscountType == DiscountType.Percentage
                                 ? $"Discount ({invoice.Discount:0.##}%)"
                                 : "Discount";
-                            summary.Item().Text($"{discountLabel}: -${totals.Discount:0.00}");
+                            summary.Item().Text($"{discountLabel}: -{CurrencyFormatter.Format(totals.Discount, currencyCode)}");
                         }
 
-                        summary.Item().Text($"Tax: ${totals.TaxAmount:0.00}");
-                        summary.Item().Text($"Total: ${totals.Total:0.00}").Bold();
+                        summary.Item().Text($"Tax: {CurrencyFormatter.Format(totals.TaxAmount, currencyCode)}");
+                        summary.Item().Text($"Total: {CurrencyFormatter.Format(totals.Total, currencyCode)}").Bold();
                     });
 
                     col.Item().Text("See our Terms & Conditions").Italic().FontSize(10);
@@ -758,6 +759,28 @@ public class InvoiceService : IInvoiceService
         if (!string.IsNullOrWhiteSpace(workspace?.CompanyUrl))
         {
             lines.Add(workspace.CompanyUrl);
+        }
+
+        var address = FormatAddress(
+            workspace?.AddressLine1,
+            workspace?.City,
+            workspace?.State,
+            workspace?.PostalCode,
+            workspace?.Country);
+        if (!string.IsNullOrWhiteSpace(workspace?.AddressLine2))
+        {
+            address = string.IsNullOrWhiteSpace(address)
+                ? workspace.AddressLine2
+                : $"{workspace.AddressLine2}, {address}";
+        }
+        if (!string.IsNullOrWhiteSpace(address))
+        {
+            lines.Add(address);
+        }
+
+        if (!string.IsNullOrWhiteSpace(workspace?.TaxRegistrationNumber))
+        {
+            lines.Add($"Tax ID: {workspace.TaxRegistrationNumber}");
         }
 
         return lines;

@@ -2,7 +2,9 @@
 using System.Net;
 using System.Net.Sockets;
 using backend.Data;
+using backend.Models;
 using backend.Models.QuoteModels;
+using backend.Services.Billing;
 using backend.Services.StorageService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -16,11 +18,13 @@ public class QuotePdfGenerator
 {
     private readonly Quote _quote;
     private readonly string _primaryColor = "#343a40";
+    private readonly Workspace? _workspace;
     private byte[]? Logo { get; set; }
 
     public QuotePdfGenerator(Quote quote, byte[]? logo = null)
     {
         _quote = quote;
+        _workspace = quote.CreatedByUser?.Workspace;
         Logo = logo;
     }
 
@@ -54,7 +58,7 @@ public class QuotePdfGenerator
                 row.RelativeItem().AlignLeft().Height(60).AlignMiddle().Text(text =>
                 {
                     text.DefaultTextStyle(x => x.FontSize(18).SemiBold().FontColor(Colors.Black));
-                    text.Line(_quote.CreatedByUser.Workspace?.Name ?? "Company Name");
+                    text.Line(GetWorkspaceDisplayName());
                 });
 
                 // Company Logo (if available)
@@ -69,7 +73,10 @@ public class QuotePdfGenerator
             {
                 row.RelativeItem(2).Column(col =>
                 {
-                    // Empty block or left-side space
+                    foreach (var line in BuildWorkspaceIdentityLines().Skip(1))
+                    {
+                        col.Item().AlignLeft().Text(line);
+                    }
                 });
 
                 row.RelativeItem(1).Column(info =>
@@ -200,7 +207,7 @@ public class QuotePdfGenerator
                             ? $"Discount ({_quote.DiscountValue:N2}%)"
                             : "Discount";
                         r.RelativeItem().Text(discountText);
-                        r.ConstantItem(80).AlignRight().Text($"-{FormatCurrency(_quote.Discount)}");
+                            r.ConstantItem(80).AlignRight().Text($"-{FormatCurrency(_quote.Discount)}");
                     });
                 }
 
@@ -231,7 +238,49 @@ public class QuotePdfGenerator
 
     private string FormatCurrency(decimal amount)
     {
-        return $"$ {amount:N2}";
+        return CurrencyFormatter.Format(amount, _workspace?.Currency);
+    }
+
+    private string GetWorkspaceDisplayName()
+        => string.IsNullOrWhiteSpace(_workspace?.CompanyName)
+            ? (string.IsNullOrWhiteSpace(_workspace?.Name) ? "Company Name" : _workspace.Name)
+            : _workspace.CompanyName;
+
+    private List<string> BuildWorkspaceIdentityLines()
+    {
+        var lines = new List<string> { GetWorkspaceDisplayName() };
+
+        var addressParts = new[]
+        {
+            _workspace?.AddressLine1,
+            _workspace?.AddressLine2,
+            _workspace?.City,
+            string.Join(" ", new[] { _workspace?.State, _workspace?.PostalCode }.Where(part => !string.IsNullOrWhiteSpace(part))),
+            _workspace?.Country
+        }.Where(part => !string.IsNullOrWhiteSpace(part));
+
+        var address = string.Join(", ", addressParts);
+        if (!string.IsNullOrWhiteSpace(address))
+        {
+            lines.Add(address);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_workspace?.PhoneNumber))
+        {
+            lines.Add(_workspace.PhoneNumber);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_workspace?.CompanyUrl))
+        {
+            lines.Add(_workspace.CompanyUrl);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_workspace?.TaxRegistrationNumber))
+        {
+            lines.Add($"Tax ID: {_workspace.TaxRegistrationNumber}");
+        }
+
+        return lines;
     }
 }
 
