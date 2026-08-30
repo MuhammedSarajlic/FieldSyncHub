@@ -6,3 +6,8 @@
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Build and dependency output
+bin/
+obj/
+node_modules/

@@ -16,7 +16,6 @@
     "country-list": "^2.3.0",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.12.1",
-    "frontend": "file:",
     "leaflet": "^1.9.4",
     "libphonenumber-js": "^1.12.9",
     "lucide-react": "^0.507.0",
