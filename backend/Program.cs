@@ -138,6 +138,10 @@ builder.Services.AddHsts(options =>
     options.IncludeSubDomains = true;
 });
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("quote-logo", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
 builder.Services.AddHostedService<JobNotificationWorker>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHealthChecks()

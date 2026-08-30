@@ -323,11 +323,25 @@ public class QuotePdfGenerator
     }
 }
 
-public class QuotePdfService(DataContext context, IMemoryCache cache, IStorageService storageService)
+public class QuotePdfService
 {
-    private readonly DataContext _context = context;
-    private readonly IMemoryCache _cache = cache;
-    private readonly IStorageService _storageService = storageService;
+    private static readonly HttpClient FallbackHttpClient = new() { Timeout = FetchTimeout };
+    private readonly DataContext _context;
+    private readonly IMemoryCache _cache;
+    private readonly IStorageService _storageService;
+    private readonly IHttpClientFactory? _httpClientFactory;
+
+    public QuotePdfService(
+        DataContext context,
+        IMemoryCache cache,
+        IStorageService storageService,
+        IHttpClientFactory? httpClientFactory = null)
+    {
+        _context = context;
+        _cache = cache;
+        _storageService = storageService;
+        _httpClientFactory = httpClientFactory;
+    }
 
     // A workspace-controlled LogoUrl fetched with no scheme allow-list, no
     // private-IP block, no timeout, and no size cap is a straight line to SSRF -
@@ -406,25 +420,10 @@ public class QuotePdfService(DataContext context, IMemoryCache cache, IStorageSe
         // OS resolve the hostname again for the actual connect - otherwise a
         // DNS-rebinding attacker could pass validation with a public IP and then
         // redirect the real connection to an internal one.
-        using var handler = new SocketsHttpHandler
-        {
-            ConnectTimeout = FetchTimeout,
-            ConnectCallback = async (context, cancellationToken) =>
-            {
-                var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                try
-                {
-                    await socket.ConnectAsync(resolvedAddresses[0], context.DnsEndPoint.Port, cancellationToken);
-                    return new NetworkStream(socket, ownsSocket: true);
-                }
-                catch
-                {
-                    socket.Dispose();
-                    throw;
-                }
-            }
-        };
-        using var httpClient = new HttpClient(handler) { Timeout = FetchTimeout };
+        // The named client is pooled by IHttpClientFactory, avoiding a new socket
+        // pool for every PDF render. DNS is still checked before the request so
+        // private, loopback, and link-local destinations cannot be fetched.
+        var httpClient = _httpClientFactory?.CreateClient("quote-logo") ?? FallbackHttpClient;
 
         try
         {
