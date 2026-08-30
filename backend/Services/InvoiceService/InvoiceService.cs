@@ -610,6 +610,10 @@ public class InvoiceService : IInvoiceService
     public async Task DeleteInvoice(Guid id, Guid callerWorkspaceId)
     {
         var invoiceToDelete = await _context.Invoices.FindAsync(id);
+        if (invoiceToDelete == null || invoiceToDelete.WorkspaceId != callerWorkspaceId)
+        {
+            throw new KeyNotFoundException($"Invoice with ID {id} not found.");
+        }
 
         if (invoiceToDelete == null || invoiceToDelete.WorkspaceId != callerWorkspaceId)
         {
