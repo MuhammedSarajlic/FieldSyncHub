@@ -8,6 +8,7 @@ public sealed class JobNotificationWorker(IServiceScopeFactory scopeFactory, ILo
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -50,7 +51,10 @@ public sealed class JobNotificationWorker(IServiceScopeFactory scopeFactory, ILo
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
             catch (Exception ex) { logger.LogError(ex, "Job notification worker failed"); }
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            if (!await timer.WaitForNextTickAsync(stoppingToken))
+            {
+                break;
+            }
         }
     }
 }
