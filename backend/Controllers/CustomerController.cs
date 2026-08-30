@@ -6,6 +6,7 @@ using backend.Services.CustomerService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
@@ -75,8 +76,15 @@ public class CustomerController : ControllerBase
             return Forbid();
         }
 
-        var customer = await _customerUnitOfWork.UpdateCustomerWithDependenciesAsync(updatedCustomerDto, callerWorkspaceId);
-        return Ok(customer);
+        try
+        {
+            var customer = await _customerUnitOfWork.UpdateCustomerWithDependenciesAsync(updatedCustomerDto, callerWorkspaceId);
+            return Ok(customer);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "This customer was changed by another user. Reload it before saving." });
+        }
     }
 
     [HttpDelete("{id:guid}")]

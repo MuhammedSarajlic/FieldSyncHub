@@ -7,6 +7,7 @@ using backend.Services.InvoiceService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
@@ -107,8 +108,15 @@ public class InvoiceController : ControllerBase
 
         try
         {
-            var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto, callerWorkspaceId);
-            return Ok(updatedInvoice);
+            try
+            {
+                var updatedInvoice = await _invoiceService.UpdateInvoice(updatedInvoiceDto, callerWorkspaceId);
+                return Ok(updatedInvoice);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict(new { message = "This invoice was changed by another user. Reload it before saving." });
+            }
         }
         catch (KeyNotFoundException ex)
         {

@@ -10,6 +10,7 @@ using backend.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers;
 
@@ -145,8 +146,15 @@ public class QuoteController : ControllerBase
 
         try
         {
-            var result = await _quoteService.UpdateQuote(updatedQuoteDto, userId, userName, callerWorkspaceId);
-            return Ok(result);
+            try
+            {
+                var result = await _quoteService.UpdateQuote(updatedQuoteDto, userId, userName, callerWorkspaceId);
+                return Ok(result);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict(new { message = "This quote was changed by another user. Reload it before saving." });
+            }
         }
         catch (KeyNotFoundException ex)
         {

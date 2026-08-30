@@ -64,6 +64,8 @@ public class Job
     public string? InternalNotes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = [];
 }
 
 public enum JobStatus

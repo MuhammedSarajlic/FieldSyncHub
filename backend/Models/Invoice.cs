@@ -51,6 +51,8 @@ public class Invoice
     public string InternalNotes { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = [];
 }
 
 public enum InvoiceStatus

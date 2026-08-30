@@ -96,6 +96,10 @@ public class DataContext : DbContext
             .HasForeignKey(u => u.WorkspaceId)
             .IsRequired(false);
         modelBuilder.Entity<Workspace>().HasQueryFilter(w => !w.IsDeleted);
+        modelBuilder.Entity<Job>().Property(j => j.RowVersion).IsRowVersion();
+        modelBuilder.Entity<Quote>().Property(q => q.RowVersion).IsRowVersion();
+        modelBuilder.Entity<Invoice>().Property(i => i.RowVersion).IsRowVersion();
+        modelBuilder.Entity<Customer>().Property(c => c.RowVersion).IsRowVersion();
 
         // Workspace → CreatedByUser
         modelBuilder.Entity<Workspace>()

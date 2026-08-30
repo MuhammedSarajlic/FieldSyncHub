@@ -7,6 +7,7 @@ using backend.Services.JobService;
 using backend.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers;
 
@@ -139,8 +140,15 @@ public class JobController : ControllerBase
         }
 
         var restriction = await ResolveJobRestriction(callerWorkspaceId);
-        var job = await _jobService.UpdateJob(updatedJobDto, callerWorkspaceId, restriction);
-        return Ok(job);
+        try
+        {
+            var job = await _jobService.UpdateJob(updatedJobDto, callerWorkspaceId, restriction);
+            return Ok(job);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "This job was changed by another user. Reload it before saving." });
+        }
     }
 
     [HttpDelete("{id:guid}")]
