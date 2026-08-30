@@ -40,9 +40,11 @@ async function api(method, path, body, accessToken) {
     json = text;
   }
   if (!res.ok) {
-    throw new Error(
+    const error = new Error(
       `${method} ${path} -> ${res.status}: ${JSON.stringify(json)}`
     );
+    error.status = res.status;
+    throw error;
   }
   return json;
 }
@@ -94,15 +96,32 @@ const WORKSPACES = [
 async function seedWorkspace(config, index) {
   console.log(`\n=== Seeding workspace: ${config.companyName} ===`);
 
-  const registerRes = await api('POST', '/auth/register', {
-    email: config.email,
-    password: DEMO_PASSWORD,
-    firstName: config.ownerFirstName,
-    lastName: config.ownerLastName,
-  });
-  const userId = registerRes.user.id;
-  const accessToken = registerRes.tokens.accessToken;
-  console.log(`User created: ${config.email} (${userId})`);
+  let authRes;
+  let authAction = 'created';
+  try {
+    authRes = await api('POST', '/auth/register', {
+      email: config.email,
+      password: DEMO_PASSWORD,
+      firstName: config.ownerFirstName,
+      lastName: config.ownerLastName,
+    });
+  } catch (error) {
+    if (error.status !== 400) throw error;
+    authAction = 'reused';
+    authRes = await api('POST', '/auth/login', {
+      email: config.email,
+      password: DEMO_PASSWORD,
+      rememberMe: true,
+    });
+  }
+  const userId = authRes.user.id;
+  const accessToken = authRes.accessToken;
+  console.log(`User ${authAction}: ${config.email} (${userId})`);
+
+  if (authRes.user.workspace?.id) {
+    console.log(`Workspace already exists: ${authRes.user.workspace.name}; skipping`);
+    return { email: config.email, password: DEMO_PASSWORD, workspaceName: authRes.user.workspace.name };
+  }
 
   const workspaceRes = await api('POST', '/workspace', {
     name: config.workspaceName,

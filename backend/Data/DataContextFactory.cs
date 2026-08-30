@@ -8,8 +8,10 @@ namespace backend.Data
         public DataContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<DataContext>();
+            var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__WebApiDatabase")
+                ?? "server=localhost;database=fieldsync;user=root;password=root;";
             optionsBuilder.UseMySql(
-                "server=localhost;database=fieldsync;user=root;password=root;",
+                connectionString,
                 new MySqlServerVersion(new Version(8, 0, 36))
             );
 

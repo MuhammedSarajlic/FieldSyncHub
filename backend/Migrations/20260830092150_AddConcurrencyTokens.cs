@@ -17,7 +17,7 @@ namespace backend.Migrations
                 type: "timestamp(6)",
                 rowVersion: true,
                 nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+                defaultValueSql: "CURRENT_TIMESTAMP(6)");
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "RowVersion",
@@ -25,7 +25,7 @@ namespace backend.Migrations
                 type: "timestamp(6)",
                 rowVersion: true,
                 nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+                defaultValueSql: "CURRENT_TIMESTAMP(6)");
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "RowVersion",
@@ -33,7 +33,7 @@ namespace backend.Migrations
                 type: "timestamp(6)",
                 rowVersion: true,
                 nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+                defaultValueSql: "CURRENT_TIMESTAMP(6)");
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "RowVersion",
@@ -41,7 +41,7 @@ namespace backend.Migrations
                 type: "timestamp(6)",
                 rowVersion: true,
                 nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+                defaultValueSql: "CURRENT_TIMESTAMP(6)");
         }
 
         /// <inheritdoc />
