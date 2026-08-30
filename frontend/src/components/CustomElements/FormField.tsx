@@ -41,9 +41,11 @@ const FormField = ({
       value={value}
       checked={checked}
       onChange={onChange}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error ? `${id || label}-error` : undefined}
       className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-bg-primary focus:ring-2 focus:ring-bg-primary ${error ? 'border-red-600' : 'border-gray-300'} ${className}`}
     />
-    {error && <p className='text-xs text-red-500'>{error}</p>}
+    {error && <p id={`${id || label}-error`} className='text-xs text-red-500'>{error}</p>}
   </div>
 );
 

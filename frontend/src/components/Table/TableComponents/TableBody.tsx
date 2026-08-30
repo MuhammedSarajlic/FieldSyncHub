@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { TTableColumns } from '../../../types/Table';
 import { renderCellContent } from '../../../utils/FuntionHelpers/TableUtils/renderCellContent';
+import { Link, useLocation } from 'react-router';
 
 interface ITableBody<T = any> {
   data: T[];
@@ -21,6 +22,7 @@ const TableBody = <T extends Record<string, any>>({
   selectedIds = [],
   onToggleSelection,
 }: ITableBody<T>) => {
+  const location = useLocation();
   if (loading) {
     return (
       <tbody className='bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-800'>
@@ -77,7 +79,15 @@ const TableBody = <T extends Record<string, any>>({
                   : 'text-left'
               } ${column.cellClassName ?? ''}`}
             >
-              {renderCellContent(item, column, rowIndex)}
+              {colIndex === 0 ? (
+                <Link
+                  to={`${location.pathname}/${item.id}`}
+                  onClick={(event) => event.stopPropagation()}
+                  className='rounded text-inherit outline-none focus:ring-2 focus:ring-bg-primary'
+                >
+                  {renderCellContent(item, column, rowIndex)}
+                </Link>
+              ) : renderCellContent(item, column, rowIndex)}
             </td>
           ))}
         </tr>
