@@ -413,6 +413,8 @@ const Signin = () => {
                   <div className='absolute inset-y-0 right-0 pr-3 flex items-center'>
                     <button
                       type='button'
+                      aria-label={isPasswordHidden ? 'Show password' : 'Hide password'}
+                      title={isPasswordHidden ? 'Show password' : 'Hide password'}
                       onClick={showPassword}
                       className='text-gray-400 hover:text-gray-500 focus:outline-none'
                     >
