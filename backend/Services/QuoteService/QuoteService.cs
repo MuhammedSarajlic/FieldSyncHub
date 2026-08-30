@@ -12,9 +12,6 @@ using backend.Services.StorageService;
 using backend.Wrappers;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
 
 namespace backend.Services.QuoteService;
 
@@ -843,101 +840,6 @@ public class QuoteService : IQuoteService
   <p style=""font-size: 12px; color: #6b7280; margin: 0;"">Sent by {System.Net.WebUtility.HtmlEncode(companyName)}</p>
 </div>";
     }
-
-    public byte[] GenerateQuotePdf(Quote quote)
-    {
-        var document = Document.Create(container =>
-        {
-            container.Page(page =>
-            {
-                page.Size(PageSizes.A4);
-                page.Margin(2, Unit.Centimetre);
-
-                page.Header().Row(row =>
-                {
-                    row.RelativeItem().Column(col =>
-                    {
-                        col.Item().Text("Your Company Inc.").Bold().FontSize(20);
-                        col.Item().Text("1234 Company St,\nCompany Town, ST 12345");
-                    });
-
-                    row.ConstantItem(100).Height(50)
-                        .Border(1).AlignCenter().AlignMiddle()
-                        .Text("Logo");
-                });
-
-                page.Content().Column(col =>
-                {
-                    col.Item().PaddingVertical(10).Row(row =>
-                    {
-                        row.RelativeItem().Column(c =>
-                        {
-                            c.Item().Text("Bill To").Bold().FontColor(Colors.Green.Medium);
-                            c.Item().Text(quote.Customer.FullName);
-                            c.Item().Text(quote.Customer.FullName);
-                        });
-
-                        row.RelativeItem().Column(c =>
-                        {
-                            c.Item().Text($"Quote # {quote.QuoteNumber}");
-                            c.Item().Text($"Quote date: {quote.CreatedAt:dd-MM-yyyy}");
-                            c.Item().Text($"Due date: {quote.CreatedAt:dd-MM-yyyy}");
-                        });
-                    });
-
-                    col.Item().PaddingVertical(5).LineHorizontal(0.5f);
-
-                    col.Item().Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
-                        {
-                            columns.ConstantColumn(50);
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn(1);
-                            columns.RelativeColumn(1);
-                        });
-
-                        table.Header(header =>
-                        {
-                            header.Cell().Text("QTY").Bold();
-                            header.Cell().Text("Description").Bold();
-                            header.Cell().AlignRight().Text("Unit Price").Bold();
-                            header.Cell().AlignRight().Text("Amount").Bold();
-                        });
-
-                        foreach (var item in quote.LineItems)
-                        {
-                            table.Cell().Text($"{item.Quantity:0.00}");
-                            table.Cell().Text(item.Name);
-                            table.Cell().AlignRight().Text($"{item.UnitPrice:C}");
-                            table.Cell().AlignRight().Text($"{(item.UnitPrice * item.Quantity):C}");
-                        }
-                    });
-
-                    col.Item().PaddingVertical(5).LineHorizontal(0.5f);
-
-                    col.Item().AlignRight().Column(c =>
-                    {
-                        c.Item().Text($"Subtotal: {quote.Subtotal:C}");
-                        c.Item().Text($"Discount: -{quote.Discount:C}");
-                        c.Item().Text($"Tax: +{quote.TaxAmount:C}");
-                        c.Item().Text($"Total (USD): {quote.Total:C}").Bold();
-                    });
-
-                    col.Item().PaddingTop(20).Text("Terms and Conditions")
-                        .Bold().FontColor(Colors.Green.Medium);
-                    col.Item().Text("Payment is due in 14 days.\nPlease make checks payable to: Your Company Inc.");
-                });
-
-                page.Footer().AlignCenter()
-                    .Text("customer signature").Italic().FontSize(10);
-            });
-        });
-
-        return document.GeneratePdf();
-    }
-
-
 
     private async Task<string> GenerateQuoteNumber(Guid workspaceId)
     {
