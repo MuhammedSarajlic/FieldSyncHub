@@ -124,4 +124,29 @@ public class EmployeeInviteController : ControllerBase
 
         return Ok(invite);
     }
+
+    [HttpGet("pending")]
+    [Authorize(Roles = "Owner,Admin")]
+    public async Task<IActionResult> Pending()
+    {
+        if (_currentUser.WorkspaceId is not Guid workspaceId) return Forbid();
+        return Ok(await _employeeInviteService.GetPendingInvites(workspaceId));
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Owner,Admin")]
+    public async Task<IActionResult> Revoke(Guid id)
+    {
+        if (_currentUser.WorkspaceId is not Guid workspaceId) return Forbid();
+        return await _employeeInviteService.RevokeInvite(id, workspaceId) ? NoContent() : NotFound();
+    }
+
+    [HttpPost("{id:guid}/resend")]
+    [Authorize(Roles = "Owner,Admin")]
+    public async Task<IActionResult> Resend(Guid id)
+    {
+        if (_currentUser.WorkspaceId is not Guid workspaceId) return Forbid();
+        try { await _employeeInviteService.SendInviteAgain(id, workspaceId); return Ok(); }
+        catch (KeyNotFoundException) { return NotFound(); }
+    }
 }

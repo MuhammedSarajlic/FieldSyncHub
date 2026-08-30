@@ -123,15 +123,18 @@ public class EmployeeInviteService : IEmployeeInviteService
         _context.EmployeeInvites.Add(invite);
         await _context.SaveChangesAsync();
 
+        var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == workspaceId)
+            ?? throw new InvalidOperationException("Workspace not found.");
+        var workspaceName = string.IsNullOrWhiteSpace(workspace.CompanyName) ? workspace.Name : workspace.CompanyName;
         var frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
         var inviteLink = $"{frontendUrl}/invite?token={token}";
         var subject = "You're Invited to Join a Workspace!";
-        var plainText = $"You have been invited to join the workspace with ID: {workspaceId}. Visit: {inviteLink}";
+        var plainText = $"You have been invited to join {workspaceName}. Visit: {inviteLink}";
         var html = $@"
         <html>
         <body>
             <h1>Workspace Invitation</h1>
-            <p>You have been invited to join the workspace with ID: <strong>{workspaceId}</strong>.</p>
+            <p>You have been invited to join <strong>{workspaceName}</strong>.</p>
             <p>Click here to accept the invitation:</p>
             <a href='{inviteLink}'>Accept Invitation</a>
         </body>
@@ -151,5 +154,29 @@ public class EmployeeInviteService : IEmployeeInviteService
         return await _context.EmployeeInvites.Where(i => i.Token == token && i.ExpiresAt > DateTime.UtcNow && !i.IsAccepted)
                                             .Include(i => i.Workspace)
                                             .FirstOrDefaultAsync();
+    }
+
+    public Task<List<EmployeeInvite>> GetPendingInvites(Guid workspaceId) =>
+        _context.EmployeeInvites.Where(i => i.WorkspaceId == workspaceId && !i.IsAccepted && i.ExpiresAt > DateTime.UtcNow)
+            .OrderByDescending(i => i.CreatedAt).ToListAsync();
+
+    public async Task<bool> RevokeInvite(Guid id, Guid workspaceId)
+    {
+        var invite = await _context.EmployeeInvites.FirstOrDefaultAsync(i => i.Id == id && i.WorkspaceId == workspaceId && !i.IsAccepted);
+        if (invite == null) return false;
+        invite.IsAccepted = true;
+        invite.ExpiresAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task SendInviteAgain(Guid id, Guid workspaceId)
+    {
+        var invite = await _context.EmployeeInvites.FirstOrDefaultAsync(i => i.Id == id && i.WorkspaceId == workspaceId && !i.IsAccepted);
+        if (invite == null) throw new KeyNotFoundException("Pending invite not found.");
+        invite.ExpiresAt = DateTime.UtcNow.AddHours(48);
+        invite.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        await SendInvite(invite.Email, workspaceId, invite.Role);
     }
 }
