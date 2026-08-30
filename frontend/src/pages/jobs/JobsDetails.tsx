@@ -43,6 +43,9 @@ import { getJobPriority } from '../../utils/FuntionHelpers/JobUtils/getJobPriori
 import { getJobStatus } from '../../utils/FuntionHelpers/JobUtils/getJobStatus';
 import { getPaymentStatusColor } from '../../utils/FuntionHelpers/JobUtils/getPaymentStatusColor';
 import JobDetailsMediaTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsMediaTab';
+import JobDetailsTeamTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsTeamTab';
+import JobDetailsTimelineTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsTimelineTab';
+import JobDetailsBillingTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsBillingTab';
 import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
 import IconButton from '../../components/CustomElements/Buttons/IconButton';
 import CustomButton from '../../components/CustomElements/Buttons/CustomButton';
@@ -288,7 +291,7 @@ const JobDetails = () => {
                   <div className=' overflow-hidden'>
                     <div className='border-b border-gray-200'>
                       <nav className='flex space-x-8 '>
-                        {['overview', 'media & files'].map((tab) => (
+                        {['overview', 'team', 'billing', 'timeline', 'media & files'].map((tab) => (
                           <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -720,6 +723,9 @@ const JobDetails = () => {
                           <span className='text-text-primary'>Generated</span>
                         </div>
                       )}
+                      {activeTab === 'team' && <JobDetailsTeamTab jobDetails={jobDetails} />}
+                      {activeTab === 'billing' && <JobDetailsBillingTab jobDetails={jobDetails} />}
+                      {activeTab === 'timeline' && <JobDetailsTimelineTab jobDetails={jobDetails} />}
 
                       <div className='flex justify-between'>
                         <span className='text-gray-600'>Payment Status</span>
