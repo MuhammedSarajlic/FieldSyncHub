@@ -1,36 +1,36 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router';
-import { useEffect } from 'react';
-import 'leaflet/dist/leaflet.css';
-import Signin from './pages/auth/Signin';
-import Signup from './pages/auth/Signup';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import ConfirmEmailChange from './pages/auth/ConfirmEmailChange';
-import Home from './pages/Home';
-import Calendar from './pages/calendar/Calendar';
-import Customers from './pages/customers/Customers';
-import Jobs from './pages/jobs/Jobs';
-import Invoices from './pages/invoices/Invoices';
-import CustomerDetails from './pages/customers/CustomerDetails';
-import JobDetails from './pages/jobs/JobsDetails';
-import Employees from './pages/employees/Employees';
-import Leads from './pages/Leads';
-import LeadDetails from './pages/LeadDetails';
-import Quotes from './pages/quotes/Quotes';
-import Pricebook from './pages/pricebook/Pricebook';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import QuoteDetails from './pages/quotes/QuoteDetails';
-import Workspace from './pages/Workspace';
+import { lazy, Suspense, useEffect } from 'react';
+
+const Signin = lazy(() => import('./pages/auth/Signin'));
+const Signup = lazy(() => import('./pages/auth/Signup'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+const ConfirmEmailChange = lazy(() => import('./pages/auth/ConfirmEmailChange'));
+const Home = lazy(() => import('./pages/Home'));
+const Calendar = lazy(() => import('./pages/calendar/Calendar'));
+const Customers = lazy(() => import('./pages/customers/Customers'));
+const Jobs = lazy(() => import('./pages/jobs/Jobs'));
+const Invoices = lazy(() => import('./pages/invoices/Invoices'));
+const CustomerDetails = lazy(() => import('./pages/customers/CustomerDetails'));
+const JobDetails = lazy(() => import('./pages/jobs/JobsDetails'));
+const Employees = lazy(() => import('./pages/employees/Employees'));
+const Leads = lazy(() => import('./pages/Leads'));
+const LeadDetails = lazy(() => import('./pages/LeadDetails'));
+const Quotes = lazy(() => import('./pages/quotes/Quotes'));
+const Pricebook = lazy(() => import('./pages/pricebook/Pricebook'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
+const QuoteDetails = lazy(() => import('./pages/quotes/QuoteDetails'));
+const Workspace = lazy(() => import('./pages/Workspace'));
 import PrivateRoute from './utils/AuthHelpers/PrivateRoute';
 import PublicRoute from './utils/AuthHelpers/PublicRoute';
 import { useAuth } from './context/AuthProvider';
 import RequireWorkspace from './utils/AuthHelpers/RequireWorkspace';
 import RequireTwoFactorSetup from './utils/AuthHelpers/RequireTwoFactorSetup';
-import InviteJoin from './pages/InviteJoin';
-import EmployeeDetails from './pages/employees/EmployeeDetails';
-import InvoiceDetails from './pages/invoices/InvoiceDetails';
-import ServiceItemDetails from './pages/pricebook/ServiceItemDetails';
+const InviteJoin = lazy(() => import('./pages/InviteJoin'));
+const EmployeeDetails = lazy(() => import('./pages/employees/EmployeeDetails'));
+const InvoiceDetails = lazy(() => import('./pages/invoices/InvoiceDetails'));
+const ServiceItemDetails = lazy(() => import('./pages/pricebook/ServiceItemDetails'));
 import { Toaster } from 'react-hot-toast';
 import ScreenLoader from './components/CustomElements/Loaders/ScreenLoader';
 
@@ -97,7 +97,8 @@ function App() {
       </a>
       <main id='main-content' tabIndex={-1} className='min-h-screen outline-none'>
         <RouteDocumentTitle />
-        <Routes>
+        <Suspense fallback={<ScreenLoader />}>
+          <Routes>
         <Route path='/' element={<Navigate to='/home' replace />} />
         <Route path='confirm-email-change' element={<ConfirmEmailChange />} />
 
@@ -153,7 +154,8 @@ function App() {
         </Route>
 
         <Route path='*' element={<div className='min-h-screen flex items-center justify-center'><div className='text-center'><h1 className='text-3xl font-bold'>Page not found</h1><a className='mt-4 inline-block text-blue-600' href='/home'>Return home</a></div></div>} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </main>
     </>
   );
