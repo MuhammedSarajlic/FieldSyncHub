@@ -115,7 +115,8 @@ public class QuoteController : ControllerBase
             return Forbid();
         }
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userId, out _)) return Unauthorized();
         var userName = User.Identity?.Name ?? "System";
 
         try
@@ -138,7 +139,8 @@ public class QuoteController : ControllerBase
             return Forbid();
         }
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userId, out _)) return Unauthorized();
         var userName = User.Identity?.Name ?? "System";
 
         try
@@ -179,7 +181,8 @@ public class QuoteController : ControllerBase
     [HttpPatch("{id}")]
     public async Task<ActionResult<Quote>> ChangeQuoteStatus(Guid id, [FromBody] QuoteStatus status)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userId, out _)) return Unauthorized();
         var userName = User.Identity?.Name ?? "System";
 
         var quote = await _quoteService.ChangeQuoteStatus(id, status, userId, userName);
@@ -199,7 +202,8 @@ public class QuoteController : ControllerBase
             return Forbid();
         }
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userId, out _)) return Unauthorized();
         var userName = User.Identity?.Name ?? "System";
 
         var result = await _quoteService.SendQuote(id, sendQuoteDto, userId, userName, workspaceId);
