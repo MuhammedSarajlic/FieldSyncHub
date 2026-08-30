@@ -1,14 +1,12 @@
-import { ReactNode, forwardRef } from 'react';
+import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react';
 import Button, { ButtonVariant } from '../Button';
 
-interface IIconButton {
+interface IIconButton extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'> {
   children?: ReactNode;
   icon: ReactNode;
   iconPosition?: 'left' | 'right';
   variant?: ButtonVariant;
   customStyle?: string;
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  disabled?: boolean;
 }
 
 const IconButton = forwardRef<HTMLButtonElement, IIconButton>(
@@ -19,20 +17,25 @@ const IconButton = forwardRef<HTMLButtonElement, IIconButton>(
       iconPosition = 'left',
       variant = 'secondary',
       customStyle = '',
-      onClick,
-      disabled,
+      'aria-label': ariaLabel,
+      title,
+      ...buttonProps
     },
     ref
   ) => {
+    const isIconOnly = children == null;
+    const accessibleLabel = ariaLabel ?? (isIconOnly ? 'Action' : undefined);
+
     return (
       <Button
         ref={ref}
         variant={variant}
-        onClick={onClick}
-        disabled={disabled}
         customStyle={customStyle}
         leftIcon={iconPosition === 'left' ? icon : undefined}
         rightIcon={iconPosition === 'right' ? icon : undefined}
+        aria-label={accessibleLabel}
+        title={title ?? (isIconOnly ? accessibleLabel : undefined)}
+        {...buttonProps}
       >
         {children}
       </Button>

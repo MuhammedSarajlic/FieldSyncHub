@@ -707,11 +707,13 @@ const Calendar = () => {
               <div className='flex items-center space-x-3'>
                 <IconButton
                   icon={<ChevronLeft className='w-5 h-5 text-gray-600' />}
+                  aria-label='Previous date range'
                   onClick={goToPrevious}
                   customStyle='py-2.5 px-2!'
                 />
                 <IconButton
                   icon={<ChevronRight className='w-5 h-5 text-gray-600' />}
+                  aria-label='Next date range'
                   onClick={goToNext}
                   customStyle='py-2.5 px-2!'
                 />
