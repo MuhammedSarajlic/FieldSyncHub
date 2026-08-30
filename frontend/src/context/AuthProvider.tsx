@@ -98,6 +98,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchCurrentUser();
   }, [accessToken]);
 
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      clearStoredToken();
+      setAccessToken(null);
+      setUser(null);
+    };
+
+    window.addEventListener('fieldsync:session-expired', handleSessionExpired);
+    return () =>
+      window.removeEventListener('fieldsync:session-expired', handleSessionExpired);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
