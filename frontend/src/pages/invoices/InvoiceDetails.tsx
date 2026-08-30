@@ -258,7 +258,6 @@ const InvoiceDetails = () => {
                   icon={<Send className='w-4 h-4 mr-2' />}
                   customStyle='py-2 px-4 bg-bg-primary border-none text-white hover:bg-bg-primary-hover'
                   // onClick={() => setIsSendModalOpen(true)}
-                  onClick={() => {}}
                 >
                   Send
                 </IconButton>

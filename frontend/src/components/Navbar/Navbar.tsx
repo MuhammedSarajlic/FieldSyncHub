@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { Bell, HelpCircle, Settings } from 'lucide-react';
-import ActivityFeed from '../ActivityFeed/ActivityFeed';
+import { useNavigate } from 'react-router';
+import { Settings } from 'lucide-react';
 import { TCustomer } from '../../types/Customer';
 import { useAuth } from '../../context/AuthProvider';
 
@@ -10,7 +9,7 @@ interface INavbar {
 
 const Navbar = ({ customer }: INavbar) => {
   const { user } = useAuth();
-  const [isActivityFeedOpen, setIsActivityFeedOpen] = useState<boolean>(false);
+  const navigate = useNavigate();
   return (
     <>
       <div className='pl-6 pr-4 h-16 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 dark:bg-gray-900'>
@@ -28,23 +27,11 @@ const Navbar = ({ customer }: INavbar) => {
           )}
         </div>
         <div className='flex items-center space-x-2'>
-          <div
-            onClick={() => setIsActivityFeedOpen(true)}
-            className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'
-          >
-            <Bell className='w-5 h-5' />
-          </div>
-          <div className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'>
-            <HelpCircle className='w-5 h-5' />
-          </div>
-          <div className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'>
+          <button type='button' aria-label='Open settings' onClick={() => navigate('/settings')} className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'>
             <Settings className='w-5 h-5' />
-          </div>
+          </button>
         </div>
       </div>
-      {isActivityFeedOpen && (
-        <ActivityFeed setIsActivityFeedOpen={setIsActivityFeedOpen} />
-      )}
     </>
   );
 };

@@ -756,7 +756,6 @@ const JobDetails = () => {
                         ))}
                       <IconButton
                         icon={<Plus className='w-4 h-4 mr-1' />}
-                        onClick={() => {}}
                         customStyle='bg-gray-100 hover:bg-gray-200 text-gray-600! px-3 py-1 rounded-full! border-none'
                       >
                         Add Tag

@@ -1,5 +1,4 @@
 import { X } from 'lucide-react';
-import ActivityItem from './ActivityItem';
 import EmptyFeed from './EmptyFeed';
 
 const ActivityFeed = ({
