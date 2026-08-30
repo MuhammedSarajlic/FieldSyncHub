@@ -386,7 +386,8 @@ public class JobService : IJobService
         existingJob.InternalNotes = updatedJobDto.InternalNotes ?? existingJob.InternalNotes;
         existingJob.Tags = updatedJobDto.Tags ?? existingJob.Tags;
 
-        // Scheduling fields are handled by the reschedule update below.
+        if (updatedJobDto.StartDateTime != default) existingJob.StartDateTime = updatedJobDto.StartDateTime;
+        if (updatedJobDto.EndDateTime != default) existingJob.EndDateTime = updatedJobDto.EndDateTime;
 
         if (updatedJobDto.AssignedTeamMembers != null)
         {
