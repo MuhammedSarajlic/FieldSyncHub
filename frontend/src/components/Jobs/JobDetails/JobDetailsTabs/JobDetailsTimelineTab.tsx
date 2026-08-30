@@ -7,26 +7,7 @@ interface IJobDetailsTimelineTab {
 }
 
 const JobDetailsTimelineTab = ({ jobDetails }: IJobDetailsTimelineTab) => {
-  const statusHistory = [
-    {
-      id: 'sh-001',
-      fromStatus: 'Scheduled',
-      toStatus: 'Dispatched',
-      changedAt: '2024-06-20T08:00:00Z',
-      changedBy: 'Michael Chen',
-      notes: 'Team dispatched to location',
-      jobId: 'job-001',
-    },
-    {
-      id: 'sh-002',
-      fromStatus: 'Dispatched',
-      toStatus: 'InProgress',
-      changedAt: '2024-06-20T09:30:00Z',
-      changedBy: 'Michael Chen',
-      notes: 'Work started on schedule',
-      jobId: 'job-001',
-    },
-  ];
+  const statusHistory = jobDetails.statusHistory ?? [];
   return (
     <div>
       <h3 className='text-lg font-semibold text-gray-900 mb-6'>

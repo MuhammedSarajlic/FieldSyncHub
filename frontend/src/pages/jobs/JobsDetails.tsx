@@ -714,19 +714,12 @@ const JobDetails = () => {
                         </div>
                       )}
 
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>Invoice #</span>
-
-                        {jobDetails.invoiceSent ? (
-                          <span className='text-bg-primary font-medium hover:underline cursor-pointer'>
-                            FSH-250714-0001
-                          </span>
-                        ) : (
-                          <span className='text-text-primary'>
-                            Not yet generated
-                          </span>
-                        )}
-                      </div>
+                      {jobDetails.invoiceSent && (
+                        <div className='flex justify-between'>
+                          <span className='text-gray-600'>Invoice</span>
+                          <span className='text-text-primary'>Generated</span>
+                        </div>
+                      )}
 
                       <div className='flex justify-between'>
                         <span className='text-gray-600'>Payment Status</span>

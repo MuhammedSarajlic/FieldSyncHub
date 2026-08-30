@@ -29,7 +29,7 @@ const JobDetailsOverviewTab = ({ jobDetails }: IJobDetailsOverviewTab) => {
             <div>
               <p className='text-sm font-medium text-gray-600'>Start Date</p>
               <p className='text-gray-900'>
-                {formatDate(jobDetails.startDate)}
+                {formatDate(jobDetails.startDateTime)}
               </p>
             </div>
           </div>
@@ -38,8 +38,8 @@ const JobDetailsOverviewTab = ({ jobDetails }: IJobDetailsOverviewTab) => {
             <div>
               <p className='text-sm font-medium text-gray-600'>Time Window</p>
               <p className='text-gray-900'>
-                {formatTime(jobDetails.arrivalWindowStart)} -{' '}
-                {formatTime(jobDetails.arrivalWindowEnd)}
+                {formatTime(jobDetails.startDateTime)} -{' '}
+                {formatTime(jobDetails.endDateTime)}
               </p>
             </div>
           </div>
