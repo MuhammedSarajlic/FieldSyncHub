@@ -22,7 +22,7 @@ const Navbar = ({ customer }: INavbar) => {
         >
           <Menu className='w-5 h-5' />
         </button>
-        <div className='text-[#6c757d] dark:text-gray-400 flex items-center space-x-3 min-w-0'>
+        <div className='text-text-muted dark:text-gray-400 flex items-center space-x-3 min-w-0'>
           <span>{user?.workspace?.name}</span>
           {customer && (
             <>
@@ -37,7 +37,7 @@ const Navbar = ({ customer }: INavbar) => {
         </div>
         <GlobalSearch />
         <div className='flex items-center space-x-2'>
-          <button type='button' aria-label='Open settings' onClick={() => navigate('/settings')} className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-[#f1f1f1] dark:text-gray-400 dark:hover:bg-gray-800'>
+          <button type='button' aria-label='Open settings' onClick={() => navigate('/settings')} className='p-2 cursor-pointer rounded-lg text-gray-500 hover:bg-surface-subtle dark:text-gray-400 dark:hover:bg-gray-800'>
             <Settings className='w-5 h-5' />
           </button>
         </div>
