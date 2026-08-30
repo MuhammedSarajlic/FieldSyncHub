@@ -26,7 +26,9 @@ jobs:
       - name: Build with warnings as errors
         run: dotnet build backend/backend.csproj --no-restore --warnaserror
       - name: Test
-        run: dotnet test backend.Tests/backend.Tests.csproj --no-restore --no-build --logger trx
+        env:
+          RUN_MYSQL_TESTS: true
+        run: dotnet test backend.Tests/backend.Tests.csproj --no-restore --logger trx
 
   frontend:
     name: Frontend build and lint

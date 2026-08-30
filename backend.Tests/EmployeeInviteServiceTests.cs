@@ -108,9 +108,12 @@ public class EmployeeInviteServiceTests
         // query string, '+' decodes back as a space and corrupts the link for a large
         // share of tokens. The token must only contain URL-safe characters.
         await using var context = CreateContext();
+        var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Acme" };
+        context.Workspaces.Add(workspace);
+        await context.SaveChangesAsync();
         var service = CreateService(context);
 
-        await service.SendInvite("newhire@acme.test", Guid.NewGuid());
+        await service.SendInvite("newhire@acme.test", workspace.Id);
 
         var invite = await context.EmployeeInvites.SingleAsync(i => i.Email == "newhire@acme.test");
         Assert.DoesNotContain('+', invite.Token);
