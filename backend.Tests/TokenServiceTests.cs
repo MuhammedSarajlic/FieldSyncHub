@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using backend.Data;
 using backend.Dtos.UserDto;
 using backend.Models;
@@ -20,14 +21,22 @@ namespace backend.Tests;
 /// </summary>
 public class TokenServiceTests
 {
-    private static (TokenService tokenService, DataContext context) CreateService()
+    private static (TokenService tokenService, DataContext context) CreateService(IDictionary<string, string?>? extraConfig = null)
     {
         var context = CreateContext();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
+        var configValues = new Dictionary<string, string?>
+        {
+            ["AppSettings:Token"] = "test-signing-key-test-signing-key-test-signing-key-test-signing-key-1234",
+        };
+        if (extraConfig != null)
+        {
+            foreach (var (key, value) in extraConfig)
             {
-                ["AppSettings:Token"] = "test-signing-key-test-signing-key-test-signing-key-test-signing-key-1234",
-            })
+                configValues[key] = value;
+            }
+        }
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configValues)
             .Build();
 
         var tokenService = new TokenService(configuration, new HttpContextAccessor { HttpContext = new DefaultHttpContext() }, context);
@@ -62,6 +71,33 @@ public class TokenServiceTests
         Assert.Equal(1, await context.RefreshTokens.CountAsync());
         var validatedUserId = await tokenService.ValidateRefreshTokenAsync(refreshToken);
         Assert.Equal(userId, validatedUserId);
+    }
+
+    [Fact]
+    public async Task GenerateTokensAsync_defaults_the_access_token_lifetime_to_15_minutes()
+    {
+        var (tokenService, _) = CreateService();
+
+        var (accessToken, _) = await tokenService.GenerateTokensAsync(TestUser(Guid.NewGuid()));
+
+        var expiresAt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken).ValidTo;
+        Assert.True(Math.Abs((expiresAt - DateTime.UtcNow.AddMinutes(15)).TotalSeconds) < 5,
+            $"Expected access token to expire ~15 minutes from now, but it expires at {expiresAt:o}");
+    }
+
+    [Fact]
+    public async Task GenerateTokensAsync_reads_the_access_token_lifetime_from_config()
+    {
+        var (tokenService, _) = CreateService(new Dictionary<string, string?>
+        {
+            ["AppSettings:AccessTokenMinutes"] = "5",
+        });
+
+        var (accessToken, _) = await tokenService.GenerateTokensAsync(TestUser(Guid.NewGuid()));
+
+        var expiresAt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken).ValidTo;
+        Assert.True(Math.Abs((expiresAt - DateTime.UtcNow.AddMinutes(5)).TotalSeconds) < 5,
+            $"Expected access token to expire ~5 minutes from now, but it expires at {expiresAt:o}");
     }
 
     [Fact]

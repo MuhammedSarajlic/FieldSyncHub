@@ -31,9 +31,15 @@ public class TokenService : ITokenService
         _context = context;
     }
 
+    // Defaults to 15 minutes: short enough that a stolen access token has a small
+    // window, long enough that the frontend's proactive refresh (fired at ~80% of
+    // this lifetime) beats expiry under normal conditions.
+    private const int DefaultAccessTokenMinutes = 15;
+
     public async Task<(string accessToken, string refreshToken)> GenerateTokensAsync(GetUserDto user, bool rememberMe = true)
     {
-        var accessToken = CreateToken(user, DateTime.UtcNow.AddHours(24), AccessTokenType, Guid.NewGuid());
+        var accessTokenMinutes = _configuration.GetValue<int?>("AppSettings:AccessTokenMinutes") ?? DefaultAccessTokenMinutes;
+        var accessToken = CreateToken(user, DateTime.UtcNow.AddMinutes(accessTokenMinutes), AccessTokenType, Guid.NewGuid());
 
         var refreshExpiry = rememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddDays(1);
         var refreshJti = Guid.NewGuid();
