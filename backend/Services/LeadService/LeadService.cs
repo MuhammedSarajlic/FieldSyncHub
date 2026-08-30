@@ -4,16 +4,19 @@ using backend.Models;
 using backend.Response;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace backend.Services.LeadService;
 
 public class LeadService : ILeadService
 {
     private readonly DataContext _context;
+    private readonly ILogger<LeadService> _logger;
 
-    public LeadService(DataContext context)
+    public LeadService(DataContext context, ILogger<LeadService>? logger = null)
     {
         _context = context;
+        _logger = logger ?? NullLogger<LeadService>.Instance;
     }
 
     public async Task<ApiResponse<Lead>> GetLeadById(Guid id, Guid callerWorkspaceId)
@@ -98,7 +101,7 @@ public class LeadService : ILeadService
                     }
                     else
                     {
-                        Console.WriteLine($"Warning: ServiceItem with ID {itemDto.ServiceItemId.Value} not found. Using custom data if provided.");
+                        _logger.LogWarning("Service item {ServiceItemId} was not found; using custom lead line item data", itemDto.ServiceItemId.Value);
                         newLineItem.Name = itemDto.Name ?? "";
                         newLineItem.Description = itemDto.Description;
                         newLineItem.UnitPrice = itemDto.UnitPrice;

@@ -20,8 +20,12 @@ using backend.Services.TokenService;
 using backend.Services.Operations;
 using backend.Health;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using backend.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -200,6 +204,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 
 var app = builder.Build();
+
+app.UseMiddleware<RequestCorrelationMiddleware>();
 
 if (!app.Environment.IsDevelopment())
 {

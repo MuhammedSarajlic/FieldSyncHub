@@ -7,6 +7,7 @@ using backend.Services.TokenService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace backend.Services.AuthService;
 
@@ -17,13 +18,15 @@ public class AuthService : IAuthService
     private readonly IEmailService _emailService;
     private readonly ITokenService _tokenService;
     private readonly IMemoryCache _cache;
-    public AuthService(DataContext context, IConfiguration configuration, IEmailService emailService, ITokenService tokenService, IMemoryCache cache)
+    private readonly ILogger<AuthService> _logger;
+    public AuthService(DataContext context, IConfiguration configuration, IEmailService emailService, ITokenService tokenService, IMemoryCache cache, ILogger<AuthService>? logger = null)
     {
         _context = context;
         _configuration = configuration;
         _emailService = emailService;
         _tokenService = tokenService;
         _cache = cache;
+        _logger = logger ?? NullLogger<AuthService>.Instance;
     }
 
     // ASP.NET's IP-partitioned rate limiter (the "auth" policy) stops one source from
@@ -347,7 +350,7 @@ public class AuthService : IAuthService
                     // provider shouldn't turn into a 500 for the user, and this
                     // response is deliberately identical whether or not the
                     // email actually went out (see comment above).
-                    Console.WriteLine($"Failed to send password reset email to {user.Email}: {ex.Message}");
+                    _logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
                 }
             }
         }

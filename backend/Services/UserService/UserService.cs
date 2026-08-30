@@ -6,6 +6,7 @@ using backend.Response;
 using backend.Services.EmailService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace backend.Services.UserService;
 
@@ -14,12 +15,14 @@ public class UserService : IUserService
     private readonly DataContext _context;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<UserService> _logger;
 
-    public UserService(DataContext context, IEmailService emailService, IConfiguration configuration)
+    public UserService(DataContext context, IEmailService emailService, IConfiguration configuration, ILogger<UserService>? logger = null)
     {
         _context = context;
         _emailService = emailService;
         _configuration = configuration;
+        _logger = logger ?? NullLogger<UserService>.Instance;
     }
 
     public async Task<ApiResponse<GetUserDto>> GetLoggedInUser(Guid userId)
@@ -269,11 +272,11 @@ public class UserService : IUserService
 
             if (!newAddressResult.Success)
             {
-                Console.WriteLine($"Failed to send email-change confirmation to {newEmail}: {newAddressResult.Error}");
+                _logger.LogWarning("Failed to send email-change confirmation to {Email}: {Error}", newEmail, newAddressResult.Error);
             }
             if (!oldAddressResult.Success)
             {
-                Console.WriteLine($"Failed to send email-change notice to {oldEmail}: {oldAddressResult.Error}");
+                _logger.LogWarning("Failed to send email-change notice to {Email}: {Error}", oldEmail, oldAddressResult.Error);
             }
 
             // The old-address notice is best-effort - what matters for the caller is
@@ -282,7 +285,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to send email-change confirmation for {oldEmail}: {ex.Message}");
+            _logger.LogError(ex, "Failed to send email-change confirmation for {Email}", oldEmail);
             return false;
         }
     }

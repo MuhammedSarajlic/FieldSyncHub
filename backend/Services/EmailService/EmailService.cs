@@ -1,4 +1,5 @@
 using Resend;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace backend.Services.EmailService;
 
@@ -6,11 +7,13 @@ public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly IResend _resend;
+    private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IConfiguration configuration, IResend resend)
+    public EmailService(IConfiguration configuration, IResend resend, ILogger<EmailService>? logger = null)
     {
         _configuration = configuration;
         _resend = resend;
+        _logger = logger ?? NullLogger<EmailService>.Instance;
     }
 
     public bool IsConfigured =>
@@ -75,7 +78,7 @@ public class EmailService : IEmailService
         if (!response.Success)
         {
             var reason = response.Exception?.Message ?? "Unknown error";
-            Console.WriteLine($"Failed to send email via Resend: {reason}");
+            _logger.LogWarning("Failed to send email via Resend: {Reason}", reason);
             return EmailSendResult.Failed(reason);
         }
 
