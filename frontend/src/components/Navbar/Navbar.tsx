@@ -17,7 +17,7 @@ const Navbar = ({ customer }: INavbar) => {
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   return (
     <>
-      <div className='pl-6 pr-4 h-16 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 dark:bg-gray-900'>
+      <header className='pl-6 pr-4 h-16 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 dark:bg-gray-900'>
         <button
           type='button'
           aria-label='Open navigation'
@@ -56,7 +56,7 @@ const Navbar = ({ customer }: INavbar) => {
             <Settings className='w-5 h-5' />
           </button>
         </div>
-      </div>
+      </header>
       {isActivityOpen && <ActivityFeed setIsActivityFeedOpen={setIsActivityOpen} />}
     </>
   );

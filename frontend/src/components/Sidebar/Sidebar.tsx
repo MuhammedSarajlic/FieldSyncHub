@@ -77,7 +77,7 @@ const Sidebar = () => {
 
   return (
     <>
-      <aside className='hidden md:flex fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex-col'>
+      <aside aria-label='Workspace sidebar' className='hidden md:flex fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex-col'>
         <div className='h-16 px-4 flex items-center border-b border-gray-100 dark:border-gray-800'>
           <img src={images.logo} alt='FieldSyncHub' className='max-w-[140px] dark:brightness-0 dark:invert' />
         </div>
@@ -88,7 +88,7 @@ const Sidebar = () => {
       {isMobileOpen && (
         <div className='md:hidden fixed inset-0 z-50' role='dialog' aria-modal='true' aria-label='Navigation menu'>
           <button type='button' aria-label='Close navigation' onClick={closeMobile} className='absolute inset-0 bg-gray-950/40' />
-          <aside className='relative flex h-full w-[min(86vw,20rem)] flex-col bg-white dark:bg-gray-900 shadow-xl'>
+          <aside aria-label='Workspace sidebar' className='relative flex h-full w-[min(86vw,20rem)] flex-col bg-white dark:bg-gray-900 shadow-xl'>
             <div className='h-16 px-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800'>
               <img src={images.logo} alt='FieldSyncHub' className='max-w-[140px] dark:brightness-0 dark:invert' />
               <button type='button' aria-label='Close navigation' onClick={closeMobile} className='p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'>
