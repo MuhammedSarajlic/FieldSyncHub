@@ -204,46 +204,39 @@ public class QuoteService : IQuoteService
 
     public async Task<QuoteStatsDto> GetQuoteStats(Guid workspaceId)
     {
-        var now = DateTime.UtcNow;
-        var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
-        var firstDayOfLastMonth = firstDayOfThisMonth.AddMonths(-1);
-        var lastDayOfLastMonth = firstDayOfThisMonth.AddDays(-1);
-
-        var quotes = await _context.Quotes
+        var stats = await _context.Quotes
             .Where(q => q.WorkspaceId == workspaceId)
-            .Include(q => q.LineItems)
-                .ThenInclude(li => li.ServiceItem)
-            .ToListAsync();
-
-        int totalQuotes = quotes.Count;
-
-        decimal totalValue = 0;
-        decimal approvedValue = 0;
-        int approvedQuotes = 0;
-
-        foreach (var quote in quotes)
-        {
-            decimal total = quote.Total;
-
-            totalValue += total;
-
-            if (quote.Status == QuoteStatus.Approved)
+            .GroupBy(_ => 1)
+            .Select(group => new
             {
-                approvedValue += total;
-                approvedQuotes++;
-            }
-        }
+                TotalQuotes = group.Count(),
+                TotalValue = group.Sum(q => q.Total),
+                ApprovedValue = group
+                    .Where(q => q.Status == QuoteStatus.Approved)
+                    .Sum(q => (decimal?)q.Total) ?? 0m,
+                ApprovedQuotes = group.Count(q => q.Status == QuoteStatus.Approved)
+            })
+            .FirstOrDefaultAsync();
 
-        double conversionRate = totalQuotes > 0
-            ? Math.Round((double)approvedQuotes / totalQuotes * 100, 2)
-            : 0;
+        if (stats == null)
+        {
+            return new QuoteStatsDto
+            {
+                TotalQuotes = 0,
+                TotalValue = 0m,
+                ApprovedValue = 0m,
+                ConversionRate = 0
+            };
+        }
 
         return new QuoteStatsDto
         {
-            TotalQuotes = totalQuotes,
-            TotalValue = totalValue,
-            ApprovedValue = approvedValue,
-            ConversionRate = conversionRate
+            TotalQuotes = stats.TotalQuotes,
+            TotalValue = stats.TotalValue,
+            ApprovedValue = stats.ApprovedValue,
+            ConversionRate = stats.TotalQuotes > 0
+                ? Math.Round((double)stats.ApprovedQuotes / stats.TotalQuotes * 100, 2)
+                : 0
         };
     }
 

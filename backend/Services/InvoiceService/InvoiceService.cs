@@ -987,54 +987,60 @@ public class InvoiceService : IInvoiceService
         var now = DateTime.UtcNow;
         var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
         var firstDayOfNextMonth = firstDayOfThisMonth.AddMonths(1);
+        var today = now.Date;
 
-        var invoices = await _context.Invoices
+        var stats = await _context.Invoices
             .Where(i => i.WorkspaceId == workspaceId)
-            .Include(i => i.LineItems)
-                .ThenInclude(li => li.ServiceItem)
-            .Include(i => i.Payments)
-            .ToListAsync();
+            .Select(i => new
+            {
+                i.Total,
+                i.WorkflowStatus,
+                i.DueDate,
+                AmountPaid = i.Payments
+                    .Where(payment => payment.Status == PaymentRecordStatus.Succeeded)
+                    .Sum(payment => (decimal?)payment.Amount) ?? 0m,
+                PaidThisMonth = i.Payments
+                    .Where(payment => payment.Status == PaymentRecordStatus.Succeeded
+                        && payment.PaidAt.HasValue
+                        && payment.PaidAt.Value >= firstDayOfThisMonth
+                        && payment.PaidAt.Value < firstDayOfNextMonth)
+                    .Sum(payment => (decimal?)payment.Amount) ?? 0m
+            })
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                InvoiceCount = group.Count(),
+                TotalInvoiceSum = group.Sum(invoice => invoice.Total),
+                TotalOutstanding = group
+                    .Where(invoice => invoice.WorkflowStatus != InvoiceStatus.Draft
+                        && invoice.Total > invoice.AmountPaid)
+                    .Sum(invoice => invoice.Total - invoice.AmountPaid),
+                TotalPaidThisMonth = group.Sum(invoice => invoice.PaidThisMonth),
+                OverdueCount = group.Count(invoice => invoice.WorkflowStatus != InvoiceStatus.Draft
+                    && invoice.DueDate < today
+                    && invoice.Total > invoice.AmountPaid)
+            })
+            .FirstOrDefaultAsync();
 
-        decimal totalOutstanding = 0;
-        decimal totalPaidThisMonth = 0;
-        int overdueCount = 0;
-        decimal totalInvoiceSum = 0;
-
-        foreach (var invoice in invoices)
+        if (stats == null)
         {
-            var total = invoice.Total;
-            var balanceDue = invoice.BalanceDue;
-
-            totalInvoiceSum += total;
-
-            if (invoice.Status != InvoiceStatus.Draft && balanceDue > 0m)
+            return new InvoiceStatsDto
             {
-                totalOutstanding += balanceDue;
-            }
-
-            totalPaidThisMonth += invoice.Payments
-                .Where(payment => payment.Status == PaymentRecordStatus.Succeeded
-                    && payment.PaidAt.HasValue
-                    && payment.PaidAt.Value >= firstDayOfThisMonth
-                    && payment.PaidAt.Value < firstDayOfNextMonth)
-                .Sum(payment => payment.Amount);
-
-            if (invoice.Status == InvoiceStatus.Overdue)
-            {
-                overdueCount++;
-            }
+                TotalOutstanding = 0m,
+                TotalPaidThisMonth = 0m,
+                OverdueCount = 0,
+                AverageInvoiceValue = 0m
+            };
         }
-
-        var averageInvoiceValue = invoices.Count > 0
-            ? totalInvoiceSum / invoices.Count
-            : 0;
 
         return new InvoiceStatsDto
         {
-            TotalOutstanding = totalOutstanding,
-            TotalPaidThisMonth = totalPaidThisMonth,
-            OverdueCount = overdueCount,
-            AverageInvoiceValue = averageInvoiceValue
+            TotalOutstanding = stats.TotalOutstanding,
+            TotalPaidThisMonth = stats.TotalPaidThisMonth,
+            OverdueCount = stats.OverdueCount,
+            AverageInvoiceValue = stats.InvoiceCount > 0
+                ? stats.TotalInvoiceSum / stats.InvoiceCount
+                : 0m
         };
     }
 

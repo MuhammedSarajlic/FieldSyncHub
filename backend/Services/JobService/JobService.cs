@@ -744,29 +744,24 @@ public class JobService : IJobService
 
     public async Task<JobStatsDto> GetJobStats(Guid workspaceId)
     {
-        var jobs = await _context.Jobs
+        var stats = await _context.Jobs
             .Where(j => j.WorkspaceId == workspaceId)
-            .Include(j => j.LineItems)
-                .ThenInclude(li => li.ServiceItem)
-            .ToListAsync();
+            .GroupBy(_ => 1)
+            .Select(group => new JobStatsDto
+            {
+                TotalJobs = group.Count(),
+                CompletedJobs = group.Count(j => j.Status == JobStatus.Completed),
+                ScheduledJobs = group.Count(j => j.Status == JobStatus.Scheduled),
+                TotalValue = group.Sum(j => j.TotalAmount)
+            })
+            .FirstOrDefaultAsync();
 
-        int totalJobs = jobs.Count;
-        int completedJobs = jobs.Count(j => j.Status == JobStatus.Completed);
-        int scheduledJobs = jobs.Count(j => j.Status == JobStatus.Scheduled);
-
-        decimal totalValue = 0;
-
-        foreach (var job in jobs)
+        return stats ?? new JobStatsDto
         {
-            totalValue += job.TotalAmount;
-        }
-
-        return new JobStatsDto
-        {
-            TotalJobs = totalJobs,
-            CompletedJobs = completedJobs,
-            ScheduledJobs = scheduledJobs,
-            TotalValue = totalValue
+            TotalJobs = 0,
+            CompletedJobs = 0,
+            ScheduledJobs = 0,
+            TotalValue = 0m
         };
     }
 
