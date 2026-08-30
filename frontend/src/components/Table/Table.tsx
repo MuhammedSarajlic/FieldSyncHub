@@ -10,12 +10,14 @@ interface ITable<T> {
   data: T[];
   columns: TTableColumns;
   paginationData: TPaginationData;
+  loading?: boolean;
 }
 
 const Table = <T extends Record<string, any>>({
   data,
   columns,
   paginationData,
+  loading = false,
 }: ITable<T>) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,7 +42,7 @@ const Table = <T extends Record<string, any>>({
             columns={columns}
             onRowClick={handleRowClick}
             emptyState={<TableEmptyState />}
-            loading={false}
+            loading={loading}
           />
         </table>
       </div>

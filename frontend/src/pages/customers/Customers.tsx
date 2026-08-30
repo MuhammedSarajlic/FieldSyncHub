@@ -56,7 +56,7 @@ const Customers = () => {
 
   const fetchAllCustomersByWorkspace = async () => {
     if (!user?.workspace) return;
-    // setIsLoading(true);
+    setIsLoading(true);
 
     const paramsObj: Record<string, string> = {};
     let shouldResetPage = false;
@@ -85,7 +85,6 @@ const Customers = () => {
       : await GetCustomerByWorkspace(user.workspace.id, finalPage, 10);
 
     if (response.status === 200) {
-      // setIsLoading(false);
       const { items, totalCount, pageSize } = response.data.payload;
       setCustomers(items);
       setPaginationData({ totalCount, pageSize });
@@ -95,7 +94,7 @@ const Customers = () => {
         navigate(`?${newParams.toString()}`);
       }
     }
-    // setIsLoading(false);
+    setIsLoading(false);
   };
 
   const fetchCustomerStats = async () => {
@@ -272,6 +271,7 @@ const Customers = () => {
                   data={customers}
                   columns={customerColumns}
                   paginationData={paginationData}
+                  loading={isLoading}
                 />
               </div>
             </div>

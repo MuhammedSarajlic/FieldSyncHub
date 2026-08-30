@@ -26,6 +26,7 @@ const Leads = () => {
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [leads, setLeads] = useState<TLead[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchParams] = useSearchParams();
 
   const searchQuery = searchParams.get('q') ?? '';
@@ -45,9 +46,14 @@ const Leads = () => {
 
   const fetchLeads = async () => {
     if (!user?.workspace) return;
-    const response = await GetLeadsByWorkspaceId(user.workspace.id);
-    if (response.status === 200) {
-      setLeads(response.data.payload);
+    setIsLoading(true);
+    try {
+      const response = await GetLeadsByWorkspaceId(user.workspace.id);
+      if (response.status === 200) {
+        setLeads(response.data.payload);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -276,6 +282,7 @@ const Leads = () => {
               data={paginatedLeads}
               columns={leadColumns}
               paginationData={paginationData}
+              loading={isLoading}
             />
           </div>
         </div>

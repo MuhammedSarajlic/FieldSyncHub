@@ -234,10 +234,11 @@ const Jobs = () => {
 
           {/* Table */}
           <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
-            <Table<TJob>
+                <Table<TJob>
               data={jobs}
               columns={jobColumns}
-              paginationData={paginationData}
+                  paginationData={paginationData}
+                  loading={isLoading}
             />
           </div>
         </div>

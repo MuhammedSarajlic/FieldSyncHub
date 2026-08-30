@@ -290,6 +290,7 @@ const Invoices = () => {
               data={invoices}
               columns={invoiceColumns}
               paginationData={paginationData}
+              loading={isLoading}
             />
           </div>
         </div>

@@ -19,12 +19,12 @@ const TableBody = <T extends Record<string, any>>({
 }: ITableBody<T>) => {
   if (loading) {
     return (
-      <tbody className='bg-white divide-y divide-gray-200'>
+      <tbody className='bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-800'>
         {Array.from({ length: 5 }).map((_, index) => (
           <tr key={index} className='animate-pulse'>
             {columns.map((_, colIndex) => (
               <td key={colIndex} className='px-6 py-4 whitespace-nowrap'>
-                <div className='h-4 bg-gray-200 rounded'></div>
+                <div className='h-4 bg-gray-200 rounded dark:bg-gray-700'></div>
               </td>
             ))}
           </tr>
@@ -35,7 +35,7 @@ const TableBody = <T extends Record<string, any>>({
 
   if (data.length === 0) {
     return (
-      <tbody className='bg-white'>
+      <tbody className='bg-white dark:bg-gray-900'>
         <tr>
           <td colSpan={columns.length} className='px-6 py-12 text-center'>
             {emptyState}
@@ -46,7 +46,7 @@ const TableBody = <T extends Record<string, any>>({
   }
 
   return (
-    <tbody className='bg-white divide-y divide-gray-200'>
+    <tbody className='bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-800'>
       {data.map((item, rowIndex) => (
         <tr
           key={item.id ?? rowIndex}

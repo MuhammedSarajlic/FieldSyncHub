@@ -30,6 +30,7 @@ const Pricebook = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [serviceItems, setServiceItems] = useState<TServiceItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isNewServiceItemModalOpen, setIsNewServiceItemModalOpen] =
     useState(false);
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
@@ -67,6 +68,7 @@ const Pricebook = () => {
 
   const fetchAllServiceItemsByWorkspace = async () => {
     if (!user?.workspace) return;
+    setIsLoading(true);
 
     const paramsObj: Record<string, string> = {};
     let shouldResetPage = false;
@@ -101,6 +103,7 @@ const Pricebook = () => {
         navigate(`?${newParams.toString()}`);
       }
     }
+    setIsLoading(false);
   };
 
   const handleExportPricebook = async () => {
@@ -286,6 +289,7 @@ const Pricebook = () => {
             data={serviceItems}
             columns={pricebookColumns}
             paginationData={paginationData}
+            loading={isLoading}
           />
         </div>
       </div>

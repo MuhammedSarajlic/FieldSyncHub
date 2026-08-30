@@ -286,6 +286,7 @@ const Quotes = () => {
                 data={quotes}
                 columns={quoteColumns}
                 paginationData={paginationData}
+                loading={isLoading}
               />
             </div>
           </div>
