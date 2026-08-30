@@ -1,15 +1,21 @@
 using backend.Dtos.CustomerDto;
+using backend.Dtos.CustomerPhoneDto;
+using backend.Dtos.CustomFieldDto;
+using backend.Dtos.CustomFieldValueDto;
+using backend.Dtos.EmployeeInviteDto;
 using backend.Dtos.EventDto;
 using backend.Dtos.InvoiceDto;
-using backend.Dtos.JobDto;
 using backend.Dtos.LeadDto;
 using backend.Dtos.LineItemDto;
 using backend.Dtos.PropertyDto;
 using backend.Dtos.QuoteDto;
+using backend.Dtos.NotesDto;
+using backend.Dtos.RecurrenceRuleDto;
 using backend.Dtos.ServiceItemDto;
 using backend.Dtos.UserDto;
 using backend.Dtos.WorkspaceDto;
 using FluentValidation;
+using backend.Dtos.JobDto;
 
 namespace backend.Validation;
 
@@ -315,5 +321,185 @@ public sealed class UserLoginDtoValidator : AbstractValidator<UserLoginDto>
     {
         RuleFor(x => x.Email).NotEmpty().EmailAddress();
         RuleFor(x => x.Password).NotEmpty();
+    }
+}
+
+public sealed class CreateNoteDtoValidator : AbstractValidator<CreateNoteDto>
+{
+    public CreateNoteDtoValidator()
+    {
+        RuleFor(x => x.CreatedBy).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.CreatedByName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.NoteText).NotEmpty().When(x => string.IsNullOrWhiteSpace(x.PathFile));
+    }
+}
+
+public sealed class UpdateNoteDtoValidator : AbstractValidator<UpdateNoteDto>
+{
+    public UpdateNoteDtoValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.NoteText).NotEmpty().When(x => string.IsNullOrWhiteSpace(x.PathFile));
+    }
+}
+
+public sealed class SendQuoteDtoValidator : AbstractValidator<SendQuoteDto>
+{
+    public SendQuoteDtoValidator()
+    {
+        RuleFor(x => x.Recipients).NotEmpty();
+        RuleForEach(x => x.Recipients).EmailAddress();
+        RuleFor(x => x.Subject).NotEmpty().MaximumLength(300);
+        RuleFor(x => x.Message).NotEmpty().MaximumLength(10000);
+        RuleForEach(x => x.Attachments).SetValidator(new SendQuoteAttachmentDtoValidator());
+    }
+}
+
+public sealed class SendQuoteAttachmentDtoValidator : AbstractValidator<SendQuoteAttachmentDto>
+{
+    public SendQuoteAttachmentDtoValidator()
+    {
+        RuleFor(x => x.FileName).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.Content).NotEmpty();
+    }
+}
+
+public sealed class SendInvoiceDtoValidator : AbstractValidator<SendInvoiceDto>
+{
+    public SendInvoiceDtoValidator()
+    {
+        RuleFor(x => x.Recipients).NotEmpty();
+        RuleForEach(x => x.Recipients).EmailAddress();
+        RuleFor(x => x.Subject).NotEmpty().MaximumLength(300);
+        RuleFor(x => x.Message).NotEmpty().MaximumLength(10000);
+        RuleForEach(x => x.Attachments).SetValidator(new SendInvoiceAttachmentDtoValidator());
+    }
+}
+
+public sealed class SendInvoiceAttachmentDtoValidator : AbstractValidator<SendInvoiceAttachmentDto>
+{
+    public SendInvoiceAttachmentDtoValidator()
+    {
+        RuleFor(x => x.FileName).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.Content).NotEmpty();
+    }
+}
+
+public sealed class RecordInvoicePaymentDtoValidator : AbstractValidator<RecordInvoicePaymentDto>
+{
+    public RecordInvoicePaymentDtoValidator()
+    {
+        RuleFor(x => x.Amount).GreaterThan(0);
+        RuleFor(x => x.Method).IsInEnum();
+    }
+}
+
+public sealed class RecordJobDepositPaymentDtoValidator : AbstractValidator<RecordJobDepositPaymentDto>
+{
+    public RecordJobDepositPaymentDtoValidator()
+    {
+        RuleFor(x => x.Amount).GreaterThan(0);
+        RuleFor(x => x.Method).IsInEnum();
+    }
+}
+
+public sealed class EmployeeInviteRequestValidator : AbstractValidator<EmployeeInviteRequest>
+{
+    public EmployeeInviteRequestValidator()
+    {
+        RuleFor(x => x.Emails).NotEmpty().Must(emails => emails.Count <= 100);
+        RuleForEach(x => x.Emails).EmailAddress();
+        RuleFor(x => x.Role).IsInEnum();
+    }
+}
+
+public sealed class CreateCustomFieldDtoValidator : AbstractValidator<CreateCustomFieldDto>
+{
+    public CreateCustomFieldDtoValidator()
+    {
+        RuleFor(x => x.WorkspaceId).NotEmpty();
+        RuleFor(x => x.FieldName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.FieldType).IsInEnum();
+    }
+}
+
+public sealed class UpdateCustomFieldDtoValidator : AbstractValidator<UpdateCustomFieldDto>
+{
+    public UpdateCustomFieldDtoValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
+        RuleFor(x => x.FieldName).NotEmpty().MaximumLength(200).When(x => x.FieldName != null);
+        RuleFor(x => x.FieldType).IsInEnum().When(x => x.FieldType.HasValue);
+    }
+}
+
+public sealed class CreateCustomFieldValueDtoValidator : AbstractValidator<CreateCustomFieldValueDto>
+{
+    public CreateCustomFieldValueDtoValidator()
+    {
+        RuleFor(x => x.CustomerId).NotEmpty();
+        RuleFor(x => x.CustomFieldId).NotEmpty();
+    }
+}
+
+public sealed class UpdateCustomFieldValueDtoValidator : AbstractValidator<UpdateCustomFieldValueDto>
+{
+    public UpdateCustomFieldValueDtoValidator() => RuleFor(x => x.Id).NotEmpty();
+}
+
+public sealed class CreateCustomerPhoneDtoValidator : AbstractValidator<CreateCustomerPhoneDto>
+{
+    public CreateCustomerPhoneDtoValidator()
+    {
+        RuleFor(x => x.CustomerId).NotEmpty();
+        RuleFor(x => x.PhoneNumber).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.PhoneType).IsInEnum();
+    }
+}
+
+public sealed class UpdateCustomerPhoneDtoValidator : AbstractValidator<UpdateCustomerPhoneDto>
+{
+    public UpdateCustomerPhoneDtoValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.PhoneNumber).NotEmpty().MaximumLength(50).When(x => x.PhoneNumber != null);
+        RuleFor(x => x.PhoneType).IsInEnum().When(x => x.PhoneType.HasValue);
+    }
+}
+
+public sealed class CreateRecurrenceRuleDtoValidator : AbstractValidator<CreateRecurrenceRuleDto>
+{
+    public CreateRecurrenceRuleDtoValidator()
+    {
+        RuleFor(x => x.Frequency).IsInEnum();
+        RuleFor(x => x.EndType).IsInEnum();
+        RuleFor(x => x.Interval).GreaterThan(0);
+        RuleFor(x => x.OccurrenceCount).GreaterThan(0).When(x => x.OccurrenceCount.HasValue);
+        RuleFor(x => x.EndDate).GreaterThan(DateTime.UtcNow).When(x => x.EndDate.HasValue);
+    }
+}
+
+public sealed class UpdateRecurrenceRuleDtoValidator : AbstractValidator<UpdateRecurrenceRuleDto>
+{
+    public UpdateRecurrenceRuleDtoValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.Frequency).IsInEnum();
+        RuleFor(x => x.EndType).IsInEnum();
+        RuleFor(x => x.Interval).GreaterThan(0);
+    }
+}
+
+public sealed class ForgotPasswordDtoValidator : AbstractValidator<ForgotPasswordDto>
+{
+    public ForgotPasswordDtoValidator() => RuleFor(x => x.Email).NotEmpty().EmailAddress();
+}
+
+public sealed class ResetPasswordDtoValidator : AbstractValidator<ResetPasswordDto>
+{
+    public ResetPasswordDtoValidator()
+    {
+        RuleFor(x => x.Token).NotEmpty();
+        RuleFor(x => x.NewPassword).MinimumLength(8);
     }
 }
