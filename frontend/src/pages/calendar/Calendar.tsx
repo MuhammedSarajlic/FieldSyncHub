@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router';
 import {
   ChevronLeft,
   ChevronRight,
@@ -117,6 +118,7 @@ const getAssignedItemsForEmployeeAndHour = (
 
 const Calendar = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedView, setSelectedView] = useState('Month'); // 'Month', 'Week', 'Day', 'Dispatch'
   const [isCalendarView, setIsCalendarView] = useState(true); // Toggles between Calendar and Map
@@ -142,6 +144,10 @@ const Calendar = () => {
   });
   const [selectedDay, setSelectedDay] = useState<null | Date>(null);
   const [employees, setEmployees] = useState<TEmployee[]>([]);
+
+  useEffect(() => {
+    if (searchParams.get('create') === 'event') setIsCreateEventModalOpen(true);
+  }, [searchParams]);
 
   const calendarRef = useRef<HTMLDivElement | null>(null);
   const calendarEventModalRef = useClickOutside<HTMLDivElement>(() =>

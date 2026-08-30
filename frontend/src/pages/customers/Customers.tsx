@@ -16,11 +16,9 @@ import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import { Plus, Download, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
 import { useNavigate, useSearchParams } from 'react-router';
-import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import Table from '../../components/Table/Table';
 import { customerColumns } from '../../constants/TableColumns/CustomerColumns';
-import { customerSortOptions } from '../../constants/Options/SortOptions/CustomerSortOptions';
 import { customerFilterOptions } from '../../constants/Options/FilterOptions/CustomerFilterOptions';
 import { downloadCSVFile } from '../../utils/FuntionHelpers/downloadCSVFile';
 import PageLoader from '../../components/CustomElements/Loaders/PageLoader';
@@ -34,7 +32,6 @@ const Customers = () => {
     useState<boolean>(false);
   const [isImportCustomerModalOpen, setIsImportCustomerModalOpen] =
     useState<boolean>(false);
-  const [isSortModalOpen, setIsSortModalOpen] = useState<boolean>(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [customers, setCustomers] = useState<TCustomer[]>([]);
   const [customerStats, setCustomerStats] = useState<TCustomerStats>();
@@ -128,6 +125,10 @@ const Customers = () => {
 
   useEffect(() => {
     fetchAllCustomersByWorkspace();
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') setIsAddCustomerModalOpen(true);
   }, [searchParams]);
 
   useEffect(() => {
@@ -251,11 +252,6 @@ const Customers = () => {
                   />
                 </div>
                 <div className='flex items-center gap-2'>
-                  <SortModal
-                    setIsSortModalOpen={setIsSortModalOpen}
-                    isSortModalOpen={isSortModalOpen}
-                    sortOptions={customerSortOptions}
-                  />
                   <FilterModal
                     initialFilters={initialCustomerFilters}
                     filterOptions={customerFilterOptions}
