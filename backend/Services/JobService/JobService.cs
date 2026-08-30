@@ -240,9 +240,9 @@ public class JobService : IJobService
         }
 
         List<Employee> employees = [];
-        if (dto.AssignedTeamMembers?.Any() == true)
+        if (dto.AssignedTeamMemberIds?.Any() == true)
         {
-            var employeeIds = dto.AssignedTeamMembers.Select(e => e.Id).ToList();
+            var employeeIds = dto.AssignedTeamMemberIds.Distinct().ToList();
             employees = await _context.Employees
                 .Where(e => e.WorkspaceId == dto.WorkspaceId && employeeIds.Contains(e.Id))
                 .ToListAsync();
@@ -324,7 +324,7 @@ public class JobService : IJobService
 
             job.Tags = dto.Tags ?? [];
             job.SyncTagRecords();
-            job.StatusHistory = dto.StatusHistory ?? [];
+            job.StatusHistory = [];
             job.RecalculateTotals();
 
             var customer = await _context.Customers.FindAsync(dto.CustomerId)
@@ -408,9 +408,9 @@ public class JobService : IJobService
         if (updatedJobDto.StartDateTime != default) existingJob.StartDateTime = updatedJobDto.StartDateTime;
         if (updatedJobDto.EndDateTime != default) existingJob.EndDateTime = updatedJobDto.EndDateTime;
 
-        if (updatedJobDto.AssignedTeamMembers != null)
+        if (updatedJobDto.AssignedTeamMemberIds != null)
         {
-            var incomingIds = updatedJobDto.AssignedTeamMembers.Select(e => e.Id).ToHashSet();
+            var incomingIds = updatedJobDto.AssignedTeamMemberIds.ToHashSet();
             var existingIds = existingJob.AssignedTeamMembers.Select(e => e.Id).ToHashSet();
 
             var idsToAdd = incomingIds.Except(existingIds).ToList();

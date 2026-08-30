@@ -15,7 +15,6 @@ public class CreateJobDto
     public JobType JobType { get; set; } = JobType.OneTime;
     public ICollection<CreateLineItemDto> LineItems { get; set; } = [];
     public JobStatus Status { get; set; } = JobStatus.Scheduled;
-    public ICollection<StatusChange> StatusHistory { get; set; } = [];
     public JobPriority Priority { get; set; } = JobPriority.Normal;
     public DateTime StartDateTime { get; set; }
     public DateTime EndDateTime { get; set; }
@@ -23,7 +22,7 @@ public class CreateJobDto
     public CreateRecurrenceRuleDto? RecurrenceRule { get; set; }
     public int? ArrivalWindow { get; set; }
     public int EstimatedDurationMinutes { get; set; }
-    public List<Employee> AssignedTeamMembers { get; set; } = [];
+    public List<Guid> AssignedTeamMemberIds { get; set; } = [];
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     public decimal DepositAmount { get; set; }
     public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;

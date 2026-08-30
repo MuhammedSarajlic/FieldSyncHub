@@ -20,7 +20,7 @@ public class UpdateJobDto
     public UpdateRecurrenceRuleDto? RecurrenceRule { get; set; }
     public int? ArrivalWindow { get; set; }
     public int? EstimatedDurationMinutes { get; set; }
-    public List<Employee>? AssignedTeamMembers { get; set; }
+    public List<Guid>? AssignedTeamMemberIds { get; set; }
     public decimal? DepositAmount { get; set; }
     public PaymentStatus? PaymentStatus { get; set; }
     public DiscountType? DiscountType { get; set; }

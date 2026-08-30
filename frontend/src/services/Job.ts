@@ -45,12 +45,22 @@ export async function GetJobsByFilter(
 }
 
 export async function CreateJob(job: TAddJob) {
-  const response = await api.post('/job', job);
+  const { assignedTeamMembers, statusHistory: _statusHistory, ...jobPayload } = job;
+  const response = await api.post('/job', {
+    ...jobPayload,
+    assignedTeamMemberIds: assignedTeamMembers.map((employee) => employee.id),
+  });
   return response;
 }
 
 export async function UpdateJob(job: TUpdateJob) {
-  const response = await api.put('/job', job);
+  const { assignedTeamMembers, ...jobPayload } = job;
+  const response = await api.put('/job', {
+    ...jobPayload,
+    ...(assignedTeamMembers === undefined
+      ? {}
+      : { assignedTeamMemberIds: assignedTeamMembers.map((employee) => employee.id) }),
+  });
   return response;
 }
 
