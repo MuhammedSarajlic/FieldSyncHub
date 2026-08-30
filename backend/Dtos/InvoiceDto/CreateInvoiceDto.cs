@@ -13,7 +13,7 @@ public class CreateInvoiceDto
 
     public Guid? JobId { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
     public List<CreateLineItemDto> LineItems { get; set; } = [];
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }

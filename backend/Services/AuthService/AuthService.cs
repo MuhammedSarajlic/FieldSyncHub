@@ -56,7 +56,7 @@ public class AuthService : IAuthService
 
         var dbUser = await _context.Users.Include(u => u.Workspace).FirstOrDefaultAsync(u => u.Email == userLogin.Email);
 
-        if (dbUser == null || !VerifyPassword(userLogin.Password, dbUser.PasswordHash))
+        if (dbUser == null || !VerifyPassword(userLogin.Password, dbUser.PasswordHash!))
         {
             RecordFailedLogin(accountKey, state);
             return new ApiResponse<GetUserDto>()
@@ -269,7 +269,7 @@ public class AuthService : IAuthService
             };
         }
 
-        if (!VerifyPassword(currentPassword, user.PasswordHash))
+        if (!VerifyPassword(currentPassword, user.PasswordHash!))
         {
             return new ApiResponse<string>
             {

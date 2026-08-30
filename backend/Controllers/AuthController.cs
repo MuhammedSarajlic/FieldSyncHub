@@ -83,7 +83,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = userDB.ErrorMessage });
         }
 
-        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload);
+        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload!);
 
         _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
 

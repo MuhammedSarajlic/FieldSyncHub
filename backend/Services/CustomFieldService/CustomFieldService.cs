@@ -88,6 +88,11 @@ public class CustomFieldService : ICustomFieldService
     public async Task DeleteCustomField(Guid id)
     {
         var customField = await _context.CustomFields.FirstOrDefaultAsync(c => c.Id == id);
+        if (customField == null)
+        {
+            return;
+        }
+
         _context.Remove(customField);
         await _context.SaveChangesAsync();
     }

@@ -68,6 +68,10 @@ public class CustomerPhoneService : ICustomerPhoneService
     {
         var existingCustomerPhone = await _context.CustomerPhones.Where(p => p.Id == updatedCustomerPhoneDto.Id).FirstOrDefaultAsync();
 
+        if (existingCustomerPhone == null)
+        {
+            throw new KeyNotFoundException("Customer phone not found.");
+        }
         existingCustomerPhone.PhoneNumber = updatedCustomerPhoneDto.PhoneNumber ?? existingCustomerPhone.PhoneNumber;
         if (updatedCustomerPhoneDto.IsReceiveMessage.HasValue)
         {
@@ -118,6 +122,11 @@ public class CustomerPhoneService : ICustomerPhoneService
     public async Task DeleteCustomerPhone(Guid id)
     {
         var customerPhone = await _context.CustomerPhones.FirstOrDefaultAsync(p => p.Id == id);
+        if (customerPhone == null)
+        {
+            return;
+        }
+
         _context.Remove(customerPhone);
         await _context.SaveChangesAsync();
     }

@@ -21,7 +21,7 @@ public class Invoice
     public Guid? JobId { get; set; }
     public Job? Job { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
     public List<LineItem> LineItems { get; set; } = [];
     public List<Payment> Payments { get; set; } = [];
     public decimal TaxRate { get; set; }

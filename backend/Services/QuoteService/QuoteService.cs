@@ -44,9 +44,9 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.Property)
                                         .Include(q => q.CreatedByUser)
                                         .Include(q => q.Customer)
-                                            .ThenInclude(c => c.CustomerPhones)
+                                            .ThenInclude(c => c!.CustomerPhones)
                                         .Include(q => q.Customer)
-                                            .ThenInclude(c => c.Properties)
+                                            .ThenInclude(c => c!.Properties)
                                         .Include(q => q.CustomerNotes.OrderByDescending(n => n.CreatedAt))
                                         .Include(q => q.InternalNotes.OrderByDescending(n => n.CreatedAt))
                                         .Include(q => q.Attachments)
@@ -63,7 +63,7 @@ public class QuoteService : IQuoteService
             }
         }
 
-        return quote;
+        return quote!;
     }
 
     private static void MarkExpiredIfNeeded(Quote quote)
@@ -79,7 +79,7 @@ public class QuoteService : IQuoteService
     {
         var query = _context.Quotes
             .Include(q => q.Customer)
-                .ThenInclude(c => c.Properties)
+                .ThenInclude(c => c!.Properties)
             .Include(q => q.LineItems)
             .OrderByDescending(q => q.CreatedAt)
             .Where(q => q.WorkspaceId == workspaceId);
@@ -109,7 +109,7 @@ public class QuoteService : IQuoteService
         var quotes = await _context.Quotes.Where(q => q.CustomerId == customerId && q.WorkspaceId == callerWorkspaceId)
                                         .Include(q => q.LineItems)
                                         .Include(q => q.Customer)
-                                        .ThenInclude(c => c.Properties)
+                                        .ThenInclude(c => c!.Properties)
                                         .OrderByDescending(q => q.CreatedAt)
                                         .ToListAsync();
         return new ApiResponse<List<Quote>> { Success = true, Payload = quotes };
@@ -155,7 +155,7 @@ public class QuoteService : IQuoteService
         }
 
         var quotesList = await dbQuery
-            .Include(q => q.Customer).ThenInclude(c => c.Properties)
+            .Include(q => q.Customer).ThenInclude(c => c!.Properties)
             .Include(q => q.LineItems)
             .ToListAsync();
 
@@ -349,14 +349,14 @@ public class QuoteService : IQuoteService
                     .Include(q => q.Property)
                     .FirstOrDefaultAsync(q => q.Id == quote.Id);
 
-                return quote;
+                return quote!;
             }
             catch (DbUpdateException)
             {
                 _context.ChangeTracker.Clear();
 
                 if (!await _context.Quotes.IgnoreQueryFilters()
-                    .AnyAsync(q => q.WorkspaceId == createQuoteDto.WorkspaceId && q.QuoteNumber == quote.QuoteNumber))
+                    .AnyAsync(q => q.WorkspaceId == createQuoteDto.WorkspaceId && q.QuoteNumber == quote!.QuoteNumber))
                 {
                     throw;
                 }
@@ -547,7 +547,7 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.AssignedToUser)
                                         .Include(q => q.Property)
                                         .FirstOrDefaultAsync();
-            return quote;
+            return quote!;
         }
         catch
         {
@@ -630,7 +630,7 @@ public class QuoteService : IQuoteService
             .Include(q => q.ActivityHistory)
             .FirstOrDefaultAsync();
 
-        quote.ActivityHistory = quote.ActivityHistory
+        quote!.ActivityHistory = quote.ActivityHistory
             .OrderByDescending(a => a.ChangedAt)
             .ToList();
 
@@ -643,7 +643,7 @@ public class QuoteService : IQuoteService
                                         .Include(q => q.ActivityHistory)
                                         .Include(q => q.Customer)
                                         .Include(q => q.CreatedByUser)
-                                            .ThenInclude(u => u.Workspace)
+                                            .ThenInclude(u => u!.Workspace)
                                         .FirstOrDefaultAsync();
 
         // Same "not found" message whether the quote doesn't exist or belongs to

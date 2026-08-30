@@ -33,7 +33,7 @@ public class InvoiceService : IInvoiceService
         var invoice = await _context.Invoices
             .Where(i => i.Id == id)
             .Include(i => i.Customer)
-                .ThenInclude(c => c.CustomerPhones)
+                .ThenInclude(c => c!.CustomerPhones)
             .Include(i => i.Job)
             .Include(i => i.LineItems)
                 .ThenInclude(item => item.ServiceItem)
@@ -57,9 +57,9 @@ public class InvoiceService : IInvoiceService
             .AsNoTracking()
             .Where(i => i.InvoiceNumber == invoiceNumber && i.WorkspaceId == workspaceId)
             .Include(i => i.Customer)
-            .ThenInclude(c => c.Properties)
+            .ThenInclude(c => c!.Properties)
             .Include(i => i.Customer)
-            .ThenInclude(c => c.CustomerPhones)
+            .ThenInclude(c => c!.CustomerPhones)
             .Include(i => i.Job)
             .Include(i => i.LineItems)
             .ThenInclude(item => item.ServiceItem)
@@ -144,7 +144,7 @@ public class InvoiceService : IInvoiceService
             var q = filterDto.Q.ToLower();
             query = query.Where(i =>
                 i.InvoiceNumber.ToLower().Contains(q) ||
-                (i.Customer.FirstName.ToLower().Contains(q) || i.Customer.LastName.ToLower().Contains(q)));
+                (i.Customer!.FirstName.ToLower().Contains(q) || i.Customer.LastName.ToLower().Contains(q)));
         }
 
         var resultList = await query.ToListAsync();
@@ -207,9 +207,9 @@ public class InvoiceService : IInvoiceService
             .Where(i => i.CustomerId == customerId && i.WorkspaceId == callerWorkspaceId)
             .AsNoTracking()
             .Include(i => i.Customer)
-            .ThenInclude(c => c.Properties)
+            .ThenInclude(c => c!.Properties)
             .Include(i => i.Customer)
-            .ThenInclude(c => c.CustomerPhones)
+            .ThenInclude(c => c!.CustomerPhones)
             .Include(i => i.Job)
             .Include(i => i.LineItems)
             .ThenInclude(item => item.ServiceItem)
@@ -358,7 +358,7 @@ public class InvoiceService : IInvoiceService
         var invoice = await _context.Invoices
             .Where(i => i.Id == id)
             .Include(i => i.Customer)
-                .ThenInclude(c => c.CustomerPhones)
+                .ThenInclude(c => c!.CustomerPhones)
             .Include(i => i.LineItems)
                 .ThenInclude(li => li.ServiceItem)
             .Include(i => i.Payments)

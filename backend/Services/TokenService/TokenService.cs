@@ -229,7 +229,7 @@ public class TokenService : ITokenService
         }
 
         string? tokenKey = _configuration.GetSection("AppSettings:Token")?.Value;
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
         var token = new JwtSecurityToken(

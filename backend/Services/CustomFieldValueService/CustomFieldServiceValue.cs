@@ -41,6 +41,10 @@ public class CustomFieldServiceValue : ICustomFieldServiceValue
     public async Task<CustomFieldValue> UpdateCustomFieldValue(UpdateCustomFieldValueDto updatedCustomFieldValueDto)
     {
         var existingCustomFieldValue = await _context.CustomFieldValues.FirstOrDefaultAsync(c => c.Id == updatedCustomFieldValueDto.Id);
+        if (existingCustomFieldValue == null)
+        {
+            throw new KeyNotFoundException("Custom field value not found.");
+        }
         updatedCustomFieldValueDto.Adapt(existingCustomFieldValue);
         existingCustomFieldValue.UpdatedAt = DateTime.UtcNow;
         _context.Update(existingCustomFieldValue);
@@ -86,6 +90,11 @@ public class CustomFieldServiceValue : ICustomFieldServiceValue
     public async Task DeleteCustomFieldValue(Guid id)
     {
         var customFieldValue = await _context.CustomFieldValues.FirstOrDefaultAsync(c => c.Id == id);
+        if (customFieldValue == null)
+        {
+            return;
+        }
+
         _context.Remove(customFieldValue);
         await _context.SaveChangesAsync();
     }

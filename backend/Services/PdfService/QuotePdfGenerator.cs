@@ -64,7 +64,7 @@ public class QuotePdfGenerator
                 // Company Logo (if available)
                 if (Logo != null && Logo.Length > 0)
                 {
-                    row.ConstantItem(120).AlignRight().Height(60).AlignTop().Image(Logo, ImageScaling.FitArea);
+                    row.ConstantItem(120).AlignRight().Height(60).AlignTop().Image(Logo).FitArea();
                 }
             });
 
@@ -341,11 +341,11 @@ public class QuotePdfService(DataContext context, IMemoryCache cache, IStorageSe
     {
         var quote = await _context.Quotes.Where(q => q.Id == id)
                                         .Include(q => q.CreatedByUser)
-                                            .ThenInclude(u => u.Workspace)
+                                            .ThenInclude(u => u!.Workspace)
                                         .Include(q => q.Customer)
-                                        .ThenInclude(c => c.CustomerPhones)
+                                        .ThenInclude(c => c!.CustomerPhones)
                                         .Include(q => q.Customer)
-                                        .ThenInclude(c => c.Properties)
+                                        .ThenInclude(c => c!.Properties)
                                         .Include(q => q.LineItems)
                                         .FirstOrDefaultAsync();
 

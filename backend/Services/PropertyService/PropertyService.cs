@@ -47,7 +47,16 @@ public class PropertyService : IPropertyService
 
         await _context.Properties.AddAsync(property);
 
-        customer?.Properties?.Add(property);
+        if (customer == null)
+        {
+            return new ApiResponse<Property>
+            {
+                Success = false,
+                ErrorMessage = "Customer not found."
+            };
+        }
+
+        customer.Properties?.Add(property);
         customer.LastActivity = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 

@@ -29,9 +29,9 @@ public class JobService : IJobService
                                     .Include(j => j.LineItems)
                                         .ThenInclude(l => l.ServiceItem)
                                     .Include(j => j.Customer)
-                                        .ThenInclude(c => c.CustomerPhones)
+                                        .ThenInclude(c => c!.CustomerPhones)
                                     .Include(j => j.Customer)
-                                        .ThenInclude(c => c.Properties)
+                                        .ThenInclude(c => c!.Properties)
                                     .Include(j => j.AssignedTeamMembers)
                                         .ThenInclude(a => a.User)
                                     .FirstOrDefaultAsync();
@@ -74,9 +74,9 @@ public class JobService : IJobService
                             .Include(j => j.LineItems)
                                 .ThenInclude(l => l.ServiceItem)
                             .Include(j => j.Customer)
-                                .ThenInclude(c => c.CustomerPhones)
+                                .ThenInclude(c => c!.CustomerPhones)
                             .Include(j => j.Customer)
-                                .ThenInclude(c => c.Properties)
+                                .ThenInclude(c => c!.Properties)
                             .FirstOrDefaultAsync();
 
         return job ?? throw new Exception("Job not found");
@@ -161,10 +161,10 @@ public class JobService : IJobService
             var q = filterDto.Q.ToLower();
             dbQuery = dbQuery.Where(j =>
                 j.JobNumber.ToLower().Contains(q) ||
-                j.Customer.FirstName.ToLower().Contains(q) ||
-                j.Customer.LastName.ToLower().Contains(q) ||
-                j.Property.Street.ToLower().Contains(q) ||
-                j.Property.City.ToLower().Contains(q));
+                j.Customer!.FirstName.ToLower().Contains(q) ||
+                j.Customer!.LastName.ToLower().Contains(q) ||
+                j.Property!.Street!.ToLower().Contains(q) ||
+                j.Property!.City!.ToLower().Contains(q));
         }
 
         var jobsList = await dbQuery.ToListAsync();
@@ -442,7 +442,7 @@ public class JobService : IJobService
 
                 if (!isNew)
                 {
-                    lineItem = existingJob.LineItems.FirstOrDefault(i => i.Id == dto.Id.Value);
+                    lineItem = existingJob.LineItems.FirstOrDefault(i => i.Id == dto.Id!.Value)!;
                     if (lineItem == null) continue;
                 }
                 else

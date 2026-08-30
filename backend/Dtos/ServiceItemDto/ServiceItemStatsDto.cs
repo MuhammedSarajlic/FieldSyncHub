@@ -8,8 +8,8 @@ public class ServiceItemStatsDto
     public decimal TotalPricebookValue { get; set; }
     public decimal AverageItemPrice { get; set; }
 
-    public string TotalItemsChange { get; set; }
-    public string MaterialItemsChange { get; set; }
-    public string ServiceItemsChange { get; set; }
-    public string AverageItemPriceChange { get; set; }
+    public string TotalItemsChange { get; set; } = string.Empty;
+    public string MaterialItemsChange { get; set; } = string.Empty;
+    public string ServiceItemsChange { get; set; } = string.Empty;
+    public string AverageItemPriceChange { get; set; } = string.Empty;
 }

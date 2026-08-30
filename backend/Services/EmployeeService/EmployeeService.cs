@@ -58,7 +58,7 @@ public class EmployeeService : IEmployeeService
 
         if (!string.IsNullOrWhiteSpace(employeeFilterDto.Q))
         {
-            queryable = queryable.Where(e => e.User.FirstName.Contains(employeeFilterDto.Q) || e.User.LastName.Contains(employeeFilterDto.Q));
+            queryable = queryable.Where(e => e.User!.FirstName.Contains(employeeFilterDto.Q) || e.User.LastName.Contains(employeeFilterDto.Q));
         }
 
         if (employeeFilterDto.WorkspaceId.HasValue && employeeFilterDto.WorkspaceId != Guid.Empty)
@@ -97,9 +97,9 @@ public class EmployeeService : IEmployeeService
         queryable = employeeFilterDto.SortBy?.ToLower() switch
         {
             "name" => employeeFilterDto.Sort == "desc"
-                ? queryable.OrderByDescending(e => e.User.FirstName)
-                : queryable.OrderBy(e => e.User.FirstName),
-            _ => queryable.OrderBy(e => e.User.FirstName)
+                ? queryable.OrderByDescending(e => e.User!.FirstName)
+                : queryable.OrderBy(e => e.User!.FirstName),
+            _ => queryable.OrderBy(e => e.User!.FirstName)
         };
 
         var employees = await queryable.ToListAsync();

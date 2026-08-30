@@ -26,7 +26,7 @@ public class CustomerService : ICustomerService
         var customer = await _context.Customers.Where(c => c.Id == id)
                                             .Include(c => c.Properties)
                                             .Include(c => c.CustomerPhones)
-                                            .Include(c => c.Notes
+                                            .Include(c => c.Notes!
                                                 .OrderByDescending(n => n.CreatedAt)
                                             )
                                             .FirstOrDefaultAsync();
@@ -146,17 +146,17 @@ public class CustomerService : ICustomerService
             queryable = queryable.Where(c => c.CreatedAt <= filterDto.CreatedDateMax.Value);
 
         if (filterDto.PropertiesMin.HasValue)
-            queryable = queryable.Where(c => c.Properties.Count >= filterDto.PropertiesMin.Value);
+            queryable = queryable.Where(c => c.Properties!.Count >= filterDto.PropertiesMin.Value);
 
         if (filterDto.PropertiesMax.HasValue)
-            queryable = queryable.Where(c => c.Properties.Count <= filterDto.PropertiesMax.Value);
+            queryable = queryable.Where(c => c.Properties!.Count <= filterDto.PropertiesMax.Value);
 
         if (filterDto.HasPhone.HasValue)
         {
             if (filterDto.HasPhone.Value)
-                queryable = queryable.Where(c => c.CustomerPhones.Any());
+                queryable = queryable.Where(c => c.CustomerPhones!.Any());
             else
-                queryable = queryable.Where(c => !c.CustomerPhones.Any());
+                queryable = queryable.Where(c => !c.CustomerPhones!.Any());
         }
 
         // if (filterDto.HasEmail.HasValue)
@@ -244,7 +244,7 @@ public class CustomerService : ICustomerService
                                                     .Select(c => new
                                                     {
                                                         c.Emails,
-                                                        PhoneCount = c.CustomerPhones.Count
+                                                        PhoneCount = c.CustomerPhones!.Count
                                                     })
                                                     .AsNoTracking()
                                                     .ToListAsync();
@@ -325,7 +325,7 @@ public class CustomerService : ICustomerService
 
         updatedCustomerDto.Adapt(existingCustomer);
 
-        existingCustomer.Emails = updatedCustomerDto.Emails;
+        existingCustomer.Emails = updatedCustomerDto.Emails ?? [];
 
         if (updatedCustomerDto.CustomFieldValues != null && existingCustomer.CustomFieldValues != null)
         {

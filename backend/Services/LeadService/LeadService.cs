@@ -22,8 +22,8 @@ public class LeadService : ILeadService
     public async Task<ApiResponse<Lead>> GetLeadById(Guid id, Guid callerWorkspaceId)
     {
         var lead = await _context.Leads.Where(r => r.Id == id && r.WorkspaceId == callerWorkspaceId)
-                                    .Include(r => r.Customer).ThenInclude(c => c.CustomerPhones)
-                                    .Include(r => r.Customer).ThenInclude(c => c.Properties)
+                                    .Include(r => r.Customer).ThenInclude(c => c!.CustomerPhones)
+                                    .Include(r => r.Customer).ThenInclude(c => c!.Properties)
                                     .Include(r => r.LineItems)
                                     .FirstOrDefaultAsync();
 

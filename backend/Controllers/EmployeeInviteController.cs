@@ -84,7 +84,7 @@ public class EmployeeInviteController : ControllerBase
             }
             catch (Exception ex)
             {
-                return new { email, sent = false, error = ex.Message };
+                return new { email, sent = false, error = (string?)ex.Message };
             }
         }));
 
