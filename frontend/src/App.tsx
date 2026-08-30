@@ -42,7 +42,20 @@ function App() {
 
   return (
     <>
-      <Toaster />
+      <Toaster
+        toastOptions={{
+          ariaProps: {
+            role: 'status',
+            'aria-live': 'polite',
+          },
+          error: {
+            ariaProps: {
+              role: 'alert',
+              'aria-live': 'assertive',
+            },
+          },
+        }}
+      />
       <Routes>
         <Route path='/' element={<Navigate to='/home' replace />} />
         <Route path='confirm-email-change' element={<ConfirmEmailChange />} />
