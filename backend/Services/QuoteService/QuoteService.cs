@@ -56,6 +56,7 @@ public class QuoteService : IQuoteService
 
         if (quote != null)
         {
+            MarkExpiredIfNeeded(quote);
             foreach (var attachment in quote.Attachments)
             {
                 attachment.Url = await _storageService.ResolveAsync(attachment.Url);
@@ -63,6 +64,15 @@ public class QuoteService : IQuoteService
         }
 
         return quote;
+    }
+
+    private static void MarkExpiredIfNeeded(Quote quote)
+    {
+        if (quote.ExpiresAt.HasValue && quote.ExpiresAt.Value <= DateTime.UtcNow
+            && quote.Status is QuoteStatus.Sent or QuoteStatus.AwaitingResponse or QuoteStatus.AwaitingApproval)
+        {
+            quote.Status = QuoteStatus.Expired;
+        }
     }
 
     public async Task<ApiResponse<PagedResult<Quote>>> GetQuotesByWorkspace(Guid workspaceId, int pageNumber, int pageSize)
@@ -597,14 +607,12 @@ public class QuoteService : IQuoteService
             }
             else if (status == QuoteStatus.Approved)
             {
-                quote.SentAt = DateTime.UtcNow;
                 quote.Viewed = true;
                 quote.ViewedAt = DateTime.UtcNow;
                 AddActivity(quote, QuoteActivityType.MarkedAccepted, $"marked quote as approved.", userId, userName);
             }
             else if (status == QuoteStatus.Declined)
             {
-                quote.SentAt = DateTime.UtcNow;
                 quote.Viewed = true;
                 quote.ViewedAt = DateTime.UtcNow;
                 AddActivity(quote, QuoteActivityType.MarkedRejected, $"marked quote as rejected.", userId, userName);
