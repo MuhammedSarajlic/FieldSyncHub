@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
 import { Plus, Download, Upload } from 'lucide-react';
@@ -102,8 +103,11 @@ const Pricebook = () => {
         const newParams = new URLSearchParams(paramsObj);
         navigate(`?${newParams.toString()}`);
       }
+      setIsLoading(false);
+      return response.data.payload;
     }
     setIsLoading(false);
+    return undefined;
   };
 
   const handleExportPricebook = async () => {
@@ -127,16 +131,34 @@ const Pricebook = () => {
     const response = await GetServiceItemsStats(user.workspace.id);
     if (response.status === 200) {
       setServiceItemStats(response.data.payload);
+      return response.data.payload;
     }
+    return undefined;
   };
 
-  useEffect(() => {
-    fetchPricebookStats();
-  }, []);
+  const pricebookQuery = useQuery({
+    queryKey: ['pricebook', user?.workspace?.id, searchParams.toString()],
+    queryFn: fetchAllServiceItemsByWorkspace,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 30_000,
+  });
+
+  const pricebookStatsQuery = useQuery({
+    queryKey: ['pricebook-stats', user?.workspace?.id],
+    queryFn: fetchPricebookStats,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
-    fetchAllServiceItemsByWorkspace();
-  }, [searchParams]);
+    if (pricebookQuery.data) {
+      setServiceItems(pricebookQuery.data.items);
+      setPaginationData({
+        totalCount: pricebookQuery.data.totalCount,
+        pageSize: pricebookQuery.data.pageSize,
+      });
+    }
+  }, [pricebookQuery.data]);
 
   return (
     <div className='flex h-screen'>

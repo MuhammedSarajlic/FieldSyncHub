@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Search from '../../components/CustomElements/Search';
@@ -112,26 +113,52 @@ const Jobs = () => {
         const newParams = new URLSearchParams(paramsObj);
         navigate(`?${newParams.toString()}`);
       }
+      return response.data.payload;
     } else {
       console.error('Failed to fetch jobs:', response.status, response.data);
     }
     setIsLoading(false);
+    return undefined;
   };
 
   const fetchJobStats = async () => {
     if (!user?.workspace) return;
     const response = await GetJobStats(user.workspace.id);
-    if (response.status === 200) setJobStats(response.data.payload);
+    if (response.status === 200) {
+      setJobStats(response.data.payload);
+      return response.data.payload;
+    }
+    return undefined;
   };
+
+  const jobsQuery = useQuery({
+    queryKey: ['jobs', user?.workspace?.id, searchParams.toString()],
+    queryFn: fetchAllJobsByWorkspace,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 30_000,
+  });
+
+  const jobStatsQuery = useQuery({
+    queryKey: ['job-stats', user?.workspace?.id],
+    queryFn: fetchJobStats,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (jobsQuery.data) {
+      setJobs(jobsQuery.data.items);
+      setPaginationData({
+        totalCount: jobsQuery.data.totalCount,
+        pageSize: jobsQuery.data.pageSize,
+      });
+    }
+    if (jobStatsQuery.data) setJobStats(jobStatsQuery.data);
+  }, [jobsQuery.data, jobStatsQuery.data]);
 
   useEffect(() => {
     if (searchParams.get('create') === 'true') setIsNewJobModalOpen(true);
-    fetchJobStats();
   }, []);
-
-  useEffect(() => {
-    fetchAllJobsByWorkspace();
-  }, [searchParams]);
 
   return (
     <div className='flex'>

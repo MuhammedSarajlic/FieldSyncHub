@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Search from '../../components/CustomElements/Search';
@@ -108,10 +109,12 @@ const Quotes = () => {
         const newParams = new URLSearchParams(paramsObj);
         navigate(`?${newParams.toString()}`);
       }
+      return response.data.payload;
     } else {
       console.error('Failed to fetch quotes:', response.status, response.data);
     }
     setIsLoading(false);
+    return undefined;
   };
 
   const fetchQuoteStats = async () => {
@@ -119,17 +122,39 @@ const Quotes = () => {
     const response = await GetQuoteStats(user.workspace.id);
     if (response.status === 200) {
       setQuoteStats(response.data.payload);
+      return response.data.payload;
     }
+    return undefined;
   };
+
+  const quotesQuery = useQuery({
+    queryKey: ['quotes', user?.workspace?.id, searchParams.toString()],
+    queryFn: fetchAllQuotesByWorkspace,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 30_000,
+  });
+
+  const quoteStatsQuery = useQuery({
+    queryKey: ['quote-stats', user?.workspace?.id],
+    queryFn: fetchQuoteStats,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (quotesQuery.data) {
+      setQuotes(quotesQuery.data.items);
+      setPaginationData({
+        totalCount: quotesQuery.data.totalCount,
+        pageSize: quotesQuery.data.pageSize,
+      });
+    }
+    if (quoteStatsQuery.data) setQuoteStats(quoteStatsQuery.data);
+  }, [quotesQuery.data, quoteStatsQuery.data]);
 
   useEffect(() => {
     if (searchParams.get('create') === 'true') setIsNewQuoteModalOpen(true);
-    fetchQuoteStats();
   }, []);
-
-  useEffect(() => {
-    fetchAllQuotesByWorkspace();
-  }, [searchParams]);
 
   return (
     <div className='flex'>

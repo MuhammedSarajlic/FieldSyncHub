@@ -1,6 +1,7 @@
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
@@ -109,6 +110,7 @@ const Invoices = () => {
         const newParams = new URLSearchParams(paramsObj);
         navigate(`?${newParams.toString()}`);
       }
+      return response.data.payload;
     } else {
       console.error(
         'Failed to fetch invoices:',
@@ -117,21 +119,46 @@ const Invoices = () => {
       );
     }
     setIsLoading(false);
+    return undefined;
   };
 
   const fetchInvoiceStats = async () => {
     if (!user?.workspace) return;
     const response = await GetInvoiceStats(user.workspace.id);
-    if (response.status === 200) setInvoiceStats(response.data.payload);
+    if (response.status === 200) {
+      setInvoiceStats(response.data.payload);
+      return response.data.payload;
+    }
+    return undefined;
   };
 
+  const invoicesQuery = useQuery({
+    queryKey: ['invoices', user?.workspace?.id, searchParams.toString()],
+    queryFn: fetchAllInvoicesByWorkspace,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 30_000,
+  });
+
+  const invoiceStatsQuery = useQuery({
+    queryKey: ['invoice-stats', user?.workspace?.id],
+    queryFn: fetchInvoiceStats,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
-    fetchInvoiceStats();
-  }, []);
+    if (invoicesQuery.data) {
+      setInvoices(invoicesQuery.data.items);
+      setPaginationData({
+        totalCount: invoicesQuery.data.totalCount,
+        pageSize: invoicesQuery.data.pageSize,
+      });
+    }
+    if (invoiceStatsQuery.data) setInvoiceStats(invoiceStatsQuery.data);
+  }, [invoicesQuery.data, invoiceStatsQuery.data]);
 
   useEffect(() => {
     if (searchParams.get('create') === 'true') setIsInvoiceModalOpen(true);
-    fetchAllInvoicesByWorkspace();
   }, [searchParams]);
 
   return (

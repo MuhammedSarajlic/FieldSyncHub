@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import ButtonIcon from '../../components/CustomElements/ButtonIcon';
 import Search from '../../components/CustomElements/Search';
 import Navbar from '../../components/Navbar/Navbar';
@@ -90,8 +91,10 @@ const Customers = () => {
         const newParams = new URLSearchParams(paramsObj);
         navigate(`?${newParams.toString()}`);
       }
+      return response.data.payload;
     }
     setIsLoading(false);
+    return undefined;
   };
 
   const fetchCustomerStats = async () => {
@@ -99,8 +102,35 @@ const Customers = () => {
     const response = await GetCustomerStats(user.workspace.id);
     if (response.status === 200) {
       setCustomerStats(response.data);
+      return response.data;
     }
+    return undefined;
   };
+
+  const customersQuery = useQuery({
+    queryKey: ['customers', user?.workspace?.id, searchParams.toString()],
+    queryFn: fetchAllCustomersByWorkspace,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 30_000,
+  });
+
+  const customerStatsQuery = useQuery({
+    queryKey: ['customer-stats', user?.workspace?.id],
+    queryFn: fetchCustomerStats,
+    enabled: Boolean(user?.workspace?.id),
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (customersQuery.data) {
+      setCustomers(customersQuery.data.items);
+      setPaginationData({
+        totalCount: customersQuery.data.totalCount,
+        pageSize: customersQuery.data.pageSize,
+      });
+    }
+    if (customerStatsQuery.data) setCustomerStats(customerStatsQuery.data);
+  }, [customersQuery.data, customerStatsQuery.data]);
 
   const handleExportCustomers = async () => {
     if (!user?.workspace) return;
@@ -118,14 +148,6 @@ const Customers = () => {
       console.error('Failed to export customers:', error);
     }
   };
-
-  useEffect(() => {
-    fetchCustomerStats();
-  }, []);
-
-  useEffect(() => {
-    fetchAllCustomersByWorkspace();
-  }, [searchParams]);
 
   useEffect(() => {
     if (searchParams.get('create') === 'true') setIsAddCustomerModalOpen(true);

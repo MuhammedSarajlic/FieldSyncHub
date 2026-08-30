@@ -5,6 +5,7 @@ import React, {
   useContext,
   ReactNode,
 } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { GetLoggedInUser } from '../services/User';
 import { GetWorkspaceById } from '../services/Workspace';
 import { TContext } from '../types/Context';
@@ -19,7 +20,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(
     getStoredToken()
   );
-  const [loading, setLoading] = useState(true);
 
   const hydrateUserWorkspace = async (currentUser: TUser) => {
     if (!currentUser.workspace?.id) {
@@ -47,44 +47,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return currentUser;
   };
 
-  const fetchCurrentUser = async () => {
-    setLoading(true);
-    try {
-      const token = getStoredToken();
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+  const queryClient = useQueryClient();
+  const currentUserQuery = useQuery({
+    queryKey: ['auth', 'current-user', accessToken],
+    enabled: Boolean(accessToken),
+    staleTime: 60_000,
+    retry: false,
+    queryFn: async () => {
+      const response = await GetLoggedInUser(accessToken!);
+      if (response.status !== 200) return null;
+      return hydrateUserWorkspace(response.data.payload);
+    },
+  });
 
-      const response = await GetLoggedInUser(token);
-
-      if (response.status === 200) {
-        setUser(await hydrateUserWorkspace(response.data.payload));
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error(error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    setUser(currentUserQuery.data ?? null);
+  }, [currentUserQuery.data]);
 
   // Re-fetches the current user without touching loading/redirect state,
   // used after mutations (e.g. workspace creation) that change data on the
   // user object but shouldn't re-trigger the initial full-page loading spinner.
   const refetchUser = async () => {
-    const token = getStoredToken();
-    if (!token) return;
-    try {
-      const response = await GetLoggedInUser(token);
-      if (response.status === 200) {
-        setUser(await hydrateUserWorkspace(response.data.payload));
-      }
-    } catch (error) {
-      console.error(error);
-    }
+    await currentUserQuery.refetch();
   };
 
   const logout = async () => {
@@ -92,23 +76,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearStoredToken();
     setUser(null);
     setAccessToken(null);
+    queryClient.removeQueries({ queryKey: ['auth', 'current-user'] });
   };
-
-  useEffect(() => {
-    fetchCurrentUser();
-  }, [accessToken]);
 
   useEffect(() => {
     const handleSessionExpired = () => {
       clearStoredToken();
       setAccessToken(null);
       setUser(null);
+      queryClient.removeQueries({ queryKey: ['auth', 'current-user'] });
     };
 
     window.addEventListener('fieldsync:session-expired', handleSessionExpired);
     return () =>
       window.removeEventListener('fieldsync:session-expired', handleSessionExpired);
-  }, []);
+  }, [queryClient]);
 
   return (
     <AuthContext.Provider
@@ -118,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         accessToken,
         setAccessToken,
         logout,
-        loading,
+        loading: Boolean(accessToken) && currentUserQuery.isLoading,
         refetchUser,
       }}
     >
