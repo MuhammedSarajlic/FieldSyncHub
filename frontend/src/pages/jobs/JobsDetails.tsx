@@ -174,7 +174,7 @@ const JobDetails = () => {
   return (
     <div className='flex'>
       <Sidebar />
-      <div className='flex-1 ml-64'>
+      <div className='flex-1 md:ml-64'>
         <Navbar />
 
         {!isLoading && jobDetails ? (

@@ -241,7 +241,7 @@ const CustomerDetails = () => {
     return (
       <div className='flex'>
         <Sidebar />
-        <div className='flex-1 ml-64'>
+        <div className='flex-1 md:ml-64'>
           <Navbar customer={customer} />
           <PageLoader />
         </div>
@@ -252,7 +252,7 @@ const CustomerDetails = () => {
   return (
     <div className='flex bg-white min-h-screen'>
       <Sidebar />
-      <div className='flex-1 ml-64'>
+      <div className='flex-1 md:ml-64'>
         <Navbar customer={customer} />
 
         <div className='px-6 pt-6 pb-10'>

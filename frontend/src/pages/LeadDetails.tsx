@@ -88,7 +88,7 @@ const LeadDetails = () => {
     return (
       <div className='flex h-screen'>
         <Sidebar />
-        <div className='flex-1 ml-64'>
+        <div className='flex-1 md:ml-64'>
           <Navbar />
           <PageLoader />
         </div>
@@ -100,7 +100,7 @@ const LeadDetails = () => {
     return (
       <div className='flex h-screen'>
         <Sidebar />
-        <div className='flex-1 ml-64'>
+        <div className='flex-1 md:ml-64'>
           <Navbar />
           <div className='px-6 pt-6'>
             <p className='text-gray-600'>Lead not found.</p>
@@ -117,7 +117,7 @@ const LeadDetails = () => {
   return (
     <div className='flex h-screen'>
       <Sidebar />
-      <div className='flex-1 ml-64 overflow-y-auto'>
+      <div className='flex-1 md:ml-64 overflow-y-auto'>
         <Navbar customer={customer} />
         <div className='px-6 pt-6 pb-10'>
           {/* Header */}

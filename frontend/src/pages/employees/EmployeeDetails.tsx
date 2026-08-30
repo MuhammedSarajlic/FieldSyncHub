@@ -183,7 +183,7 @@ const EmployeeDetails = () => {
   return (
     <div className='flex h-screen'>
       <Sidebar />
-      <div className='flex-1 ml-64'>
+      <div className='flex-1 md:ml-64'>
         <Navbar />
 
         {/* Main Content */}

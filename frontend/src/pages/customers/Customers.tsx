@@ -147,7 +147,7 @@ const Customers = () => {
     <>
       <div className='flex mb-4'>
         <Sidebar />
-        <div className='flex-1 ml-64'>
+        <div className='flex-1 md:ml-64'>
           <Navbar />
           {!isLoading ? (
             <div className='px-6 pt-6 mb-10'>

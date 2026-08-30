@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { Settings } from 'lucide-react';
+import { Menu, Settings } from 'lucide-react';
 import { TCustomer } from '../../types/Customer';
 import { useAuth } from '../../context/AuthProvider';
 
@@ -13,6 +13,14 @@ const Navbar = ({ customer }: INavbar) => {
   return (
     <>
       <div className='pl-6 pr-4 h-16 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 dark:bg-gray-900'>
+        <button
+          type='button'
+          aria-label='Open navigation'
+          onClick={() => window.dispatchEvent(new Event('fieldsync:open-sidebar'))}
+          className='md:hidden mr-3 p-2 rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+        >
+          <Menu className='w-5 h-5' />
+        </button>
         <div className='text-[#6c757d] dark:text-gray-400 flex items-center space-x-3'>
           <span>{user?.workspace?.name}</span>
           {customer && (

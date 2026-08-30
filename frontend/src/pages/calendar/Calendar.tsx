@@ -692,7 +692,7 @@ const Calendar = () => {
   return (
     <div className='flex'>
       <Sidebar />
-      <div className='overflow-hidden flex-1 ml-64'>
+      <div className='overflow-hidden flex-1 md:ml-64'>
         <Navbar />
         <div className='p-6'>
           <div className='flex justify-between items-center mb-6'>
