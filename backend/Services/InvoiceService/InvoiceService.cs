@@ -319,6 +319,10 @@ public class InvoiceService : IInvoiceService
                             if (itemDto.UnitPrice.HasValue) existing.UnitPrice = itemDto.UnitPrice.Value;
                             existing.Description = itemDto.Description ?? existing.Description;
                             if (itemDto.Quantity.HasValue) existing.Quantity = itemDto.Quantity.Value;
+                            if (itemDto.Cost.HasValue) existing.Cost = itemDto.Cost.Value;
+                            if (itemDto.IsTaxable.HasValue) existing.IsTaxable = itemDto.IsTaxable.Value;
+                            if (itemDto.IsOptional.HasValue) existing.IsOptional = itemDto.IsOptional.Value;
+                            if (itemDto.ServiceItemId.HasValue) existing.ServiceItemId = itemDto.ServiceItemId.Value;
                             existing.UpdatedAt = DateTime.UtcNow;
                         }
                         // TODO: Handle case where itemDto.Id.Value exists but not found in current invoice.LineItems.
