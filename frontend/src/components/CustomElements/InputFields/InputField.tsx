@@ -1,3 +1,5 @@
+import FormField from '../FormField';
+
 interface IInputField {
   labelText?: string;
   inputName?: string;
@@ -19,29 +21,18 @@ const InputField = ({
   customStyle,
   isFullWidth = true,
 }: IInputField) => {
-  const inputStyle =
-    'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring- focus:ring-[#356852] focus:border-[#356852]';
-
   return (
-    <div className={`${isFullWidth ? 'w-full' : 'w-1/2'} flex flex-col`}>
-      {labelText && (
-        <label
-          htmlFor={inputName}
-          className='block text-sm font-medium text-gray-700 mb-2'
-        >
-          {labelText}
-        </label>
-      )}
-      <input
-        id={inputName}
-        name={inputName}
-        type={inputType || 'text'}
-        placeholder={inputPlaceholder || ''}
-        value={inputValue}
-        onChange={handleChange}
-        className={`${inputStyle} ${customStyle}`}
-      />
-    </div>
+    <FormField
+      label={labelText}
+      id={inputName}
+      name={inputName}
+      type={inputType || 'text'}
+      placeholder={inputPlaceholder}
+      value={inputValue}
+      onChange={handleChange}
+      className={customStyle}
+      fullWidth={isFullWidth}
+    />
   );
 };
 

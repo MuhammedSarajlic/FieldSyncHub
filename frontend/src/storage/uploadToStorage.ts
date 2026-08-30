@@ -1,4 +1,4 @@
-import { uploadToBackend } from '../services/Upload';
+import { uploadWithProgress } from './upload';
 
 export interface UploadStatus {
   progress: number;
@@ -16,17 +16,5 @@ export const uploadFileToStorage = async (
   _folderName: string,
   onProgress: (progress: number) => void
 ): Promise<UploadStatus> => {
-  onProgress(0);
-  try {
-    const result = await uploadToBackend(file, 'quote-attachment');
-    onProgress(100);
-    return { progress: 100, status: 'Completed', downloadURL: result.path };
-  } catch (error) {
-    console.error(`Storage upload failed for ${file.name}:`, error);
-    return {
-      progress: 0,
-      status: 'Failed',
-      error: error instanceof Error ? error.message : 'Upload failed',
-    };
-  }
+  return uploadWithProgress(file, 'quote-attachment', onProgress);
 };

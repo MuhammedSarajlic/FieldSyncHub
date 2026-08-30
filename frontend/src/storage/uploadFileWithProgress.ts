@@ -1,4 +1,4 @@
-import { uploadToBackend } from '../services/Upload';
+import { uploadWithProgress } from './upload';
 
 interface UploadResult {
   progress?: number;
@@ -13,17 +13,5 @@ export const uploadFileWithProgress = async (
   file: File,
   onProgress: (progress: number) => void
 ): Promise<UploadResult> => {
-  onProgress(0);
-  try {
-    const result = await uploadToBackend(file, 'service-item-image');
-    onProgress(100);
-    return { progress: 100, status: 'Completed', downloadURL: result.path };
-  } catch (error) {
-    console.error('Upload failed:', error);
-    return {
-      progress: 0,
-      status: 'Failed',
-      error: error instanceof Error ? error.message : 'Upload failed',
-    };
-  }
+  return uploadWithProgress(file, 'service-item-image', onProgress);
 };

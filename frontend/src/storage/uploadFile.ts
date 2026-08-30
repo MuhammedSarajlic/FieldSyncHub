@@ -1,4 +1,4 @@
-import { uploadToBackend } from '../services/Upload';
+import { uploadWithProgress } from './upload';
 
 // Used for the company logo, uploaded during onboarding (before a workspace
 // exists) and again from Settings. Returns the storage path - callers persist
@@ -7,6 +7,9 @@ import { uploadToBackend } from '../services/Upload';
 export const uploadFile = async (file: File): Promise<string> => {
   if (!file) throw new Error('No file provided');
 
-  const result = await uploadToBackend(file, 'logo');
-  return result.path;
+  const result = await uploadWithProgress(file, 'logo', () => undefined);
+  if (result.status === 'Failed' || !result.downloadURL) {
+    throw new Error(result.error || 'Upload failed');
+  }
+  return result.downloadURL;
 };
