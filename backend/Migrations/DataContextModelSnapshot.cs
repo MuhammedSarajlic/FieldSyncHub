@@ -1013,6 +1013,14 @@ namespace backend.Migrations
                     b.Property<bool>("IsBillingAddress")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<decimal?>("Latitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)");
+
                     b.Property<string>("PostalCode")
                         .HasColumnType("longtext");
 

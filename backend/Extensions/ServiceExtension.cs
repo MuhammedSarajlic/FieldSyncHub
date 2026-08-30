@@ -50,6 +50,7 @@ public static class ServiceExtension
         services.AddScoped<ICustomerPhoneService, CustomerPhoneService>();
         services.AddScoped<INotesService, NotesService>();
         services.AddScoped<IPropertyService, PropertyService>();
+        services.AddScoped<IGeocodingService, GeocodingService>();
         services.AddScoped<IServiceItemService, ServiceItemService>();
         services.AddScoped<IJobService, JobService>();
         services.AddScoped<IEmployeeInviteService, EmployeeInviteService>();

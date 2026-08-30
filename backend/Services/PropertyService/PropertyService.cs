@@ -10,9 +10,12 @@ namespace backend.Services.PropertyService;
 public class PropertyService : IPropertyService
 {
     private readonly DataContext _context;
-    public PropertyService(DataContext context)
+    private readonly IGeocodingService? _geocodingService;
+
+    public PropertyService(DataContext context, IGeocodingService? geocodingService = null)
     {
         _context = context;
+        _geocodingService = geocodingService;
     }
 
     public async Task<ApiResponse<Property>> GetPropertyById(Guid id, Guid callerWorkspaceId)
@@ -45,8 +48,6 @@ public class PropertyService : IPropertyService
         property.Id = Guid.NewGuid();
         property.CustomerId = createPropertyDto.CustomerId;
 
-        await _context.Properties.AddAsync(property);
-
         if (customer == null)
         {
             return new ApiResponse<Property>
@@ -56,6 +57,8 @@ public class PropertyService : IPropertyService
             };
         }
 
+        await ApplyCoordinatesAsync(property, createPropertyDto.Latitude, createPropertyDto.Longitude);
+        await _context.Properties.AddAsync(property);
         customer.Properties?.Add(property);
         customer.LastActivity = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -82,11 +85,30 @@ public class PropertyService : IPropertyService
             };
         }
 
+        var oldStreet = property.Street;
+        var oldCity = property.City;
+        var oldState = property.State;
+        var oldCountry = property.Country;
+        var oldPostalCode = property.PostalCode;
         property.Street = updatePropertyDto.Street ?? property.Street;
         property.City = updatePropertyDto.City ?? property.City;
         property.State = updatePropertyDto.State ?? property.State;
         property.Country = updatePropertyDto.Country ?? property.Country;
         property.PostalCode = updatePropertyDto.PostalCode ?? property.PostalCode;
+        var addressChanged = property.Street != oldStreet
+            || property.City != oldCity
+            || property.State != oldState
+            || property.Country != oldCountry
+            || property.PostalCode != oldPostalCode;
+        if (updatePropertyDto.Latitude.HasValue && updatePropertyDto.Longitude.HasValue)
+        {
+            property.Latitude = updatePropertyDto.Latitude;
+            property.Longitude = updatePropertyDto.Longitude;
+        }
+        else if (addressChanged)
+        {
+            await ApplyCoordinatesAsync(property, null, null);
+        }
         if (updatePropertyDto.IsBillingAddress.HasValue) property.IsBillingAddress = updatePropertyDto.IsBillingAddress.Value;
         property.UpdatedAt = DateTime.UtcNow;
 
@@ -99,6 +121,25 @@ public class PropertyService : IPropertyService
             Payload = property,
             ErrorMessage = null
         };
+    }
+
+    private async Task ApplyCoordinatesAsync(Property property, decimal? latitude, decimal? longitude)
+    {
+        if (latitude.HasValue && longitude.HasValue)
+        {
+            property.Latitude = latitude;
+            property.Longitude = longitude;
+            return;
+        }
+
+        var coordinates = _geocodingService == null
+            ? null
+            : await _geocodingService.GeocodeAsync(property.Address);
+        if (coordinates != null)
+        {
+            property.Latitude = coordinates.Latitude;
+            property.Longitude = coordinates.Longitude;
+        }
     }
 
     public async Task UpdateProperties(ICollection<UpdatePropertyDto> updatedPropertiesDto, Guid customerId)

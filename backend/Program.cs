@@ -170,6 +170,11 @@ builder.Services.AddHttpClient("quote-logo", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(5);
 });
+builder.Services.AddHttpClient("geocoding", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(3);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("FieldSyncHub/1.0 (+https://fieldsynchub.com)");
+});
 builder.Services.AddHostedService<JobNotificationWorker>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHealthChecks()

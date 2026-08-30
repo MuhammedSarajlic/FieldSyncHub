@@ -8,5 +8,7 @@ public class UpdatePropertyDto
     public string? State { get; set; }
     public string? Country { get; set; }
     public string? PostalCode { get; set; }
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
     public bool? IsBillingAddress { get; set; }
 }

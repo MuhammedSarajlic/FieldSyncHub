@@ -5,6 +5,8 @@ export type TProperty = {
   state?: string;
   country?: string;
   postalCode?: string;
+  latitude?: number;
+  longitude?: number;
   address: string;
   isBillingAddress: boolean;
   customerId: string;
@@ -18,6 +20,8 @@ export type TAddProperty = {
   state?: string;
   country?: string;
   postalCode?: string;
+  latitude?: number;
+  longitude?: number;
   isBillingAddress?: boolean;
   customerId?: string;
 };
@@ -28,6 +32,8 @@ export type TAddBilingProperty = {
   state?: string;
   country?: string;
   postalCode?: string;
+  latitude?: number;
+  longitude?: number;
   customerId?: string;
 };
 
