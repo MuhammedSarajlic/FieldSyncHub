@@ -21,11 +21,13 @@ const ActionConfirmationModal = ({
   itemType = 'item',
 }: ActionConfirmationModalProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [confirmation, setConfirmation] = useState('');
 
   const handleAction = async () => {
     setIsProcessing(true);
     try {
       await onConfirm();
+      setConfirmation('');
       onClose();
     } finally {
       setIsProcessing(false);
@@ -79,6 +81,7 @@ const ActionConfirmationModal = ({
     description,
     bulletPoints,
   } = config[actionType];
+  const requiresTypedConfirmation = actionType === 'delete';
 
   return (
     <div className='fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50'>
@@ -107,6 +110,19 @@ const ActionConfirmationModal = ({
                     ))}
                   </ul>
                 )}
+                {requiresTypedConfirmation && (
+                  <div className='mt-4'>
+                    <label className='block text-xs font-medium text-gray-700 mb-1'>
+                      Type DELETE to confirm
+                    </label>
+                    <input
+                      value={confirmation}
+                      onChange={(event) => setConfirmation(event.target.value)}
+                      autoComplete='off'
+                      className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -114,7 +130,10 @@ const ActionConfirmationModal = ({
           <div className='mt-6 flex justify-end space-x-3'>
             <CustomButton
               onClick={onClose}
-              disabled={isProcessing}
+              disabled={
+                isProcessing ||
+                (requiresTypedConfirmation && confirmation !== 'DELETE')
+              }
               customStyle='px-4 py-2 border-gray-300  hover:bg-gray-50'
             >
               Cancel

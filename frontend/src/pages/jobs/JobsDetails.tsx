@@ -42,6 +42,7 @@ import {
 import { getJobPriority } from '../../utils/FuntionHelpers/JobUtils/getJobPriority';
 import { getJobStatus } from '../../utils/FuntionHelpers/JobUtils/getJobStatus';
 import { getPaymentStatusColor } from '../../utils/FuntionHelpers/JobUtils/getPaymentStatusColor';
+import ActionConfirmationModal from '../../components/Quotes/QuotesModals/ActionConfirmationModal';
 import JobDetailsMediaTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsMediaTab';
 import JobDetailsTeamTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsTeamTab';
 import JobDetailsTimelineTab from '../../components/Jobs/JobDetails/JobDetailsTabs/JobDetailsTimelineTab';
@@ -64,6 +65,7 @@ const JobDetails = () => {
   const [jobDetails, setJobDetails] = useState<TJob | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isEditJobModalOpen, setIsEditJobModalOpen] = useState<boolean>(false);
+  const [isDeleteJobModalOpen, setIsDeleteJobModalOpen] = useState(false);
   const [isRecordDepositModalOpen, setIsRecordDepositModalOpen] =
     useState<boolean>(false);
 
@@ -267,7 +269,10 @@ const JobDetails = () => {
                                 Archive Job
                               </button>
                               <button
-                                onClick={handleDeleteJob}
+                                onClick={() => {
+                                  setShowMoreActions(false);
+                                  setIsDeleteJobModalOpen(true);
+                                }}
                                 className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors'
                               >
                                 <Trash2 className='w-4 h-4 mr-2' />
@@ -854,6 +859,14 @@ const JobDetails = () => {
         balanceDue={jobDetails.depositBalanceDue}
         onClose={() => setIsRecordDepositModalOpen(false)}
         onSubmit={handleRecordDepositPayment}
+      />
+      <ActionConfirmationModal
+        isOpen={isDeleteJobModalOpen}
+        onClose={() => setIsDeleteJobModalOpen(false)}
+        onConfirm={handleDeleteJob}
+        itemName={jobDetails.title || 'Job'}
+        actionType='delete'
+        itemType='job'
       />
     </div>
   );
