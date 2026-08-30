@@ -44,7 +44,7 @@ public class CustomerController : ControllerBase
         return (await _customerService.GetCustomersByWorkspace(workspaceId, pageNumber, pageSize)).MapPage(customer => customer.ToResponse());
     }
 
-    [HttpGet("stats/{workspaceId:guid}")]
+    [HttpGet("workspace/{workspaceId:guid}/stats")]
     public async Task<IActionResult> GetCustomerStats(Guid workspaceId)
     {
         CustomerStatsDto stats = await _customerService.GetCustomerStats(workspaceId);
@@ -128,7 +128,7 @@ public class CustomerController : ControllerBase
         return await _customerService.ExportCustomers(workspaceId);
     }
 
-    [HttpPatch("{id}/tags")]
+    [HttpPatch("{id:guid}/tags")]
     public async Task<IActionResult> UpdateCustomerTags(Guid id, [FromBody] string tag)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -140,7 +140,7 @@ public class CustomerController : ControllerBase
         return Ok();
     }
 
-    [HttpPatch("{id}/tags/remove")]
+    [HttpPatch("{id:guid}/tags/remove")]
     public async Task<IActionResult> RemoveCustomerTag(Guid id, [FromBody] string tag)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -152,7 +152,7 @@ public class CustomerController : ControllerBase
         return Ok();
     }
 
-    [HttpPatch("{id}/archive")]
+    [HttpPatch("{id:guid}/archive")]
     public async Task<IActionResult> ArchiveCustomer(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)

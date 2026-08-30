@@ -17,7 +17,7 @@ public class EventController : ControllerBase
         _eventService = eventService;
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<ActionResult<Event>> GetEventById(Guid id)
     {
         var evt = await _eventService.GetEventByIdAsync(id);
@@ -25,7 +25,7 @@ public class EventController : ControllerBase
         return Ok(evt);
     }
 
-    [HttpGet("workspace/{workspaceId}")]
+    [HttpGet("workspace/{workspaceId:guid}")]
     public async Task<ActionResult<List<Event>>> GetEventsByWorkspaceId(Guid workspaceId)
     {
         return Ok(await _eventService.GetEventsByWorkspaceIdAsync(workspaceId));
@@ -38,7 +38,7 @@ public class EventController : ControllerBase
         return CreatedAtAction(nameof(GetEventById), new { id = created.Id }, created);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
     public async Task<ActionResult<Event>> UpdateEvent(Guid id, [FromBody] UpdateEventDto dto)
     {
         if (id != dto.Id) return BadRequest("Event ID mismatch.");
@@ -48,7 +48,7 @@ public class EventController : ControllerBase
         return Ok(updated);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteEvent(Guid id)
     {

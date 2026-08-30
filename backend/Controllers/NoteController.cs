@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace backend.Controllers;
 
 [ApiController]
-[Route("api/notes")]
+[Route("api/note")]
 public class NoteController : ControllerBase
 {
     private readonly INotesService _notesService;
@@ -33,7 +33,7 @@ public class NoteController : ControllerBase
         return Ok(await _notesService.GetNoteById(id, callerWorkspaceId));
     }
 
-    [HttpGet("{customerId}/customer")]
+    [HttpGet("{customerId:guid}/customer")]
     public async Task<ActionResult<ApiResponse<List<Note>>>> GetNoteByCustomerId(Guid customerId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)

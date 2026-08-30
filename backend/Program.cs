@@ -63,6 +63,7 @@ builder.Services.AddControllersWithViews(options =>
         // data by changing the GUID in the URL.
         options.Filters.Add(typeof(WorkspaceAccessFilter));
         options.Filters.Add<FluentValidationFilter>();
+        options.Filters.Add<PaginationFilter>();
     })
     .AddJsonOptions(options =>
     {

@@ -27,7 +27,7 @@ public class InvoiceController : ControllerBase
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<ActionResult<InvoiceResponseDto>> GetInvoiceById(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -70,7 +70,7 @@ public class InvoiceController : ControllerBase
         return (await _invoiceService.GetInvoicesByFilter(filterDto, workspaceId, pageNumber, pageSize)).MapPage(invoice => invoice.ToResponse());
     }
 
-    [HttpGet("workspace/{workspaceId:guid}/invoice-stats")]
+    [HttpGet("workspace/{workspaceId:guid}/stats")]
     public async Task<ApiResponse<InvoiceStatsDto>> GetInvoiceStats(Guid workspaceId)
     {
         var stats = await _invoiceService.GetInvoiceStats(workspaceId);
@@ -81,7 +81,7 @@ public class InvoiceController : ControllerBase
         };
     }
 
-    [HttpGet("customer/{customerId}")]
+    [HttpGet("customer/{customerId:guid}")]
     public async Task<ActionResult<ApiResponse<List<InvoiceResponseDto>>>> GetInvoicesByCustomerId(Guid customerId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -148,7 +148,7 @@ public class InvoiceController : ControllerBase
         return result.Success ? Ok(response) : BadRequest(response);
     }
 
-    [HttpPost("{id}/payments")]
+    [HttpPost("{id:guid}/payments")]
     public async Task<ActionResult<InvoiceResponseDto>> RecordPayment(Guid id, [FromBody] RecordInvoicePaymentDto paymentDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId || _currentUser.UserId is not Guid recordedByUserId)
@@ -171,7 +171,7 @@ public class InvoiceController : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -184,7 +184,7 @@ public class InvoiceController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("invoice/{id}/pdf")]
+    [HttpGet("{id:guid}/pdf")]
     public async Task<IActionResult> GetInvoicePdf(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)

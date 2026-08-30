@@ -42,7 +42,7 @@ export async function GetQuotesByFilter(
 }
 
 export async function GetQuoteStats(workspaceId: string) {
-  const response = await api.get(`/quote/workspace/${workspaceId}/quote-stats`);
+  const response = await api.get(`/quote/workspace/${workspaceId}/stats`);
   return response;
 }
 

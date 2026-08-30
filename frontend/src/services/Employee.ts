@@ -12,7 +12,7 @@ export async function GetEmployeeById(employeeId: string) {
 }
 
 export async function GetEmployeeStats(workspaceId: string) {
-  const response = await api.get(`/employee/${workspaceId}/stats`);
+  const response = await api.get(`/employee/workspace/${workspaceId}/stats`);
   return response;
 }
 

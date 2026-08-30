@@ -23,7 +23,7 @@ public class LeadController : ControllerBase
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApiResponse<LeadResponseDto>>> GetLeadById(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -35,14 +35,14 @@ public class LeadController : ControllerBase
         return Ok(leads.Map(payload => payload.ToResponse()));
     }
 
-    [HttpGet("workspace/{workspaceId}")]
+    [HttpGet("workspace/{workspaceId:guid}")]
     public async Task<ActionResult<ApiResponse<List<LeadResponseDto>>>> GetLeadsByWorkspaceId(Guid workspaceId)
     {
         var leads = await _leadService.GetLeadsByWorkspaceId(workspaceId);
         return Ok(leads.MapList(lead => lead.ToResponse()));
     }
 
-    [HttpGet("customer/{customerId}")]
+    [HttpGet("customer/{customerId:guid}")]
     public async Task<ActionResult<ApiResponse<List<LeadResponseDto>>>> GetLeadsByCustomerId(Guid customerId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -73,7 +73,7 @@ public class LeadController : ControllerBase
         return Ok(result.Map(payload => payload.ToResponse()));
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteLead(Guid id)
     {

@@ -218,7 +218,7 @@ public class JobController : ControllerBase
         return result.Success ? Ok(response) : BadRequest(response);
     }
 
-    [HttpGet("workspace/{workspaceId:guid}/job-stats")]
+    [HttpGet("workspace/{workspaceId:guid}/stats")]
     public async Task<ApiResponse<JobStatsDto>> GetJobStats(Guid workspaceId)
     {
         var stats = await _jobService.GetJobStats(workspaceId);

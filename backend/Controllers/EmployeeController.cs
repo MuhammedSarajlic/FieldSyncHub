@@ -38,13 +38,13 @@ public class EmployeeController : ControllerBase
         return await _employeeService.GetEmployeesByWorkspaceId(workspaceId);
     }
 
-    [HttpGet("workspace/{workspaceId}/filter")]
+    [HttpGet("workspace/{workspaceId:guid}/filter")]
     public async Task<ApiResponse<List<Employee>>> GetEmployeesByFilter([FromQuery] EmployeeFilterDto employeeFilterDto, Guid workspaceId)
     {
         return await _employeeService.GetEmployeesByFilter(employeeFilterDto, workspaceId);
     }
 
-    [HttpGet("{workspaceId}/stats")]
+    [HttpGet("workspace/{workspaceId:guid}/stats")]
     public async Task<ActionResult<EmployeeStatsDto>> GetEmployeeStats(Guid workspaceId)
     {
         var stats = await _employeeService.GetEmployeeStatsAsync(workspaceId);

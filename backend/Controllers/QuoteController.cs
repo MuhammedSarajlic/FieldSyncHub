@@ -33,7 +33,7 @@ public class QuoteController : ControllerBase
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<ActionResult<QuoteResponseDto>> GetQuoteById(Guid id)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -54,7 +54,7 @@ public class QuoteController : ControllerBase
         return (await _quoteService.GetQuotesByWorkspace(workspaceId, pageNumber, pageSize)).MapPage(quote => quote.ToResponse());
     }
 
-    [HttpGet("customer/{customerId}")]
+    [HttpGet("customer/{customerId:guid}")]
     public async Task<ActionResult<ApiResponse<List<QuoteResponseDto>>>> GetQuotesByCustomerId(Guid customerId)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -76,7 +76,7 @@ public class QuoteController : ControllerBase
         return (await _quoteService.GetQuotesByFilter(workspaceId, pageNumber, pageSize, filterDto)).MapPage(quote => quote.ToResponse());
     }
 
-    [HttpGet("workspace/{workspaceId:guid}/quote-stats")]
+    [HttpGet("workspace/{workspaceId:guid}/stats")]
     public async Task<ApiResponse<QuoteStatsDto>> GetQuoteStats(Guid workspaceId)
     {
         var stats = await _quoteService.GetQuoteStats(workspaceId);
@@ -95,21 +95,21 @@ public class QuoteController : ControllerBase
         return Ok(result.ToResponse());
     }
 
-    [HttpPost("{quoteId}/customer-note")]
+    [HttpPost("{quoteId:guid}/customer-note")]
     public async Task<IActionResult> AddCustomerNote(Guid quoteId, [FromBody] CreateNoteDto noteDto)
     {
         var note = await _quoteService.AddCustomerNoteToQuote(quoteId, noteDto);
         return Ok(note.ToResponse());
     }
 
-    [HttpPost("{quoteId}/internal-note")]
+    [HttpPost("{quoteId:guid}/internal-note")]
     public async Task<IActionResult> AddInternalNote(Guid quoteId, [FromBody] CreateNoteDto noteDto)
     {
         var note = await _quoteService.AddInternalNoteToQuote(quoteId, noteDto);
         return Ok(note.ToResponse());
     }
 
-    [HttpPost("{quoteId}/attachment")]
+    [HttpPost("{quoteId:guid}/attachment")]
     public async Task<IActionResult> AddAttachment(Guid quoteId, [FromBody] QuoteAttachmentDto attachmentDto)
     {
         if (_currentUser.WorkspaceId is not Guid callerWorkspaceId)
@@ -167,7 +167,7 @@ public class QuoteController : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> DeleteQuote(Guid id)
     {
@@ -180,14 +180,14 @@ public class QuoteController : ControllerBase
         return success ? NoContent() : NotFound();
     }
 
-    [HttpPatch("{id}/archive")]
+    [HttpPatch("{id:guid}/archive")]
     public async Task<IActionResult> ArchiveQuote(Guid id)
     {
         await _quoteService.ArchiveQuote(id);
         return Ok();
     }
 
-    [HttpPatch("{id}")]
+    [HttpPatch("{id:guid}")]
     public async Task<ActionResult<QuoteResponseDto>> ChangeQuoteStatus(Guid id, [FromBody] QuoteStatus status)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -221,7 +221,7 @@ public class QuoteController : ControllerBase
         return result.Success ? Ok(response) : BadRequest(response);
     }
 
-    [HttpGet("{id}/pdf")]
+    [HttpGet("{id:guid}/pdf")]
     public async Task<IActionResult> GetQuotePdf(Guid id)
     {
         // var quote = await _quoteService.GetByIdAsync(id);

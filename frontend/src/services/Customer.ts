@@ -73,7 +73,7 @@ export async function ArchiveCustomer(id: string) {
 }
 
 export async function GetCustomerStats(workspaceId: string) {
-  const response = await api.get(`/customer/stats/${workspaceId}`);
+  const response = await api.get(`/customer/workspace/${workspaceId}/stats`);
   return response;
 }
 

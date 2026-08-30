@@ -29,7 +29,7 @@ export async function GetInvoicesByCustomer(customerId: string) {
 
 export async function GetInvoiceStats(wokrspaceId: string) {
   const response = await api.get(
-    `/invoice/workspace/${wokrspaceId}/invoice-stats`
+    `/invoice/workspace/${wokrspaceId}/stats`
   );
   return response;
 }

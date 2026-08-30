@@ -8,7 +8,7 @@ export async function GetJobById(jobId: string) {
 }
 
 export async function GetJobStats(wokrspaceId: string) {
-  const response = await api.get(`/job/workspace/${wokrspaceId}/job-stats`);
+  const response = await api.get(`/job/workspace/${wokrspaceId}/stats`);
   return response;
 }
 

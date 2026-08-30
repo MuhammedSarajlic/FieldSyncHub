@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace backend.Controllers;
 
 [ApiController]
-[Route("api/customfieldvalue/")]
+[Route("api/custom-field-value")]
 public class CustomFieldValueController : ControllerBase
 {
     private readonly ICustomFieldServiceValue _customFieldServiceValue;

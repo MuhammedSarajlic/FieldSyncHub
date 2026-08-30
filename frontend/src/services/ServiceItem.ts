@@ -18,7 +18,7 @@ export async function GetServiceItemsByWorkspace(
 }
 
 export async function GetServiceItemsStats(workspaceId: string) {
-  const response = await api.get(`/service-item/stats/${workspaceId}`);
+  const response = await api.get(`/service-item/workspace/${workspaceId}/stats`);
   return response;
 }
 

@@ -19,7 +19,7 @@ public class ServiceItemController : ControllerBase
         _serviceItemService = serviceItemService;
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<ActionResult<ServiceItem>> GetServiceItemById(Guid id)
     {
         var serviceItem = await _serviceItemService.GetServiceItemById(id);
@@ -27,14 +27,14 @@ public class ServiceItemController : ControllerBase
         return Ok(serviceItem);
     }
 
-    [HttpGet("workspace/{workspaceId}")]
+    [HttpGet("workspace/{workspaceId:guid}")]
     public async Task<ApiResponse<PagedResult<ServiceItem>>> GetByWorkspace(Guid workspaceId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
         var serviceItems = await _serviceItemService.GetServiceItemsByWorkspace(workspaceId, pageNumber, pageSize);
         return serviceItems;
     }
 
-    [HttpGet("workspace/{workspaceId}/filter")]
+    [HttpGet("workspace/{workspaceId:guid}/filter")]
     public async Task<ApiResponse<PagedResult<ServiceItem>>> GetServiceItemsByFilter(Guid workspaceId,
         [FromQuery] int pageNumber,
         [FromQuery] int pageSize, [FromQuery] ServiceItemFilterDto filterDto)
@@ -42,7 +42,7 @@ public class ServiceItemController : ControllerBase
         return await _serviceItemService.GetServiceItemsByFilter(filterDto, workspaceId, pageNumber, pageSize);
     }
 
-    [HttpGet("stats/{workspaceId}")]
+    [HttpGet("workspace/{workspaceId:guid}/stats")]
     public async Task<IActionResult> GetPricebookStats(Guid workspaceId)
     {
         var result = await _serviceItemService.GetPricebookStatsByWorkspace(workspaceId);
@@ -78,14 +78,14 @@ public class ServiceItemController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("import/{workspaceId}")]
+    [HttpPost("import/{workspaceId:guid}")]
     [Authorize(Roles = "Owner,Admin")]
     public async Task<ApiResponse<object>> ImportServiceItems([FromBody] List<ImportedServiceItemDto> serviceItems, Guid workspaceId)
     {
         return await _serviceItemService.ImportServiceItemsAsync(serviceItems, workspaceId);
     }
 
-    [HttpGet("export/{workspaceId}")]
+    [HttpGet("export/{workspaceId:guid}")]
     [Authorize(Roles = "Owner,Admin")]
     public async Task<IActionResult> ExportServiceItems(Guid workspaceId)
     {

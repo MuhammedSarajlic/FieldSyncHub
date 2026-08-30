@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace backend.Controllers;
 
 [ApiController]
-[Route("api/customerphone")]
+[Route("api/customer-phone")]
 public class CustomerPhoneController : ControllerBase
 {
     private readonly ICustomerPhoneService _customerPhoneService;
