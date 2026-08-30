@@ -75,12 +75,24 @@ public class EmployeeInviteController : ControllerBase
             return Forbid();
         }
 
-        foreach (var email in request.Emails)
+        var results = await Task.WhenAll(request.Emails.Select(async email =>
         {
-            await _employeeInviteService.SendInvite(email, workspaceId, request.Role);
-        }
+            try
+            {
+                await _employeeInviteService.SendInvite(email, workspaceId, request.Role);
+                return new { email, sent = true, error = (string?)null };
+            }
+            catch (Exception ex)
+            {
+                return new { email, sent = false, error = ex.Message };
+            }
+        }));
 
-        return Ok("Invitations sent.");
+        return Ok(new
+        {
+            sent = results.Where(r => r.sent).Select(r => r.email),
+            failed = results.Where(r => !r.sent).Select(r => new { r.email, r.error })
+        });
     }
 
     [HttpPost("accept-invite")]
