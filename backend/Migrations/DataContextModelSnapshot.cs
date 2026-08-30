@@ -800,17 +800,29 @@ namespace backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid>("CustomerId")
+                    b.Property<Guid?>("CustomerId")
                         .HasColumnType("char(36)");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("EndDateTime")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("FirstName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Notes")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PhoneNumber")
                         .HasColumnType("longtext");
 
                     b.Property<int>("Priority")
@@ -818,6 +830,9 @@ namespace backend.Migrations
 
                     b.Property<Guid?>("QuoteId")
                         .HasColumnType("char(36)");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime?>("StartDateTime")
                         .HasColumnType("datetime(6)");
@@ -1783,8 +1798,7 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.Customer", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("backend.Models.QuoteModels.Quote", "Quote")
                         .WithMany()
