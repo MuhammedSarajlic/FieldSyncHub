@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router';
+import { Navigate, Route, Routes, useLocation } from 'react-router';
+import { useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 import Signin from './pages/auth/Signin';
 import Signup from './pages/auth/Signup';
@@ -33,6 +34,38 @@ import ServiceItemDetails from './pages/pricebook/ServiceItemDetails';
 import { Toaster } from 'react-hot-toast';
 import ScreenLoader from './components/CustomElements/Loaders/ScreenLoader';
 
+const getPageTitle = (pathname: string) => {
+  if (pathname === '/' || pathname.startsWith('/home')) return 'Dashboard';
+  if (pathname.startsWith('/calendar')) return 'Calendar';
+  if (pathname.startsWith('/customers')) return 'Customers';
+  if (pathname.startsWith('/jobs')) return 'Jobs';
+  if (pathname.startsWith('/invoices')) return 'Invoices';
+  if (pathname.startsWith('/employees')) return 'Team';
+  if (pathname.startsWith('/leads')) return 'Leads';
+  if (pathname.startsWith('/quotes')) return 'Quotes';
+  if (pathname.startsWith('/pricebook')) return 'Pricebook';
+  if (pathname.startsWith('/reports')) return 'Reports';
+  if (pathname.startsWith('/settings')) return 'Settings';
+  if (pathname.startsWith('/workspace')) return 'Workspace setup';
+  if (pathname.startsWith('/signin')) return 'Sign in';
+  if (pathname.startsWith('/signup')) return 'Create account';
+  if (pathname.startsWith('/forgot-password')) return 'Forgot password';
+  if (pathname.startsWith('/reset-password')) return 'Reset password';
+  if (pathname.startsWith('/invite')) return 'Join workspace';
+  if (pathname.startsWith('/confirm-email-change')) return 'Confirm email change';
+  return 'Page not found';
+};
+
+const RouteDocumentTitle = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    document.title = `${getPageTitle(pathname)} | FieldSyncHub`;
+  }, [pathname]);
+
+  return null;
+};
+
 function App() {
   const { loading } = useAuth();
 
@@ -63,6 +96,7 @@ function App() {
         Skip to main content
       </a>
       <main id='main-content' tabIndex={-1} className='min-h-screen outline-none'>
+        <RouteDocumentTitle />
         <Routes>
         <Route path='/' element={<Navigate to='/home' replace />} />
         <Route path='confirm-email-change' element={<ConfirmEmailChange />} />
