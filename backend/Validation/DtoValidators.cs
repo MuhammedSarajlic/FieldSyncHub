@@ -173,6 +173,16 @@ public sealed class CreateLeadDtoValidator : AbstractValidator<CreateLeadDto>
     {
         RuleFor(x => x.WorkspaceId).NotEmpty();
         RuleFor(x => x.Description).NotEmpty().MaximumLength(2000);
+        RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
+        RuleFor(x => x.FirstName).MaximumLength(100).When(x => x.FirstName != null);
+        RuleFor(x => x.LastName).MaximumLength(100).When(x => x.LastName != null);
+        RuleFor(x => x)
+            .Must(x => x.CustomerId.HasValue
+                || !string.IsNullOrWhiteSpace(x.FirstName)
+                || !string.IsNullOrWhiteSpace(x.LastName)
+                || !string.IsNullOrWhiteSpace(x.Email)
+                || !string.IsNullOrWhiteSpace(x.PhoneNumber))
+            .WithMessage("A standalone lead must include contact information.");
         RuleFor(x => x.EndDateTime).GreaterThan(x => x.StartDateTime)
             .When(x => x.StartDateTime.HasValue && x.EndDateTime.HasValue);
         RuleFor(x => x.Priority).IsInEnum();
@@ -186,6 +196,7 @@ public sealed class UpdateLeadDtoValidator : AbstractValidator<UpdateLeadDto>
     {
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Description).NotEmpty().MaximumLength(2000).When(x => x.Description != null);
+        RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
         RuleFor(x => x.EndDateTime).GreaterThan(x => x.StartDateTime)
             .When(x => x.StartDateTime.HasValue && x.EndDateTime.HasValue);
         RuleFor(x => x.Status).IsInEnum().When(x => x.Status.HasValue);

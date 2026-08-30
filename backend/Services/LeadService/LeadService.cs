@@ -130,11 +130,20 @@ public class LeadService : ILeadService
 
         if (createLeadDto.CustomerId.HasValue)
         {
-            var customer = await _context.Customers.FindAsync(createLeadDto.CustomerId.Value);
-            if (customer != null)
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(c => c.Id == createLeadDto.CustomerId.Value
+                    && c.WorkspaceId == createLeadDto.WorkspaceId);
+            if (customer == null)
             {
-                customer.LastActivity = DateTime.UtcNow;
+                return new ApiResponse<Lead>
+                {
+                    Success = false,
+                    ErrorMessage = "Customer not found in this workspace.",
+                    Payload = null
+                };
             }
+
+            customer.LastActivity = DateTime.UtcNow;
         }
 
         await _context.Leads.AddAsync(lead);
@@ -165,6 +174,11 @@ public class LeadService : ILeadService
         }
 
         if (updatedLeadDto.Description != null) lead.Description = updatedLeadDto.Description;
+        if (updatedLeadDto.FirstName != null) lead.FirstName = updatedLeadDto.FirstName;
+        if (updatedLeadDto.LastName != null) lead.LastName = updatedLeadDto.LastName;
+        if (updatedLeadDto.Email != null) lead.Email = updatedLeadDto.Email;
+        if (updatedLeadDto.PhoneNumber != null) lead.PhoneNumber = updatedLeadDto.PhoneNumber;
+        if (updatedLeadDto.Source != null) lead.Source = updatedLeadDto.Source;
         if (updatedLeadDto.StartDateTime.HasValue) lead.StartDateTime = updatedLeadDto.StartDateTime.Value;
         if (updatedLeadDto.EndDateTime != null) lead.EndDateTime = updatedLeadDto.EndDateTime;
         if (updatedLeadDto.Status.HasValue) lead.Status = updatedLeadDto.Status.Value;

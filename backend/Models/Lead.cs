@@ -7,9 +7,13 @@ public class Lead
 {
     [Key]
     public Guid Id { get; set; }
-    [Required]
-    public Guid CustomerId { get; set; }
+    public Guid? CustomerId { get; set; }
     public Customer? Customer { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? Source { get; set; }
     public Guid? QuoteId { get; set; }
     public Quote? Quote { get; set; }
     public Guid WorkspaceId { get; set; }

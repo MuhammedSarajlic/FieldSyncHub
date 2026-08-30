@@ -15,6 +15,11 @@ export type TLead = {
   quote?: TQuote;
   workspaceId: string;
   workspace?: TWorkspace;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  source?: string;
   description: string;
   startDateTime?: string;
   endDateTime?: string;
@@ -29,6 +34,11 @@ export type TLead = {
 export type TAddLead = {
   customerId?: string;
   workspaceId: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  source?: string;
   description: string;
   startDateTime?: string;
   endDateTime?: string;
@@ -39,6 +49,11 @@ export type TAddLead = {
 
 export type TUpdateLead = {
   id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  source?: string;
   description?: string;
   startDateTime?: string;
   endDateTime?: string;

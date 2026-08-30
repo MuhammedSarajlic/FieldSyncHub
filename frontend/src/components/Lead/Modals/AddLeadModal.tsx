@@ -16,6 +16,10 @@ interface IAddLeadModal {
 
 const leadInitialState = {
   customerId: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
   description: '',
   priority: LeadPriority.Normal,
   notes: '',
@@ -48,7 +52,6 @@ const AddLeadModal = ({ isOpen, onClose, onCreated }: IAddLeadModal) => {
 
   const validate = (): boolean => {
     const newErrors: { [key: string]: string } = {};
-    if (!lead.customerId) newErrors.customerId = 'Customer is required';
     if (!lead.description.trim())
       newErrors.description = 'Description is required';
     setErrors(newErrors);
@@ -59,8 +62,12 @@ const AddLeadModal = ({ isOpen, onClose, onCreated }: IAddLeadModal) => {
     if (!user?.workspace || !validate()) return;
 
     const payload: TAddLead = {
-      customerId: lead.customerId,
+      customerId: lead.customerId || undefined,
       workspaceId: user.workspace.id,
+      firstName: lead.firstName.trim() || undefined,
+      lastName: lead.lastName.trim() || undefined,
+      email: lead.email.trim() || undefined,
+      phoneNumber: lead.phoneNumber.trim() || undefined,
       description: lead.description.trim(),
       priority: lead.priority,
       notes: lead.notes.trim() || undefined,
@@ -100,7 +107,7 @@ const AddLeadModal = ({ isOpen, onClose, onCreated }: IAddLeadModal) => {
               htmlFor='lead-customer'
               className='block text-sm font-medium text-gray-700 mb-2'
             >
-              Customer <span className='text-red-500'>*</span>
+              Existing customer (optional)
             </label>
             <div className='relative'>
               <select
@@ -122,10 +129,29 @@ const AddLeadModal = ({ isOpen, onClose, onCreated }: IAddLeadModal) => {
                 <ChevronDown className='w-5 h-5' />
               </div>
             </div>
-            {errors.customerId && (
-              <p className='text-red-500 text-sm mt-1'>{errors.customerId}</p>
-            )}
+            <p className='text-gray-500 text-xs mt-1'>Leave blank for a new inbound contact.</p>
           </div>
+
+          {!lead.customerId && (
+            <div className='grid grid-cols-2 gap-3'>
+              <div>
+                <label htmlFor='lead-first-name' className='block text-sm font-medium text-gray-700 mb-2'>First name</label>
+                <input id='lead-first-name' value={lead.firstName} onChange={(e) => setLead({ ...lead, firstName: e.target.value })} className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm' />
+              </div>
+              <div>
+                <label htmlFor='lead-last-name' className='block text-sm font-medium text-gray-700 mb-2'>Last name</label>
+                <input id='lead-last-name' value={lead.lastName} onChange={(e) => setLead({ ...lead, lastName: e.target.value })} className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm' />
+              </div>
+              <div>
+                <label htmlFor='lead-email' className='block text-sm font-medium text-gray-700 mb-2'>Email</label>
+                <input id='lead-email' type='email' value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm' />
+              </div>
+              <div>
+                <label htmlFor='lead-phone' className='block text-sm font-medium text-gray-700 mb-2'>Phone</label>
+                <input id='lead-phone' value={lead.phoneNumber} onChange={(e) => setLead({ ...lead, phoneNumber: e.target.value })} className='w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm' />
+              </div>
+            </div>
+          )}
 
           <div>
             <label

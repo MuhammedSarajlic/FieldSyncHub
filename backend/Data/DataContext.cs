@@ -254,6 +254,12 @@ public class DataContext : DbContext
             .HasForeignKey(r => r.QuoteId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<Lead>()
+            .HasOne(r => r.Customer)
+            .WithMany()
+            .HasForeignKey(r => r.CustomerId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         //many-to-many job<->employee
         modelBuilder.Entity<Job>()
             .HasMany(j => j.AssignedTeamMembers)
