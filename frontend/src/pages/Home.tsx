@@ -9,6 +9,9 @@ import {
   Plus,
   Receipt,
   FileText,
+  Users,
+  Wrench,
+  X,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar/Sidebar';
 import Navbar from '../components/Navbar/Navbar';
@@ -37,6 +40,9 @@ const Home = () => {
   });
   const [recentInvoices, setRecentInvoices] = useState<TInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isChecklistDismissed, setIsChecklistDismissed] = useState(
+    () => localStorage.getItem('fieldsync:onboarding-dismissed') === 'true'
+  );
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -141,6 +147,23 @@ const Home = () => {
               }
             />
           </div>
+
+          {!isChecklistDismissed && (jobStats?.totalJobs ?? 0) === 0 && recentInvoices.length === 0 && (
+            <section className='mb-8 border border-border-primary bg-white p-5 dark:bg-gray-900 dark:border-gray-800'>
+              <div className='flex items-start justify-between gap-4'>
+                <div><h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>Get your workspace ready</h2><p className='mt-1 text-sm text-gray-500'>A few setup steps and you can start scheduling real work.</p></div>
+                <button type='button' aria-label='Dismiss onboarding checklist' onClick={() => { localStorage.setItem('fieldsync:onboarding-dismissed', 'true'); setIsChecklistDismissed(true); }} className='rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'><X className='h-4 w-4' /></button>
+              </div>
+              <div className='mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+                {[
+                  ['Add your first customer', 'Customers are who jobs, quotes, and invoices are for.', '/customers?create=true', Users],
+                  ['Build your pricebook', 'Save your common services and materials.', '/pricebook', Wrench],
+                  ['Invite your team', 'Assign people to upcoming work.', '/employees', Users],
+                  ['Send your first quote', 'Turn a customer need into scheduled work.', '/quotes?create=true', FileText],
+                ].map(([title, description, path, Icon]) => <button key={title as string} type='button' onClick={() => navigate(path as string)} className='flex min-h-24 items-start gap-3 border border-gray-200 p-4 text-left hover:border-bg-primary dark:border-gray-700'><Icon className='mt-0.5 h-5 w-5 text-bg-primary' /><span><span className='block text-sm font-medium text-gray-900 dark:text-gray-100'>{title as string}</span><span className='mt-1 block text-xs text-gray-500'>{description as string}</span></span></button>)}
+              </div>
+            </section>
+          )}
 
           {/* Two-Column Layout */}
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
