@@ -6,10 +6,8 @@ import NewQuoteModal from '../../components/Quotes/QuotesModals/NewQuoteModal';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
 import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import Table from '../../components/Table/Table';
-import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import { TQuote, TQuoteStats } from '../../types/Quote';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
-import { quoteSortOptions } from '../../constants/Options/SortOptions/QuoteSortOptions';
 import { quoteFilterOptions } from '../../constants/Options/FilterOptions/QuoteFilterOptions';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
@@ -34,7 +32,6 @@ const Quotes = () => {
     totalCount: 0,
     pageSize: 10,
   });
-  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [quoteStats, setQuoteStats] = useState<TQuoteStats>();
@@ -266,11 +263,6 @@ const Quotes = () => {
                 />
               </div>
               <div className='flex items-center gap-2'>
-                <SortModal
-                  setIsSortModalOpen={setIsSortModalOpen}
-                  isSortModalOpen={isSortModalOpen}
-                  sortOptions={quoteSortOptions}
-                />
                 <FilterModal
                   initialFilters={initialQuoteFilters}
                   filterOptions={quoteFilterOptions}

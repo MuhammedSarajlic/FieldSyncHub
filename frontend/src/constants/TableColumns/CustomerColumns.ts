@@ -7,12 +7,14 @@ export const customerColumns: TTableColumns = [
     accessor: 'fullName',
     type: 'text',
     bold: true,
+    sortKey: 'name',
   },
   {
     header: 'Company',
     accessor: (customer: TCustomer) =>
       customer.isCompany ? customer.companyName : '-',
     type: 'text',
+    sortKey: 'company',
   },
   {
     header: 'Property',

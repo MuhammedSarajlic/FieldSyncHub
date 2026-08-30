@@ -8,17 +8,20 @@ export const invoiceColumns: TTableColumns = [
     header: 'Invoice #',
     accessor: 'invoiceNumber',
     type: 'text',
+    sortKey: 'invoice-number',
   },
   {
     header: 'Customer',
     accessor: (invoice: TInvoice) => invoice.customer?.fullName ?? '-',
     type: 'text',
     bold: true,
+    sortKey: 'customer',
   },
   {
     header: 'Issue date',
     accessor: 'issueDate',
     type: 'date',
+    sortKey: 'due-date',
   },
   {
     header: 'Due date',
@@ -38,5 +41,6 @@ export const invoiceColumns: TTableColumns = [
     type: 'currency',
     align: 'right',
     bold: true,
+    sortKey: 'total',
   },
 ];

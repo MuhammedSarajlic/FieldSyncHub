@@ -7,6 +7,7 @@ export interface BaseColumn<T = any> {
   width?: string;
   customColumnStyle?: string;
   cellClassName?: string;
+  sortKey?: string;
 }
 
 export interface StatusConfig {

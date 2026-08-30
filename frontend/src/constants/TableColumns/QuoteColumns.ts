@@ -8,6 +8,7 @@ export const quoteColumns: TTableColumns = [
     accessor: (quote) => quote.customer.fullName ?? 'N/A',
     type: 'text',
     bold: true,
+    sortKey: 'customer',
   },
   {
     header: 'Quote Number',
@@ -23,6 +24,7 @@ export const quoteColumns: TTableColumns = [
     header: 'Created',
     accessor: 'createdAt',
     type: 'date',
+    sortKey: 'created',
   },
   {
     header: 'Status',
@@ -36,5 +38,6 @@ export const quoteColumns: TTableColumns = [
     accessor: 'total',
     type: 'currency',
     align: 'right',
+    sortKey: 'total',
   },
 ];

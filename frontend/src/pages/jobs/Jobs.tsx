@@ -14,9 +14,7 @@ import {
 import Table from '../../components/Table/Table';
 import { TPaginationData } from '../../types/Table';
 import { jobColumns } from '../../constants/TableColumns/JobColumns';
-import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
-import { jobSortOptions } from '../../constants/Options/SortOptions/JobSortOptions';
 import { useNavigate, useSearchParams } from 'react-router';
 import { jobFilterOptions } from '../../constants/Options/FilterOptions/JobFilterOptions';
 import { formatCurrency } from '../../utils/FuntionHelpers/formatCurrency';
@@ -29,7 +27,6 @@ const Jobs = () => {
 
   const [jobs, setJobs] = useState<TJob[]>([]);
   const [isNewJobModalOpen, setIsNewJobModalOpen] = useState(false);
-  const [isSortModalOpen, setIsSortModalOpen] = useState<boolean>(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [jobStats, setJobStats] = useState<TJobStats>({
@@ -218,11 +215,6 @@ const Jobs = () => {
               />
             </div>
             <div className='flex items-center gap-2'>
-              <SortModal
-                setIsSortModalOpen={setIsSortModalOpen}
-                isSortModalOpen={isSortModalOpen}
-                sortOptions={jobSortOptions}
-              />
               <FilterModal
                 initialFilters={initialJobFilters}
                 filterOptions={jobFilterOptions}

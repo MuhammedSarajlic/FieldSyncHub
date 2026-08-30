@@ -3,12 +3,10 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import CustomIconButton from '../../components/CustomElements/CustomIconButton';
-import SortModal from '../../components/CustomElements/SortComponent/SortModal';
 import FilterModal from '../../components/CustomElements/FilterComponent/FilterModal';
 import Search from '../../components/CustomElements/Search';
 import { useNavigate, useSearchParams } from 'react-router';
 import { invoiceFilterOptions } from '../../constants/Options/FilterOptions/InvoiceFilterOptions';
-import { inoviceSortOptions } from '../../constants/Options/SortOptions/InvoiceSortOptions';
 import CreateInvoiceModal from '../../components/Invoice/Modal/CreateInvoiceModal';
 import {
   GetAllInvoicesByWorkspaceId,
@@ -29,7 +27,6 @@ const Invoices = () => {
 
   const [invoices, setInvoices] = useState<TInvoice[]>([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [invoiceStats, setInvoiceStats] = useState<TInvoiceStats>({
@@ -269,11 +266,6 @@ const Invoices = () => {
               </div>
 
               <div className='flex items-center gap-2'>
-                <SortModal
-                  setIsSortModalOpen={setIsSortModalOpen}
-                  isSortModalOpen={isSortModalOpen}
-                  sortOptions={inoviceSortOptions}
-                />
                 <FilterModal
                   initialFilters={initialInvoiceFilters}
                   filterOptions={invoiceFilterOptions}

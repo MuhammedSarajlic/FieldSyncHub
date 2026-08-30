@@ -10,6 +10,7 @@ export const jobColumns: TTableColumns = [
     accessor: (job: TJob) => job.customer?.fullName ?? '-',
     type: 'text',
     bold: true,
+    sortKey: 'customer',
   },
   {
     header: 'Property',
@@ -20,6 +21,7 @@ export const jobColumns: TTableColumns = [
     header: 'Schedule',
     accessor: 'startDate',
     type: 'date',
+    sortKey: 'schedule',
   },
   {
     header: 'Status',
@@ -41,5 +43,6 @@ export const jobColumns: TTableColumns = [
     type: 'currency',
     align: 'right',
     bold: true,
+    sortKey: 'total',
   },
 ];
