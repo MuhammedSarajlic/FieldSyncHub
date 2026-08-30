@@ -18,6 +18,8 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using backend.Services.TokenService;
 using backend.Services.Operations;
+using backend.Health;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -133,6 +135,8 @@ builder.Services.AddHsts(options =>
 builder.Services.AddHttpClient();
 builder.Services.AddHostedService<JobNotificationWorker>();
 builder.Services.AddMemoryCache();
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
 TypeAdapterConfig<UpdateQuoteDto, Quote>.NewConfig()
@@ -243,6 +247,14 @@ if (app.Environment.IsDevelopment())
 app.MapStaticAssets();
 
 app.MapControllers();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => false
+}).AllowAnonymous();
+app.MapHealthChecks("/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+}).AllowAnonymous();
 
 app.Run();
 
