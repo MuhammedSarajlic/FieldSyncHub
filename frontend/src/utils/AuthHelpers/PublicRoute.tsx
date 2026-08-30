@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthProvider';
 import { Navigate, Outlet } from 'react-router';
+import ScreenLoader from '../../components/CustomElements/Loaders/ScreenLoader';
 
 interface IPublicRoute {
   children?: React.ReactNode;
@@ -10,7 +11,7 @@ const PublicRoute = ({ children }: IPublicRoute) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <ScreenLoader />;
   }
 
   if (user) {

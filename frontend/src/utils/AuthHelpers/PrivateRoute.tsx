@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthProvider';
 import { Navigate, Outlet, useLocation } from 'react-router';
+import ScreenLoader from '../../components/CustomElements/Loaders/ScreenLoader';
 
 interface IPrivateRoute {
   children?: React.ReactNode;
@@ -11,7 +12,7 @@ const PrivateRoute = ({ children }: IPrivateRoute) => {
   const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <ScreenLoader />;
   }
 
   if (user === null) {
