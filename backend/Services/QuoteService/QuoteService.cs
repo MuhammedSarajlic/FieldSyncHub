@@ -315,6 +315,7 @@ public class QuoteService : IQuoteService
             quote.CustomerNotes = createQuoteDto.CustomerNotes?.Select(n => new Note
             {
                 Id = Guid.NewGuid(),
+                WorkspaceId = quote.WorkspaceId,
                 CreatedBy = n.CreatedBy,
                 CreatedByName = n.CreatedByName,
                 NoteText = n.NoteText,
@@ -323,6 +324,7 @@ public class QuoteService : IQuoteService
             quote.InternalNotes = createQuoteDto.InternalNotes?.Select(n => new Note
             {
                 Id = Guid.NewGuid(),
+                WorkspaceId = quote.WorkspaceId,
                 CreatedBy = n.CreatedBy,
                 CreatedByName = n.CreatedByName,
                 NoteText = n.NoteText,
@@ -374,6 +376,7 @@ public class QuoteService : IQuoteService
         var note = new Note
         {
             Id = Guid.NewGuid(),
+            WorkspaceId = quote.WorkspaceId,
             CreatedBy = noteDto.CreatedBy,
             CreatedByName = noteDto.CreatedByName,
             NoteText = noteDto.NoteText,
@@ -401,6 +404,7 @@ public class QuoteService : IQuoteService
         var note = new Note
         {
             Id = Guid.NewGuid(),
+            WorkspaceId = quote.WorkspaceId,
             CreatedBy = noteDto.CreatedBy,
             CreatedByName = noteDto.CreatedByName,
             NoteText = noteDto.NoteText,
