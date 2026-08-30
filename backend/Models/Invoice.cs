@@ -27,11 +27,10 @@ public class Invoice
     public decimal TaxRate { get; set; }
     public decimal Discount { get; set; }
     public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
-    private TotalsBreakdown Totals => TotalsCalculator.Calculate(LineItems, DiscountType, Discount, TaxRate);
-    [NotMapped]
-    public decimal Subtotal => Totals.Subtotal;
-    [NotMapped]
-    public decimal Total => Totals.Total;
+    public decimal Subtotal { get; private set; }
+    public decimal DiscountAmount { get; private set; }
+    public decimal TaxAmount { get; private set; }
+    public decimal Total { get; private set; }
     [NotMapped]
     public decimal AmountPaid => PaymentLedgerCalculator.CalculateAmountPaid(Payments);
     [NotMapped]
@@ -53,6 +52,15 @@ public class Invoice
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     [Timestamp]
     public byte[] RowVersion { get; set; } = [];
+
+    public void RecalculateTotals()
+    {
+        var totals = TotalsCalculator.Calculate(LineItems, DiscountType, Discount, TaxRate);
+        Subtotal = totals.Subtotal;
+        DiscountAmount = totals.Discount;
+        TaxAmount = totals.TaxAmount;
+        Total = totals.Total;
+    }
 }
 
 public enum InvoiceStatus

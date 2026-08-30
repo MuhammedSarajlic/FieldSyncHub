@@ -235,6 +235,7 @@ public class InvoiceService : IInvoiceService
             var customer = await _context.Customers.FindAsync(createInvoiceDto.CustomerId)
                 ?? throw new KeyNotFoundException($"Customer with ID {createInvoiceDto.CustomerId} not found.");
             customer.LastActivity = DateTime.UtcNow;
+            invoice.RecalculateTotals();
 
             _context.Invoices.Add(invoice);
 
@@ -347,6 +348,7 @@ public class InvoiceService : IInvoiceService
             }
         }
 
+        invoice.RecalculateTotals();
         invoice.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 

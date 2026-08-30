@@ -303,5 +303,20 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<Quote>().Property(q => q.DiscountValue).HasPrecision(19, 4);
         modelBuilder.Entity<Quote>().Property(q => q.TaxRate).HasPrecision(9, 6);
+
+        modelBuilder.Entity<Invoice>().Property(i => i.Subtotal).HasPrecision(19, 4);
+        modelBuilder.Entity<Invoice>().Property(i => i.DiscountAmount).HasPrecision(19, 4);
+        modelBuilder.Entity<Invoice>().Property(i => i.TaxAmount).HasPrecision(19, 4);
+        modelBuilder.Entity<Invoice>().Property(i => i.Total).HasPrecision(19, 4);
+
+        modelBuilder.Entity<Job>().Property(j => j.Subtotal).HasPrecision(19, 4);
+        modelBuilder.Entity<Job>().Property(j => j.Discount).HasPrecision(19, 4);
+        modelBuilder.Entity<Job>().Property(j => j.TaxAmount).HasPrecision(19, 4);
+        modelBuilder.Entity<Job>().Property(j => j.TotalAmount).HasPrecision(19, 4);
+
+        modelBuilder.Entity<Quote>().Property(q => q.Subtotal).HasPrecision(19, 4);
+        modelBuilder.Entity<Quote>().Property(q => q.Discount).HasPrecision(19, 4);
+        modelBuilder.Entity<Quote>().Property(q => q.TaxAmount).HasPrecision(19, 4);
+        modelBuilder.Entity<Quote>().Property(q => q.Total).HasPrecision(19, 4);
     }
 }

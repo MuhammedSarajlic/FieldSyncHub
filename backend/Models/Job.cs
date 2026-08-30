@@ -39,16 +39,11 @@ public class Job
     public bool IsDepositPaid => DepositAmount > 0m && DepositPaid >= DepositAmount;
     public DiscountType DiscountType { get; set; } = DiscountType.FixedAmount;
     public decimal DiscountValue { get; set; }
-    private TotalsBreakdown Totals => TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate);
-    [NotMapped]
-    public decimal Subtotal => Totals.Subtotal;
-    [NotMapped]
-    public decimal Discount => Totals.Discount;
+    public decimal Subtotal { get; private set; }
+    public decimal Discount { get; private set; }
     public decimal TaxRate { get; set; }
-    [NotMapped]
-    public decimal TaxAmount => Totals.TaxAmount;
-    [NotMapped]
-    public decimal TotalAmount => Totals.Total;
+    public decimal TaxAmount { get; private set; }
+    public decimal TotalAmount { get; private set; }
     public bool SendInvoice { get; set; }
     public bool SendReminder { get; set; }
     public int ReminderDaysBefore { get; set; } = 1;
@@ -66,6 +61,15 @@ public class Job
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     [Timestamp]
     public byte[] RowVersion { get; set; } = [];
+
+    public void RecalculateTotals()
+    {
+        var totals = TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate);
+        Subtotal = totals.Subtotal;
+        Discount = totals.Discount;
+        TaxAmount = totals.TaxAmount;
+        TotalAmount = totals.Total;
+    }
 }
 
 public enum JobStatus

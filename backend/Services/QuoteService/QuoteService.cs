@@ -338,6 +338,7 @@ public class QuoteService : IQuoteService
             var customer = await _context.Customers.FindAsync(createQuoteDto.CustomerId)
                 ?? throw new KeyNotFoundException($"Customer with ID {createQuoteDto.CustomerId} not found.");
             customer.LastActivity = DateTime.UtcNow;
+            quote.RecalculateTotals();
 
             _context.Quotes.Add(quote);
 
@@ -537,6 +538,7 @@ public class QuoteService : IQuoteService
                 }
             }
 
+            quote.RecalculateTotals();
             quote.UpdatedAt = DateTime.UtcNow;
 
             AddActivity(quote, QuoteActivityType.QuoteEdited, "edited quote", userId, userName);

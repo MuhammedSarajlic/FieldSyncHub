@@ -41,19 +41,10 @@ public class Quote
     public decimal DiscountValue { get; set; }
     public decimal TaxRate { get; set; }
 
-    private TotalsBreakdown Totals => TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate);
-
-    [NotMapped]
-    public decimal Subtotal => Totals.Subtotal;
-
-    [NotMapped]
-    public decimal Discount => Totals.Discount;
-
-    [NotMapped]
-    public decimal TaxAmount => Totals.TaxAmount;
-
-    [NotMapped]
-    public decimal Total => Totals.Total;
+    public decimal Subtotal { get; private set; }
+    public decimal Discount { get; private set; }
+    public decimal TaxAmount { get; private set; }
+    public decimal Total { get; private set; }
 
     public List<Note> CustomerNotes { get; set; } = [];
     public List<Note> InternalNotes { get; set; } = [];
@@ -70,6 +61,15 @@ public class Quote
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     [Timestamp]
     public byte[] RowVersion { get; set; } = [];
+
+    public void RecalculateTotals()
+    {
+        var totals = TotalsCalculator.Calculate(LineItems, DiscountType, DiscountValue, TaxRate);
+        Subtotal = totals.Subtotal;
+        Discount = totals.Discount;
+        TaxAmount = totals.TaxAmount;
+        Total = totals.Total;
+    }
 }
 
 public enum QuoteStatus

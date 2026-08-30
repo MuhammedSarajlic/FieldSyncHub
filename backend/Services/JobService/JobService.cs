@@ -320,6 +320,7 @@ public class JobService : IJobService
 
             job.Tags = dto.Tags ?? [];
             job.StatusHistory = dto.StatusHistory ?? [];
+            job.RecalculateTotals();
 
             var customer = await _context.Customers.FindAsync(dto.CustomerId)
                 ?? throw new KeyNotFoundException($"Customer with ID {dto.CustomerId} not found.");
@@ -484,6 +485,7 @@ public class JobService : IJobService
             }
         }
 
+        existingJob.RecalculateTotals();
         existingJob.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
