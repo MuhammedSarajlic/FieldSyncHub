@@ -8,6 +8,8 @@ interface ITableBody<T = any> {
   onRowClick: (item: T) => void;
   emptyState: ReactNode;
   loading: boolean;
+  selectedIds?: string[];
+  onToggleSelection?: (id: string) => void;
 }
 
 const TableBody = <T extends Record<string, any>>({
@@ -16,6 +18,8 @@ const TableBody = <T extends Record<string, any>>({
   onRowClick,
   emptyState,
   loading = false,
+  selectedIds = [],
+  onToggleSelection,
 }: ITableBody<T>) => {
   if (loading) {
     return (
@@ -37,7 +41,7 @@ const TableBody = <T extends Record<string, any>>({
     return (
       <tbody className='bg-white dark:bg-gray-900'>
         <tr>
-          <td colSpan={columns.length} className='px-6 py-12 text-center'>
+          <td colSpan={columns.length + 1} className='px-6 py-12 text-center'>
             {emptyState}
           </td>
         </tr>
@@ -53,6 +57,7 @@ const TableBody = <T extends Record<string, any>>({
           onClick={onRowClick ? () => onRowClick(item) : undefined}
           className={`hover:bg-gray-50 cursor-pointer h-[70px] group `}
         >
+          <td className='px-4 py-4' onClick={(event) => event.stopPropagation()}><input type='checkbox' checked={selectedIds.includes(String(item.id))} onChange={() => onToggleSelection?.(String(item.id))} aria-label='Select row' className='h-4 w-4 accent-bg-primary' /></td>
           {columns.map((column, colIndex) => (
             <td
               key={colIndex}

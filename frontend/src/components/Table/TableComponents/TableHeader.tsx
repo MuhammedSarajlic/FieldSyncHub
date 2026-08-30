@@ -5,9 +5,11 @@ import { useSearchParams } from 'react-router';
 interface ITableHeader {
   columns: TTableColumns;
   customStyle?: string;
+  isAllSelected?: boolean;
+  onToggleAll?: () => void;
 }
 
-const TableHeader = ({ columns, customStyle }: ITableHeader) => {
+const TableHeader = ({ columns, customStyle, isAllSelected, onToggleAll }: ITableHeader) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const sortBy = searchParams.get('sortBy');
   const sort = searchParams.get('sort');
@@ -27,6 +29,7 @@ const TableHeader = ({ columns, customStyle }: ITableHeader) => {
   return (
     <thead className={`bg-gray-50 ${customStyle}`}>
       <tr>
+        <th className='w-12 px-4 py-3'><input type='checkbox' checked={isAllSelected} onChange={onToggleAll} aria-label='Select all rows' className='h-4 w-4 accent-bg-primary' /></th>
         {columns.map((column, index) => (
           <th
             key={index}
