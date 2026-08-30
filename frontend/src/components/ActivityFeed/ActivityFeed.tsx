@@ -7,7 +7,6 @@ const ActivityFeed = ({
 }: {
   setIsActivityFeedOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const arr = [1];
   return (
     <div className='fixed top-0 right-0 h-screen w-[420px] bg-white shadow-lg rounded-l-xl'>
       <div className='px-4 py-6 flex items-center justify-between border-b-[1px] border-[#ced4da]'>
@@ -20,7 +19,7 @@ const ActivityFeed = ({
         </div>
       </div>
       <div>
-        {arr.length > 0 ? arr.map(() => <ActivityItem />) : <EmptyFeed />}
+        <EmptyFeed />
       </div>
     </div>
   );

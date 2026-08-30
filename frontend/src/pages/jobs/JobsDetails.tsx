@@ -109,48 +109,7 @@ const JobDetails = () => {
     setShowMoreActions(false)
   );
 
-  const [jobMedia] = useState([
-    {
-      id: '1',
-      type: 'photo' as const, // Use 'as const' for literal types
-      title: 'Before: Kitchen Sink',
-      url: 'https://via.placeholder.com/400x300/a8dadc/ffffff?text=Kitchen+Sink',
-      uploaded_at: '2025-05-01T14:35:00',
-      uploadedBy: 'Olivia Rhye',
-      email: 'olivia@untitledui.com',
-      size: '144 KB',
-    },
-    {
-      id: '2',
-      type: 'document' as const,
-      title: 'Customer Authorization',
-      url: 'https://www.africau.edu/images/default/sample.pdf', // A sample PDF
-      uploaded_at: '2025-05-01T14:40:00',
-      uploadedBy: 'Phoenix Baker',
-      email: 'phoenix@untitledui.com',
-      size: '64 KB',
-    },
-    {
-      id: '3',
-      type: 'photo' as const,
-      title: 'During: Pipe Repair',
-      url: 'https://via.placeholder.com/400x300/fec89a/ffffff?text=Pipe+Repair',
-      uploaded_at: '2025-05-02T10:00:00',
-      uploadedBy: 'Lana Steiner',
-      email: 'lana@untitledui.com',
-      size: '16 MB',
-    },
-    {
-      id: '4',
-      type: 'document' as const,
-      title: 'Material List',
-      url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', // Another sample PDF
-      uploaded_at: '2025-05-02T10:15:00',
-      uploadedBy: 'Demi Wilkinson',
-      email: 'demi@untitledui.com',
-      size: '720 KB',
-    },
-  ]);
+  const jobMedia = [];
 
   // Handle send reminder (keeping it as a placeholder as in original)
   const handleSendReminder = () => {
@@ -377,7 +336,7 @@ const JobDetails = () => {
                                   Scheduled Date
                                 </p>
                                 <p className='font-medium'>
-                                  {formatDate(jobDetails.startDate)}
+                                  {formatDate(jobDetails.startDateTime)}
                                 </p>
                               </div>
                               <div>

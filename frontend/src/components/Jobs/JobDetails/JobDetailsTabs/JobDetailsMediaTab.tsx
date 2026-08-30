@@ -11,49 +11,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-// Mock data for demonstration
-const mockJobMedia = [
-  {
-    id: '1',
-    type: 'document' as const,
-    title: 'Tech requirements.pdf',
-    url: '/files/tech-requirements.pdf',
-    uploaded_at: '2022-01-04T10:00:00Z',
-    size: '200 KB',
-    uploadedBy: 'Olivia Rhye',
-    email: 'olivia@untitledui.com',
-  },
-  {
-    id: '2',
-    type: 'photo' as const,
-    title: 'Dashboard screenshot.jpg',
-    url: '/files/dashboard-screenshot.jpg',
-    uploaded_at: '2022-01-04T10:00:00Z',
-    size: '720 KB',
-    uploadedBy: 'Phoenix Baker',
-    email: 'phoenix@untitledui.com',
-  },
-  {
-    id: '3',
-    type: 'document' as const,
-    title: 'Dashboard prototype.mp4',
-    url: '/files/dashboard-prototype.mp4',
-    uploaded_at: '2022-01-02T10:00:00Z',
-    size: '16 MB',
-    uploadedBy: 'Lana Steiner',
-    email: 'lana@untitledui.com',
-  },
-  {
-    id: '4',
-    type: 'document' as const,
-    title: 'Dashboard prototype FINAL.fig',
-    url: '/files/dashboard-prototype-final.fig',
-    uploaded_at: '2022-01-06T10:00:00Z',
-    size: '4.2 MB',
-    uploadedBy: 'Demi Wilkinson',
-    email: 'demi@untitledui.com',
-  },
-];
 
 interface JobMedia {
   id: string;
@@ -72,7 +29,7 @@ interface IJobDetailsMediaTab {
 }
 
 const JobDetailsMediaTab = ({
-  jobMedia = mockJobMedia,
+  jobMedia = [],
   jobDetails,
 }: IJobDetailsMediaTab) => {
   const [activeTab, setActiveTab] = useState('all');

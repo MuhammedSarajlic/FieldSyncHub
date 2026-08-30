@@ -13,12 +13,10 @@ import Invoices from './pages/invoices/Invoices';
 import CustomerDetails from './pages/customers/CustomerDetails';
 import JobDetails from './pages/jobs/JobsDetails';
 import Employees from './pages/employees/Employees';
-import Dispatch from './pages/Dispatch';
 import Leads from './pages/Leads';
 import LeadDetails from './pages/LeadDetails';
 import Quotes from './pages/quotes/Quotes';
 import Pricebook from './pages/pricebook/Pricebook';
-import Marketing from './pages/Marketing';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import QuoteDetails from './pages/quotes/QuoteDetails';
@@ -62,8 +60,6 @@ function App() {
         </Route>
 
         <Route element={<PrivateRoute />}>
-          <Route path='workspace' element={<Workspace />} />
-
           <Route element={<RequireWorkspace />}>
             <Route element={<RequireTwoFactorSetup />}>
               <Route path='home' element={<Home />} />
@@ -75,7 +71,6 @@ function App() {
               />
               <Route path='jobs' element={<Jobs />} />
               <Route path='jobs/:jobId' element={<JobDetails />} />
-              <Route path='jobsd' element={<JobDetails />} />
               <Route path='invoices' element={<Invoices />} />
               <Route
                 path='invoices/:invoiceId'
@@ -86,7 +81,6 @@ function App() {
                 path='employees/:employeeId'
                 element={<EmployeeDetails />}
               />
-              <Route path='dispatch' element={<Dispatch />} />
               <Route path='leads' element={<Leads />} />
               <Route path='leads/:leadId' element={<LeadDetails />} />
               <Route path='quotes' element={<Quotes />} />
@@ -96,9 +90,7 @@ function App() {
                 path='pricebook/:serviceItemId'
                 element={<ServiceItemDetails />}
               />
-              <Route path='marketing' element={<Marketing />} />
               <Route path='reports' element={<Reports />} />
-              <Route path='support' element={<Settings />} />
             </Route>
             {/* Outside the 2FA gate - an Owner who hasn't enrolled yet must
                 still be able to reach the settings page that lets them. */}
@@ -106,7 +98,7 @@ function App() {
           </Route>
         </Route>
 
-        <Route path='*' element={<Navigate to='/home' replace />} />
+        <Route path='*' element={<div className='min-h-screen flex items-center justify-center'><div className='text-center'><h1 className='text-3xl font-bold'>Page not found</h1><a className='mt-4 inline-block text-blue-600' href='/home'>Return home</a></div></div>} />
       </Routes>
     </>
   );

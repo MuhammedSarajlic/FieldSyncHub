@@ -60,21 +60,9 @@ export const sidebarItems = [
     section: 'business',
   },
   {
-    name: 'Marketing',
-    icon: 'https://api.iconify.design/lucide:megaphone.svg',
-    slug: 'marketing',
-    section: 'business',
-  },
-  {
     name: 'Settings',
     icon: 'https://api.iconify.design/lucide:settings.svg',
     slug: 'settings',
-    section: 'system',
-  },
-  {
-    name: 'Help & Support',
-    icon: 'https://api.iconify.design/lucide:help-circle.svg',
-    slug: 'help-support',
     section: 'system',
   },
 ];

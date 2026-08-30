@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import SidebarItem from './SidebarItem';
-import { ChevronDown, LogOut, Settings, Smartphone, User } from 'lucide-react';
+import { ChevronDown, LogOut } from 'lucide-react';
 import { sidebarItems } from '../../constants/sidebar';
 import { useAuth } from '../../context/AuthProvider';
 import images from '../../constants/AssetsConstants/images';
@@ -17,12 +17,7 @@ const Sidebar = () => {
   );
   const systemItems = sidebarItems.filter((item) => item.section === 'system');
 
-  const mockUser = {
-    name: 'John Mitchell',
-    email: 'john@fieldsync.com',
-    avatar:
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face&auto=format',
-  };
+  const initials = user?.fullName?.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase() ?? '?';
 
   return (
     <div className='fixed'>
@@ -82,11 +77,7 @@ const Sidebar = () => {
             onClick={() => setShowProfileModal(!showProfileModal)}
             className='flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer'
           >
-            <img
-              src={mockUser.avatar}
-              alt={mockUser.name}
-              className='w-8 h-8 rounded-full'
-            />
+            <div className='w-8 h-8 rounded-full bg-bg-primary text-white flex items-center justify-center text-xs font-semibold'>{initials}</div>
             <div className='text-left'>
               <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                 {user?.fullName}
@@ -113,21 +104,6 @@ const Sidebar = () => {
           <div className='absolute bottom-3 left-full w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-2'>
             {/* Profile Actions */}
             <div className='px-1'>
-              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
-                <User className='w-4 h-4' />
-                My profile @{mockUser.email.split('@')[0]}
-              </button>
-
-              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
-                <Settings className='w-4 h-4' />
-                Account settings
-              </button>
-
-              <button className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
-                <Smartphone className='w-4 h-4' />
-                Device management
-              </button>
-
               <button
                 onClick={logout}
                 className='flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
