@@ -263,6 +263,7 @@ public class DataContext : DbContext
         modelBuilder.Entity<Job>().HasIndex(j => new { j.WorkspaceId, j.JobNumber }).IsUnique();
         modelBuilder.Entity<Quote>().HasIndex(q => new { q.WorkspaceId, q.QuoteNumber }).IsUnique();
         modelBuilder.Entity<ServiceItem>().HasIndex(s => s.WorkspaceId);
+        modelBuilder.Entity<Employee>().HasIndex(e => e.WorkspaceId);
 
         // Login and the email-change flow both assume at most one account per
         // address - enforce it at the database level too, not just in application code.
