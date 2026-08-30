@@ -22,6 +22,10 @@ using backend.Health;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using backend.Middleware;
 using backend.Response;
+using backend.Validation;
+using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +62,7 @@ builder.Services.AddControllersWithViews(options =>
         // claim - otherwise [Authorize] alone still lets one workspace read another's
         // data by changing the GUID in the URL.
         options.Filters.Add(typeof(WorkspaceAccessFilter));
+        options.Filters.Add<FluentValidationFilter>();
     })
     .AddJsonOptions(options =>
     {
@@ -67,6 +72,29 @@ builder.Services.AddControllersWithViews(options =>
         // instead of failing serialization on whichever response hits them first.
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
+builder.Services.AddValidatorsFromAssemblyContaining<CreateJobDtoValidator>();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors
+                    .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
+                        ? error.Exception?.Message ?? "The value is invalid."
+                        : error.ErrorMessage)
+                    .ToArray());
+
+        return new BadRequestObjectResult(new ApiResponse<object>
+        {
+            Success = false,
+            ErrorMessage = "One or more validation errors occurred.",
+            Payload = errors
+        });
+    };
+});
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
