@@ -22,8 +22,6 @@ export const quoteFilterOptions: TFilterOption[] = [
     dropdownOptions: [
       { value: 'draft', label: 'Draft' },
       { value: 'sent', label: 'Sent' },
-      { value: 'awaitingResponse', label: 'Awaiting response' },
-      { value: 'awaitingApproval', label: 'Awaiting approval' },
       { value: 'approved', label: 'Approved' },
       { value: 'declined', label: 'Declined' },
       { value: 'expired', label: 'Expired' },
