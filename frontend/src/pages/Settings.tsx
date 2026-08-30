@@ -83,6 +83,7 @@ const Settings = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true);
+  const [workspaceLoadError, setWorkspaceLoadError] = useState<string | null>(null);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
 
   // My Account
@@ -156,11 +157,17 @@ const Settings = () => {
 
   useEffect(() => {
     const fetchWorkspace = async () => {
-      if (!user?.workspace?.id) return;
+      if (!user?.workspace?.id) {
+        setWorkspace(null);
+        setWorkspaceLoadError('Your workspace could not be identified. Please refresh and try again.');
+        setIsLoadingWorkspace(false);
+        return;
+      }
       setIsLoadingWorkspace(true);
+      setWorkspaceLoadError(null);
       try {
         const response = await GetWorkspaceById(user.workspace.id);
-        if (response.status === 200) {
+        if (response.status === 200 && response.data?.payload) {
           const ws = response.data.payload;
           setWorkspace({
             id: ws.id,
@@ -199,9 +206,12 @@ const Settings = () => {
           }));
           localStorage.setItem('workspaceCurrency', ws.currency || 'USD');
           setLogoPreview(ws.logoUrl ?? null);
+        } else {
+          setWorkspaceLoadError(response.data?.errorMessage || 'The workspace could not be loaded.');
         }
       } catch (error) {
         console.error('Failed to load workspace', error);
+        setWorkspaceLoadError('The workspace could not be loaded. Please refresh and try again.');
       } finally {
         setIsLoadingWorkspace(false);
       }
@@ -420,8 +430,13 @@ const Settings = () => {
             <h2 className='text-2xl font-bold text-gray-900'>
               Company Profile
             </h2>
-            {isLoadingWorkspace || !workspace ? (
+            {isLoadingWorkspace ? (
               <p className='text-sm text-gray-500'>Loading...</p>
+            ) : !workspace ? (
+              <div className='space-y-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700'>
+                <p>{workspaceLoadError || 'The workspace could not be loaded.'}</p>
+                <button type='button' onClick={() => window.location.reload()} className='font-semibold underline'>Reload workspace</button>
+              </div>
             ) : (
               <>
                 <div>

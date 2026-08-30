@@ -24,6 +24,7 @@ import { useAuth } from '../context/AuthProvider';
 import { CompanySize } from '../constants/Enumeration/WorkspaceEnum/WorkspaceEnum';
 import { serviceCategories } from '../constants/ServiceCategories';
 import { uploadFile } from '../storage/uploadFile';
+import { setStoredToken } from '../utils/AuthHelpers/tokenStorage';
 
 // Enum for steps in our onboarding process. No standalone "Welcome" step -
 // the user just came from Signup, so onboarding starts directly at the
@@ -71,7 +72,7 @@ const primaryButtonClass =
   'flex items-center justify-center px-5 py-2.5 rounded-md font-medium text-sm text-white bg-bg-primary hover:bg-bg-primary-hover shadow-lg shadow-bg-primary/20 transition-all duration-200 disabled:bg-gray-300 disabled:dark:bg-gray-700 disabled:shadow-none disabled:cursor-not-allowed';
 
 const Workspace = () => {
-  const { user, refetchUser } = useAuth();
+  const { user, refetchUser, setAccessToken, setUser } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(
     OnboardingStep.COMPANY_INFO
@@ -185,9 +186,25 @@ const Workspace = () => {
 
       const response = await CreateWorkspace(finalWorkspace);
       if (response.status === 200) {
+        if (response.data.accessToken) {
+          const rememberMe = Boolean(localStorage.getItem('accessToken'));
+          setStoredToken(response.data.accessToken, rememberMe);
+          setAccessToken(response.data.accessToken);
+        }
+        if (response.data.workspace?.payload) {
+          setUser?.((currentUser) => currentUser ? {
+            ...currentUser,
+            workspace: response.data.workspace.payload,
+            workspaces: [...(currentUser.workspaces ?? []), {
+              id: response.data.workspace.payload.id,
+              name: response.data.workspace.payload.companyName || response.data.workspace.payload.name,
+              role: currentUser.role,
+            }],
+          } : currentUser);
+        }
         localStorage.setItem(
           'workspaceCurrency',
-          finalWorkspace.currency || 'USD'
+          response.data.workspace?.payload?.currency || finalWorkspace.currency || 'USD'
         );
         // The workspace was just created server-side, but the in-memory
         // `user` from AuthProvider still reflects the pre-workspace state

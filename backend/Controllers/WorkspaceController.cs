@@ -122,7 +122,36 @@ public class WorkspaceController : ControllerBase
         }
 
         var workspace = await _workspaceService.CreateWorkspace(createWorkspaceDto, callerId);
-        return Ok(workspace);
+        if (!workspace.Success || workspace.Payload == null)
+        {
+            return Ok(workspace);
+        }
+
+        // Signup tokens are issued before a workspace exists and therefore carry
+        // an empty workspace claim. Replace that token immediately after
+        // onboarding so the first workspace-scoped request can succeed.
+        var user = await _db.Users
+            .IgnoreQueryFilters()
+            .Include(item => item.Workspace)
+            .FirstOrDefaultAsync(item => item.Id == callerId);
+        if (user == null || user.Workspace == null)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Workspace was created but the owner session could not be updated." });
+        }
+
+        var userDto = new GetUserDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            FullName = user.FullName,
+            Role = UserRole.Owner,
+            Workspace = new WorkspaceLookupDto { Id = user.Workspace.Id, Name = user.Workspace.CompanyName ?? user.Workspace.Name }
+        };
+        var tokens = await _tokenService.GenerateTokensAsync(userDto);
+        _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
+        return Ok(new { workspace, accessToken = tokens.accessToken });
     }
 
     [HttpPut]
