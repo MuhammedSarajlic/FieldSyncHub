@@ -21,6 +21,7 @@ using backend.Services.Operations;
 using backend.Health;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using backend.Middleware;
+using backend.Response;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -207,30 +208,53 @@ var app = builder.Build();
 
 app.UseMiddleware<RequestCorrelationMiddleware>();
 
-if (!app.Environment.IsDevelopment())
+app.UseExceptionHandler(errorApp =>
 {
-    // "/Home/Error" pointed at a controller action that doesn't exist in this
-    // API-only project - an unhandled exception fell through to a bare 404
-    // instead of a real response. This returns a generic JSON body (no
-    // exception message, no stack trace) and logs the actual exception
-    // server-side, where it belongs.
-    app.UseExceptionHandler(errorApp =>
+    errorApp.Run(async context =>
     {
-        errorApp.Run(async context =>
+        var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+        var exception = feature?.Error;
+        var correlationId = context.TraceIdentifier;
+        var statusCode = exception switch
         {
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/json";
+            KeyNotFoundException => StatusCodes.Status404NotFound,
+            UnauthorizedAccessException => StatusCodes.Status403Forbidden,
+            ArgumentException or InvalidOperationException => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status500InternalServerError
+        };
 
-            var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
-            if (feature?.Error != null)
-            {
-                var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalExceptionHandler");
-                logger.LogError(feature.Error, "Unhandled exception for {Path}", feature.Path);
-            }
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalExceptionHandler");
+        if (statusCode >= StatusCodes.Status500InternalServerError)
+        {
+            logger.LogError(exception, "Unhandled exception for {Path}", feature?.Path);
+        }
+        else
+        {
+            logger.LogWarning(exception, "Request failed for {Path} with status {StatusCode}", feature?.Path, statusCode);
+        }
 
-            await context.Response.WriteAsJsonAsync(new { message = "An unexpected error occurred." });
+        if (context.Response.HasStarted)
+        {
+            return;
+        }
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
+        var errorMessage = statusCode >= StatusCodes.Status500InternalServerError
+            ? $"An unexpected error occurred. Correlation ID: {correlationId}"
+            : exception?.Message ?? "The request could not be completed.";
+
+        await context.Response.WriteAsJsonAsync(new ApiResponse<object>
+        {
+            Success = false,
+            ErrorMessage = errorMessage,
+            Payload = null
         });
     });
+});
+
+if (!app.Environment.IsDevelopment())
+{
     app.UseHsts();
 }
 app.UseSecurityHeaders(app.Environment);
