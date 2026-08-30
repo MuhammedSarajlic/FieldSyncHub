@@ -15,4 +15,11 @@ public class UpdateEmployeeDto
     public string? ImageUrl { get; set; }
     public string? Location { get; set; }
     public bool? IsAvailable { get; set; }
+    public decimal? HourlyCostRate { get; set; }
+    public decimal? BillableRate { get; set; }
+    public List<string>? Skills { get; set; }
+    public List<string>? Certifications { get; set; }
+    public List<DayOfWeek>? WorkingDays { get; set; }
+    public TimeSpan? WorkdayStart { get; set; }
+    public TimeSpan? WorkdayEnd { get; set; }
 }

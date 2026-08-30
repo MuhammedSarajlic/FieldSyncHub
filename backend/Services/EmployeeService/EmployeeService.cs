@@ -189,6 +189,34 @@ public class EmployeeService : IEmployeeService
         {
             existingEmployee.IsAvailable = updateEmployeeDto.IsAvailable.Value;
         }
+        if (updateEmployeeDto.HourlyCostRate.HasValue)
+        {
+            existingEmployee.HourlyCostRate = updateEmployeeDto.HourlyCostRate.Value;
+        }
+        if (updateEmployeeDto.BillableRate.HasValue)
+        {
+            existingEmployee.BillableRate = updateEmployeeDto.BillableRate.Value;
+        }
+        if (updateEmployeeDto.Skills != null)
+        {
+            existingEmployee.Skills = updateEmployeeDto.Skills;
+        }
+        if (updateEmployeeDto.Certifications != null)
+        {
+            existingEmployee.Certifications = updateEmployeeDto.Certifications;
+        }
+        if (updateEmployeeDto.WorkingDays != null)
+        {
+            existingEmployee.WorkingDays = updateEmployeeDto.WorkingDays;
+        }
+        if (updateEmployeeDto.WorkdayStart.HasValue)
+        {
+            existingEmployee.WorkdayStart = updateEmployeeDto.WorkdayStart.Value;
+        }
+        if (updateEmployeeDto.WorkdayEnd.HasValue)
+        {
+            existingEmployee.WorkdayEnd = updateEmployeeDto.WorkdayEnd.Value;
+        }
 
         existingEmployee.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -204,7 +232,8 @@ public class EmployeeService : IEmployeeService
         {
             throw new UnauthorizedAccessException("That employee is not in your workspace.");
         }
-        _context.Remove(employee);
+        employee.IsArchived = true;
+        employee.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         InvalidateWorkspaceCache(employee.WorkspaceId);
     }

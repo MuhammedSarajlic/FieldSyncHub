@@ -16,6 +16,13 @@ export type TEmployee = {
   imageUrl?: string;
   location?: string;
   isAvailable: boolean;
+  hourlyCostRate: number;
+  billableRate: number;
+  skills: string[];
+  certifications: string[];
+  workingDays: number[];
+  workdayStart?: string;
+  workdayEnd?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -31,6 +38,13 @@ export type TAddEmployee = {
   imageUrl?: string;
   location?: string;
   isAvailable: boolean;
+  hourlyCostRate?: number;
+  billableRate?: number;
+  skills?: string[];
+  certifications?: string[];
+  workingDays?: number[];
+  workdayStart?: string;
+  workdayEnd?: string;
 };
 
 export type TUpdateEmployee = {
@@ -43,6 +57,13 @@ export type TUpdateEmployee = {
   imageUrl?: string;
   location?: string;
   isAvailable?: boolean;
+  hourlyCostRate?: number;
+  billableRate?: number;
+  skills?: string[];
+  certifications?: string[];
+  workingDays?: number[];
+  workdayStart?: string;
+  workdayEnd?: string;
 };
 
 export type TEmployeeFilter = {
