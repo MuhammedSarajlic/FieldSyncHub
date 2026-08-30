@@ -2,6 +2,7 @@ import { AlertTriangle, Archive, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import CustomButton from '../../CustomElements/Buttons/CustomButton';
 import IconButton from '../../CustomElements/Buttons/IconButton';
+import Modal from '../../CustomElements/Modal';
 
 interface ActionConfirmationModalProps {
   isOpen: boolean;
@@ -84,8 +85,8 @@ const ActionConfirmationModal = ({
   const requiresTypedConfirmation = actionType === 'delete';
 
   return (
-    <div className='fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50'>
-      <div className='bg-white rounded-lg shadow-xl w-full max-w-md'>
+    <Modal open={isOpen} onClose={onClose} title={title} labelledBy='action-confirmation-title' className='max-w-md'>
+      <div>
         <div className='p-6'>
           <div className='flex items-start'>
             <div
@@ -149,7 +150,7 @@ const ActionConfirmationModal = ({
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

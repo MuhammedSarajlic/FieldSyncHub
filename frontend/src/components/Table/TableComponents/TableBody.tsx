@@ -55,7 +55,15 @@ const TableBody = <T extends Record<string, any>>({
         <tr
           key={item.id ?? rowIndex}
           onClick={onRowClick ? () => onRowClick(item) : undefined}
-          className={`hover:bg-gray-50 cursor-pointer h-[70px] group `}
+          tabIndex={0}
+          role='link'
+          onKeyDown={(event) => {
+            if ((event.key === 'Enter' || event.key === ' ') && onRowClick) {
+              event.preventDefault();
+              onRowClick(item);
+            }
+          }}
+          className='h-[70px] cursor-pointer group hover:bg-gray-50 focus:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bg-primary dark:hover:bg-gray-800 dark:focus:bg-gray-800'
         >
           <td className='px-4 py-4' onClick={(event) => event.stopPropagation()}><input type='checkbox' checked={selectedIds.includes(String(item.id))} onChange={() => onToggleSelection?.(String(item.id))} aria-label='Select row' className='h-4 w-4 accent-bg-primary' /></td>
           {columns.map((column, colIndex) => (
