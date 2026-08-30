@@ -4,6 +4,7 @@ import { sidebarItems } from '../../constants/sidebar';
 import { useAuth } from '../../context/AuthProvider';
 import images from '../../constants/AssetsConstants/images';
 import SidebarItem from './SidebarItem';
+import ThemeToggle from '../CustomElements/ThemeToggle';
 
 const Navigation = ({ onNavigate }: { onNavigate?: () => void }) => {
   const sections = [
@@ -51,6 +52,9 @@ const Profile = ({ onNavigate }: { onNavigate?: () => void }) => {
         <LogOut className='w-4 h-4' />
         Sign out
       </button>
+      <div className='border-t border-gray-100 dark:border-gray-700 px-1 py-1'>
+        <ThemeToggle />
+      </div>
     </div>
   );
 };

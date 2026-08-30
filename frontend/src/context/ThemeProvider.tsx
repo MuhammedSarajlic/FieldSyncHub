@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -10,22 +10,20 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
-// Dark mode is disabled for now: only the sidebar/navbar shell has dark
-// styling, so switching to dark left every page's content still light,
-// which looked broken. Forcing 'light' here (and no-op-ing the setters)
-// turns it off app-wide without ripping out the groundwork - re-enable by
-// restoring the state/localStorage/workspace-sync logic once real
-// per-page dark styling exists.
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const theme: Theme = 'light';
+  const [theme, setThemeState] = useState<Theme>(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark' || saved === 'light' ? saved : 'light';
+  });
 
   useEffect(() => {
-    document.documentElement.classList.remove('dark');
-    localStorage.removeItem('theme');
-  }, []);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.style.colorScheme = theme;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
-  const setTheme = () => {};
-  const toggleTheme = () => {};
+  const setTheme = (nextTheme: Theme) => setThemeState(nextTheme);
+  const toggleTheme = () => setThemeState((current) => current === 'dark' ? 'light' : 'dark');
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>

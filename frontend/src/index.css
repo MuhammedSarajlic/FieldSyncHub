@@ -29,3 +29,22 @@ html.dark {
 html.dark body {
   background-color: #0f172a;
 }
+
+/* Keep legacy utility-heavy pages readable while they migrate to explicit
+   dark variants. These are surface tokens, not page-specific overrides. */
+html.dark .bg-white { background-color: #111827; }
+html.dark .bg-gray-50 { background-color: #0f172a; }
+html.dark .bg-gray-100 { background-color: #1f2937; }
+html.dark .text-gray-900 { color: #f8fafc; }
+html.dark .text-gray-800 { color: #e5e7eb; }
+html.dark .text-gray-700 { color: #d1d5db; }
+html.dark .text-gray-600 { color: #cbd5e1; }
+html.dark .text-gray-500 { color: #94a3b8; }
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300 { border-color: #334155; }
+html.dark input,
+html.dark textarea,
+html.dark select { background-color: #111827; color: #f8fafc; border-color: #475569; }
+html.dark input::placeholder,
+html.dark textarea::placeholder { color: #94a3b8; }
