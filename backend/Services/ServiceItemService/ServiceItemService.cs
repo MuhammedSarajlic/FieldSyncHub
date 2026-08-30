@@ -320,6 +320,26 @@ public class ServiceItemService : IServiceItemService
         {
             existingServiceItem.IsActive = updateServiceItemDto.IsActive.Value;
         }
+        if (updateServiceItemDto.StockLevel.HasValue)
+        {
+            existingServiceItem.StockLevel = updateServiceItemDto.StockLevel.Value;
+        }
+        if (updateServiceItemDto.ReorderPoint.HasValue)
+        {
+            existingServiceItem.ReorderPoint = updateServiceItemDto.ReorderPoint.Value;
+        }
+        if (updateServiceItemDto.DefaultDurationMinutes.HasValue)
+        {
+            existingServiceItem.DefaultDurationMinutes = updateServiceItemDto.DefaultDurationMinutes.Value;
+        }
+        if (updateServiceItemDto.MarkupPercentage.HasValue)
+        {
+            existingServiceItem.MarkupPercentage = updateServiceItemDto.MarkupPercentage.Value;
+        }
+        if (updateServiceItemDto.Vendor != null)
+        {
+            existingServiceItem.Vendor = updateServiceItemDto.Vendor;
+        }
 
         existingServiceItem.UpdatedAt = DateTime.UtcNow;
 
@@ -341,7 +361,9 @@ public class ServiceItemService : IServiceItemService
         var serviceItem = await _context.ServiceItems.FirstOrDefaultAsync(s => s.Id == id);
         if (serviceItem == null) return;
 
-        _context.ServiceItems.Remove(serviceItem);
+        serviceItem.IsArchived = true;
+        serviceItem.IsActive = false;
+        serviceItem.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         InvalidateWorkspaceCache(serviceItem.WorkspaceId);
     }
@@ -398,6 +420,11 @@ public class ServiceItemService : IServiceItemService
                 Category = dto.Category,
                 SKU = dto.SKU?.Trim() ?? null,
                 UnitOfMeasure = dto.UnitOfMeasure?.Trim() ?? string.Empty,
+                StockLevel = dto.StockLevel,
+                ReorderPoint = dto.ReorderPoint,
+                DefaultDurationMinutes = dto.DefaultDurationMinutes,
+                MarkupPercentage = dto.MarkupPercentage,
+                Vendor = dto.Vendor?.Trim(),
                 UnitPrice = dto.UnitPrice,
                 Cost = dto.Cost,
                 IsTaxable = dto.IsTaxable,
@@ -441,11 +468,11 @@ public class ServiceItemService : IServiceItemService
 
         var sb = new StringBuilder();
 
-        sb.AppendLine("Name,Description,Type,Category,SKU,UnitOfMeasure,UnitPrice,Cost,IsTaxable,IsActive,ImageUrl");
+        sb.AppendLine("Name,Description,Type,Category,SKU,UnitOfMeasure,StockLevel,ReorderPoint,DefaultDurationMinutes,MarkupPercentage,Vendor,UnitPrice,Cost,IsTaxable,IsActive,ImageUrl");
 
         foreach (var item in serviceItems)
         {
-            sb.AppendLine($"{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{EscapeCsvField(item.UnitOfMeasure)},{item.UnitPrice},{item.Cost},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
+            sb.AppendLine($"{EscapeCsvField(item.Name)},{EscapeCsvField(item.Description)},{item.Type},{EscapeCsvField(item.Category)},{EscapeCsvField(item.SKU)},{EscapeCsvField(item.UnitOfMeasure)},{item.StockLevel},{item.ReorderPoint},{item.DefaultDurationMinutes},{item.MarkupPercentage},{EscapeCsvField(item.Vendor)},{item.UnitPrice},{item.Cost},{item.IsTaxable},{item.IsActive},{EscapeCsvField(item.ImageUrl)}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());

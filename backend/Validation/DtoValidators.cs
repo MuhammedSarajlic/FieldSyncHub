@@ -244,6 +244,10 @@ public sealed class CreateServiceItemDtoValidator : AbstractValidator<CreateServ
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.UnitPrice).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Cost).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.StockLevel).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.ReorderPoint).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.DefaultDurationMinutes).GreaterThan(0).When(x => x.DefaultDurationMinutes.HasValue);
+        RuleFor(x => x.MarkupPercentage).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Type).IsInEnum();
     }
 }
@@ -256,6 +260,10 @@ public sealed class UpdateServiceItemDtoValidator : AbstractValidator<UpdateServ
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200).When(x => x.Name != null);
         RuleFor(x => x.UnitPrice).GreaterThanOrEqualTo(0).When(x => x.UnitPrice.HasValue);
         RuleFor(x => x.Cost).GreaterThanOrEqualTo(0).When(x => x.Cost.HasValue);
+        RuleFor(x => x.StockLevel).GreaterThanOrEqualTo(0).When(x => x.StockLevel.HasValue);
+        RuleFor(x => x.ReorderPoint).GreaterThanOrEqualTo(0).When(x => x.ReorderPoint.HasValue);
+        RuleFor(x => x.DefaultDurationMinutes).GreaterThan(0).When(x => x.DefaultDurationMinutes.HasValue);
+        RuleFor(x => x.MarkupPercentage).GreaterThanOrEqualTo(0).When(x => x.MarkupPercentage.HasValue);
         RuleFor(x => x.Type).IsInEnum().When(x => x.Type.HasValue);
     }
 }

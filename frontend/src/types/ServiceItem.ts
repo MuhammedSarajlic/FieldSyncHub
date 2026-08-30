@@ -9,6 +9,11 @@ export type TServiceItem = {
   category: string;
   sku: string;
   unitOfMeasure: string;
+  stockLevel: number;
+  reorderPoint: number;
+  defaultDurationMinutes?: number;
+  markupPercentage: number;
+  vendor?: string;
   unitPrice: number;
   cost: number;
   taxRate?: number;
@@ -27,6 +32,11 @@ export type TAddServiceItem = {
   category: string;
   sku?: string;
   unitOfMeasure: string;
+  stockLevel?: number;
+  reorderPoint?: number;
+  defaultDurationMinutes?: number;
+  markupPercentage?: number;
+  vendor?: string;
   unitPrice: number;
   cost: number;
   taxRate?: number;
@@ -43,6 +53,11 @@ export type TUpdateServiceItem = {
   category?: string;
   sku?: string;
   unitOfMeasure?: string;
+  stockLevel?: number;
+  reorderPoint?: number;
+  defaultDurationMinutes?: number;
+  markupPercentage?: number;
+  vendor?: string;
   unitPrice?: number;
   cost?: number;
   taxRate?: number;
@@ -59,6 +74,11 @@ export type TImportServiceItem = {
   category?: string;
   sku?: string;
   unitOfMeasure?: string;
+  stockLevel?: number;
+  reorderPoint?: number;
+  defaultDurationMinutes?: number;
+  markupPercentage?: number;
+  vendor?: string;
   unitPrice?: number;
   cost?: number;
   taxRate?: number;

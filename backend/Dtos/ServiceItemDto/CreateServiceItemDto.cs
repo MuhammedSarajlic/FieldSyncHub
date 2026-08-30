@@ -11,6 +11,11 @@ public class CreateServiceItemDto
     public string Category { get; set; } = string.Empty;
     public string? SKU { get; set; }
     public string UnitOfMeasure { get; set; } = string.Empty;
+    public decimal StockLevel { get; set; }
+    public decimal ReorderPoint { get; set; }
+    public int? DefaultDurationMinutes { get; set; }
+    public decimal MarkupPercentage { get; set; }
+    public string? Vendor { get; set; }
 
     public decimal UnitPrice { get; set; }
     public decimal Cost { get; set; }
