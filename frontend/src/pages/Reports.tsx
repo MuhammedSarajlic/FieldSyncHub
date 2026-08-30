@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DollarSign,
   Briefcase,
@@ -24,6 +24,24 @@ import { GetEmployeeStats } from '../services/Employee';
 import { GetServiceItemsStats } from '../services/ServiceItem';
 import { GetLeadsByWorkspaceId } from '../services/Lead';
 import { TLead } from '../types/Lead';
+import { GetJobsByFilter } from '../services/Job';
+import { GetQuotesByFilter } from '../services/Quote';
+import { GetInvoicesByFilter } from '../services/Invoice';
+import { TJob } from '../types/Job';
+import { TQuote } from '../types/Quote';
+import { TInvoice } from '../types/Invoice';
+import { QuoteStatus } from '../constants/Enumeration/QuoteEnum/QuoteEnum';
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 type TCustomerStats = {
   total: number;
@@ -68,6 +86,13 @@ type TServiceItemStats = {
   totalServiceItems: number;
   totalPricebookValue: number;
   averageItemPrice: number;
+};
+
+type TTrendPoint = {
+  month: string;
+  revenue: number;
+  jobs: number;
+  winRate: number;
 };
 
 const StatCard = ({
@@ -167,6 +192,11 @@ const Reports = () => {
   const [serviceItemStats, setServiceItemStats] =
     useState<TServiceItemStats | null>(null);
   const [leads, setLeads] = useState<TLead[]>([]);
+  const [trendRange, setTrendRange] = useState('6');
+  const [trendJobs, setTrendJobs] = useState<TJob[]>([]);
+  const [trendQuotes, setTrendQuotes] = useState<TQuote[]>([]);
+  const [trendInvoices, setTrendInvoices] = useState<TInvoice[]>([]);
+  const [isTrendLoading, setIsTrendLoading] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -209,6 +239,105 @@ const Reports = () => {
 
     fetchAll();
   }, [user?.workspace?.id]);
+
+  useEffect(() => {
+    const fetchTrend = async () => {
+      if (!user?.workspace?.id) return;
+      setIsTrendLoading(true);
+      const months = Number(trendRange);
+      const start = new Date();
+      start.setDate(1);
+      start.setHours(0, 0, 0, 0);
+      start.setMonth(start.getMonth() - (months - 1));
+      const end = new Date();
+      const startIso = start.toISOString();
+      const endIso = end.toISOString();
+      const workspaceId = user.workspace.id;
+
+      try {
+        const [jobsResponse, quotesResponse, invoicesResponse] =
+          await Promise.all([
+            GetJobsByFilter(
+              workspaceId,
+              1,
+              1000,
+              new URLSearchParams({
+                scheduleDateMin: startIso,
+                scheduleDateMax: endIso,
+              }).toString()
+            ),
+            GetQuotesByFilter(
+              workspaceId,
+              1,
+              1000,
+              new URLSearchParams({
+                createdDateMin: startIso,
+                createdDateMax: endIso,
+              }).toString()
+            ),
+            GetInvoicesByFilter(
+              workspaceId,
+              1,
+              1000,
+              new URLSearchParams({
+                dueDateMin: startIso,
+                dueDateMax: endIso,
+              }).toString()
+            ),
+          ]);
+
+        if (jobsResponse.status === 200) {
+          setTrendJobs(jobsResponse.data.payload.items ?? []);
+        }
+        if (quotesResponse.status === 200) {
+          setTrendQuotes(quotesResponse.data.payload.items ?? []);
+        }
+        if (invoicesResponse.status === 200) {
+          setTrendInvoices(invoicesResponse.data.payload.items ?? []);
+        }
+      } catch (error) {
+        console.error('Failed to load report trend', error);
+        setTrendJobs([]);
+        setTrendQuotes([]);
+        setTrendInvoices([]);
+      } finally {
+        setIsTrendLoading(false);
+      }
+    };
+
+    fetchTrend();
+  }, [trendRange, user?.workspace?.id]);
+
+  const trendData = useMemo<TTrendPoint[]>(() => {
+    const months = Number(trendRange);
+    const points: TTrendPoint[] = [];
+    const cursor = new Date();
+    cursor.setDate(1);
+    cursor.setHours(0, 0, 0, 0);
+    cursor.setMonth(cursor.getMonth() - (months - 1));
+
+    for (let index = 0; index < months; index += 1) {
+      const year = cursor.getFullYear();
+      const month = cursor.getMonth();
+      const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+      const jobs = trendJobs.filter((job) => job.startDateTime?.startsWith(key));
+      const quotes = trendQuotes.filter((quote) => quote.createdAt?.startsWith(key));
+      const invoices = trendInvoices.filter((invoice) => invoice.dueDate?.startsWith(key));
+      const approvedQuotes = quotes.filter(
+        (quote) => quote.status === QuoteStatus.Approved || quote.status === QuoteStatus.ConvertedToJob
+      ).length;
+
+      points.push({
+        month: cursor.toLocaleDateString(undefined, { month: 'short' }),
+        revenue: invoices.reduce((sum, invoice) => sum + (invoice.total ?? 0), 0),
+        jobs: jobs.length,
+        winRate: quotes.length ? (approvedQuotes / quotes.length) * 100 : 0,
+      });
+      cursor.setMonth(month + 1);
+    }
+
+    return points;
+  }, [trendInvoices, trendJobs, trendQuotes, trendRange]);
 
   const netRevenue =
     (invoiceStats?.totalPaidThisMonth ?? 0) + (jobStats?.totalValue ?? 0);
@@ -272,6 +401,43 @@ const Reports = () => {
                 caption={`${customerStats?.newCustomers ?? 0} new this month`}
               />
             </div>
+
+            <SectionCard title='Performance over time' icon={TrendingUp}>
+              <div className='mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                <p className='text-sm text-gray-500'>Revenue, job volume, and quote win rate by month.</p>
+                <label className='flex items-center gap-2 text-sm text-gray-600'>
+                  <span className='sr-only'>Report date range</span>
+                  <select
+                    value={trendRange}
+                    onChange={(event) => setTrendRange(event.target.value)}
+                    className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100'
+                  >
+                    <option value='3'>Last 3 months</option>
+                    <option value='6'>Last 6 months</option>
+                    <option value='12'>Last 12 months</option>
+                  </select>
+                </label>
+              </div>
+              <div className='h-72 w-full'>
+                {isTrendLoading ? (
+                  <div className='flex h-full items-center justify-center text-sm text-gray-500'>Loading trend...</div>
+                ) : (
+                  <ResponsiveContainer width='100%' height='100%'>
+                    <ComposedChart data={trendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
+                      <XAxis dataKey='month' tick={{ fontSize: 12 }} />
+                      <YAxis yAxisId='money' tick={{ fontSize: 12 }} tickFormatter={(value) => formatCurrency(Number(value))} />
+                      <YAxis yAxisId='percent' orientation='right' domain={[0, 100]} tick={{ fontSize: 12 }} tickFormatter={(value) => `${value}%`} />
+                      <Tooltip formatter={(value, name) => name === 'Revenue' ? formatCurrency(Number(value)) : name === 'Win rate' ? `${Number(value).toFixed(0)}%` : value} />
+                      <Legend />
+                      <Bar yAxisId='money' dataKey='revenue' name='Revenue' fill='#1f8a70' radius={[3, 3, 0, 0]} />
+                      <Line yAxisId='money' type='monotone' dataKey='jobs' name='Jobs' stroke='#2563eb' strokeWidth={2} />
+                      <Line yAxisId='percent' type='monotone' dataKey='winRate' name='Win rate' stroke='#9333ea' strokeWidth={2} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </SectionCard>
 
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
               <SectionCard title='Job profitability' icon={BarChart3}>
