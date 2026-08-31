@@ -367,21 +367,98 @@ const QuoteFilterPanel = ({ searchParams, onApply, onClose }: { searchParams: UR
   const [createdMax, setCreatedMax] = useState(searchParams.get('createdDateMax') ?? '');
   const [totalMin, setTotalMin] = useState(searchParams.get('totalMin') ?? '');
   const [totalMax, setTotalMax] = useState(searchParams.get('totalMax') ?? '');
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   const submit = (event: FormEvent) => { event.preventDefault(); onApply({ createdDateMin: createdMin || null, createdDateMax: createdMax || null, totalMin: totalMin || null, totalMax: totalMax || null }); };
-  return <form onSubmit={submit} className='absolute right-0 top-12 z-40 w-[min(22rem,calc(100vw-2rem))] rounded-lg border border-[#cfd8d3] bg-white shadow-[0_12px_32px_rgba(23,33,29,0.14)]'>
-    <div className='flex items-center justify-between border-b border-[#e0e6e2] px-4 py-3'><div><h3 className='font-semibold text-[#17211d]'>Filter quotes</h3><p className='mt-0.5 text-xs text-[#6b7972]'>Narrow by date or document value.</p></div><button type='button' onClick={onClose} aria-label='Close filters' className='rounded-md p-1.5 text-[#69776f] hover:bg-[#f0f3f1]'><X className='h-4 w-4' /></button></div>
-    <div className='space-y-5 p-4'>
-      <fieldset><legend className='mb-2 text-sm font-semibold text-[#33423a]'>Created date</legend><div className='grid grid-cols-2 gap-3'>
-        <label htmlFor='quote-created-from' className='text-xs font-medium text-[#66746c]'>From<input id='quote-created-from' type='date' value={createdMin} onChange={(event) => setCreatedMin(event.target.value)} className='mt-1.5 h-10 w-full rounded-md border border-[#cbd5d0] px-2 text-sm text-[#17211d] outline-none focus:border-[#0d5944] focus:ring-2 focus:ring-[#0d5944]/15' /></label>
-        <label htmlFor='quote-created-to' className='text-xs font-medium text-[#66746c]'>To<input id='quote-created-to' type='date' value={createdMax} onChange={(event) => setCreatedMax(event.target.value)} className='mt-1.5 h-10 w-full rounded-md border border-[#cbd5d0] px-2 text-sm text-[#17211d] outline-none focus:border-[#0d5944] focus:ring-2 focus:ring-[#0d5944]/15' /></label>
-      </div></fieldset>
-      <fieldset><legend className='mb-2 text-sm font-semibold text-[#33423a]'>Total value</legend><div className='grid grid-cols-2 gap-3'>
-        <label htmlFor='quote-total-min' className='text-xs font-medium text-[#66746c]'>Minimum<input id='quote-total-min' type='number' min='0' step='0.01' value={totalMin} onChange={(event) => setTotalMin(event.target.value)} placeholder='0.00' className='mt-1.5 h-10 w-full rounded-md border border-[#cbd5d0] px-3 text-sm text-[#17211d] outline-none placeholder:text-[#8b9992] focus:border-[#0d5944] focus:ring-2 focus:ring-[#0d5944]/15' /></label>
-        <label htmlFor='quote-total-max' className='text-xs font-medium text-[#66746c]'>Maximum<input id='quote-total-max' type='number' min='0' step='0.01' value={totalMax} onChange={(event) => setTotalMax(event.target.value)} placeholder='Any' className='mt-1.5 h-10 w-full rounded-md border border-[#cbd5d0] px-3 text-sm text-[#17211d] outline-none placeholder:text-[#8b9992] focus:border-[#0d5944] focus:ring-2 focus:ring-[#0d5944]/15' /></label>
-      </div></fieldset>
+  const activeCount = [createdMin, createdMax, totalMin, totalMax].filter(Boolean).length;
+  const fieldClass = 'mt-1.5 h-11 w-full rounded-md border border-[#cbd5d0] bg-white px-3 text-sm text-[#17211d] outline-none transition placeholder:text-[#8b9992] hover:border-[#aebbb4] focus:border-[#0d5944] focus:ring-2 focus:ring-[#0d5944]/15';
+
+  return (
+    <div className='fixed inset-0 z-50 overflow-y-auto bg-[#17211d]/20 px-4 py-5 sm:px-6 sm:py-8'>
+      <button type='button' onClick={onClose} aria-label='Close filters' className='absolute inset-0 h-full w-full cursor-default' />
+      <div className='relative z-10 flex min-h-full items-start justify-center sm:pt-8 lg:justify-end lg:pr-8'>
+        <form
+          onSubmit={submit}
+          role='dialog'
+          aria-modal='true'
+          aria-labelledby='quote-filter-title'
+          className='flex max-h-[calc(100vh-2.5rem)] w-full max-w-[30rem] flex-col overflow-hidden rounded-lg border border-[#cfd8d3] bg-white shadow-[0_18px_48px_rgba(23,33,29,0.2)] sm:max-h-[calc(100vh-4rem)]'
+        >
+          <div className='flex items-start justify-between border-b border-[#dfe5e1] px-5 py-5'>
+            <div className='flex items-start gap-3'>
+              <span className='flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#e9f1ed] text-[#0d5944]'>
+                <Filter className='h-4 w-4' />
+              </span>
+              <div>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <h3 id='quote-filter-title' className='text-base font-semibold text-[#17211d]'>Filter quotes</h3>
+                  {activeCount > 0 && <span className='rounded-full bg-[#e9f1ed] px-2 py-0.5 text-[11px] font-bold text-[#0d5944]'>{activeCount} active</span>}
+                </div>
+                <p className='mt-1 text-sm leading-5 text-[#68756f]'>Refine the register by when a quote was created or what it is worth.</p>
+              </div>
+            </div>
+            <button type='button' onClick={onClose} aria-label='Close filters' className='-mr-1 -mt-1 rounded-md p-2 text-[#69776f] transition hover:bg-[#f0f3f1] hover:text-[#17211d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d5944]/30'>
+              <X className='h-4 w-4' />
+            </button>
+          </div>
+
+          <div className='min-h-0 flex-1 overflow-y-auto px-5 py-5'>
+            <fieldset>
+              <legend className='text-sm font-semibold text-[#24332c]'>Created date</legend>
+              <p className='mt-1 text-xs leading-5 text-[#718078]'>Show quotes created within a specific time window.</p>
+              <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <label htmlFor='quote-created-from' className='text-xs font-semibold text-[#536159]'>
+                  From
+                  <input id='quote-created-from' type='date' value={createdMin} onChange={(event) => setCreatedMin(event.target.value)} className={fieldClass} />
+                </label>
+                <label htmlFor='quote-created-to' className='text-xs font-semibold text-[#536159]'>
+                  To
+                  <input id='quote-created-to' type='date' value={createdMax} onChange={(event) => setCreatedMax(event.target.value)} className={fieldClass} />
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset className='mt-7 border-t border-[#e0e6e2] pt-6'>
+              <legend className='text-sm font-semibold text-[#24332c]'>Total value</legend>
+              <p className='mt-1 text-xs leading-5 text-[#718078]'>Keep only quotes within your target deal size.</p>
+              <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <label htmlFor='quote-total-min' className='text-xs font-semibold text-[#536159]'>
+                  Minimum
+                  <input id='quote-total-min' type='number' min='0' step='0.01' value={totalMin} onChange={(event) => setTotalMin(event.target.value)} placeholder='0.00' className={fieldClass} />
+                </label>
+                <label htmlFor='quote-total-max' className='text-xs font-semibold text-[#536159]'>
+                  Maximum
+                  <input id='quote-total-max' type='number' min='0' step='0.01' value={totalMax} onChange={(event) => setTotalMax(event.target.value)} placeholder='Any amount' className={fieldClass} />
+                </label>
+              </div>
+            </fieldset>
+          </div>
+
+          <div className='flex flex-col-reverse gap-2 border-t border-[#dfe5e1] bg-[#fafbfa] px-5 py-4 sm:flex-row sm:items-center sm:justify-between'>
+            <button type='button' onClick={() => onApply({ createdDateMin: null, createdDateMax: null, totalMin: null, totalMax: null })} className='inline-flex h-10 items-center justify-center rounded-md px-3 text-sm font-semibold text-[#596860] transition hover:bg-white hover:text-[#17211d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d5944]/30 sm:justify-start'>
+              Clear all
+            </button>
+            <div className='flex gap-2'>
+              <button type='button' onClick={onClose} className='h-10 flex-1 rounded-md border border-[#cbd5d0] bg-white px-4 text-sm font-semibold text-[#34443c] transition hover:bg-[#f3f6f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d5944]/30 sm:flex-none'>
+                Cancel
+              </button>
+              <button type='submit' className='inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#0d5944] px-4 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(13,89,68,0.18)] transition hover:bg-[#084936] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d5944] focus-visible:ring-offset-2 sm:flex-none'>
+                <Check className='h-4 w-4' /> Apply filters
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
-    <div className='flex items-center justify-between border-t border-[#e0e6e2] bg-[#fafbfa] px-4 py-3'><button type='button' onClick={() => onApply({ createdDateMin: null, createdDateMax: null, totalMin: null, totalMax: null })} className='text-sm font-medium text-[#596860] hover:text-[#17211d]'>Reset</button><button type='submit' className='inline-flex h-9 items-center gap-2 rounded-md bg-[#0d5944] px-3 text-sm font-semibold text-white hover:bg-[#084936]'><Check className='h-4 w-4' /> Apply filters</button></div>
-  </form>;
+  );
 };
 
 const QuoteTableSkeleton = () => <div aria-label='Loading quotes' aria-busy='true' className='divide-y divide-[#e4e9e6]'>{Array.from({ length: 7 }).map((_, index) => <div key={index} className='grid grid-cols-[2fr_1.4fr_1fr_1fr] gap-5 px-5 py-5'><div className='h-4 animate-pulse rounded bg-[#e7ece9]' /><div className='h-4 animate-pulse rounded bg-[#edf1ef]' /><div className='h-4 animate-pulse rounded bg-[#edf1ef]' /><div className='h-4 animate-pulse rounded bg-[#e7ece9]' /></div>)}</div>;
