@@ -218,14 +218,17 @@ const QuoteAttachments = ({
   };
 
   return (
-    <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-      <div className='flex items-center justify-between mb-6'>
-        <h3 className='text-lg font-semibold text-gray-900'>Attachments</h3>
+    <section aria-labelledby='quote-attachments-title' className='bg-white px-5 py-5'>
+      <div className='mb-4 flex items-center justify-between'>
+        <div>
+          <h2 id='quote-attachments-title' className='text-base font-semibold text-[#17211d]'>Attachments</h2>
+          <p className='mt-1 text-xs text-[#5f6d66]'>{currentAttachments.length} {currentAttachments.length === 1 ? 'file' : 'files'} on this quote</p>
+        </div>
         {!isUploadAreaOpen && (
           <IconButton
             icon={<Plus className='w-4 h-4 mr-1' />}
             onClick={() => setIsUploadAreaOpen(true)}
-            customStyle='bg-bg-primary text-white hover:border-gray-300 border-none'
+            customStyle='h-9 rounded-lg bg-[#0d5944] px-3 text-white hover:bg-[#084936] border-none'
           >
             Add
           </IconButton>
@@ -233,12 +236,12 @@ const QuoteAttachments = ({
       </div>
 
       {isUploadAreaOpen && (
-        <div className='mb-6 border-gray-300 rounded-lg text-center'>
+        <div className='mb-5 text-center'>
           <div
-            className={`relative flex flex-col items-center justify-center p-6 border-2 rounded-lg transition-colors ${
+            className={`relative flex flex-col items-center justify-center rounded-lg border-2 p-5 transition-colors ${
               isDragging
-                ? 'border-bg-primary bg-bg-primary-light'
-                : 'border-dashed border-gray-300 bg-gray-50 hover:border-gray-400'
+                ? 'border-[#0d5944] bg-[#edf5f1]'
+                : 'border-dashed border-[#cbd5d0] bg-[#f8faf9] hover:border-[#8fa198]'
             }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -252,17 +255,17 @@ const QuoteAttachments = ({
               className='absolute inset-0 opacity-0 cursor-pointer w-full h-full'
             />
             <CloudUpload
-              className={`w-12 h-12 mb-3 ${
-                isDragging ? 'text-bg-primary' : 'text-gray-400'
+              className={`mb-3 h-9 w-9 ${
+                isDragging ? 'text-[#0d5944]' : 'text-[#5f6d66]'
               }`}
             />
-            <p className='text-gray-600 font-medium'>
+            <p className='text-sm font-medium text-[#46564e]'>
               Drag & drop files here, or
             </p>
             <button
               type='button'
               onClick={handleButtonClick}
-              className='mt-2 px-4 py-2 bg-bg-primary text-white text-sm font-medium rounded-md hover:bg-bg-primary-hover'
+              className='relative z-10 mt-2 rounded-lg bg-[#0d5944] px-3 py-2 text-sm font-semibold text-white hover:bg-[#084936]'
             >
               Browse Files
             </button>
@@ -273,7 +276,7 @@ const QuoteAttachments = ({
               {selectedFiles.map((fileWrapper, index) => (
                 <div
                   key={fileWrapper.file.name + index}
-                  className='flex items-center justify-between p-3 bg-gray-100 rounded-md border border-gray-200'
+                className='flex items-center justify-between rounded-lg border border-[#dfe5e1] bg-[#f7f9f8] p-3'
                 >
                   <div className='flex items-center space-x-3 truncate'>
                     <Paperclip className='w-4 h-4 text-gray-500' />
@@ -300,7 +303,8 @@ const QuoteAttachments = ({
                   <button
                     type='button'
                     onClick={() => handleRemoveFile(index)}
-                    className='text-gray-500 hover:text-red-500 ml-2 cursor-pointer'
+                    aria-label={`Remove ${fileWrapper.file.name}`}
+                    className='ml-2 cursor-pointer rounded p-1 text-[#5f6d66] hover:bg-red-50 hover:text-red-700'
                   >
                     <X className='w-4 h-4' />
                   </button>
@@ -309,10 +313,10 @@ const QuoteAttachments = ({
             </div>
           )}
 
-          <div className='mt-6 flex justify-end space-x-3'>
+          <div className='mt-4 flex justify-end space-x-2'>
             <CustomButton
               onClick={handleCancelUpload}
-              customStyle='py-1.5 px-4 hover:bg-gray-50'
+              customStyle='h-9 rounded-lg px-3 hover:bg-[#f1f4f2]'
             >
               Cancel
             </CustomButton>
@@ -322,7 +326,7 @@ const QuoteAttachments = ({
                 selectedFiles.length === 0 ||
                 selectedFiles.some((f) => f.uploadStatus.status === 'Uploading')
               }
-              customStyle='py-1.5 px-4 bg-bg-primary text-white hover:bg-bg-primary-hover border-none'
+              customStyle='h-9 rounded-lg bg-[#0d5944] px-3 text-white hover:bg-[#084936] border-none'
             >
               Upload
             </CustomButton>
@@ -331,15 +335,15 @@ const QuoteAttachments = ({
       )}
 
       {currentAttachments.length > 0 ? (
-        <div className='space-y-2'>
+        <div className='divide-y divide-[#e3e8e5] border-y border-[#e3e8e5]'>
           {currentAttachments.map((attachment, index) => (
             <div
               key={attachment.url || index}
-              className='flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100'
+              className='flex items-center justify-between gap-3 py-3'
             >
               <div className='flex items-center space-x-3'>
-                <FileDown className='w-5 h-5 text-gray-400' />
-                <span className='text-sm font-medium text-gray-900'>
+                <FileDown className='h-5 w-5 shrink-0 text-[#65736c]' />
+                <span className='truncate text-sm font-medium text-[#33423a]'>
                   {attachment.fileName}
                 </span>
               </div>
@@ -348,20 +352,20 @@ const QuoteAttachments = ({
                   onClick={() => handleDownload(attachment.url)}
                   className='hover:opacity-80 cursor-pointer'
                 >
-                  <Download className='w-4 h-4 text-primary' />
+                  <Download className='h-4 w-4 text-[#0d5944]' />
                 </button>
               )}
             </div>
           ))}
         </div>
       ) : (
-        <div className='flex items-center justify-center h-24 bg-gray-50 rounded-lg border border-dashed border-gray-300'>
-          <span className='text-sm text-gray-500'>
+        <div className='flex min-h-20 items-center justify-center border border-dashed border-[#cbd5d0] bg-[#f8faf9] px-4 text-center'>
+          <span className='text-sm text-[#5f6d66]'>
             No attachments added yet
           </span>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
