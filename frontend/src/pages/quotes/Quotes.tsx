@@ -221,7 +221,7 @@ const Quotes = () => {
       <Sidebar />
       <div className='min-w-0 flex-1 md:ml-64'>
         <Navbar />
-        <main id='main-content' className='mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8'>
+        <main id='main-content' className='w-full px-4 py-5 sm:px-6 sm:py-7 lg:px-8'>
           <header className='flex flex-col gap-5 border-b border-[#d9e0dc] pb-6 sm:flex-row sm:items-end sm:justify-between'>
             <div>
               <p className='mb-2 text-sm font-semibold text-[#456157]'>Sales workspace</p>
