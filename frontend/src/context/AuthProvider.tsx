@@ -64,6 +64,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(currentUserQuery.data ?? null);
   }, [currentUserQuery.data]);
 
+  // Use the query result immediately so route guards do not see a false
+  // unauthenticated frame while the mirrored user state catches up.
+  const resolvedUser = currentUserQuery.data ?? user;
+
   // Re-fetches the current user without touching loading/redirect state,
   // used after mutations (e.g. workspace creation) that change data on the
   // user object but shouldn't re-trigger the initial full-page loading spinner.
@@ -95,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: resolvedUser,
         setUser,
         accessToken,
         setAccessToken,
