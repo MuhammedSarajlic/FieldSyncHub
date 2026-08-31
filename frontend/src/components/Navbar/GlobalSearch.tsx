@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import {
+  ArrowUpRight,
+  BriefcaseBusiness,
+  FileText,
+  Receipt,
+  Search,
+  Users,
+  X,
+} from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { GetCustomersByFilter } from '../../services/Customer';
 import { GetJobsByFilter } from '../../services/Job';
@@ -19,10 +27,21 @@ type SearchResult = {
   path: string;
 };
 
+interface GlobalSearchProps {
+  className?: string;
+}
+
 const getItems = <T,>(response: { data?: { payload?: { items?: T[] } } }) =>
   response.data?.payload?.items ?? [];
 
-const GlobalSearch = () => {
+const resultIconByType = {
+  Customer: Users,
+  Job: BriefcaseBusiness,
+  Quote: FileText,
+  Invoice: Receipt,
+};
+
+const GlobalSearch = ({ className = '' }: GlobalSearchProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -122,8 +141,12 @@ const GlobalSearch = () => {
   };
 
   return (
-    <div className='relative flex-1 max-w-xl mx-3 sm:mx-6'>
-      <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
+    <div
+      className={`relative w-full ${
+        isOpen && query.trim().length >= 2 ? 'z-30' : ''
+      } ${className}`}
+    >
+      <Search className='pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted' />
       <input
         ref={inputRef}
         value={query}
@@ -135,11 +158,22 @@ const GlobalSearch = () => {
             setIsOpen(false);
             inputRef.current?.blur();
           }
+          if (event.key === 'Enter' && results[0]) selectResult(results[0]);
         }}
+        role='combobox'
+        aria-autocomplete='list'
+        aria-haspopup='listbox'
+        aria-expanded={isOpen && query.trim().length >= 2}
+        aria-controls='global-search-results'
         aria-label='Search customers, jobs, quotes and invoices'
-        placeholder='Search...'
-        className='w-full h-10 rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-9 text-sm text-gray-900 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-green-900'
+        placeholder='Search customers, jobs, quotes...'
+        className='h-10 w-full rounded-md border border-border-primary bg-white pl-10 pr-20 text-sm text-text-primary outline-none transition placeholder:text-text-muted hover:border-gray-300 focus:border-bg-primary focus:ring-2 focus:ring-bg-primary/15 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-emerald-500 dark:focus:ring-emerald-900/40'
       />
+      {!query && (
+        <span className='pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 items-center gap-1 rounded border border-border-primary bg-surface-subtle px-1.5 py-0.5 text-[10px] font-medium text-text-muted sm:inline-flex dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400'>
+          Ctrl K
+        </span>
+      )}
       {query && (
         <button
           type='button'
@@ -148,7 +182,7 @@ const GlobalSearch = () => {
             setQuery('');
             inputRef.current?.focus();
           }}
-          className='absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+          className='absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-text-muted transition hover:bg-surface-subtle hover:text-text-primary dark:hover:bg-gray-800 dark:hover:text-gray-100'
         >
           <X className='w-4 h-4' />
         </button>
@@ -161,18 +195,33 @@ const GlobalSearch = () => {
             className='fixed inset-0 z-20 cursor-default'
             onClick={() => setIsOpen(false)}
           />
-          <div className='absolute left-0 right-0 top-12 z-30 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900'>
+          <div
+            id='global-search-results'
+            role='listbox'
+            className='absolute left-0 right-0 top-12 z-30 overflow-hidden rounded-lg border border-border-primary bg-white shadow-[0_14px_36px_rgba(23,33,29,0.14)] dark:border-gray-700 dark:bg-gray-900'
+          >
             {isLoading ? (
-              <div className='px-4 py-4 text-sm text-gray-500'>Searching...</div>
+              <div className='flex items-center gap-3 px-4 py-5 text-sm text-text-muted dark:text-gray-400'>
+                <span className='h-4 w-4 animate-spin rounded-full border-2 border-border-primary border-t-bg-primary' />
+                Searching your workspace...
+              </div>
             ) : results.length ? (
               <div className='max-h-96 overflow-y-auto py-1'>
                 {results.map((result) => (
                   <button
                     type='button'
+                    role='option'
+                    aria-selected='false'
                     key={`${result.type}-${result.id}`}
                     onClick={() => selectResult(result)}
-                    className='flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800'
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-surface-subtle focus:bg-surface-subtle focus:outline-none dark:hover:bg-gray-800 dark:focus:bg-gray-800'
                   >
+                    <span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-subtle text-bg-primary dark:bg-gray-800 dark:text-emerald-300'>
+                      {(() => {
+                        const Icon = resultIconByType[result.type];
+                        return <Icon className='h-4 w-4' />;
+                      })()}
+                    </span>
                     <span className='min-w-0'>
                       <span className='block truncate text-sm font-medium text-gray-900 dark:text-gray-100'>
                         {result.label}
@@ -183,12 +232,17 @@ const GlobalSearch = () => {
                         </span>
                       )}
                     </span>
-                    <span className='ml-3 text-xs text-gray-400'>{result.type}</span>
+                    <span className='ml-auto flex shrink-0 items-center gap-1.5 pl-3 text-xs text-text-muted dark:text-gray-500'>
+                      {result.type}
+                      <ArrowUpRight className='h-3.5 w-3.5' />
+                    </span>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className='px-4 py-4 text-sm text-gray-500'>No matches found.</div>
+              <div className='px-4 py-5 text-sm text-text-muted dark:text-gray-400'>
+                No matches found in this workspace.
+              </div>
             )}
           </div>
         </>
