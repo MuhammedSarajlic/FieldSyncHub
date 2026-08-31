@@ -71,6 +71,11 @@ Containers use modest corners no more than 8px. Pills are reserved for status an
 ### Registers
 - Summary registers and record tables share one outer border. Internal dividers connect related information without producing nested cards.
 
+### Document Editors
+- Quote and invoice creation use a wide, accessible dialog with a scrollable editor and persistent totals ledger on desktop.
+- Mobile editors collapse to one column and keep validation and save actions in a fixed footer while the document body scrolls.
+- Customer context, line-item taxability, discounts, tax, and the final total remain visible and reconcilable before saving.
+
 ## Do's and Don'ts
 
 ### Do:

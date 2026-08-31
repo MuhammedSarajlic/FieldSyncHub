@@ -242,7 +242,7 @@ const Quotes = () => {
             </div>
           </section>
 
-          <section aria-labelledby='quote-register-title' className='mt-6 overflow-hidden rounded-lg border border-[#d6ded9] bg-white'>
+          <section aria-labelledby='quote-register-title' className='relative mt-6 rounded-lg border border-[#d6ded9] bg-white'>
             <div className='border-b border-[#dfe5e1] px-4 pt-4 sm:px-5'>
               <div className='flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
                 <div>
