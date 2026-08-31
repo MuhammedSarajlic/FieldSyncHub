@@ -6444,156 +6444,6 @@ export interface paths {
         };
         trace?: never;
     };
-    "/api/auth/2fa/setup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/2fa/setup/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["TwoFactorConfirmSetupDto"];
-                    "text/json": components["schemas"]["TwoFactorConfirmSetupDto"];
-                    "application/*+json": components["schemas"]["TwoFactorConfirmSetupDto"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/2fa/disable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["TwoFactorDisableDto"];
-                    "text/json": components["schemas"]["TwoFactorDisableDto"];
-                    "application/*+json": components["schemas"]["TwoFactorDisableDto"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/2fa/challenge": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["TwoFactorChallengeDto"];
-                    "text/json": components["schemas"]["TwoFactorChallengeDto"];
-                    "application/*+json": components["schemas"]["TwoFactorChallengeDto"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/upload": {
         parameters: {
             query?: never;
@@ -7904,7 +7754,6 @@ export interface components {
             lastName?: string | null;
             fullName?: string | null;
             role?: components["schemas"]["UserRole"];
-            twoFactorEnabled?: boolean;
             workspace?: components["schemas"]["WorkspaceLookupDto"];
             workspaces?: components["schemas"]["UserWorkspaceDto"][] | null;
             /** Format: date-time */
@@ -9053,17 +8902,6 @@ export interface components {
          * @enum {integer}
          */
         TimeEntryType: 0 | 1 | 2;
-        TwoFactorChallengeDto: {
-            challengeToken?: string | null;
-            code?: string | null;
-            rememberMe?: boolean;
-        };
-        TwoFactorConfirmSetupDto: {
-            code?: string | null;
-        };
-        TwoFactorDisableDto: {
-            currentPassword?: string | null;
-        };
         UpdateCustomFieldDto: {
             /** Format: uuid */
             id?: string | null;
@@ -9392,8 +9230,6 @@ export interface components {
             emailChangeToken?: string | null;
             /** Format: date-time */
             emailChangeTokenExpiresAt?: string | null;
-            twoFactorEnabled?: boolean;
-            twoFactorSecretEncrypted?: string | null;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */

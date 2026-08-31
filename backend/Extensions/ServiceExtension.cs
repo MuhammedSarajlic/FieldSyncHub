@@ -22,7 +22,6 @@ using backend.Services.EventService;
 using backend.Services.CalendarService;
 using backend.Services.ActivityHistoryService;
 using backend.Services.StorageService;
-using backend.Services.TwoFactorService;
 using backend.Services.WebhookService;
 using backend.Services.StripeService;
 using backend.Services.AccountingService;
@@ -67,8 +66,6 @@ public static class ServiceExtension
         services.AddScoped<ICalendarService, CalendarService>();
         services.AddScoped<QuotePdfService>();
         services.AddScoped<IStorageService, SupabaseStorageService>();
-        services.AddSingleton<TotpSecretProtector>();
-        services.AddScoped<ITwoFactorService, TwoFactorService>();
         services.AddScoped<IActivityHistoryService, ActivityHistoryService>();
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
         services.AddScoped<IStripePaymentService, StripePaymentService>();

@@ -29,7 +29,6 @@ import PrivateRoute from './utils/AuthHelpers/PrivateRoute';
 import PublicRoute from './utils/AuthHelpers/PublicRoute';
 import { useAuth } from './context/AuthProvider';
 import RequireWorkspace from './utils/AuthHelpers/RequireWorkspace';
-import RequireTwoFactorSetup from './utils/AuthHelpers/RequireTwoFactorSetup';
 const InviteJoin = lazy(() => import('./pages/InviteJoin'));
 const EmployeeDetails = lazy(() => import('./pages/employees/EmployeeDetails'));
 const InvoiceDetails = lazy(() => import('./pages/invoices/InvoiceDetails'));
@@ -135,7 +134,7 @@ function App() {
 
         <Route element={<PrivateRoute />}>
           <Route element={<RequireWorkspace />}>
-            <Route element={<RequireTwoFactorSetup />}>
+          <Route>
               <Route path='home' element={<Home />} />
               <Route path='calendar' element={<Calendar />} />
               <Route path='dispatch' element={<DispatchBoard />} />
@@ -171,8 +170,6 @@ function App() {
               <Route path='inventory' element={<Inventory />} />
               <Route path='billing' element={<Subscription />} />
             </Route>
-            {/* Outside the 2FA gate - an Owner who hasn't enrolled yet must
-                still be able to reach the settings page that lets them. */}
             <Route path='settings' element={<Settings />} />
           </Route>
         </Route>

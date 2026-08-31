@@ -27,11 +27,6 @@ public class User
     public string? PendingEmail { get; set; }
     public string? EmailChangeToken { get; set; }
     public DateTime? EmailChangeTokenExpiresAt { get; set; }
-    public bool TwoFactorEnabled { get; set; }
-    // AES-GCM encrypted (see TotpSecretProtector) - never stored or logged in the
-    // clear, since anyone who reads it out of a database dump could mint valid
-    // codes indefinitely, unlike a one-time reset token.
-    public string? TwoFactorSecretEncrypted { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

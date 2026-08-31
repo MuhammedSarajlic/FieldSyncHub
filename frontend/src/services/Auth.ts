@@ -4,12 +4,10 @@ export async function Register(user) {
   const response = await api.post('/auth/register', user);
   return response;
 }
-
 export async function Login(user) {
   const response = await api.post('/auth/login', user);
   return response;
 }
-
 export async function GoogleLogin(idToken: string) {
   const response = await api.post('/auth/google', { idToken });
   return response;
@@ -46,30 +44,3 @@ export async function ResetPassword(token: string, newPassword: string) {
   return response;
 }
 
-export async function BeginTwoFactorSetup() {
-  const response = await api.post('/auth/2fa/setup');
-  return response;
-}
-
-export async function ConfirmTwoFactorSetup(code: string) {
-  const response = await api.post('/auth/2fa/setup/confirm', { code });
-  return response;
-}
-
-export async function DisableTwoFactor(currentPassword: string) {
-  const response = await api.post('/auth/2fa/disable', { currentPassword });
-  return response;
-}
-
-export async function VerifyTwoFactorChallenge(
-  challengeToken: string,
-  code: string,
-  rememberMe: boolean = true
-) {
-  const response = await api.post('/auth/2fa/challenge', {
-    challengeToken,
-    code,
-    rememberMe,
-  });
-  return response;
-}

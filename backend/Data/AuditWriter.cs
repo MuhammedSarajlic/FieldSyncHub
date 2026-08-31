@@ -19,8 +19,8 @@ public static class AuditWriter
     /// <summary>
     /// Top-level business records worth a "who touched this" answer. Deliberately an
     /// allow-list, not a deny-list: child rows (LineItem, StatusChange) churn on
-    /// every parent edit and would bury the signal, and auth records (RefreshToken,
-    /// RecoveryCode) would write a row on every single login and token refresh.
+    /// every parent edit and would bury the signal, and auth records (RefreshToken)
+    /// would write a row on every single login and token refresh.
     /// ActivityHistory itself is absent for the obvious reason.
     /// </summary>
     private static readonly HashSet<Type> AuditedTypes =
@@ -54,7 +54,7 @@ public static class AuditWriter
     /// <summary>
     /// Never name these in an audit row. The log is readable by anyone who can see
     /// the workspace's history, so it must not become a second place credentials or
-    /// live tokens leak from - see SEC-16 (reset tokens) and SEC-25 (TOTP secrets).
+    /// live tokens leak from - see SEC-16 and the email-change token flows.
     /// </summary>
     private static readonly HashSet<string> SensitiveProperties =
     [
@@ -63,7 +63,6 @@ public static class AuditWriter
         "PasswordResetTokenExpiresAt",
         "EmailChangeToken",
         "EmailChangeTokenExpiresAt",
-        "TwoFactorSecretEncrypted",
         "GoogleId",
     ];
 

@@ -3,7 +3,6 @@ using backend.Models;
 using backend.Response;
 using backend.Services.AuthService;
 using backend.Services.TokenService;
-using backend.Services.TwoFactorService;
 using backend.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,24 +48,14 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = userDB.ErrorMessage });
         }
 
-        // The password is correct, but that's only the first factor when 2FA is
-        // enabled - issue a short-lived challenge token instead of real access, so
-        // whoever holds it still can't reach the API without the second factor too.
-        if (userDB.Payload!.TwoFactorEnabled)
-        {
-            var challengeToken = _tokenService.CreateMfaChallengeToken(userDB.Payload.Id);
-            return Ok(new { mfaRequired = true, challengeToken });
-        }
-
-        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload, userLogin.RememberMe);
+        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload!, userLogin.RememberMe);
 
         _tokenService.SetRefreshTokenCookie(tokens.refreshToken, userLogin.RememberMe);
 
         return Ok(new
         {
             user = userDB.Payload,
-            tokens.accessToken,
-            mfaSetupRequired = userDB.Payload.Role == UserRole.Owner && !userDB.Payload.TwoFactorEnabled
+            tokens.accessToken
         });
     }
 
@@ -118,21 +107,14 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = userDB.ErrorMessage });
         }
 
-        if (userDB.Payload!.TwoFactorEnabled)
-        {
-            var challengeToken = _tokenService.CreateMfaChallengeToken(userDB.Payload.Id);
-            return Ok(new { mfaRequired = true, challengeToken });
-        }
-
-        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload);
+        (string accessToken, string refreshToken) tokens = await _tokenService.GenerateTokensAsync(userDB.Payload!);
 
         _tokenService.SetRefreshTokenCookie(tokens.refreshToken);
 
         return Ok(new
         {
             user = userDB.Payload,
-            tokens.accessToken,
-            mfaSetupRequired = userDB.Payload.Role == UserRole.Owner && !userDB.Payload.TwoFactorEnabled
+            tokens.accessToken
         });
     }
 

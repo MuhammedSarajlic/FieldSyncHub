@@ -11,8 +11,6 @@ import {
   Globe,
   Phone,
   ArrowRight,
-  ShieldCheck,
-  Copy,
   MapPin,
   Bell,
   Clock3,
@@ -21,7 +19,7 @@ import {
   Download,
   Trash2,
 } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar/Navbar';
 import Sidebar from '../components/Sidebar/Sidebar';
@@ -30,15 +28,9 @@ import { useAuth } from '../context/AuthProvider';
 import { GetWorkspaceById, UpdateWorkspace } from '../services/Workspace';
 import { UpdateUser } from '../services/User';
 import { DeleteUser } from '../services/User';
-import {
-  UpdatePassword,
-  BeginTwoFactorSetup,
-  ConfirmTwoFactorSetup,
-  DisableTwoFactor,
-} from '../services/Auth';
+import { UpdatePassword } from '../services/Auth';
 import { uploadFile } from '../storage/uploadFile';
 import { CompanySize } from '../constants/Enumeration/WorkspaceEnum/WorkspaceEnum';
-import { UserRole } from '../constants/Enumeration/UserEnum/UserEnum';
 import { serviceCategories } from '../constants/ServiceCategories';
 import { TUpdateWorkspace } from '../types/Workspace';
 import { ExportWorkspace } from '../services/Workspace';
@@ -76,7 +68,19 @@ const inputClass =
 const Settings = () => {
   const { user, refetchUser, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('company');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Keep the active tab in the URL so it survives a remount and can be bookmarked.
+  const sectionParam = searchParams.get('section');
+  const activeSection = settingSections.some((s) => s.id === sectionParam)
+    ? (sectionParam as string)
+    : 'company';
+
+  const setActiveSection = (sectionId: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('section', sectionId);
+    setSearchParams(next, { replace: true });
+  };
 
   // Company Profile
   const [workspace, setWorkspace] = useState<TUpdateWorkspace | null>(null);
@@ -102,16 +106,6 @@ const Settings = () => {
   const [showPasswords, setShowPasswords] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
-  // Two-factor authentication
-  const [twoFactorStep, setTwoFactorStep] = useState<
-    'idle' | 'awaiting-code' | 'recovery-codes'
-  >('idle');
-  const [twoFactorManualKey, setTwoFactorManualKey] = useState('');
-  const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
-  const [disablePassword, setDisablePassword] = useState('');
-  const [showDisableForm, setShowDisableForm] = useState(false);
-  const [isTwoFactorBusy, setIsTwoFactorBusy] = useState(false);
   const [notifications, setNotifications] = useState(() => {
     try {
       return JSON.parse(
@@ -323,64 +317,6 @@ const Settings = () => {
       );
     } finally {
       setIsSavingPassword(false);
-    }
-  };
-
-  const handleBeginTwoFactorSetup = async () => {
-    setIsTwoFactorBusy(true);
-    try {
-      const response = await BeginTwoFactorSetup();
-      setTwoFactorManualKey(response.data.manualEntryKey);
-      setTwoFactorStep('awaiting-code');
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message ||
-          'Could not start two-factor setup.'
-      );
-    } finally {
-      setIsTwoFactorBusy(false);
-    }
-  };
-
-  const handleConfirmTwoFactorSetup = async () => {
-    setIsTwoFactorBusy(true);
-    try {
-      const response = await ConfirmTwoFactorSetup(twoFactorCode);
-      setRecoveryCodes(response.data.recoveryCodes);
-      setTwoFactorStep('recovery-codes');
-      setTwoFactorCode('');
-      await refetchUser();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'That code was incorrect.');
-    } finally {
-      setIsTwoFactorBusy(false);
-    }
-  };
-
-  const handleFinishTwoFactorSetup = () => {
-    setTwoFactorStep('idle');
-    setTwoFactorManualKey('');
-    setRecoveryCodes([]);
-  };
-
-  const handleCancelTwoFactorSetup = () => {
-    setTwoFactorStep('idle');
-    setTwoFactorManualKey('');
-    setTwoFactorCode('');
-  };
-
-  const handleDisableTwoFactor = async () => {
-    setIsTwoFactorBusy(true);
-    try {
-      await DisableTwoFactor(disablePassword);
-      toast.success('Two-factor authentication disabled');
-      setDisablePassword('');
-      setShowDisableForm(false);
-      await refetchUser();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Incorrect password.');
-    } finally {
-      setIsTwoFactorBusy(false);
     }
   };
 
@@ -956,164 +892,6 @@ const Settings = () => {
               </div>
             </div>
 
-            <div className='space-y-4 pt-6 border-t border-gray-200'>
-              <h3 className='text-lg font-semibold text-gray-900 flex items-center gap-2'>
-                <ShieldCheck size={18} />
-                Two-Factor Authentication
-              </h3>
-
-              {twoFactorStep === 'idle' && (
-                <>
-                  {user?.twoFactorEnabled ? (
-                    <div className='space-y-3'>
-                      <p className='text-sm text-gray-600'>
-                        Two-factor authentication is{' '}
-                        <span className='font-medium text-green-700'>
-                          enabled
-                        </span>{' '}
-                        on your account.
-                      </p>
-                      {!showDisableForm ? (
-                        <Button
-                          variant='secondary'
-                          onClick={() => setShowDisableForm(true)}
-                        >
-                          Disable
-                        </Button>
-                      ) : (
-                        <div className='space-y-3 max-w-sm'>
-                          <label className='block text-sm font-medium text-gray-700'>
-                            Confirm your current password
-                          </label>
-                          <input
-                            type='password'
-                            value={disablePassword}
-                            onChange={(e) =>
-                              setDisablePassword(e.target.value)
-                            }
-                            className={inputClass}
-                          />
-                          <div className='flex gap-2'>
-                            <Button
-                              variant='secondary'
-                              onClick={handleDisableTwoFactor}
-                              disabled={isTwoFactorBusy || !disablePassword}
-                            >
-                              {isTwoFactorBusy
-                                ? 'Disabling...'
-                                : 'Confirm disable'}
-                            </Button>
-                            <Button
-                              variant='secondary'
-                              onClick={() => {
-                                setShowDisableForm(false);
-                                setDisablePassword('');
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className='space-y-3'>
-                      <p className='text-sm text-gray-600'>
-                        {user?.role === UserRole.Owner
-                          ? 'Required for Owner accounts. Add an extra layer of security using an authenticator app (Google Authenticator, Authy, 1Password, etc).'
-                          : 'Add an extra layer of security to your account using an authenticator app (Google Authenticator, Authy, 1Password, etc).'}
-                      </p>
-                      <Button
-                        variant='primary'
-                        onClick={handleBeginTwoFactorSetup}
-                        disabled={isTwoFactorBusy}
-                        leftIcon={<ShieldCheck size={16} />}
-                      >
-                        {isTwoFactorBusy ? 'Starting...' : 'Enable Two-Factor'}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {twoFactorStep === 'awaiting-code' && (
-                <div className='space-y-4 max-w-sm'>
-                  <p className='text-sm text-gray-600'>
-                    Add this key to your authenticator app (most apps have a
-                    "Enter a setup key" or "Can't scan?" option), then enter
-                    the 6-digit code it generates.
-                  </p>
-                  <div className='flex items-center gap-2'>
-                    <code className='flex-1 px-3 py-2 bg-gray-100 rounded-md text-sm font-mono break-all'>
-                      {twoFactorManualKey}
-                    </code>
-                    <button
-                      type='button'
-                      onClick={() => {
-                        navigator.clipboard?.writeText(twoFactorManualKey);
-                        toast.success('Copied');
-                      }}
-                      className='p-2 text-gray-500 hover:text-gray-700'
-                      aria-label='Copy setup key'
-                    >
-                      <Copy size={16} />
-                    </button>
-                  </div>
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>
-                      6-digit code
-                    </label>
-                    <input
-                      type='text'
-                      inputMode='numeric'
-                      value={twoFactorCode}
-                      onChange={(e) => setTwoFactorCode(e.target.value)}
-                      placeholder='123456'
-                      className={`${inputClass} text-center tracking-widest`}
-                    />
-                  </div>
-                  <div className='flex gap-2'>
-                    <Button
-                      variant='primary'
-                      onClick={handleConfirmTwoFactorSetup}
-                      disabled={isTwoFactorBusy || twoFactorCode.length !== 6}
-                    >
-                      {isTwoFactorBusy ? 'Verifying...' : 'Verify and enable'}
-                    </Button>
-                    <Button
-                      variant='secondary'
-                      onClick={handleCancelTwoFactorSetup}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {twoFactorStep === 'recovery-codes' && (
-                <div className='space-y-4 max-w-sm'>
-                  <p className='text-sm text-gray-600'>
-                    Save these recovery codes somewhere safe. Each one can be
-                    used once to sign in if you lose access to your
-                    authenticator app.{' '}
-                    <span className='font-medium text-gray-900'>
-                      They won't be shown again.
-                    </span>
-                  </p>
-                  <div className='grid grid-cols-2 gap-2 p-4 bg-gray-100 rounded-md font-mono text-sm'>
-                    {recoveryCodes.map((code) => (
-                      <div key={code}>{code}</div>
-                    ))}
-                  </div>
-                  <Button
-                    variant='primary'
-                    onClick={handleFinishTwoFactorSetup}
-                  >
-                    I've saved these codes
-                  </Button>
-                </div>
-              )}
-            </div>
           </div>
         );
 
