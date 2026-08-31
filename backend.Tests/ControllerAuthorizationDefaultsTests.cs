@@ -22,7 +22,6 @@ public class ControllerAuthorizationDefaultsTests : IClassFixture<AuthorizationD
         ("POST", "api/auth/forgot-password"),
         ("POST", "api/auth/reset-password"),
         ("POST", "api/auth/refresh"),
-        ("POST", "api/auth/2fa/challenge"),
         ("POST", "api/invite/accept-invite"),
         ("GET", "api/invite/validate-token"),
         ("POST", "api/user/confirm-email-change"),
